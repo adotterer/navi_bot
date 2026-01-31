@@ -21,6 +21,6 @@ jobs:
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: navi-bot
           environment_name: navi-bot-env
-          region: us-east-1
+          region: us-west-1
           version_label: v-${{ github.sha }}
           deployment_package: navi_bot.zip
