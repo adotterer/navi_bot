@@ -1,0 +1,26 @@
+name: Deploy to Elastic Beanstalk
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create deployment package
+        run: |
+          zip -r navi_bot.zip . -x "node_modules/*" ".git/*" ".gitignore"
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: navi-bot
+          environment_name: navi-bot-env
+          region: us-east-1
+          version_label: v-${{ github.sha }}
+          deployment_package: navi_bot.zip
