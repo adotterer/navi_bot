@@ -83,6 +83,25 @@ Generates an AI-powered match-up summary for a specific character using Google G
 
 ---
 
+### `!mu-question <question>`
+Answers a specific matchup question using exported Discord messages for the detected character.
+
+**Usage:**
+```
+!mu-question What should Zelda do versus Mario's fireball?
+!mu-question How do I deal with Peach's turnips?
+!mu-question How do I deal with Daisy's turnips?
+```
+
+**Features:**
+- Detects character names in the question (supports nicknames like **palu** → palutena, **pika** → pikachu)
+- Handles shared channels like **peach|daisy** automatically
+- Fetches character data from S3 bucket
+- Prioritizes messages from `katyparry` (expert player)
+- If the question isn't covered in the messages, it says so
+
+---
+
 ### `!should-have` Detection (Automatic)
 The bot automatically responds to messages containing "should have" with a positive reinforcement message suggesting "could have" instead.
 

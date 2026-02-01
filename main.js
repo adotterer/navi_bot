@@ -61,6 +61,79 @@ async function fetchFromS3(filename) {
     return JSON.parse(str);
 }
 
+function isModelOverloaded(error) {
+    const status = error?.status || error?.statusCode || error?.response?.status;
+    const message = `${error?.message || ''}`.toLowerCase();
+    return status === 500 || message.includes('overloaded');
+}
+
+const nicknameAliases = {
+    palu: "palutena",
+    pika: "pikachu",
+    peach: "peach|daisy",
+    daisy: "peach|daisy"
+};
+
+function normalizeCharacterText(text) {
+    return text
+        .toLowerCase()
+        .replace(/[’']/g, "")
+        .replace(/[^a-z0-9|\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function buildCharacterAliasMap(guild) {
+    const aliasMap = new Map();
+    const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
+
+    const matchupChannels = guild.channels.cache.filter(
+        ch => ch.parent && categoryNames.includes(ch.parent.name)
+    );
+
+    for (const channel of matchupChannels.values()) {
+        const slug = channel.name.toLowerCase();
+        const normalizedSlug = normalizeCharacterText(slug);
+        aliasMap.set(normalizedSlug, slug);
+
+        if (slug.includes("|")) {
+            const parts = slug.split("|").map(part => normalizeCharacterText(part));
+            for (const part of parts) {
+                if (part) {
+                    aliasMap.set(part, slug);
+                }
+            }
+        }
+    }
+
+    for (const [alias, canonical] of Object.entries(nicknameAliases)) {
+        const normalizedAlias = normalizeCharacterText(alias);
+        const normalizedCanonical = normalizeCharacterText(canonical);
+        const canonicalSlug = aliasMap.get(normalizedCanonical) || canonical.toLowerCase();
+        aliasMap.set(normalizedAlias, canonicalSlug);
+    }
+
+    return aliasMap;
+}
+
+function escapeRegex(text) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function resolveCharacterFromText(text, aliasMap) {
+    const normalizedText = normalizeCharacterText(text);
+    const aliases = Array.from(aliasMap.keys()).sort((a, b) => b.length - a.length);
+
+    for (const alias of aliases) {
+        const pattern = new RegExp(`(^|\\s)${escapeRegex(alias)}(\\s|$)`);
+        if (pattern.test(normalizedText)) {
+            return { slug: aliasMap.get(alias), alias };
+        }
+    }
+
+    return null;
+}
+
 const client = new Client({ intents: [
 GatewayIntentBits.Guilds,
 GatewayIntentBits.GuildMessages,
@@ -120,7 +193,8 @@ client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
     const isCommand = message.content.toLowerCase().startsWith("!export") ||
-        message.content.toLowerCase().startsWith("!match-up-notes");
+        message.content.toLowerCase().startsWith("!match-up-notes") ||
+        message.content.toLowerCase().startsWith("!mu-question");
 
     if (isCommand) {
         const hasModeratorRole = message.member?.roles?.cache?.some(
@@ -301,6 +375,13 @@ ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
                 return;
             }
         } catch (error) {
+            if (isModelOverloaded(error)) {
+                await message.reply("⚠️ The model is overloaded right now. I can’t generate a refined summary yet.");
+                setTimeout(() => {
+                    message.reply("Would you like to retry? Reply with **retry** to try again.").catch(console.error);
+                }, 10000);
+                return;
+            }
             console.error("Error in conversational refinement:", error);
             // Continue to other command handlers if this fails
         }
@@ -386,6 +467,98 @@ ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
         } catch (error) {
             console.error(error);
             await message.reply("❌ Error exporting Match Ups channels: " + error.message);
+        }
+    }
+
+    if (message.content.toLowerCase().startsWith("!mu-question")) {
+        const rawQuestion = message.content.replace(/^!mu-question\s*/i, "").trim();
+
+        if (!rawQuestion) {
+            await message.reply("❌ Please include a question. Example: `!mu-question How do I deal with Peach's turnips?`");
+            return;
+        }
+
+        let characterSlug;
+        let displayName;
+
+        try {
+            const aliasMap = buildCharacterAliasMap(message.guild);
+            const characterMatch = resolveCharacterFromText(rawQuestion, aliasMap);
+
+            if (!characterMatch) {
+                await message.reply("❌ I couldn’t detect a character in your question. Please mention the character name (nicknames like 'palu' or 'pika' are ok). Example: `!mu-question What should Zelda do versus Mario's fireball?`");
+                return;
+            }
+
+            characterSlug = characterMatch.slug;
+            displayName = characterSlug.replace("|", "/");
+            const filename = `${characterSlug}.json`;
+
+            await message.reply(`⏳ Searching matchup notes for **${displayName}**...`);
+
+            const messages = await fetchFromS3(filename);
+
+            if (!messages || messages.length === 0) {
+                await message.reply(`❌ No messages found for ${displayName}. Have you exported this character yet?`);
+                return;
+            }
+
+            const katyparryMessages = messages.filter(msg => msg.author === 'katyparry');
+            const otherMessages = messages.filter(msg => msg.author !== 'katyparry');
+
+            const prompt = `You are an expert Super Smash Bros. Ultimate analyst. The user has a specific matchup question about Zelda vs ${displayName}.
+
+QUESTION:
+"${rawQuestion}"
+
+IMPORTANT: Messages from user 'katyparry' are the most authoritative and should be heavily weighted in your answer.
+
+=== PRIORITY MESSAGES (from katyparry) ===
+${katyparryMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
+
+=== OTHER COMMUNITY MESSAGES ===
+${otherMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
+
+RULES:
+1. Answer only using information from the messages above
+2. If the messages don’t address the question, say you couldn’t find it
+3. Be concise and actionable
+4. Do not mention jab combos
+5. Prefer matchup-specific tools, counterplay, and neutral/advantage/disadvantage info
+
+Provide the best possible answer now:`;
+
+            const response = await genAI.models.generateContent({
+                model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
+                contents: prompt
+            });
+
+            const answer = response.text;
+
+            if (answer.length <= 2000) {
+                await message.reply(answer);
+            } else {
+                const chunks = answer.match(/[\s\S]{1,2000}/g) || [];
+                for (const chunk of chunks) {
+                    await message.channel.send(chunk);
+                }
+            }
+
+            console.log(`✅ Answered MU question for ${displayName}`);
+        } catch (error) {
+            if (isModelOverloaded(error)) {
+                await message.reply("⚠️ The model is overloaded right now. I can’t answer yet.");
+                setTimeout(() => {
+                    message.reply("Would you like to retry? Reply with **retry** to try again.").catch(console.error);
+                }, 10000);
+                return;
+            }
+            console.error(error);
+            if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') {
+                await message.reply(`❌ File ${(characterSlug || "character")}.json not found in S3. Have you exported this character yet?`);
+            } else {
+                await message.reply("❌ Error answering question: " + error.message);
+            }
         }
     }
     
@@ -488,6 +661,13 @@ Generate the matchup summary now:`;
             console.log(`✅ Generated match-up notes for ${character}`);
         } catch (error) {
             console.error(error);
+            if (isModelOverloaded(error)) {
+                await message.reply("⚠️ The model is overloaded right now. I can’t generate notes yet.");
+                setTimeout(() => {
+                    message.reply("Would you like to retry? Reply with **retry** to try again.").catch(console.error);
+                }, 10000);
+                return;
+            }
             if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') {
                 await message.reply(`❌ File ${filename} not found in S3. Have you exported this character yet?`);
             } else {
