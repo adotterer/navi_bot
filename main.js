@@ -292,7 +292,7 @@ Create a comprehensive matchup summary following this format:
 - Include reasoning in italics like *[reason]*
 
 **Phantom in Neutral?**
-- Phantom In Neutral? NO :7blizzetta: or YES :7blizzetta: 
+- Phantom In Neutral? NO <:7blizzetta:1337261523269058731> or YES <:7blizzetta:1337261523269058731> 
 
 **D-Tilt Safe on Shield**
 - Spaced: safe
