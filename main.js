@@ -7,6 +7,7 @@ import { handleExportFalco, handleExportMatchups } from './src/export/exportHand
 import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/matchups/matchupHandler.js';
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
 import { initializeScheduler } from './src/shared/scheduler.js';
+import { checkTodaysTournaments } from './src/tournaments/dailyTournamentCheck.js';
 
 dotenv.config();
 
@@ -66,7 +67,8 @@ client.on("messageCreate", async (message) => {
     const isCommand = message.content.toLowerCase().startsWith("!export") ||
         message.content.toLowerCase().startsWith("!match-up-notes") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
-        message.content.toLowerCase().startsWith("!list-categories");
+        message.content.toLowerCase().startsWith("!list-categories") ||
+        message.content.toLowerCase().startsWith("!matches-today");
 
     if (isCommand) {
         const hasModeratorRole = message.member?.roles?.cache?.some(
@@ -174,6 +176,54 @@ client.on("messageCreate", async (message) => {
     // ===== MATCH-UP NOTES =====
     if (message.content.toLowerCase().startsWith("!match-up-notes")) {
         await handleMatchupNotes(message);
+        return;
+    }
+
+    // ===== MATCHES TODAY =====
+    if (message.content.toLowerCase() === "!matches-today") {
+        const STARTGG_TOKEN = process.env.STARTGG_AUTH_TOKEN || '';
+        if (!STARTGG_TOKEN) {
+            await message.reply("❌ Start.gg API token not configured.");
+            return;
+        }
+
+        try {
+            await message.reply("⏳ Checking today's tournaments for Zelda players...");
+            const tournaments = await checkTodaysTournaments(STARTGG_TOKEN);
+
+            if (tournaments.length === 0) {
+                await message.reply("❌ No Zelda players found in today's tournaments with Ultimate Singles.");
+                return;
+            }
+
+            // Post one message per tournament
+            for (const tournament of tournaments) {
+                const startTime = new Date(tournament.startAt * 1000).toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    timeZone: 'America/New_York'
+                });
+                const streamInfo = tournament.streams.length > 0
+                    ? tournament.streams.map(s => `${s.streamName} (${s.streamSource})`).join(', ')
+                    : 'No streams listed';
+
+                const playersList = tournament.zeldaPlayers
+                    .map(p => `• ${p.gamerTag}`)
+                    .join('\n');
+
+                const messageContent = `🏆 **${tournament.tournamentName}**\n` +
+                    `📅 Start: ${startTime} EST\n` +
+                    `🎮 Event: ${tournament.eventName}\n` +
+                    `👤 Zelda Player(s):\n${playersList}\n` +
+                    `📺 Streams: ${streamInfo}\n` +
+                    `🔗 https://www.start.gg/${tournament.tournamentSlug}`;
+
+                await message.channel.send(messageContent);
+            }
+        } catch (error) {
+            console.error("Error checking tournaments:", error);
+            await message.reply(`❌ Error checking tournaments: ${error.message}`);
+        }
         return;
     }
 });

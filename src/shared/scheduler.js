@@ -1,12 +1,13 @@
 import cron from 'node-cron';
 import { fetchAllMessages, uploadToS3 } from './s3Helper.js';
+import { checkTodaysTournaments } from '../tournaments/dailyTournamentCheck.js';
 
 export function initializeScheduler(client) {
     // Weekly export every Sunday at 2 AM UTC
     // Cron format: minute hour day month dayOfWeek
     // Testing: 5 1 * * * = Every day at 1:05 AM America/New_York
     // Production: 0 2 * * 0 = Every Sunday at 2:00 AM UTC
-    const task = cron.schedule('24 1 * * *', async () => {
+    const weeklyExportTask = cron.schedule('24 1 * * *', async () => {
         console.log('📅 Starting scheduled weekly export...');
         
         try {
@@ -76,8 +77,87 @@ export function initializeScheduler(client) {
     // Uncomment the line below to test the scheduler immediately when bot starts
     // task.emit('tick');
 
-    console.log('📅 Weekly export scheduler initialized (runs every day at 1:18 AM America/New_York for testing)');
-    return task;
+    console.log('📅 Weekly export scheduler initialized (runs every day at 1:24 AM America/New_York for testing)');
+    
+    // ========== DAILY TOURNAMENT CHECK ==========
+    // Runs daily at 8:30 AM EST to check for Zelda players in tournaments
+    // Cron format: minute hour day month dayOfWeek
+    // '30 8 * * *' = Every day at 8:30 AM America/New_York
+    const dailyTournamentTask = cron.schedule('30 8 * * *', async () => {
+        console.log('🎮 Starting daily tournament check for Zelda players...');
+        
+        try {
+            const guild = client.guilds.cache.first();
+            if (!guild) {
+                console.error('❌ No guild found for daily tournament check');
+                return;
+            }
+
+            const STARTGG_TOKEN = process.env.STARTGG_AUTH_TOKEN || '';
+            if (!STARTGG_TOKEN) {
+                console.error('❌ Start.gg API token not configured');
+                return;
+            }
+
+            // Find the #daily-tournaments-streams channel
+            const channel = guild.channels.cache.find(
+                ch => ch.isTextBased() && ch.name === 'daily-tournaments-streams'
+            );
+
+            if (!channel) {
+                console.warn('⚠️ #daily-tournaments-streams channel not found');
+                return;
+            }
+
+            // Check today's tournaments
+            const tournaments = await checkTodaysTournaments(STARTGG_TOKEN);
+
+            if (tournaments.length === 0) {
+                await channel.send('❌ No Zelda players found in today\'s tournaments with Ultimate Singles.');
+                return;
+            }
+
+            // Post one message per tournament
+            let postedCount = 0;
+            for (const tournament of tournaments) {
+                try {
+                    const startTime = new Date(tournament.startAt * 1000).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        timeZone: 'America/New_York'
+                    });
+                    const streamInfo = tournament.streams.length > 0
+                        ? tournament.streams.map(s => `${s.streamName} (${s.streamSource})`).join(', ')
+                        : 'No streams listed';
+
+                    const playersList = tournament.zeldaPlayers
+                        .map(p => `• ${p.gamerTag}`)
+                        .join('\n');
+
+                    const messageContent = `🏆 **${tournament.tournamentName}**\n` +
+                        `📅 Start: ${startTime} EST\n` +
+                        `🎮 Event: ${tournament.eventName}\n` +
+                        `👤 Zelda Player(s):\n${playersList}\n` +
+                        `📺 Streams: ${streamInfo}\n` +
+                        `🔗 https://www.start.gg/${tournament.tournamentSlug}`;
+
+                    await channel.send(messageContent);
+                    postedCount++;
+                } catch (error) {
+                    console.error(`❌ Error posting tournament message:`, error.message);
+                }
+            }
+
+            console.log(`✅ Daily tournament check completed: ${postedCount} tournament(s) posted`);
+        } catch (error) {
+            console.error('❌ Daily tournament check failed:', error);
+        }
+    }, {
+        timezone: 'America/New_York'
+    });
+
+    console.log('📅 Daily tournament check scheduler initialized (runs every day at 8:30 AM America/New_York)');
+    return weeklyExportTask;
 }
 
 // Helper function to send success notification to Moderators chat
