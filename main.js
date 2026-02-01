@@ -276,6 +276,11 @@ ${otherMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
 === YOUR TASK ===
 Create a comprehensive matchup summary following this format:
 
+**🔎 | GENERAL GAMEPLAN**
+- Overview of the matchup dynamics
+- Key strengths and weaknesses for Zelda
+- Important neutral strategies
+
 **🔎 | MATCH UP BASICS**
 - List key strategies, frame data, punish options, and general gameplan
 - Use bold text for important moves/concepts
@@ -285,6 +290,14 @@ Create a comprehensive matchup summary following this format:
 **🚨 | STAGE BANS** (ONLY include this section if stages are specifically discussed in the messages)
 - List recommended stage bans
 - Include reasoning in italics like *[reason]*
+
+**Phantom in Neutral?**
+- Phantom In Neutral? NO :7blizzetta: or YES :7blizzetta: 
+
+**D-Tilt Safe on Shield**
+- Spaced: safe
+- Not spaced: Bair and grab
+
 
 Rules:
 1. Base everything on the actual messages provided
@@ -296,6 +309,10 @@ Rules:
 7. Match the tone and style of the example provided
 8. When there are more messages, or longer messages with verbose detail, please condense the information to keep the summary focused and readable. 
 9. The goal is to have a summary could briefly read 5 minutes before a match and get all critical info without being overwhelmed.
+10. Ignore overly granular, single-move, percentage-based interactions (e.g., specific % windows for one move). Summarize those as general principles instead.
+11. Look specifically for anything about if Zelda can use the Phantom in neutral against this character, and include that in the summary. If it is not mentioned, do not include it.
+12. Include if D-Tilt is Safe on Shield or not.
+
 
 Generate the matchup summary now:`;
             
