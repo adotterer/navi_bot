@@ -6,7 +6,7 @@ export function initializeScheduler(client) {
     // Cron format: minute hour day month dayOfWeek
     // Testing: 40 0 * * * = Every day at 12:40 AM EST (00:40 in 24-hour format)
     // Production: 0 2 * * 0 = Every Sunday at 2:00 AM UTC
-    const task = cron.schedule('40 0 * * *', async () => {
+    const task = cron.schedule('50 0 * * *', async () => {
         console.log('📅 Starting scheduled weekly export...');
         
         try {
@@ -91,9 +91,9 @@ async function notifyModerators(guild, channelsExported, messagesExported, durat
             return;
         }
 
-        // Find chat channel in Moderators category
+        // Find chat channel in Moderators category (search by name containing "chat")
         const chatChannel = moderatorsCategory.children.cache.find(
-            ch => ch.isTextBased() && ch.name === "chat"
+            ch => ch.isTextBased() && ch.name.toLowerCase().includes("chat")
         );
 
         if (!chatChannel) {
@@ -121,7 +121,7 @@ async function notifyModeratorsOfFailure(guild, errorMessage) {
         if (!moderatorsCategory) return;
 
         const chatChannel = moderatorsCategory.children.cache.find(
-            ch => ch.isTextBased() && ch.name === "chat"
+            ch => ch.isTextBased() && ch.name.toLowerCase().includes("chat")
         );
 
         if (!chatChannel) return;
