@@ -68,10 +68,35 @@ function isModelOverloaded(error) {
 }
 
 const nicknameAliases = {
+    bayo: "bayonetta",
+    diddy: "diddy-kong",
+    dk: "donkey-kong",
+    "DK": "donkey-kong",
+    icies: "ice-climbers",
+    iceclimbers: "ice-climbers",
+    "ice climbers": "ice-climbers",
     palu: "palutena",
     pika: "pikachu",
+    pit: "pit|dark-pit",
+    "dark pit": "pit|dark-pit",
+    rosalina: "rosalina-and-luma",
+    "rosalina & luma": "rosalina-and-luma",
+    "rosalina and luma": "rosalina-and-luma",
+    simon: "simon-richter",
+    richter: "simon-richter",
+    "richter belmont": "simon-richter",
     peach: "peach|daisy",
-    daisy: "peach|daisy"
+    plant: "piranha-plant",
+    daisy: "peach|daisy",
+    GaW: "mr-game-and-watch",
+    "Mr. G&W": "mr-game-and-watch",
+    "mr g&w": "mr-game-and-watch",
+    "g&w": "mr-game-and-watch",
+    "G&W": "mr-game-and-watch",
+    "game and watch": "mr-game-and-watch",
+    "game & watch": "mr-game-and-watch",
+    zss: "zero-suit-samus",
+    "zero suit samus": "zero-suit-samus",
 };
 
 function normalizeCharacterText(text) {
