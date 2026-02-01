@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { handleExportFalco, handleExportMatchups } from './src/export/exportHandler.js';
 import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/matchups/matchupHandler.js';
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
+import { initializeScheduler } from './src/shared/scheduler.js';
 
 dotenv.config();
 
@@ -36,6 +37,9 @@ client.login(DISCORD_TOKEN);
 
 client.on("clientReady", () => {
     console.log(`✅ Bot logged in as ${client.user.tag}`);
+    
+    // Initialize weekly export scheduler
+    initializeScheduler(client);
 });
 
 // ========== MESSAGE HANDLERS ==========
