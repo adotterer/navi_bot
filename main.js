@@ -278,6 +278,8 @@ Rules:
 5. Use Discord markdown formatting (**, *, \\n for line breaks)
 6. Be concise but thorough
 7. Match the tone and style of the example provided
+8. When there are more messages, or longer messages with verbose detail, please condense the information to keep the summary focused and readable. 
+9. The goal is to have a summary could briefly read 5 minutes before a match and get all critical info without being overwhelmed.
 
 Generate the matchup summary now:`;
             
