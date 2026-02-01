@@ -1,7 +1,7 @@
 import {Client, GatewayIntentBits, AttachmentBuilder } from "discord.js";
 import express from 'express';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { GoogleGenerativeAI } from '@google/genai';
+import { GoogleGenAI} from '@google/genai';
 import dotenv from 'dotenv';
 import fs from 'fs';
 dotenv.config();
@@ -30,8 +30,10 @@ const s3Client = new S3Client({
 });
 
 // Gemini AI client setup
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp' });
+const genAI = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+    defaultModel: process.env.GEMINI_MODEL || 'gemini-3-flash-preview'
+});
 
 // Helper function to upload file to S3
 async function uploadToS3(filename, fileContent) {
@@ -283,8 +285,11 @@ Rules:
 
 Generate the matchup summary now:`;
             
-            const result = await model.generateContent(prompt);
-            const summary = result.response.text();
+            const response = await genAI.models.generateContent({
+                model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
+                contents: prompt
+            });
+            const summary = response.text();
             
             // Send the summary (Discord has a 2000 character limit, so split if needed)
             if (summary.length <= 2000) {
