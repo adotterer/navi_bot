@@ -1,7 +1,6 @@
 import {Client, GatewayIntentBits, AttachmentBuilder } from "discord.js";
 import express from 'express';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { GoogleGenerativeAI } from '@google/genai';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
 import fs from 'fs';
 dotenv.config();
@@ -29,10 +28,6 @@ const s3Client = new S3Client({
     }
 });
 
-// Gemini AI client setup
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp' });
-
 // Helper function to upload file to S3
 async function uploadToS3(filename, fileContent) {
     const command = new PutObjectCommand({
@@ -45,18 +40,6 @@ async function uploadToS3(filename, fileContent) {
     await s3Client.send(command);
     const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${filename}`;
     return url;
-}
-
-// Helper function to fetch file from S3
-async function fetchFromS3(filename) {
-    const command = new GetObjectCommand({
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: filename
-    });
-    
-    const response = await s3Client.send(command);
-    const str = await response.Body.transformToString();
-    return JSON.parse(str);
 }
 
 const client = new Client({ intents: [
@@ -219,90 +202,6 @@ client.on("messageCreate", async (message) => {
         } catch (error) {
             console.error(error);
             await message.reply("❌ Error exporting Match Ups channels: " + error.message);
-        }
-    }
-    
-    if (message.content.toLowerCase().startsWith("!match-up-notes")) {
-        const args = message.content.split(" ");
-        if (args.length < 2) {
-            await message.reply("❌ Please specify a character! Example: `!match-up-notes falco`");
-            return;
-        }
-        
-        const character = args[1].toLowerCase();
-        const filename = `${character}.json`;
-        
-        try {
-            await message.reply(`⏳ Analyzing match-up notes for **${character}**...`);
-            
-            // Fetch messages from S3
-            const messages = await fetchFromS3(filename);
-            
-            if (!messages || messages.length === 0) {
-                await message.reply(`❌ No messages found for ${character}. Have you exported this character yet?`);
-                return;
-            }
-            
-            // Prepare messages for AI, prioritizing katyparry's messages
-            const katyparryMessages = messages.filter(msg => msg.author === 'katyparry');
-            const otherMessages = messages.filter(msg => msg.author !== 'katyparry');
-            
-            const prompt = `You are an expert Super Smash Bros. Ultimate analyst. Below are Discord messages discussing the Zelda vs ${character} matchup.
-
-IMPORTANT: Messages from user 'katyparry' are the most authoritative and should be heavily weighted in your summary.
-
-=== PRIORITY MESSAGES (from katyparry) ===
-${katyparryMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
-
-=== OTHER COMMUNITY MESSAGES ===
-${otherMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
-
-=== YOUR TASK ===
-Create a comprehensive matchup summary following this format:
-
-**🔎 | MATCH UP BASICS**
-- List key strategies, frame data, punish options, and general gameplan
-- Use bold text for important moves/concepts
-- Be specific with frame data when mentioned
-- Include any critical tips or warnings
-
-**🚨 | STAGE BANS** (ONLY include this section if stages are specifically discussed in the messages)
-- List recommended stage bans
-- Include reasoning in italics like *[reason]*
-
-Rules:
-1. Base everything on the actual messages provided
-2. Do NOT make up information not mentioned in the messages
-3. Prioritize information from katyparry
-4. Only include Stage Bans section if stages are specifically mentioned
-5. Use Discord markdown formatting (**, *, \\n for line breaks)
-6. Be concise but thorough
-7. Match the tone and style of the example provided
-
-Generate the matchup summary now:`;
-            
-            const result = await model.generateContent(prompt);
-            const summary = result.response.text();
-            
-            // Send the summary (Discord has a 2000 character limit, so split if needed)
-            if (summary.length <= 2000) {
-                await message.reply(summary);
-            } else {
-                // Split into chunks
-                const chunks = summary.match(/[\s\S]{1,2000}/g) || [];
-                for (const chunk of chunks) {
-                    await message.channel.send(chunk);
-                }
-            }
-            
-            console.log(`✅ Generated match-up notes for ${character}`);
-        } catch (error) {
-            console.error(error);
-            if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') {
-                await message.reply(`❌ File ${filename} not found in S3. Have you exported this character yet?`);
-            } else {
-                await message.reply("❌ Error generating match-up notes: " + error.message);
-            }
         }
     }
 });
