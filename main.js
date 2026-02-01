@@ -267,7 +267,10 @@ Original Discord Messages:
 ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
 
                 // Generate refined content
-                const response = await genAI.models.generateContent(refinementPrompt);
+                const response = await genAI.models.generateContent({
+                    model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
+                    contents: refinementPrompt
+                });
                 const refinedSummary = response.text;
                 
                 // Post refined summary (chunk if needed)
