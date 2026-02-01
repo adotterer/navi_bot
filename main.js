@@ -118,6 +118,20 @@ const followupResponses = [
 
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
+
+    const isCommand = message.content.toLowerCase().startsWith("!export") ||
+        message.content.toLowerCase().startsWith("!match-up-notes");
+
+    if (isCommand) {
+        const hasModeratorRole = message.member?.roles?.cache?.some(
+            role => role.name?.toLowerCase() === "moderator"
+        );
+
+        if (!hasModeratorRole) {
+            await message.reply("❌ Only moderators can run this command.");
+            return;
+        }
+    }
     if (message.channel.name === "real-talk") return;
     console.log(message, "message");
     console.log(`📨 Message received from ${message.author.tag} in #${message.channel.name}: ${message.content}`);
