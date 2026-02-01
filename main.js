@@ -8,7 +8,7 @@ import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/ma
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
 import { initializeScheduler } from './src/shared/scheduler.js';
 import { checkTodaysTournaments } from './src/tournaments/dailyTournamentCheck.js';
-import { handleAddZelda } from './src/tournaments/addZeldaCommand.js';
+import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaCommand.js';
 
 dotenv.config();
 
@@ -70,7 +70,8 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!list-categories") ||
         message.content.toLowerCase().startsWith("!matches-today") ||
-        message.content.toLowerCase().startsWith("!add-zelda");
+        message.content.toLowerCase().startsWith("!add-zelda") ||
+        message.content.toLowerCase().startsWith("!list-zelda");
 
     if (isCommand) {
         const hasModeratorRole = message.member?.roles?.cache?.some(
@@ -184,6 +185,12 @@ client.on("messageCreate", async (message) => {
     // ===== ADD ZELDA PLAYER =====
     if (message.content.toLowerCase().startsWith("!add-zelda")) {
         await handleAddZelda(message);
+        return;
+    }
+
+    // ===== LIST ZELDA PLAYERS =====
+    if (message.content.toLowerCase() === "!list-zelda") {
+        await handleListZelda(message);
         return;
     }
 

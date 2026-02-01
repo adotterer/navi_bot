@@ -79,3 +79,33 @@ export async function handleAddZelda(message) {
         await message.reply(`❌ Failed to add Zelda player: ${error.message}`);
     }
 }
+
+export async function handleListZelda(message) {
+    try {
+        const { key, players } = await loadZeldaPlayersFromS3OrLocal();
+
+        if (players.length === 0) {
+            await message.reply('📭 No Zelda players in list.');
+            return;
+        }
+
+        const list = players
+            .map((p, idx) => `${idx + 1}. ${p.gamerTag} (ID: ${p.playerId}) - Added: ${p.addedDate}`)
+            .join('\n');
+
+        const messageContent = `🎮 **Zelda Players Tracked** (${players.length})\n\n${list}`;
+
+        // Split if too long
+        const maxLength = 1900;
+        if (messageContent.length > maxLength) {
+            for (let i = 0; i < messageContent.length; i += maxLength) {
+                await message.channel.send(messageContent.slice(i, i + maxLength));
+            }
+        } else {
+            await message.reply(messageContent);
+        }
+    } catch (error) {
+        console.error('❌ Error listing Zelda players:', error.message);
+        await message.reply(`❌ Failed to list Zelda players: ${error.message}`);
+    }
+}
