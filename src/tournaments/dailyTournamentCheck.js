@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import { executeQuery } from './startggClient.js';
+import { fetchFromS3 } from '../shared/s3Helper.js';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -20,6 +21,17 @@ async function executeWithRetry(query, variables, authToken, retries = 3, delayM
  * Load Zelda players from JSON file
  */
 async function loadZeldaPlayers() {
+    const key = process.env.ZELDA_PLAYERS_KEY || 'zelda_players.json';
+
+    try {
+        const json = await fetchFromS3(key);
+        if (json?.players?.length) {
+            return json.players;
+        }
+    } catch (error) {
+        console.warn(`⚠️  S3 load failed (${key}), falling back to local file: ${error.message}`);
+    }
+
     try {
         const data = await fs.readFile('zelda_players.json', 'utf-8');
         const json = JSON.parse(data);

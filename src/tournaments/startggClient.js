@@ -130,6 +130,95 @@ export async function getActiveTournaments(videogameId, authToken) {
 }
 
 /**
+ * Get player ID from a Start.gg user slug or profile URL
+ * @param {string} userSlug - User slug (e.g., "39ce7d25") or full URL
+ * @param {string} authToken - Start.gg auth token
+ * @returns {Promise<number|null>} - Player ID or null if not found
+ */
+export async function getPlayerIdBySlug(userSlug, authToken) {
+    if (!userSlug) {
+        throw new Error('User slug is required');
+    }
+
+    const slug = normalizeUserSlug(userSlug);
+
+    const query = `
+        query GetUserBySlug($slug: String!) {
+            user(slug: $slug) {
+                id
+                slug
+                player {
+                    id
+                    gamerTag
+                }
+            }
+        }
+    `;
+
+    const data = await executeQuery(query, { slug }, authToken);
+    return data?.user?.player?.id ?? null;
+}
+
+/**
+ * Normalize a Start.gg user slug from URL or slug-like input
+ * @param {string} userSlug - Slug or URL
+ * @returns {string}
+ */
+export function normalizeUserSlug(userSlug) {
+    let slug = String(userSlug).trim();
+
+    // Allow full URLs like https://www.start.gg/user/39ce7d25
+    if (slug.includes('start.gg')) {
+        try {
+            const url = new URL(slug);
+            const parts = url.pathname.split('/').filter(Boolean);
+            const userIndex = parts.indexOf('user');
+            if (userIndex !== -1 && parts[userIndex + 1]) {
+                slug = parts[userIndex + 1];
+            }
+        } catch {
+            // Fall through to best-effort parsing below
+        }
+    }
+
+    // Allow inputs like "user/39ce7d25"
+    if (slug.includes('/')) {
+        slug = slug.split('/').pop();
+    }
+
+    return slug;
+}
+
+/**
+ * Get player info from a Start.gg user slug or URL
+ * @param {string} userSlug - User slug or URL
+ * @param {string} authToken - Start.gg auth token
+ * @returns {Promise<{ playerId: number|null, gamerTag: string|null, slug: string }>} - Player info
+ */
+export async function getPlayerBySlug(userSlug, authToken) {
+    const slug = normalizeUserSlug(userSlug);
+    const query = `
+        query GetUserBySlug($slug: String!) {
+            user(slug: $slug) {
+                id
+                slug
+                player {
+                    id
+                    gamerTag
+                }
+            }
+        }
+    `;
+
+    const data = await executeQuery(query, { slug }, authToken);
+    return {
+        playerId: data?.user?.player?.id ?? null,
+        gamerTag: data?.user?.player?.gamerTag ?? null,
+        slug
+    };
+}
+
+/**
  * Get sets (matches) for a tournament event
  * @param {number} eventId - Event ID
  * @param {string} authToken - Start.gg auth token

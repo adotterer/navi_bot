@@ -8,6 +8,7 @@ import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/ma
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
 import { initializeScheduler } from './src/shared/scheduler.js';
 import { checkTodaysTournaments } from './src/tournaments/dailyTournamentCheck.js';
+import { handleAddZelda } from './src/tournaments/addZeldaCommand.js';
 
 dotenv.config();
 
@@ -68,7 +69,8 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!match-up-notes") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!list-categories") ||
-        message.content.toLowerCase().startsWith("!matches-today");
+        message.content.toLowerCase().startsWith("!matches-today") ||
+        message.content.toLowerCase().startsWith("!add-zelda");
 
     if (isCommand) {
         const hasModeratorRole = message.member?.roles?.cache?.some(
@@ -176,6 +178,12 @@ client.on("messageCreate", async (message) => {
     // ===== MATCH-UP NOTES =====
     if (message.content.toLowerCase().startsWith("!match-up-notes")) {
         await handleMatchupNotes(message);
+        return;
+    }
+
+    // ===== ADD ZELDA PLAYER =====
+    if (message.content.toLowerCase().startsWith("!add-zelda")) {
+        await handleAddZelda(message);
         return;
     }
 
