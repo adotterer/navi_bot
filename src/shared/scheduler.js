@@ -18,6 +18,7 @@ export function initializeScheduler(client) {
             const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
             let totalChannels = 0;
             let totalMessages = 0;
+            const startTime = new Date();
 
             for (const categoryName of categoryNames) {
                 const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
@@ -49,9 +50,22 @@ export function initializeScheduler(client) {
                 }
             }
 
+            const endTime = new Date();
+            const duration = Math.round((endTime - startTime) / 1000); // seconds
+            
             console.log(`✅ Weekly export completed: ${totalChannels} channels, ${totalMessages} total messages`);
+            
+            // Send notification to Moderators chat channel
+            await notifyModerators(guild, totalChannels, totalMessages, duration);
         } catch (error) {
             console.error('❌ Scheduled export failed:', error);
+            // Still notify moderators of failure
+            try {
+                const guild = client.guilds.cache.first();
+                await notifyModeratorsOfFailure(guild, error.message);
+            } catch (notifyError) {
+                console.error('❌ Failed to send failure notification:', notifyError);
+            }
         }
     });
 
@@ -63,8 +77,59 @@ export function initializeScheduler(client) {
     return task;
 }
 
-// Helper function to manually trigger export (useful for testing)
-export function triggerExportNow(client) {
-    console.log('🚀 Manually triggering export now...');
-    // This would call the same logic as initializeScheduler
+// Helper function to send success notification to Moderators chat
+async function notifyModerators(guild, channelsExported, messagesExported, duration) {
+    try {
+        // Find Moderators category
+        const moderatorsCategory = guild.channels.cache.find(
+            ch => ch.isCategory && ch.name === "Moderators"
+        );
+        
+        if (!moderatorsCategory) {
+            console.warn('⚠️  Moderators category not found');
+            return;
+        }
+
+        // Find chat channel in Moderators category
+        const chatChannel = moderatorsCategory.children.cache.find(
+            ch => ch.isTextBased() && ch.name === "chat"
+        );
+
+        if (!chatChannel) {
+            console.warn('⚠️  chat channel not found in Moderators category');
+            return;
+        }
+
+        // Send notification
+        const message = `✅ **Weekly Matchup Export Complete**\n\n📊 Summary:\n• **Channels Exported:** ${channelsExported}\n• **Total Messages:** ${messagesExported.toLocaleString()}\n• **Duration:** ${duration}s\n• **Status:** All data synced to S3 for AI analysis\n\n🤖 Your matchup AI now has the latest community insights!`;
+
+        await chatChannel.send(message);
+        console.log('📢 Notification sent to Moderators/chat');
+    } catch (error) {
+        console.error('❌ Failed to send moderator notification:', error.message);
+    }
+}
+
+// Helper function to send failure notification to Moderators chat
+async function notifyModeratorsOfFailure(guild, errorMessage) {
+    try {
+        const moderatorsCategory = guild.channels.cache.find(
+            ch => ch.isCategory && ch.name === "Moderators"
+        );
+        
+        if (!moderatorsCategory) return;
+
+        const chatChannel = moderatorsCategory.children.cache.find(
+            ch => ch.isTextBased() && ch.name === "chat"
+        );
+
+        if (!chatChannel) return;
+
+        const message = `❌ **Weekly Matchup Export Failed**\n\n⚠️ Error: ${errorMessage}\n\nPlease check the bot logs or try running \`!export matchups\` manually.`;
+
+        await chatChannel.send(message);
+        console.log('📢 Failure notification sent to Moderators/chat');
+    } catch (error) {
+        console.error('❌ Failed to send failure notification:', error.message);
+    }
 }
