@@ -6,7 +6,7 @@ export function initializeScheduler(client) {
     // Cron format: minute hour day month dayOfWeek
     // Testing: 5 1 * * * = Every day at 1:05 AM America/New_York
     // Production: 0 2 * * 0 = Every Sunday at 2:00 AM UTC
-    const task = cron.schedule('5 1 * * *', async () => {
+    const task = cron.schedule('18 1 * * *', async () => {
         console.log('📅 Starting scheduled weekly export...');
         
         try {
@@ -83,9 +83,10 @@ export function initializeScheduler(client) {
 // Helper function to send success notification to Moderators chat
 async function notifyModerators(guild, channelsExported, messagesExported, duration) {
     try {
-        // Find Moderators category
+        // Find Moderators category (same lookup style as categoryNames)
+        const categoryNames = ["Moderators"];
         const moderatorsCategory = guild.channels.cache.find(
-            ch => ch.isCategory && ch.name === "Moderators"
+            ch => ch.children && categoryNames.includes(ch.name)
         );
         
         if (!moderatorsCategory) {
@@ -93,9 +94,9 @@ async function notifyModerators(guild, channelsExported, messagesExported, durat
             return;
         }
 
-        // Find chat channel in Moderators category (search by name containing "chat")
+        // Find chat channel in Moderators category
         const chatChannel = moderatorsCategory.children.cache.find(
-            ch => ch.isTextBased() && ch.name.toLowerCase().includes("chat")
+            ch => ch.isTextBased() && ch.name === "chat"
         );
 
         if (!chatChannel) {
@@ -116,14 +117,15 @@ async function notifyModerators(guild, channelsExported, messagesExported, durat
 // Helper function to send failure notification to Moderators chat
 async function notifyModeratorsOfFailure(guild, errorMessage) {
     try {
+        const categoryNames = ["Moderators"];
         const moderatorsCategory = guild.channels.cache.find(
-            ch => ch.isCategory && ch.name === "Moderators"
+            ch => ch.children && categoryNames.includes(ch.name)
         );
         
         if (!moderatorsCategory) return;
 
         const chatChannel = moderatorsCategory.children.cache.find(
-            ch => ch.isTextBased() && ch.name.toLowerCase().includes("chat")
+            ch => ch.isTextBased() && ch.name === "chat"
         );
 
         if (!chatChannel) return;

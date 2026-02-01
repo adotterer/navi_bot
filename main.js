@@ -65,7 +65,8 @@ client.on("messageCreate", async (message) => {
     // ===== COMMAND GATE: MODERATORS ONLY =====
     const isCommand = message.content.toLowerCase().startsWith("!export") ||
         message.content.toLowerCase().startsWith("!match-up-notes") ||
-        message.content.toLowerCase().startsWith("!mu-question");
+        message.content.toLowerCase().startsWith("!mu-question") ||
+        message.content.toLowerCase().startsWith("!list-categories");
 
     if (isCommand) {
         const hasModeratorRole = message.member?.roles?.cache?.some(
@@ -106,6 +107,67 @@ client.on("messageCreate", async (message) => {
     // ===== MU QUESTION =====
     if (message.content.toLowerCase().startsWith("!mu-question")) {
         await handleMuQuestion(message);
+        return;
+    }
+
+    // ===== LIST CATEGORIES =====
+    if (message.content.toLowerCase().startsWith("!list-categories")) {
+        const input = message.content.trim();
+        const rawArgs = input.split(" ").slice(1).join(" ").trim();
+
+        const guild = message.guild;
+        if (!guild) {
+            await message.reply("❌ This command must be used in a server.");
+            return;
+        }
+
+        const sendInChunks = async (text) => {
+            const maxLength = 1900;
+            for (let i = 0; i < text.length; i += maxLength) {
+                await message.channel.send(text.slice(i, i + maxLength));
+            }
+        };
+
+        if (!rawArgs) {
+            const categoryNames = guild.channels.cache
+                .filter(ch => ch.children)
+                .map(ch => ch.name)
+                .sort((a, b) => a.localeCompare(b));
+
+            if (categoryNames.length === 0) {
+                await message.reply("⚠️ No categories found.");
+                return;
+            }
+
+            const output = `📂 **Categories (${categoryNames.length})**\n` +
+                categoryNames.map(name => `• ${name}`).join("\n");
+            await sendInChunks(output);
+            return;
+        }
+
+        const categoryName = rawArgs;
+        const category = guild.channels.cache.find(
+            ch => ch.children && ch.name === categoryName
+        );
+
+        if (!category) {
+            await message.reply(`⚠️ Category not found: ${categoryName}`);
+            return;
+        }
+
+        const channelNames = category.children.cache
+            .filter(ch => ch.isTextBased())
+            .map(ch => `#${ch.name}`)
+            .sort((a, b) => a.localeCompare(b));
+
+        if (channelNames.length === 0) {
+            await message.reply(`⚠️ No text channels found under **${categoryName}**.`);
+            return;
+        }
+
+        const output = `📁 **${categoryName}** (${channelNames.length})\n` +
+            channelNames.map(name => `• ${name}`).join("\n");
+        await sendInChunks(output);
         return;
     }
 
