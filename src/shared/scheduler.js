@@ -4,8 +4,9 @@ import { fetchAllMessages, uploadToS3 } from './s3Helper.js';
 export function initializeScheduler(client) {
     // Weekly export every Sunday at 2 AM UTC
     // Cron format: minute hour day month dayOfWeek
-    // 0 2 * * 0 = Every Sunday at 2:00 AM
-    const task = cron.schedule('0 2 * * 0', async () => {
+    // Testing: 35 0 * * * = Every day at 12:35 AM EST (00:35 in 24-hour format)
+    // Production: 0 2 * * 0 = Every Sunday at 2:00 AM UTC
+    const task = cron.schedule('35 0 * * *', async () => {
         console.log('📅 Starting scheduled weekly export...');
         
         try {
@@ -73,7 +74,7 @@ export function initializeScheduler(client) {
     // Uncomment the line below to test the scheduler immediately when bot starts
     // task.emit('tick');
 
-    console.log('📅 Weekly export scheduler initialized (runs every Sunday at 2:00 AM UTC)');
+    console.log('📅 Weekly export scheduler initialized (runs every day at 12:35 AM EST for testing)');
     return task;
 }
 
