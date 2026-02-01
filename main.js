@@ -102,7 +102,7 @@ client.on("messageCreate", async (message) => {
             const exportedFiles = [];
             
             for (const categoryName of categoryNames) {
-                const category = guild.channels.cache.find(ch => ch.isCategory() && ch.name === categoryName);
+                const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
                 
                 if (!category) {
                     console.log(`⚠️  Category '${categoryName}' not found`);
