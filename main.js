@@ -71,7 +71,7 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!list-categories") ||
         message.content.toLowerCase().startsWith("!matches-today") ||
         message.content.toLowerCase().startsWith("!add-zelda") ||
-        message.content.toLowerCase().startsWith("!list-zelda");
+        message.content.toLowerCase().startsWith("!list-zeldas");
 
     if (isCommand) {
         const hasModeratorRole = message.member?.roles?.cache?.some(
@@ -189,7 +189,7 @@ client.on("messageCreate", async (message) => {
     }
 
     // ===== LIST ZELDA PLAYERS =====
-    if (message.content.toLowerCase() === "!list-zelda") {
+    if (message.content.toLowerCase() === "!list-zeldas") {
         await handleListZelda(message);
         return;
     }
