@@ -155,6 +155,154 @@ client.on("messageCreate", async (message) => {
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
     
+    // Check if this is a reply to bot's match-up notes for conversational refinement
+    if (message.reference) {
+        try {
+            const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
+            
+            // Check if reply is to bot's match-up notes (contains search emoji)
+            if (repliedMessage.author.id === client.user.id && repliedMessage.content.includes("🔎")) {
+                // Check if user has Moderators role
+                const hasModeratorsRole = message.member.roles.cache.some(role => role.name === "Moderators");
+                if (!hasModeratorsRole) {
+                    await message.reply("❌ Only users with the Moderators role can refine match-up notes.");
+                    return;
+                }
+                
+                // Extract character name from recent messages
+                const recentMessages = await message.channel.messages.fetch({ limit: 20 });
+                let characterName = null;
+                
+                for (const msg of recentMessages.values()) {
+                    if (msg.author.id === client.user.id && msg.content.includes("Analyzing match-up notes for **")) {
+                        const match = msg.content.match(/Analyzing match-up notes for \*\*(.+?)\*\*/);
+                        if (match) {
+                            characterName = match[1];
+                            break;
+                        }
+                    }
+                }
+                
+                if (!characterName) {
+                    await message.reply("❌ Could not determine which character's notes to refine. Please use !match-up-notes <character> to generate fresh notes.");
+                    return;
+                }
+                
+                await message.reply(`⏳ Refining match-up notes for **${characterName}** based on your feedback...`);
+                
+                // Fetch previous summary from replied message (handle multi-part messages)
+                let previousSummary = repliedMessage.content;
+                
+                // Check if this is a multi-part message
+                if (previousSummary.includes("**Part ")) {
+                    // Fetch recent messages to find all parts
+                    const allMessages = await message.channel.messages.fetch({ limit: 50 });
+                    const botMessages = Array.from(allMessages.values())
+                        .filter(m => m.author.id === client.user.id && m.content.includes("**Part "))
+                        .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+                    
+                    // Find the group of parts that includes the replied message
+                    const repliedIndex = botMessages.findIndex(m => m.id === repliedMessage.id);
+                    if (repliedIndex !== -1) {
+                        // Collect all consecutive parts around the replied message
+                        let startIndex = repliedIndex;
+                        let endIndex = repliedIndex;
+                        
+                        // Go backwards to find Part 1
+                        while (startIndex > 0 && botMessages[startIndex - 1].content.includes("**Part ")) {
+                            startIndex--;
+                        }
+                        
+                        // Go forwards to find the last part
+                        while (endIndex < botMessages.length - 1 && botMessages[endIndex + 1].content.includes("**Part ")) {
+                            endIndex++;
+                        }
+                        
+                        // Combine all parts, removing the "**Part X:**" headers
+                        previousSummary = botMessages
+                            .slice(startIndex, endIndex + 1)
+                            .map(m => m.content.replace(/\*\*Part \d+:\*\*\n/, ''))
+                            .join('');
+                    }
+                }
+                
+                // Fetch messages from character's channel
+                const guild = message.guild;
+                const channel = guild.channels.cache.find(ch => ch.name === characterName.toLowerCase());
+                
+                if (!channel) {
+                    await message.reply(`❌ Channel for ${characterName} not found!`);
+                    return;
+                }
+                
+                const channelMessages = await fetchAllMessages(channel);
+                
+                // Build refinement prompt
+                const userFeedback = message.content;
+                const refinementPrompt = `You previously generated this match-up summary:
+
+${previousSummary}
+
+The user has provided this feedback for refinement:
+"${userFeedback}"
+
+Please refine the match-up notes based on the user's feedback while maintaining the same format and structure. Use the original Discord messages below as additional context if needed.
+
+IMPORTANT RULES:
+1. Prioritize information from users named "katyparry" (case insensitive) - their insights are the most valuable
+2. Focus on neutral game interactions, advantage state, disadvantage state, and edgeguarding
+3. IGNORE jab combo discussions unless specifically relevant to a unique interaction
+4. When percentages are mentioned with specific interactions, include them (e.g., "up-tilt kills at 130%")
+5. Condense overly verbose or repetitive points into clear, actionable insights
+6. Skip generic advice that applies to all characters
+7. Highlight character-specific tools, counterplay, and matchup dynamics
+8. Include stage considerations if mentioned
+9. Mention DI, SDI, or tech options when relevant to interactions
+10. If users discuss specific moves or setups, summarize the key takeaways
+11. Keep the summary concise but comprehensive - aim for clarity over length
+12. Maintain the emoji structure and formatting from the original summary
+13. Address the user's specific feedback while preserving other valuable information
+
+Original Discord Messages:
+${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
+
+                // Generate refined content
+                const response = await genAI.models.generateContent(refinementPrompt);
+                const refinedSummary = response.text;
+                
+                // Post refined summary (chunk if needed)
+                const maxLength = 2000;
+                if (refinedSummary.length <= maxLength) {
+                    await message.reply(refinedSummary);
+                } else {
+                    const lines = refinedSummary.split('\n');
+                    let currentChunk = '';
+                    let chunkNumber = 1;
+                    
+                    for (const line of lines) {
+                        if ((currentChunk + line + '\n').length > maxLength) {
+                            await message.channel.send(`**Part ${chunkNumber}:**\n${currentChunk}`);
+                            currentChunk = line + '\n';
+                            chunkNumber++;
+                        } else {
+                            currentChunk += line + '\n';
+                        }
+                    }
+                    
+                    if (currentChunk.trim()) {
+                        await message.channel.send(`**Part ${chunkNumber}:**\n${currentChunk}`);
+                    }
+                }
+                
+                console.log(`✅ Refined match-up notes for ${characterName} based on user feedback`);
+                return;
+            }
+        } catch (error) {
+            console.error("Error in conversational refinement:", error);
+            // Continue to other command handlers if this fails
+        }
+    }
+    
     if (message.content.toLowerCase() === "!export falco") {
         const guild = message.guild;
         const channel = guild.channels.cache.find(ch => ch.name === "falco");
