@@ -289,7 +289,7 @@ Generate the matchup summary now:`;
                 model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
                 contents: prompt
             });
-            const summary = response.text();
+            const summary = response.text;
             
             // Send the summary (Discord has a 2000 character limit, so split if needed)
             if (summary.length <= 2000) {
