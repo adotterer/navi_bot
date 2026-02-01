@@ -1,8 +1,46 @@
-import {Client, GatewayIntentBits } from "discord.js";
+import {Client, GatewayIntentBits, AttachmentBuilder } from "discord.js";
+import express from 'express';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
 import fs from 'fs';
 dotenv.config();
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN || '';
+
+// Express server setup
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+app.use('/exports', express.static('.'));
+app.get('/', (req, res) => {
+    res.send('Navi Bot is running! 🧚');
+});
+
+app.listen(PORT, () => {
+    console.log(`🌐 HTTP server running on port ${PORT}`);
+});
+
+// S3 client setup
+const s3Client = new S3Client({
+    region: process.env.AWS_REGION || 'us-west-1',
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
+});
+
+// Helper function to upload file to S3
+async function uploadToS3(filename, fileContent) {
+    const command = new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: filename,
+        Body: fileContent,
+        ContentType: 'application/json'
+    });
+    
+    await s3Client.send(command);
+    const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${filename}`;
+    return url;
+}
 
 const client = new Client({ intents: [
 GatewayIntentBits.Guilds,
@@ -121,7 +159,11 @@ client.on("messageCreate", async (message) => {
                         const filename = `${channel.name}.json`;
                         fs.writeFileSync(filename, jsonData);
                         
-                        exportedFiles.push(`${channel.name} (${messages.length} messages)`);
+                        // Upload to S3
+                        const s3Url = await uploadToS3(filename, jsonData);
+                        console.log(`☁️  Uploaded to S3: ${s3Url}`);
+                        
+                        exportedFiles.push(`[${channel.name}](${s3Url}) - ${messages.length} messages`);
                         totalMessages += messages.length;
                         totalChannels++;
                         
