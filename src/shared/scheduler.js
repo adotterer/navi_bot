@@ -6,7 +6,7 @@ export function initializeScheduler(client) {
     // Cron format: minute hour day month dayOfWeek
     // Testing: 5 1 * * * = Every day at 1:05 AM America/New_York
     // Production: 0 2 * * 0 = Every Sunday at 2:00 AM UTC
-    const task = cron.schedule('18 1 * * *', async () => {
+    const task = cron.schedule('24 1 * * *', async () => {
         console.log('📅 Starting scheduled weekly export...');
         
         try {
@@ -76,7 +76,7 @@ export function initializeScheduler(client) {
     // Uncomment the line below to test the scheduler immediately when bot starts
     // task.emit('tick');
 
-    console.log('📅 Weekly export scheduler initialized (runs every day at 1:05 AM America/New_York for testing)');
+    console.log('📅 Weekly export scheduler initialized (runs every day at 1:18 AM America/New_York for testing)');
     return task;
 }
 
@@ -94,9 +94,9 @@ async function notifyModerators(guild, channelsExported, messagesExported, durat
             return;
         }
 
-        // Find chat channel in Moderators category
+        // Find chat channel in Moderators category (handle emoji prefixes)
         const chatChannel = moderatorsCategory.children.cache.find(
-            ch => ch.isTextBased() && ch.name === "chat"
+            ch => ch.isTextBased() && ch.name.toLowerCase().includes("chat")
         );
 
         if (!chatChannel) {
@@ -125,7 +125,7 @@ async function notifyModeratorsOfFailure(guild, errorMessage) {
         if (!moderatorsCategory) return;
 
         const chatChannel = moderatorsCategory.children.cache.find(
-            ch => ch.isTextBased() && ch.name === "chat"
+            ch => ch.isTextBased() && ch.name.toLowerCase().includes("chat")
         );
 
         if (!chatChannel) return;
