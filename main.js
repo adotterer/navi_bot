@@ -124,7 +124,7 @@ client.on("messageCreate", async (message) => {
 
     if (isCommand) {
         const hasModeratorRole = message.member?.roles?.cache?.some(
-            role => role.name?.toLowerCase() === "moderator"
+            role => role.name === "Moderators"
         );
 
         if (!hasModeratorRole) {
