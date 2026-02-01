@@ -311,7 +311,8 @@ Rules:
 9. The goal is to have a summary could briefly read 5 minutes before a match and get all critical info without being overwhelmed.
 10. Ignore overly granular, single-move, percentage-based interactions (e.g., specific % windows for one move). Summarize those as general principles instead.
 11. Look specifically for anything about if Zelda can use the Phantom in neutral against this character, and include that in the summary. If it is not mentioned, do not include it.
-12. Include if D-Tilt is Safe on Shield or not.
+12. Do not mention jab combos.
+13. Include if D-Tilt is Safe on Shield or not.
 
 
 Generate the matchup summary now:`;
