@@ -18,7 +18,8 @@ export async function handleMatchupNotes(message) {
     const filename = `${character}.json`;
     
     try {
-        await message.reply(`⏳ Analyzing match-up notes for **${character}**...`);
+        const capitalizedCharacter = character.charAt(0).toUpperCase() + character.slice(1);
+        await message.reply(`🚨 Watch out! That's a **${capitalizedCharacter}**. Here's what you should do...`);
         
         const messages = await fetchFromS3(filename);
         
@@ -142,7 +143,7 @@ export async function handleMuQuestion(message) {
         displayName = characterSlug.replace("|", "/");
         const filename = `${characterSlug}.json`;
 
-        await message.reply(`⏳ Searching matchup notes for **${displayName}**...`);
+        await message.reply(`🚨 Watch out! That's a **${displayName}**. Let me search for the answer...`);
 
         const messages = await fetchFromS3(filename);
 
@@ -227,8 +228,8 @@ export async function handleRefinement(message, repliedMessage, client) {
         let characterName = null;
         
         for (const msg of recentMessages.values()) {
-            if (msg.author.id === client.user.id && msg.content.includes("Analyzing match-up notes for **")) {
-                const match = msg.content.match(/Analyzing match-up notes for \*\*(.+?)\*\*/);
+            if (msg.author.id === client.user.id && msg.content.includes("Watch out! That's a **")) {
+                const match = msg.content.match(/Watch out! That's a \*\*(.+?)\*\*/);
                 if (match) {
                     characterName = match[1];
                     break;
