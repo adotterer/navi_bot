@@ -66,8 +66,6 @@ Create a comprehensive matchup summary following this format:
 - Spaced: safe
 - Not spaced: Bair and grab
 
--# Note: Responses are AI generated based on community messages. Verify with trusted sources.
-
 Rules:
 1. Base everything on the actual messages provided
 2. Do NOT make up information not mentioned in the messages
@@ -99,6 +97,8 @@ Generate the matchup summary now:`;
                 await message.channel.send(chunk);
             }
         }
+
+        await message.channel.send("-# Note: Responses are AI generated based on community messages. Verify with trusted sources.");
         
         // Tag katyparry for verification
         await message.channel.send(`<@596207448935628812> Please verify the above matchup notes are accurate! 🔎`);
@@ -176,7 +176,7 @@ RULES:
 3. Be concise and actionable
 4. Do not mention jab combos
 5. Don't provide information that doesn't relate to the original question.
-6. After the last message, add this disclaimer: -# Note: Responses are AI generated based on community messages. Verify with trusted sources.
+
 
 Provide the best possible answer now:`;
 
@@ -195,6 +195,8 @@ Provide the best possible answer now:`;
                 await message.channel.send(chunk);
             }
         }
+
+        await message.channel.send("-# Note: Responses are AI generated based on community messages. Verify with trusted sources.");
 
         // Tag katyparry for verification
         await message.channel.send(`<@596207448935628812> Please verify the above answer is accurate! 🔎`);
@@ -310,7 +312,6 @@ IMPORTANT RULES:
 12. Maintain the emoji structure and formatting from the original summary
 13. Address the user's specific feedback while preserving other valuable information
 14. Use markdown format 
-15. After the last message, add this disclaimer: -# Note: Responses are AI generated based on community messages. Verify with trusted sources.
 
 Original Discord Messages:
 ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
@@ -343,6 +344,8 @@ ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
                 await message.channel.send(`**Part ${chunkNumber}:**\n${currentChunk}`);
             }
         }
+
+        await message.channel.send("-# Note: Responses are AI generated based on community messages. Verify with trusted sources.");
         
         console.log(`✅ Refined match-up notes for ${characterName} based on user feedback`);
     } catch (error) {
