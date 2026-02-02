@@ -19,7 +19,7 @@ export async function handleMatchupNotes(message) {
     
     try {
         const capitalizedCharacter = character.charAt(0).toUpperCase() + character.slice(1);
-        await message.reply(`🚨 Watch out! That's a **${capitalizedCharacter}**. Here's what you should do...`);
+        await message.reply(`Watch out - that’s a **${capitalizedCharacter}**. Listen…`);
         
         const messages = await fetchFromS3(filename);
         
