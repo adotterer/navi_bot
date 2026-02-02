@@ -176,6 +176,7 @@ RULES:
 3. Be concise and actionable
 4. Do not mention jab combos
 5. Don't provide information that doesn't relate to the original question.
+6. After the last message, add this disclaimer: -# Note: Responses are AI generated based on community messages. Verify with trusted sources.
 
 Provide the best possible answer now:`;
 

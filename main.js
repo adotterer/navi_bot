@@ -3,7 +3,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 
 // Import handlers
-import { handleExportFalco, handleExportMatchups } from './src/export/exportHandler.js';
+import { handleExportCharacter, handleExportMatchups } from './src/export/exportHandler.js';
 import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/matchups/matchupHandler.js';
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
 import { initializeScheduler } from './src/shared/scheduler.js';
@@ -99,13 +99,20 @@ client.on("messageCreate", async (message) => {
     }
 
     // ===== EXPORT COMMANDS =====
-    if (message.content.toLowerCase() === "!export falco") {
-        await handleExportFalco(message);
-        return;
-    }
+    if (message.content.toLowerCase().startsWith("!export")) {
+        const input = message.content.trim().split(" ").slice(1).join(" ").trim();
 
-    if (message.content.toLowerCase() === "!export matchups") {
-        await handleExportMatchups(message);
+        if (!input) {
+            await message.reply("❌ Usage: !export <character> or !export matchups");
+            return;
+        }
+
+        if (input.toLowerCase() === "matchups") {
+            await handleExportMatchups(message);
+            return;
+        }
+
+        await handleExportCharacter(message);
         return;
     }
 
