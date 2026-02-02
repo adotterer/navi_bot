@@ -101,11 +101,11 @@ export function initializeScheduler(client) {
 
             // Find the #daily-tournaments-streams channel
             const channel = guild.channels.cache.find(
-                ch => ch.isTextBased() && ch.name === 'daily-tournaments-streams'
+                ch => ch.isTextBased() && ch.name === 'audit-logs'
             );
 
             if (!channel) {
-                console.warn('⚠️ #daily-tournaments-streams channel not found');
+                console.warn('⚠️ #audit-logs channel not found');
                 return;
             }
 
@@ -160,60 +160,42 @@ export function initializeScheduler(client) {
     return weeklyExportTask;
 }
 
-// Helper function to send success notification to Moderators chat
+// Helper function to send success notification to audit-logs
 async function notifyModerators(guild, channelsExported, messagesExported, duration) {
     try {
-        // Find Moderators category (same lookup style as categoryNames)
-        const categoryNames = ["Moderators"];
-        const moderatorsCategory = guild.channels.cache.find(
-            ch => ch.children && categoryNames.includes(ch.name)
+        // Find the audit-logs channel
+        const auditLogsChannel = guild.channels.cache.find(
+            ch => ch.isTextBased() && ch.name === 'audit-logs'
         );
         
-        if (!moderatorsCategory) {
-            console.warn('⚠️  Moderators category not found');
-            return;
-        }
-
-        // Find chat channel in Moderators category (handle emoji prefixes)
-        const chatChannel = moderatorsCategory.children.cache.find(
-            ch => ch.isTextBased() && ch.name.toLowerCase().includes("chat")
-        );
-
-        if (!chatChannel) {
-            console.warn('⚠️  chat channel not found in Moderators category');
+        if (!auditLogsChannel) {
+            console.warn('⚠️  audit-logs channel not found');
             return;
         }
 
         // Send notification
         const message = `✅ **Weekly Matchup Export Complete**\n\n📊 Summary:\n• **Channels Exported:** ${channelsExported}\n• **Total Messages:** ${messagesExported.toLocaleString()}\n• **Duration:** ${duration}s\n• **Status:** All data synced to S3 for AI analysis\n\n🤖 Your matchup AI now has the latest community insights!`;
 
-        await chatChannel.send(message);
-        console.log('📢 Notification sent to Moderators/chat');
+        await auditLogsChannel.send(message);
+        console.log('📢 Notification sent to audit-logs');
     } catch (error) {
-        console.error('❌ Failed to send moderator notification:', error.message);
+        console.error('❌ Failed to send notification:', error.message);
     }
 }
 
-// Helper function to send failure notification to Moderators chat
+// Helper function to send failure notification to audit-logs
 async function notifyModeratorsOfFailure(guild, errorMessage) {
     try {
-        const categoryNames = ["Moderators"];
-        const moderatorsCategory = guild.channels.cache.find(
-            ch => ch.children && categoryNames.includes(ch.name)
+        const auditLogsChannel = guild.channels.cache.find(
+            ch => ch.isTextBased() && ch.name === 'audit-logs'
         );
         
-        if (!moderatorsCategory) return;
-
-        const chatChannel = moderatorsCategory.children.cache.find(
-            ch => ch.isTextBased() && ch.name.toLowerCase().includes("chat")
-        );
-
-        if (!chatChannel) return;
+        if (!auditLogsChannel) return;
 
         const message = `❌ **Weekly Matchup Export Failed**\n\n⚠️ Error: ${errorMessage}\n\nPlease check the bot logs or try running \`!export matchups\` manually.`;
 
-        await chatChannel.send(message);
-        console.log('📢 Failure notification sent to Moderators/chat');
+        await auditLogsChannel.send(message);
+        console.log('📢 Failure notification sent to audit-logs');
     } catch (error) {
         console.error('❌ Failed to send failure notification:', error.message);
     }
