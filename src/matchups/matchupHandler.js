@@ -66,6 +66,8 @@ Create a comprehensive matchup summary following this format:
 - Spaced: safe
 - Not spaced: Bair and grab
 
+-# Note: Responses are AI generated based on community messages. Verify with trusted sources.
+
 Rules:
 1. Base everything on the actual messages provided
 2. Do NOT make up information not mentioned in the messages
@@ -143,7 +145,7 @@ export async function handleMuQuestion(message) {
         displayName = characterSlug.replace("|", "/");
         const filename = `${characterSlug}.json`;
 
-        await message.reply(`🚨 Watch out! That's a **${displayName}**. Let me search for the answer...`);
+        await message.reply(`✨ Watch out! That's a **${displayName}**. Let me search for the answer...`);
 
         const messages = await fetchFromS3(filename);
 
@@ -306,6 +308,8 @@ IMPORTANT RULES:
 11. Keep the summary concise but comprehensive - aim for clarity over length
 12. Maintain the emoji structure and formatting from the original summary
 13. Address the user's specific feedback while preserving other valuable information
+14. Use markdown format 
+15. After the last message, add this disclaimer: -# Note: Responses are AI generated based on community messages. Verify with trusted sources.
 
 Original Discord Messages:
 ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
