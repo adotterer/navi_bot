@@ -46,14 +46,14 @@ Exports all character channels from both "Match Ups (B-L)" and "Match Ups (M-Z)"
 
 ---
 
-### `!match-up-notes <character>`
+### `!mu-notes <character>`
 Generates an AI-powered match-up summary for a specific character using Google Gemini. Uses exported Discord messages as context.
 
 **Usage:**
 ```
-!match-up-notes falco
-!match-up-notes mario
-!match-up-notes sheik
+!mu-notes falco
+!mu-notes mario
+!mu-notes sheik
 ```
 
 **Features:**

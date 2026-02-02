@@ -66,7 +66,7 @@ client.on("messageCreate", async (message) => {
 
     // ===== COMMAND GATE: MODERATORS ONLY =====
     const isCommand = message.content.toLowerCase().startsWith("!export") ||
-        message.content.toLowerCase().startsWith("!match-up-notes") ||
+        message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!list-categories") ||
         message.content.toLowerCase().startsWith("!matches-today") ||
@@ -177,7 +177,7 @@ client.on("messageCreate", async (message) => {
     }
 
     // ===== MATCH-UP NOTES =====
-    if (message.content.toLowerCase().startsWith("!match-up-notes")) {
+    if (message.content.toLowerCase().startsWith("!mu-notes")) {
         await handleMatchupNotes(message);
         return;
     }

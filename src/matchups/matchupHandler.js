@@ -10,7 +10,7 @@ const genAI = new GoogleGenAI({
 export async function handleMatchupNotes(message) {
     const args = message.content.split(" ");
     if (args.length < 2) {
-        await message.reply("❌ Please specify a character! Example: `!match-up-notes falco`");
+        await message.reply("❌ Please specify a character! Example: `!mu-notes falco`");
         return;
     }
     
@@ -96,6 +96,9 @@ Generate the matchup summary now:`;
                 await message.channel.send(chunk);
             }
         }
+        
+        // Tag katyparry for verification
+        await message.channel.send(`<@280137906203475968> Please verify the above matchup notes are accurate! 🔎`);
         
         console.log(`✅ Generated match-up notes for ${character}`);
     } catch (error) {
@@ -189,6 +192,9 @@ Provide the best possible answer now:`;
             }
         }
 
+        // Tag katyparry for verification
+        await message.channel.send(`<@280137906203475968> Please verify the above answer is accurate! 🔎`);
+
         console.log(`✅ Answered MU question for ${displayName}`);
     } catch (error) {
         if (isModelOverloaded(error)) {
@@ -229,7 +235,7 @@ export async function handleRefinement(message, repliedMessage, client) {
         }
         
         if (!characterName) {
-            await message.reply("❌ Could not determine which character's notes to refine. Please use !match-up-notes <character> to generate fresh notes.");
+            await message.reply("❌ Could not determine which character's notes to refine. Please use !mu-notes <character> to generate fresh notes.");
             return;
         }
         
