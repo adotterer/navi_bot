@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { fetchAllMessages, uploadToS3 } from '../shared/s3Helper.js';
+import { fetchAllMessages, fetchFromS3, uploadToS3 } from '../shared/s3Helper.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
 
 export async function handleExportFalco(message) {
@@ -78,7 +78,7 @@ export async function handleExportCharacter(message) {
         fs.writeFileSync(filename, jsonData);
 
         const s3Url = await uploadToS3(filename, jsonData);
-        await message.reply(`✅ Exported ${messages.length} messages to ${filename}\n☁️ ${s3Url}`);
+        await message.reply(`✅ Exported #${channel.name}: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
         console.log(`✅ Exported ${messages.length} messages from #${channel.name}`);
     } catch (error) {
         console.error(error);
@@ -139,5 +139,61 @@ export async function handleExportMatchups(message) {
     } catch (error) {
         console.error(error);
         await message.reply("❌ Error exporting Match Ups channels: " + error.message);
+    }
+}
+
+export async function handleListThreadCounts(message) {
+    const guild = message.guild;
+    if (!guild) {
+        await message.reply("❌ This command must be used in a server.");
+        return;
+    }
+
+    const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
+    const counts = [];
+
+    try {
+        await message.reply("⏳ Counting messages in each character thread...");
+
+        for (const categoryName of categoryNames) {
+            const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
+            if (!category) continue;
+
+            const channels = category.children.cache.filter(ch => ch.isTextBased());
+
+            for (const [, channel] of channels) {
+                try {
+                    const filename = `${channel.name}.json`;
+                    const messages = await fetchFromS3(filename);
+                    const count = Array.isArray(messages) ? messages.length : 0;
+                    counts.push({ name: channel.name, count });
+                } catch (error) {
+                    console.error(`❌ Error counting #${channel.name}:`, error.message);
+                    counts.push({ name: channel.name, count: 0 });
+                }
+            }
+        }
+
+        if (counts.length === 0) {
+            await message.reply("⚠️ No matchup channels found.");
+            return;
+        }
+
+        counts.sort((a, b) => b.count - a.count);
+        const lines = counts.map(c => `#${c.name}: ${c.count} messages`).join("\n");
+        const header = `📊 **Character Thread Message Counts** (${counts.length})\n`;
+        const output = header + lines;
+
+        const maxLength = 1900;
+        if (output.length > maxLength) {
+            for (let i = 0; i < output.length; i += maxLength) {
+                await message.channel.send(output.slice(i, i + maxLength));
+            }
+        } else {
+            await message.reply(output);
+        }
+    } catch (error) {
+        console.error(error);
+        await message.reply("❌ Error counting messages: " + error.message);
     }
 }

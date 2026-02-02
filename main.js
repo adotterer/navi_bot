@@ -3,7 +3,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 
 // Import handlers
-import { handleExportCharacter, handleExportMatchups } from './src/export/exportHandler.js';
+import { handleExportCharacter, handleExportMatchups, handleListThreadCounts } from './src/export/exportHandler.js';
 import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/matchups/matchupHandler.js';
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
 import { initializeScheduler } from './src/shared/scheduler.js';
@@ -71,7 +71,8 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!list-categories") ||
         message.content.toLowerCase().startsWith("!matches-today") ||
         message.content.toLowerCase().startsWith("!add-zelda") ||
-        message.content.toLowerCase().startsWith("!list-zeldas");
+        message.content.toLowerCase().startsWith("!list-zeldas") ||
+        message.content.toLowerCase().startsWith("!list-thread-counts");
 
     if (isCommand) {
         const hasAuthorizedRole = message.member?.roles?.cache?.some(
@@ -113,6 +114,12 @@ client.on("messageCreate", async (message) => {
         }
 
         await handleExportCharacter(message);
+        return;
+    }
+
+    // ===== LIST THREAD COUNTS =====
+    if (message.content.toLowerCase() === "!list-thread-counts") {
+        await handleListThreadCounts(message);
         return;
     }
 
