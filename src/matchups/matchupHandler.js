@@ -215,9 +215,11 @@ Provide the best possible answer now:`;
 
 export async function handleRefinement(message, repliedMessage, client) {
     try {
-        const hasModeratorsRole = message.member.roles.cache.some(role => role.name === "Moderators");
-        if (!hasModeratorsRole) {
-            await message.reply("❌ Only users with the Moderators role can refine match-up notes.");
+        const hasAuthorizedRole = message.member.roles.cache.some(role => 
+            role.name === "Moderators" || role.name === "Legend"
+        );
+        if (!hasAuthorizedRole) {
+            await message.reply("❌ Only Moderators or Legend members can refine match-up notes.");
             return;
         }
         

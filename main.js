@@ -74,12 +74,12 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!list-zeldas");
 
     if (isCommand) {
-        const hasModeratorRole = message.member?.roles?.cache?.some(
-            role => role.name === "Moderators"
+        const hasAuthorizedRole = message.member?.roles?.cache?.some(
+            role => role.name === "Moderators" || role.name === "Legend"
         );
 
-        if (!hasModeratorRole) {
-            await message.reply("❌ Only moderators can run this command.");
+        if (!hasAuthorizedRole) {
+            await message.reply("❌ Only Moderators or Legend members can run this command.");
             return;
         }
     }
