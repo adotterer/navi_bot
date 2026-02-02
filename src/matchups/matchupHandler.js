@@ -172,7 +172,7 @@ RULES:
 2. If the messages don't address the question, say you couldn't find it
 3. Be concise and actionable
 4. Do not mention jab combos
-5. Prefer matchup-specific tools, counterplay, and neutral/advantage/disadvantage info
+5. Don't provide information that doesn't relate to the original question.
 
 Provide the best possible answer now:`;
 
