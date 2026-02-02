@@ -174,7 +174,7 @@ async function notifyModerators(guild, channelsExported, messagesExported, durat
         }
 
         // Send notification
-        const message = `✅ **Weekly Matchup Export Complete**\n\n📊 Summary:\n• **Channels Exported:** ${channelsExported}\n• **Total Messages:** ${messagesExported.toLocaleString()}\n• **Duration:** ${duration}s\n• **Status:** All data synced to S3 for AI analysis\n\n🤖 Your matchup AI now has the latest community insights!`;
+        const message = `✅ **Daily Matchup Export Complete**\n\n📊 Summary:\n• **Channels Exported:** ${channelsExported}\n• **Total Messages:** ${messagesExported.toLocaleString()}\n• **Duration:** ${duration}s\n• **Status:** All data synced to S3 for AI analysis\n\n🤖 Your matchup AI now has the latest community insights!`;
 
         await auditLogsChannel.send(message);
         console.log('📢 Notification sent to audit-logs');
@@ -192,7 +192,7 @@ async function notifyModeratorsOfFailure(guild, errorMessage) {
         
         if (!auditLogsChannel) return;
 
-        const message = `❌ **Weekly Matchup Export Failed**\n\n⚠️ Error: ${errorMessage}\n\nPlease check the bot logs or try running \`!export matchups\` manually.`;
+        const message = `❌ **Daily Matchup Export Failed**\n\n⚠️ Error: ${errorMessage}\n\nPlease check the bot logs or try running \`!export matchups\` manually.`;
 
         await auditLogsChannel.send(message);
         console.log('📢 Failure notification sent to audit-logs');
