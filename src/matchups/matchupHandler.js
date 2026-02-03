@@ -81,57 +81,24 @@ ${katyparryMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
 ${otherMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
 
 === YOUR TASK ===
-Create a comprehensive matchup summary following this format. Falco is just an example - adapt the content for ${character}.
+Create a comprehensive matchup summary following this format. Falco and Lucas is just an example - adapt the content for ${character}.
 
 # Falco vs Zelda 
-
 # | Disadvantage 
-### ❌ - Point 1 
--# - explanation of point 1 
-### ❌ - Point 2
--# - explanation of point 2
-### ❌ - Point 3
--# - explanation of point 3
+## ❌- Don’t Try To Punish Down Tilt
+-# - <:6symbolnavi:1341400385709019138> Lucas’s down tilt is -6 on shield. This move is extremely difficult to punish…etc
+## ✅ Use Nayru’s to Stall offstage 
+-# - <:6symbolnavi:1341400385709019138> Using this tactic will allow you to outwait Lucas attempts to edgeguard you with bair, which will spike you if you get attacked.
 # | Neutral 
-### <:6symbolnavi:1341400385709019138>- Phantom in Neutral? NO <:7blizzetta:1337261523269058731> or YES <:7blizzetta:1337261523269058731> 
--# - Yes, you can Phantom in neutral in this match up. Best practice would be to use Phantom Kick as a bait at midrange, and if Falco uses his blaster *after* you, you can buffer jump out of the release animation and approach him from the air. 
-### <:6symbolnavi:1341400385709019138> - Point 1 
--# - explanation of point 1 
-### <:6symbolnavi:1341400385709019138> - Point 2
--# - explanation of point 2
-### <:6symbolnavi:1341400385709019138> - Point 3
--# - explanation of point 3
+etc.
 # | Advantage 
-### <:6symbolnavi:1341400385709019138> - Point 1 
--# - explanation of point 1 
-### <:6symbolnavi:1341400385709019138> - Point 2
--# - explanation of point 2
-### <:6symbolnavi:1341400385709019138> - Point 3
--# - explanation of point 3
+etc.
 # | How does Falco kill Zelda?
-### <:6symbolnavi:1341400385709019138> - Point 1 
--# - explanation of point 1 
-### <:6symbolnavi:1341400385709019138> - Point 2
--# - explanation of point 2
-### <:6symbolnavi:1341400385709019138> - Point 3
--# - explanation of point 3
+etc.
 # | How does Zelda kill Falco?
-### <:6symbolnavi:1341400385709019138> - Point 1 
--# - explanation of point 1 
-### <:6symbolnavi:1341400385709019138> - Point 2
--# - explanation of point 2
-### <:6symbolnavi:1341400385709019138> - Point 3
--# - explanation of point 3
-
+etc.
 #  | Match Up Basics
-### <:6symbolnavi:1341400385709019138>- Phantom in Neutral? NO <:7blizzetta:1337261523269058731> or YES <:7blizzetta:1337261523269058731> 
--# - Yes, you can Phantom in neutral in this match up. Best practice would be to use Phantom Kick as a bait at midrange, and if Falco uses his blaster *after* you, you can buffer jump out of the release animation and approach him from the air. 
-### <:6symbolnavi:1341400385709019138> - Falco's bread and butter, **uptilt**, is **-12 on shield **if he starts it from the *front*.** WAIT FOR THE SECOND HIT, THEN PUNISH WITH FARORE'S WIND!!! ** 
--# - Falco's bread and butter, **uptilt**, is **-12 on shield**. We must buffer our punish/jump as soon as the second hit touches our shield. **You can even stay in shield and let him do a second up tilt if you need more time. (as long as your shield is fresh, or aimed UP)
-### <:6symbolnavi:1341400385709019138> - Farore's Wind's *first hit* is the **easiest and most reliable way to punish ALL of Falco's moves** (besides down tilt & up air.)
--# - We get this for free every single time, and can teleport away to reposition. I believe its better to use this as a movement tool, rather than attempting to kill Falco will the second hit. Falco can out do us in the air, and if he DI's the move (which is likely because he wants to move after landing his uptilt to cover OUR DI) and we tried to chase him, he can easily upair/bair/any aerial really and kill us off the top.
-### <:6symbolnavi:1341400385709019138> - Falco's down tilt is +11 frames on shield, meaning we cannot do anything to punish it - PERIOD!
--# - Most Falcos will down tilt again after connecting the first one at lower percents, because they are waiting for their opponent to swing in disadvantage. Once you show them you aren't going to Nayru's/attack back in disadvantage, they will start to chase you with their jump. Nairdodge will beat this, but they can call it out with a short hop fast fall aerial. 
+etc.
 ##  | Stage Ban Priority 
 ### ❌ - 1. Yoshi’s Island 
 -# <:6symbolnavi:1341400385709019138> Platform extensions, easy for him to recover up the sides, Zelda can't ledge trap with Phantom, instant ban everytime
@@ -158,7 +125,7 @@ Rules:
 11. Look specifically for anything about if Zelda can use the Phantom in neutral against this character, and include that in the summary. If it is not mentioned, do not include it.
 12. Do not mention jab combos.
 13. Include if D-Tilt is Safe on Shield or not.
-14. Do NOT add blank lines between bullet pairs. Keep each "### ..." line directly followed by its "-# - ..." line, and then the next "### ..." line without extra empty lines.
+14. Do NOT add any blank lines between bullet pairs, between bullets and sections, or between sections. Keep compact formatting throughout with no extra empty lines.
 15. Do NOT mention any usernames or quote users. Present all advice as Navi Bot's own guidance (even if informed by those messages).
 
 Generate the matchup summary now:`;
@@ -256,7 +223,7 @@ RULES:
 3. Be concise and actionable
 4. Do not mention jab combos
 5. Don't provide information that doesn't relate to the original question.
-6. Do NOT add blank lines between bullet pairs. Keep each "### ..." line directly followed by its "-# - ..." line, and then the next "### ..." line without extra empty lines.
+6. Do NOT add any blank lines between bullet pairs, between bullets and sections, or between sections. Keep compact formatting throughout with no extra empty lines.
 7. Do NOT mention any usernames or quote users. Present all advice as Navi Bot's own guidance (even if informed by those messages).
 
 For a reference, here is example to draw from for markdown format, how to organize bullet points and headings, etc.
@@ -264,28 +231,10 @@ For a reference, here is example to draw from for markdown format, how to organi
 # {question topic}
 
 # | Disadvantage 
-### ❌ - Point 1 
--# - explanation of point 1 
-### ❌ - Point 2
--# - explanation of point 2
-### ❌ - Point 3
--# - explanation of point 3
-# | Neutral 
-### <:6symbolnavi:1341400385709019138>- Phantom in Neutral? NO <:7blizzetta:1337261523269058731> or YES <:7blizzetta:1337261523269058731> 
--# - Yes, you can Phantom in neutral in this match up. Best practice would be to use Phantom Kick as a bait at midrange, and if Falco uses his blaster *after* you, you can buffer jump out of the release animation and approach him from the air. 
-### <:6symbolnavi:1341400385709019138> - Point 1 
--# - explanation of point 1 
-### <:6symbolnavi:1341400385709019138> - Point 2
--# - explanation of point 2
-### <:6symbolnavi:1341400385709019138> - Point 3
--# - explanation of point 3
-# | Advantage 
-### <:6symbolnavi:1341400385709019138> - Point 1 
--# - explanation of point 1 
-### <:6symbolnavi:1341400385709019138> - Point 2
--# - explanation of point 2
-### <:6symbolnavi:1341400385709019138> - Point 3
--# - explanation of point 3
+## ❌- Don’t Try To Punish Down Tilt
+-# - <:6symbolnavi:1341400385709019138> Lucas’s down tilt is -6 on shield. This move is extremely difficult to punish…etc
+## ✅ Use Nayru’s to Stall offstage 
+-# - <:6symbolnavi:1341400385709019138> Using this tactic will allow you to outwait Lucas attempts to edgeguard you with bair, which will spike you if you get attacked.
 
 Provide the best possible answer now:`;
 
@@ -412,36 +361,20 @@ IMPORTANT RULES:
 11. Keep the summary concise but comprehensive - aim for clarity over length
 12. Maintain the emoji structure and formatting from the original summary
 13. Address the user's specific feedback while preserving other valuable information
-14. Use markdown format 
-15. Do NOT mention any usernames or quote users. Present all advice as Navi Bot's own guidance (even if informed by those messages).
+14. Use markdown format
+15. Do NOT add any blank lines between bullet pairs, between bullets and sections, or between sections. Keep compact formatting throughout with no extra empty lines.
+16. Do NOT mention any usernames or quote users. Present all advice as Navi Bot's own guidance (even if informed by those messages).
 
 For a reference, here is example to draw from for markdown format, how to organize bullet points and headings, etc.
 
 # Falco vs Zelda 
 
 # | Disadvantage 
-### ❌ - Point 1 
--# - explanation of point 1 
-### ❌ - Point 2
--# - explanation of point 2
-### ❌ - Point 3
--# - explanation of point 3
-# | Neutral 
-### <:6symbolnavi:1341400385709019138>- Phantom in Neutral? NO <:7blizzetta:1337261523269058731> or YES <:7blizzetta:1337261523269058731> 
--# - Yes, you can Phantom in neutral in this match up. Best practice would be to use Phantom Kick as a bait at midrange, and if Falco uses his blaster *after* you, you can buffer jump out of the release animation and approach him from the air. 
-### <:6symbolnavi:1341400385709019138> - Point 1 
--# - explanation of point 1 
-### <:6symbolnavi:1341400385709019138> - Point 2
--# - explanation of point 2
-### <:6symbolnavi:1341400385709019138> - Point 3
--# - explanation of point 3
-# | Advantage 
-### <:6symbolnavi:1341400385709019138> - Point 1 
--# - explanation of point 1 
-### <:6symbolnavi:1341400385709019138> - Point 2
--# - explanation of point 2
-### <:6symbolnavi:1341400385709019138> - Point 3
--# - explanation of point 3
+## ❌- Don’t Try To Punish Down Tilt
+-# - <:6symbolnavi:1341400385709019138> Lucas’s down tilt is -6 on shield. This move is extremely difficult to punish…etc
+## ✅ Use Nayru’s to Stall offstage 
+-# - <:6symbolnavi:1341400385709019138> Using this tactic will allow you to outwait Lucas attempts to edgeguard you with bair, which will spike you if you get attacked.
+
 
 Original Discord Messages:
 ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
