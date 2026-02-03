@@ -93,7 +93,6 @@ const followupResponses = [
     "Using 'could' takes the pressure off and keeps the fun going! 🎪",
     "Princess Zelda herself will be notified of this transgression immediately. 👑",
     "Even Link wouldn't say 'should'—have 🤐",
-    "The Triforce of wisdom demands you use the word 'could' instead! ✨",
     "The Great Deku Tree is disappointed in your use of 'should'. Plant a 'could' instead! 🌳",
 ];
 
@@ -117,6 +116,8 @@ client.on("messageCreate", async (message) => {
     await message.reply(
         `<:6symbolnavi:1341400385709019138> Hey Listen ${message.author}! Remember to say, you *could* have${tail}! ${followup} <:6symbolnavi:1341400385709019138>`
     );
+    await message.channel.send(`-# <@596207448935628812> has been summoned - prepare to be smited by the Triforce of Wisdom!`);
+
 });
 
 client.on("messageCreate", async (message) => {

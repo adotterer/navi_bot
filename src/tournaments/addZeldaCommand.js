@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import { fetchFromS3, uploadToS3 } from '../shared/s3Helper.js';
 import { getPlayerBySlug } from './startggClient.js';
+import { sendSplitMessage } from '../shared/messageSplitter.js';
 
 function getTodayDate() {
     return new Date().toISOString().slice(0, 10);
@@ -95,15 +96,7 @@ export async function handleListZelda(message) {
 
         const messageContent = `🎮 **Zelda Players Tracked** (${players.length})\n\n${list}`;
 
-        // Split if too long
-        const maxLength = 1900;
-        if (messageContent.length > maxLength) {
-            for (let i = 0; i < messageContent.length; i += maxLength) {
-                await message.channel.send(messageContent.slice(i, i + maxLength));
-            }
-        } else {
-            await message.reply(messageContent);
-        }
+        await sendSplitMessage(message, messageContent, true);
     } catch (error) {
         console.error('❌ Error listing Zelda players:', error.message);
         await message.reply(`❌ Failed to list Zelda players: ${error.message}`);

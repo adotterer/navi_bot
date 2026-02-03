@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { fetchFromS3, isModelOverloaded, fetchAllMessages } from '../shared/s3Helper.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from './characterAliases.js';
+import { sendSplitMessage } from '../shared/messageSplitter.js';
 
 const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -128,14 +129,7 @@ Generate the matchup summary now:`;
         });
         const summary = response.text;
         
-        if (summary.length <= 2000) {
-            await message.reply(summary);
-        } else {
-            const chunks = summary.match(/[\s\S]{1,2000}/g) || [];
-            for (const chunk of chunks) {
-                await message.channel.send(chunk);
-            }
-        }
+        await sendSplitMessage(message, summary, true);
 
         await message.channel.send("-# Note: Responses are AI generated based on community messages. Verify with trusted sources.");
         
@@ -228,15 +222,7 @@ Provide the best possible answer now:`;
         });
 
         const answer = response.text;
-
-        if (answer.length <= 2000) {
-            await message.reply(answer);
-        } else {
-            const chunks = answer.match(/[\s\S]{1,2000}/g) || [];
-            for (const chunk of chunks) {
-                await message.channel.send(chunk);
-            }
-        }
+        await sendSplitMessage(message, answer, true);
 
         await message.channel.send("-# Note: Responses are AI generated based on community messages. Verify with trusted sources.");
 
@@ -355,6 +341,34 @@ IMPORTANT RULES:
 13. Address the user's specific feedback while preserving other valuable information
 14. Use markdown format 
 
+For a reference, here is example to draw from for markdown format:
+
+# Falco vs Zelda 
+
+# | Disadvantage 
+### ❌ - Point 1 
+-# - explanation of point 1 
+### ❌ - Point 2
+-# - explanation of point 2
+### ❌ - Point 3
+-# - explanation of point 3
+# | Neutral 
+### <:6symbolnavi:1341400385709019138>- Phantom in Neutral? NO <:7blizzetta:1337261523269058731> or YES <:7blizzetta:1337261523269058731> 
+-# - Yes, you can Phantom in neutral in this match up. Best practice would be to use Phantom Kick as a bait at midrange, and if Falco uses his blaster *after* you, you can buffer jump out of the release animation and approach him from the air. 
+### <:6symbolnavi:1341400385709019138> - Point 1 
+-# - explanation of point 1 
+### <:6symbolnavi:1341400385709019138> - Point 2
+-# - explanation of point 2
+### <:6symbolnavi:1341400385709019138> - Point 3
+-# - explanation of point 3
+# | Advantage 
+### <:6symbolnavi:1341400385709019138> - Point 1 
+-# - explanation of point 1 
+### <:6symbolnavi:1341400385709019138> - Point 2
+-# - explanation of point 2
+### <:6symbolnavi:1341400385709019138> - Point 3
+-# - explanation of point 3
+
 Original Discord Messages:
 ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
 
@@ -364,28 +378,7 @@ ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
         });
         const refinedSummary = response.text;
         
-        const maxLength = 2000;
-        if (refinedSummary.length <= maxLength) {
-            await message.reply(refinedSummary);
-        } else {
-            const lines = refinedSummary.split('\n');
-            let currentChunk = '';
-            let chunkNumber = 1;
-            
-            for (const line of lines) {
-                if ((currentChunk + line + '\n').length > maxLength) {
-                    await message.channel.send(`**Part ${chunkNumber}:**\n${currentChunk}`);
-                    currentChunk = line + '\n';
-                    chunkNumber++;
-                } else {
-                    currentChunk += line + '\n';
-                }
-            }
-            
-            if (currentChunk.trim()) {
-                await message.channel.send(`**Part ${chunkNumber}:**\n${currentChunk}`);
-            }
-        }
+        await sendSplitMessage(message, `**Refined Summary:**\n${refinedSummary}`, false);
 
         await message.channel.send("-# Note: Responses are AI generated based on community messages. Verify with trusted sources.");
         

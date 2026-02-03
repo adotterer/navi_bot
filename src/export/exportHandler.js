@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { fetchAllMessages, fetchFromS3, uploadToS3 } from '../shared/s3Helper.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
+import { sendSplitMessage } from '../shared/messageSplitter.js';
 
 export async function handleExportFalco(message) {
     const guild = message.guild;
@@ -184,14 +185,7 @@ export async function handleListThreadCounts(message) {
         const header = `📊 **Character Thread Message Counts** (${counts.length})\n`;
         const output = header + lines;
 
-        const maxLength = 1900;
-        if (output.length > maxLength) {
-            for (let i = 0; i < output.length; i += maxLength) {
-                await message.channel.send(output.slice(i, i + maxLength));
-            }
-        } else {
-            await message.reply(output);
-        }
+        await sendSplitMessage(message, output, true);
     } catch (error) {
         console.error(error);
         await message.reply("❌ Error counting messages: " + error.message);
