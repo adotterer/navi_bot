@@ -12,8 +12,8 @@ export const followupResponses = [
 ];
 
 export const lanWarningResponses = [
+    "Stow your fear, it's now or never!",
     "⚠️ WARNING: LAN is not Guaranteed 🚨",
-    "⚠️ ⚠️ ⚠️ LAN IS NOT GUARANTEED ⚠️ ⚠️ ⚠️",
 ];
 
 export async function handleShouldHave(message) {

@@ -116,7 +116,7 @@ client.on("messageCreate", async (message) => {
     await message.reply(
         `<:6symbolnavi:1341400385709019138> Hey Listen ${message.author}! Remember to say, you *could* have${tail}! ${followup} <:6symbolnavi:1341400385709019138>`
     );
-    await message.channel.send(`-# <@596207448935628812> has been summoned - prepare to be smited by the Triforce of Wisdom!`);
+    await message.channel.send(`-# <@596207448935628812> has been summoned - prepare yourself!`);
 
 });
 
