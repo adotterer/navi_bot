@@ -96,6 +96,13 @@ client.on("messageCreate", async (message) => {
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
+    const channelName = message.channel?.name?.toLowerCase() || '';
+    const isAskNaviChannel = channelName.includes('ask-navi');
+    const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
+        message.content.toLowerCase().startsWith("!mu") ||
+        message.content.toLowerCase().startsWith("!mu-question") ||
+        message.content.toLowerCase().startsWith("!mu-q");
+
     // ===== COMMAND GATE: MODERATORS ONLY =====
     const isCommand = message.content.toLowerCase().startsWith("!export") ||
         message.content.toLowerCase().startsWith("!mu-notes") ||
