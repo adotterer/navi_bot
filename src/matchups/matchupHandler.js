@@ -159,6 +159,7 @@ Rules:
 12. Do not mention jab combos.
 13. Include if D-Tilt is Safe on Shield or not.
 14. Do NOT add blank lines between bullet pairs. Keep each "### ..." line directly followed by its "-# - ..." line, and then the next "### ..." line without extra empty lines.
+15. Do NOT mention any usernames or quote users. Present all advice as Navi Bot's own guidance (even if informed by those messages).
 
 Generate the matchup summary now:`;
         
@@ -170,7 +171,7 @@ Generate the matchup summary now:`;
         
         await sendSplitMessage(message, summary, true);
 
-        await message.channel.send("-# Note: Responses are AI generated based on community messages. Verify with trusted sources.");
+        await message.channel.send("-# Note: Responses are summarized based on community messages. Verify with trusted sources.");
         
         // Tag katyparry for verification
         await message.channel.send(`-# <@596207448935628812> Please verify the above matchup notes are accurate! 🔎`);
@@ -256,6 +257,7 @@ RULES:
 4. Do not mention jab combos
 5. Don't provide information that doesn't relate to the original question.
 6. Do NOT add blank lines between bullet pairs. Keep each "### ..." line directly followed by its "-# - ..." line, and then the next "### ..." line without extra empty lines.
+7. Do NOT mention any usernames or quote users. Present all advice as Navi Bot's own guidance (even if informed by those messages).
 
 For a reference, here is example to draw from for markdown format, how to organize bullet points and headings, etc.
 
@@ -295,7 +297,7 @@ Provide the best possible answer now:`;
         const answer = response.text;
         await sendSplitMessage(message, answer, true);
 
-        await message.channel.send("-# Note: Responses are AI generated based on community messages. Verify with trusted sources.");
+        await message.channel.send("-# Note: Responses are summarized based on community messages. Verify with trusted sources.");
 
         // Tag katyparry for verification
         await message.channel.send(`-# <@596207448935628812> Please verify the above answer is accurate! 🔎`);
@@ -411,6 +413,7 @@ IMPORTANT RULES:
 12. Maintain the emoji structure and formatting from the original summary
 13. Address the user's specific feedback while preserving other valuable information
 14. Use markdown format 
+15. Do NOT mention any usernames or quote users. Present all advice as Navi Bot's own guidance (even if informed by those messages).
 
 For a reference, here is example to draw from for markdown format, how to organize bullet points and headings, etc.
 
@@ -451,7 +454,7 @@ ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
         
         await sendSplitMessage(message, `**Refined Summary:**\n${refinedSummary}`, false);
 
-        await message.channel.send("-# Note: Responses are AI generated based on community messages. Verify with trusted sources.");
+        await message.channel.send("-# Note: Responses are summarized based on community messages. Verify with trusted sources.");
         
         console.log(`✅ Refined match-up notes for ${characterName} based on user feedback`);
     } catch (error) {
