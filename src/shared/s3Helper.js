@@ -40,6 +40,7 @@ export function isModelOverloaded(error) {
 
 export async function fetchAllMessages(channel) {
     const messages = [];
+    const replyCache = new Map();
     let lastMessageId;
     
     while (true) {
@@ -49,7 +50,7 @@ export async function fetchAllMessages(channel) {
         const fetched = await channel.messages.fetch(options);
         if (fetched.size === 0) break;
         
-        fetched.forEach(msg => {
+        for (const msg of fetched.values()) {
             const msgData = {
                 author: msg.author.username,
                 authorId: msg.author.id,
@@ -59,21 +60,35 @@ export async function fetchAllMessages(channel) {
             };
             
             // Add reply context if this message is replying to another
-            if (msg.reference) {
+            if (msg.reference?.messageId) {
                 msgData.replyingTo = {
                     messageId: msg.reference.messageId,
                     guildId: msg.reference.guildId,
                     channelId: msg.reference.channelId
                 };
                 
-                // Try to fetch the original message for its content
-                if (msg.mentions.repliedUser) {
-                    msgData.replyingToAuthor = msg.mentions.repliedUser.username;
+                try {
+                    let repliedMessage = replyCache.get(msg.reference.messageId);
+                    if (!repliedMessage) {
+                        repliedMessage = await channel.messages.fetch(msg.reference.messageId);
+                        replyCache.set(msg.reference.messageId, repliedMessage);
+                    }
+                    if (repliedMessage) {
+                        msgData.replyingToAuthor = repliedMessage.author?.username || null;
+                        msgData.replyingToAuthorId = repliedMessage.author?.id || null;
+                        msgData.replyingToContent = repliedMessage.content || null;
+                        msgData.replyingToTimestamp = repliedMessage.createdAt?.toISOString() || null;
+                    }
+                } catch (error) {
+                    if (msg.mentions.repliedUser) {
+                        msgData.replyingToAuthor = msg.mentions.repliedUser.username;
+                        msgData.replyingToAuthorId = msg.mentions.repliedUser.id;
+                    }
                 }
             }
             
             messages.push(msgData);
-        });
+        }
         
         lastMessageId = fetched.last().id;
     }
