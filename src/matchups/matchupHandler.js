@@ -20,8 +20,11 @@ async function fetchMultiCharacterData(characterSlug) {
     // Fetch all character data in parallel
     const dataPromises = allCharacters.map(async (char) => {
         try {
-            // Normalize the filename to handle special characters and spaces
-            const filename = `${char.replace(/\s+/g, '').toLowerCase()}.json`;
+            // Normalize the filename: remove spaces and convert pipe variants to Unicode vertical line
+            let normalizedChar = char.replace(/\s+/g, '').toLowerCase();
+            // Convert regular pipes and other pipe variants to the Unicode vertical line that S3 uses
+            normalizedChar = normalizedChar.replace(/[|︱｜]/g, '︱');
+            const filename = `${normalizedChar}.json`;
             console.log(`Fetching: ${filename}`);
             const messages = await fetchFromS3(filename);
             console.log(`Successfully fetched ${filename}: ${messages ? messages.length : 0} messages`);
