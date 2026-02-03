@@ -1,12 +1,44 @@
 import { GoogleGenAI } from '@google/genai';
 import { fetchFromS3, isModelOverloaded, fetchAllMessages } from '../shared/s3Helper.js';
-import { buildCharacterAliasMap, resolveCharacterFromText } from './characterAliases.js';
+import { buildCharacterAliasMap, resolveCharacterFromText, relatedCharacters } from './characterAliases.js';
 import { sendSplitMessage } from '../shared/messageSplitter.js';
 
 const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
     defaultModel: process.env.GEMINI_MODEL || 'gemini-3-flash-preview'
 });
+
+/**
+ * Fetches matchup data for a character and all related characters.
+ * @param {string} characterSlug - The main character slug
+ * @returns {Promise<{messages: Array, characterList: string}>} Combined messages and character list
+ */
+async function fetchMultiCharacterData(characterSlug) {
+    const related = relatedCharacters[characterSlug] || [];
+    const allCharacters = [characterSlug, ...related];
+    
+    // Fetch all character data in parallel
+    const dataPromises = allCharacters.map(async (char) => {
+        try {
+            const filename = `${char}.json`;
+            const messages = await fetchFromS3(filename);
+            return { character: char, messages: messages || [] };
+        } catch (error) {
+            console.warn(`Could not fetch data for ${char}:`, error.message);
+            return { character: char, messages: [] };
+        }
+    });
+    
+    const results = await Promise.all(dataPromises);
+    
+    // Combine all messages
+    const allMessages = results.flatMap(r => r.messages);
+    
+    // Build character list string for display
+    const characterList = allCharacters.join(", ");
+    
+    return { messages: allMessages, characterList, allCharacters };
+}
 
 export async function handleMatchupNotes(message) {
     const args = message.content.split(" ");
@@ -16,13 +48,19 @@ export async function handleMatchupNotes(message) {
     }
     
     const character = args[1].toLowerCase();
-    const filename = `${character}.json`;
     
     try {
-        const capitalizedCharacter = character.charAt(0).toUpperCase() + character.slice(1);
-        await message.reply(`Watch out - that’s a **${capitalizedCharacter}**. Listen…`);
+        const { messages, characterList } = await fetchMultiCharacterData(character);
         
-        const messages = await fetchFromS3(filename);
+        const capitalizedCharacter = character.charAt(0).toUpperCase() + character.slice(1);
+        const related = relatedCharacters[character];
+        
+        if (related && related.length > 0) {
+            const relatedCapitalized = related.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(", ");
+            await message.reply(`Watch out - that's a **${capitalizedCharacter}**. Pulling data from: **${characterList}**. Listen…`);
+        } else {
+            await message.reply(`Watch out - that's a **${capitalizedCharacter}**. Listen…`);
+        }
         
         if (!messages || messages.length === 0) {
             await message.reply(`❌ No messages found for ${character}. Have you exported this character yet?`);
@@ -179,11 +217,15 @@ export async function handleMuQuestion(message) {
 
         characterSlug = characterMatch.slug;
         displayName = characterSlug.replace("|", "/");
-        const filename = `${characterSlug}.json`;
 
-        await message.reply(`✨ Watch out! That's a **${displayName}**. Let me search for the answer...`);
-
-        const messages = await fetchFromS3(filename);
+        const { messages, characterList } = await fetchMultiCharacterData(characterSlug);
+        
+        const related = relatedCharacters[characterSlug];
+        if (related && related.length > 0) {
+            await message.reply(`✨ Watch out! That's a **${displayName}**. Pulling data from: **${characterList}**. Let me search for the answer...`);
+        } else {
+            await message.reply(`✨ Watch out! That's a **${displayName}**. Let me search for the answer...`);
+        }
 
         if (!messages || messages.length === 0) {
             await message.reply(`❌ No messages found for ${displayName}. Have you exported this character yet?`);
