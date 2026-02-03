@@ -86,6 +86,8 @@ client.on("messageCreate", async (message) => {
             return;
         }
     }
+    }
+    
     if (message.channel.name === "real-talk") return;
     
     console.log(`📨 Message received from ${message.author.tag} in #${message.channel.name}: ${message.content}`);
