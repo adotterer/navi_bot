@@ -50,13 +50,29 @@ export async function fetchAllMessages(channel) {
         if (fetched.size === 0) break;
         
         fetched.forEach(msg => {
-            messages.push({
+            const msgData = {
                 author: msg.author.username,
                 authorId: msg.author.id,
                 content: msg.content,
                 timestamp: msg.createdAt.toISOString(),
                 messageId: msg.id
-            });
+            };
+            
+            // Add reply context if this message is replying to another
+            if (msg.reference) {
+                msgData.replyingTo = {
+                    messageId: msg.reference.messageId,
+                    guildId: msg.reference.guildId,
+                    channelId: msg.reference.channelId
+                };
+                
+                // Try to fetch the original message for its content
+                if (msg.mentions.repliedUser) {
+                    msgData.replyingToAuthor = msg.mentions.repliedUser.username;
+                }
+            }
+            
+            messages.push(msgData);
         });
         
         lastMessageId = fetched.last().id;
