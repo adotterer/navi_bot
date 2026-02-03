@@ -35,23 +35,25 @@ Exports all character channels from both "Match Ups (B-L)" and "Match Ups (M-Z)"
 
 ---
 
-### `!mu-notes <character>`
+### `!mu-notes <character>` / `!mu <character>`
 Generates an AI-powered match-up summary for a specific character using S3 messages.
 
 **Usage:**
 ```
 !mu-notes falco
+!mu falco
 !mu-notes mario
 ```
 
 ---
 
-### `!mu-question <question>`
+### `!mu-question <question>` / `!mu-q <question>`
 Answers a specific matchup question using S3 messages for the detected character.
 
 **Usage:**
 ```
 !mu-question What should Zelda do versus Mario's fireball?
+!mu-q What should Zelda do versus Mario's fireball?
 ```
 
 ---

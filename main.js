@@ -53,7 +53,9 @@ client.on("messageCreate", async (message) => {
     const channelName = message.channel?.name?.toLowerCase() || '';
     const isAskNaviChannel = channelName.includes('ask-navi');
     const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
-        message.content.toLowerCase().startsWith("!mu-question");
+        message.content.toLowerCase().startsWith("!mu") ||
+        message.content.toLowerCase().startsWith("!mu-question") ||
+        message.content.toLowerCase().startsWith("!mu-q");
 
     if (isAskNaviChannel) {
         // Always allow katyparry messages
@@ -97,7 +99,9 @@ client.on("messageCreate", async (message) => {
     // ===== COMMAND GATE: MODERATORS ONLY =====
     const isCommand = message.content.toLowerCase().startsWith("!export") ||
         message.content.toLowerCase().startsWith("!mu-notes") ||
+        message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
+        message.content.toLowerCase().startsWith("!mu-q") ||
         message.content.toLowerCase().startsWith("!list-categories") ||
         message.content.toLowerCase().startsWith("!matches-today") ||
         message.content.toLowerCase().startsWith("!add-zelda") ||
@@ -154,7 +158,8 @@ client.on("messageCreate", async (message) => {
     }
 
     // ===== MU QUESTION =====
-    if (message.content.toLowerCase().startsWith("!mu-question")) {
+    if (message.content.toLowerCase().startsWith("!mu-question") ||
+        message.content.toLowerCase().startsWith("!mu-q")) {
         await handleMuQuestion(message);
         return;
     }
@@ -221,7 +226,8 @@ client.on("messageCreate", async (message) => {
     }
 
     // ===== MATCH-UP NOTES =====
-    if (message.content.toLowerCase().startsWith("!mu-notes")) {
+    if (message.content.toLowerCase().startsWith("!mu-notes") ||
+        message.content.toLowerCase().startsWith("!mu")) {
         await handleMatchupNotes(message);
         return;
     }

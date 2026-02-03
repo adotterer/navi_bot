@@ -16,15 +16,16 @@ export const lanWarningResponses = [
     "⚠️ ⚠️ ⚠️ LAN IS NOT GUARANTEED ⚠️ ⚠️ ⚠️",
 ];
 
-export async function handleShouldHave(message, followupResponses) {
+export async function handleShouldHave(message) {
     const match = message.content.match(/\b(i|you|he|she|they|we)\s+should\s+have\b/i) || 
                   message.content.match(/\bshould\s+have\b/i);
     if (!match) return false;
 
     const after = message.content.slice(match.index + match[0].length).trim();
     const tail = after ? ` ${after}` : "";
-    
-    const followup = followupResponses[Math.floor(Math.random() * followupResponses.length)];
+
+    const pool = Array.isArray(followupResponses) ? followupResponses : [String(followupResponses)];
+    const followup = pool[Math.floor(Math.random() * pool.length)];
 
     await message.reply(
         `<:6symbolnavi:1341400385709019138> Hey Listen ${message.author}! Remember to say, you *could* have${tail}! ${followup} <:6symbolnavi:1341400385709019138>`
@@ -32,7 +33,7 @@ export async function handleShouldHave(message, followupResponses) {
     return true;
 }
 
-export async function handleArenaIsUp(message, lanWarningResponses) {
+export async function handleArenaIsUp(message) {
     if (message.author.username !== "condymathceo") return false;
     
     if (!message.content.toLowerCase().includes("arena is up") && 
@@ -40,7 +41,8 @@ export async function handleArenaIsUp(message, lanWarningResponses) {
         return false;
     }
 
-    const warning = lanWarningResponses[Math.floor(Math.random() * lanWarningResponses.length)];
+    const pool = Array.isArray(lanWarningResponses) ? lanWarningResponses : [String(lanWarningResponses)];
+    const warning = pool[Math.floor(Math.random() * pool.length)];
     await message.reply(warning);
     return true;
 }

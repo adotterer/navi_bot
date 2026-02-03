@@ -42,29 +42,68 @@ ${katyparryMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
 ${otherMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
 
 === YOUR TASK ===
-Create a comprehensive matchup summary following this format:
+Create a comprehensive matchup summary following this format. Falco is just an example - adapt the content for ${character}.
 
-**🔎 | GENERAL GAMEPLAN**
-- Overview of the matchup dynamics
-- Key strengths and weaknesses for Zelda
-- Important neutral strategies
+# Falco vs Zelda 
 
-**🔎 | MATCH UP BASICS**
-- List key strategies, frame data, punish options, and general gameplan
-- Use bold text for important moves/concepts
-- Be specific with frame data when mentioned
-- Include any critical tips or warnings
+# | Disadvantage 
+### ❌ - Point 1 
+-# - explanation of point 1 
+### ❌ - Point 2
+-# - explanation of point 2
+### ❌ - Point 3
+-# - explanation of point 3
+# | Neutral 
+### <:6symbolnavi:1341400385709019138>- Phantom in Neutral? NO <:7blizzetta:1337261523269058731> or YES <:7blizzetta:1337261523269058731> 
+-# - Yes, you can Phantom in neutral in this match up. Best practice would be to use Phantom Kick as a bait at midrange, and if Falco uses his blaster *after* you, you can buffer jump out of the release animation and approach him from the air. 
+### <:6symbolnavi:1341400385709019138> - Point 1 
+-# - explanation of point 1 
+### <:6symbolnavi:1341400385709019138> - Point 2
+-# - explanation of point 2
+### <:6symbolnavi:1341400385709019138> - Point 3
+-# - explanation of point 3
+# | Advantage 
+### <:6symbolnavi:1341400385709019138> - Point 1 
+-# - explanation of point 1 
+### <:6symbolnavi:1341400385709019138> - Point 2
+-# - explanation of point 2
+### <:6symbolnavi:1341400385709019138> - Point 3
+-# - explanation of point 3
+# | How does Falco kill Zelda?
+### <:6symbolnavi:1341400385709019138> - Point 1 
+-# - explanation of point 1 
+### <:6symbolnavi:1341400385709019138> - Point 2
+-# - explanation of point 2
+### <:6symbolnavi:1341400385709019138> - Point 3
+-# - explanation of point 3
+# | How does Zelda kill Falco?
+### <:6symbolnavi:1341400385709019138> - Point 1 
+-# - explanation of point 1 
+### <:6symbolnavi:1341400385709019138> - Point 2
+-# - explanation of point 2
+### <:6symbolnavi:1341400385709019138> - Point 3
+-# - explanation of point 3
 
-**🚨 | STAGE BANS** (ONLY include this section if stages are specifically discussed in the messages)
-- List recommended stage bans
-- Include reasoning in italics like *[reason]*
+#  | Match Up Basics
+### <:6symbolnavi:1341400385709019138>- Phantom in Neutral? NO <:7blizzetta:1337261523269058731> or YES <:7blizzetta:1337261523269058731> 
+-# - Yes, you can Phantom in neutral in this match up. Best practice would be to use Phantom Kick as a bait at midrange, and if Falco uses his blaster *after* you, you can buffer jump out of the release animation and approach him from the air. 
+### <:6symbolnavi:1341400385709019138> - Falco's bread and butter, **uptilt**, is **-12 on shield **if he starts it from the *front*.** WAIT FOR THE SECOND HIT, THEN PUNISH WITH FARORE'S WIND!!! ** 
+-# - Falco's bread and butter, **uptilt**, is **-12 on shield**. We must buffer our punish/jump as soon as the second hit touches our shield. **You can even stay in shield and let him do a second up tilt if you need more time. (as long as your shield is fresh, or aimed UP)
+### <:6symbolnavi:1341400385709019138> - Farore's Wind's *first hit* is the **easiest and most reliable way to punish ALL of Falco's moves** (besides down tilt & up air.)
+-# - We get this for free every single time, and can teleport away to reposition. I believe its better to use this as a movement tool, rather than attempting to kill Falco will the second hit. Falco can out do us in the air, and if he DI's the move (which is likely because he wants to move after landing his uptilt to cover OUR DI) and we tried to chase him, he can easily upair/bair/any aerial really and kill us off the top.
+### <:6symbolnavi:1341400385709019138> - Falco's down tilt is +11 frames on shield, meaning we cannot do anything to punish it - PERIOD!
+-# - Most Falcos will down tilt again after connecting the first one at lower percents, because they are waiting for their opponent to swing in disadvantage. Once you show them you aren't going to Nayru's/attack back in disadvantage, they will start to chase you with their jump. Nairdodge will beat this, but they can call it out with a short hop fast fall aerial. 
+##  | Stage Ban Priority 
+### ❌ - 1. Yoshi’s Island 
+-# <:6symbolnavi:1341400385709019138> Platform extensions, easy for him to recover up the sides, Zelda can't ledge trap with Phantom, instant ban everytime
+### ❌ - 2. Town & City 
+-# <:6symbolnavi:1341400385709019138> Platform extensions, can take advantage of the higher ceiling better than Zelda can
+### ❌ - 3. Kalos 
+-# <:6symbolnavi:1341400385709019138> Easy for him to recover up the sides, can use the platforms to escape Zelda's ledgetrapping]
+### ❌ - 4. Battlefield 
+-# <:6symbolnavi:1341400385709019138> Can be interchanged based on comfort level.
+-# <:6symbolnavi:1341400385709019138> Platform extensions, can take advantage of the higher ceiling better than Zelda can.
 
-**Phantom in Neutral?**
-- Phantom In Neutral? NO <:7blizzetta:1337261523269058731> or YES <:7blizzetta:1337261523269058731> 
-
-**D-Tilt Safe on Shield**
-- Spaced: safe
-- Not spaced: Bair and grab
 
 Rules:
 1. Base everything on the actual messages provided
@@ -122,7 +161,10 @@ Generate the matchup summary now:`;
 }
 
 export async function handleMuQuestion(message) {
-    const rawQuestion = message.content.replace(/^!mu-question\s*/i, "").trim();
+    const rawQuestion = message.content
+        .replace(/^!mu-question\s*/i, "")
+        .replace(/^!mu-q\s*/i, "")
+        .trim();
 
     if (!rawQuestion) {
         await message.reply("❌ Please include a question. Example: `!mu-question How do I deal with Peach's turnips?`");
