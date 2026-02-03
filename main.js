@@ -81,7 +81,7 @@ client.on("messageCreate", async (message) => {
             try {
                 await message.delete();
             } catch (error) {
-                console.error("Error deleting message in ask-navi:", error);
+                console.error("Error deleting message in ask-navi :", error);
             }
             return;
         }
