@@ -100,8 +100,10 @@ export function buildCharacterAliasMap(guild) {
         const normalizedSlug = normalizeCharacterText(slug);
         aliasMap.set(normalizedSlug, slug);
 
-        if (slug.includes("|")) {
-            const parts = slug.split("|").map(part => normalizeCharacterText(part));
+        // Match both regular pipe | and special vertical line characters (︱, ｜, etc)
+        const pipePattern = /[|︱｜]/;
+        if (pipePattern.test(slug)) {
+            const parts = slug.split(pipePattern).map(part => normalizeCharacterText(part));
             for (const part of parts) {
                 if (part) {
                     aliasMap.set(part, slug);

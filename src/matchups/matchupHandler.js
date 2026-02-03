@@ -21,15 +21,24 @@ async function fetchMultiCharacterData(characterSlug) {
     const dataPromises = allCharacters.map(async (char) => {
         try {
             const filename = `${char}.json`;
+            console.log(`Fetching: ${filename}`);
             const messages = await fetchFromS3(filename);
+            console.log(`Successfully fetched ${filename}: ${messages ? messages.length : 0} messages`);
             return { character: char, messages: messages || [] };
         } catch (error) {
-            console.warn(`Could not fetch data for ${char}:`, error.message);
-            return { character: char, messages: [] };
+            console.error(`Could not fetch data for ${char}: ${error.message}`);
+            return { character: char, messages: [], error: error.message };
         }
     });
     
     const results = await Promise.all(dataPromises);
+    
+    // Log any fetch failures
+    results.forEach(r => {
+        if (r.error) {
+            console.warn(`Fetch failed for ${r.character}: ${r.error}`);
+        }
+    });
     
     // Combine all messages
     const allMessages = results.flatMap(r => r.messages);
@@ -63,7 +72,7 @@ export async function handleMatchupNotes(message) {
         }
         
         if (!messages || messages.length === 0) {
-            await message.reply(`❌ No messages found for ${character}. Have you exported this character yet?`);
+            await message.reply(`❌ No messages found for ${character}. Looking for file: \`${character}.json\`. Have you exported this character yet?`);
             return;
         }
         
@@ -197,7 +206,7 @@ export async function handleMuQuestion(message) {
         }
 
         if (!messages || messages.length === 0) {
-            await message.reply(`❌ No messages found for ${displayName}. Have you exported this character yet?`);
+            await message.reply(`❌ No messages found for ${displayName}. Looking for file: \`${characterSlug}.json\`. Have you exported this character yet?`);
             return;
         }
 
