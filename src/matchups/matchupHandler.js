@@ -158,6 +158,7 @@ Rules:
 11. Look specifically for anything about if Zelda can use the Phantom in neutral against this character, and include that in the summary. If it is not mentioned, do not include it.
 12. Do not mention jab combos.
 13. Include if D-Tilt is Safe on Shield or not.
+14. Do NOT add blank lines between bullet pairs. Keep each "### ..." line directly followed by its "-# - ..." line, and then the next "### ..." line without extra empty lines.
 
 Generate the matchup summary now:`;
         
@@ -254,6 +255,7 @@ RULES:
 3. Be concise and actionable
 4. Do not mention jab combos
 5. Don't provide information that doesn't relate to the original question.
+6. Do NOT add blank lines between bullet pairs. Keep each "### ..." line directly followed by its "-# - ..." line, and then the next "### ..." line without extra empty lines.
 
 For a reference, here is example to draw from for markdown format, how to organize bullet points and headings, etc.
 
