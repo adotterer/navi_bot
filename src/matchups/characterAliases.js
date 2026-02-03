@@ -21,6 +21,7 @@ export const nicknameAliases = {
     char: "charizard",
     isa: "isabelle",
     ivy: "ivysaur",
+    "p t": "pokemon-trainer",
     pt: "pokemon-trainer",
     d3: "king-dedede",
     dedede: "king-dedede",

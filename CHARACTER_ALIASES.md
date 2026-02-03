@@ -1,19 +1,14 @@
-# Character Aliases & Related Characters
+# Commands, Character Aliases & Related Characters
 
-## Related Character Groups
+## Matchup (MU) Commands
 
-When you query these characters, the bot automatically pulls data from all related characters:
+**!mu <character>**
+→ Generates full matchup notes vs the specified character.
+Example: !mu-notes falco
 
-**Pokémon Trainer**
-→ Also pulls: squirtle, ivysaur, charizard
-
-**Pyra**
-→ Also pulls: mythra
-
-**Mythra**
-→ Also pulls: pyra
-
----
+**!mu-q <question>**
+→ Ask a specific matchup question in plain English.
+Example: !mu-question How do I deal with Peach's turnips?
 
 ## Nickname Aliases
 
@@ -54,3 +49,16 @@ You can use these shorthand names when asking about matchups:
 **ganon** → ganondorf
 **dh** → duck-hunt
 **zss, zero suit samus** → zero-suit-samus
+
+## Related Character Groups
+
+When you query these characters, the bot automatically pulls data from all related characters:
+
+**Pokémon Trainer**
+→ Also pulls: squirtle, ivysaur, charizard
+
+**Pyra**
+→ Also pulls: mythra
+
+**Mythra**
+→ Also pulls: pyra
