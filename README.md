@@ -11,116 +11,89 @@ A Discord bot for the Zelda competitive community that exports match-up discussi
 
 ## Bot Commands
 
-### `!export falco`
-Exports all messages from the #falco channel to a JSON file.
+> Permissions: commands below require the **Moderators** or **Legend** role unless noted.
+
+### `!export <character>`
+Exports a single character matchup channel to S3 (supports nickname aliases).
 
 **Usage:**
 ```
-!export falco
+!export palu
+!export palutena
+!export peach
 ```
-
-**Output:** 
-- Creates `falco_messages.json` locally
-- Includes: author, authorId, content, timestamp, messageId
 
 ---
 
 ### `!export matchups`
-Exports all character channels from both "Match Ups (B-L)" and "Match Ups (M-Z)" categories to individual JSON files and uploads them to AWS S3.
+Exports all character channels from both "Match Ups (B-L)" and "Match Ups (M-Z)" categories to S3.
 
 **Usage:**
 ```
 !export matchups
 ```
 
-**Features:**
-- Automatically finds both category folders
-- Creates individual JSON files for each character (e.g., `banjo-and-kazooie.json`, `mario.json`)
-- Uploads all files to S3 bucket `navi-bot-exports`
-- Returns a summary of all exported channels
-- Approximately 50 character channels exported
-
-**Output:**
-- Individual `.json` files for each character
-- S3 URLs for remote access via: `https://navi-bot-exports.s3.us-west-1.amazonaws.com/{character}.json`
-
 ---
 
 ### `!mu-notes <character>`
-Generates an AI-powered match-up summary for a specific character using Google Gemini. Uses exported Discord messages as context.
+Generates an AI-powered match-up summary for a specific character using S3 messages.
 
 **Usage:**
 ```
 !mu-notes falco
 !mu-notes mario
-!mu-notes sheik
-```
-
-**Features:**
-- Fetches character data from S3 bucket
-- Prioritizes messages from `katyparry` (expert player)
-- Generates structured summary with:
-  - **🔎 Match Up Basics** - Key strategies, frame data, punish options, game plan
-  - **🚨 Stage Bans** - Only if mentioned in messages (not fabricated)
-- Handles long responses by splitting into multiple Discord messages
-- Uses Google Gemini AI for analysis
-
-**Example Output:**
-```
-🔎 | MATCH UP BASICS
-
-- Falco's bread and butter, **uptilt**, is **-12 on shield** if he starts it from the *front*. WAIT FOR THE SECOND HIT, THEN PUNISH WITH FARORE'S WIND!!!
-
-- **Farore's Wind's *first hit*** is the **easiest and most reliable way to punish ALL of Falco's moves** (besides down tilt & up air.)
-
-- **Falco's down tilt is +11 frames on shield**, meaning we cannot do anything to punish it - PERIOD!
-
-🚨 | STAGE BANS
-
-- Yoshi's *[platform extensions, easy recovery]*
-- Town & City *[platform extensions, higher ceiling advantage]*
 ```
 
 ---
 
 ### `!mu-question <question>`
-Answers a specific matchup question using exported Discord messages for the detected character.
+Answers a specific matchup question using S3 messages for the detected character.
 
 **Usage:**
 ```
 !mu-question What should Zelda do versus Mario's fireball?
-!mu-question How do I deal with Peach's turnips?
-!mu-question How do I deal with Daisy's turnips?
 ```
 
-**Features:**
-- Detects character names in the question (supports nicknames like **palu** → palutena, **pika** → pikachu)
-- Handles shared channels like **peach|daisy** automatically
-- Fetches character data from S3 bucket
-- Prioritizes messages from `katyparry` (expert player)
-- If the question isn't covered in the messages, it says so
+---
+
+### `!matches-today`
+Checks today’s SSBU tournaments for tracked Zelda players and posts one message per tournament found.
+
+---
+
+### `!add-zelda <start.gg user URL or slug>`
+Resolves a Start.gg profile to `playerId` and adds it to the Zelda list in S3.
+
+**Usage:**
+```
+!add-zelda https://www.start.gg/user/302ae8f4
+```
+
+---
+
+### `!list-zelda`
+Lists all tracked Zelda players from S3.
+
+---
+
+### `!list-thread-counts`
+Shows message counts for each matchup channel using the S3 JSON files.
+
+---
+
+### `!list-categories`
+Lists server categories or channels inside a category.
+
+**Usage:**
+```
+!list-categories
+!list-categories Match Ups (B-L)
+```
 
 ---
 
 ### `!should-have` Detection (Automatic)
-The bot automatically responds to messages containing "should have" with a positive reinforcement message suggesting "could have" instead.
-
-**Triggers:**
-- "I should have"
-- "you should have"
-- "he/she/they/we should have"
-- Just "should have" anywhere in the message
-
-**Response Example:**
-```
-<:6symbolnavi:1341400385709019138> Hey Listen @user! Remember to say, you *could* have [action]! 
-[Random supportive or Zelda-themed message] <:6symbolnavi:1341400385709019138>
-```
-
-**Features:**
-- 10+ creative responses including Zelda references
-- Does NOT trigger in #real-talk channel
-- Encourages growth mindset over regret
+The bot automatically replies to messages containing "should have" with a positive reinforcement message.
 
 ---
 

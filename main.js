@@ -49,6 +49,36 @@ client.on("clientReady", () => {
 // Handler 1: "should have" → "could have" + Arena LAN warning
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
+
+    const channelName = message.channel?.name?.toLowerCase() || '';
+    const isAskNaviChannel = channelName.includes('ask-navi');
+    const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
+        message.content.toLowerCase().startsWith("!mu-question");
+
+    if (isAskNaviChannel) {
+        // Always allow katyparry messages
+        if (message.author.id === "596207448935628812") return;
+
+        // Allow replies to the bot
+        if (message.reference?.messageId) {
+            try {
+                const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
+                if (repliedMessage.author.id === client.user.id) return;
+            } catch (error) {
+                console.error("Error checking reply target:", error);
+            }
+        }
+
+        // Allow MU commands only
+        if (!isMuCommand) {
+            try {
+                await message.delete();
+            } catch (error) {
+                console.error("Error deleting message in ask-navi:", error);
+            }
+            return;
+        }
+    }
     if (message.channel.name === "real-talk") return;
     
     console.log(`📨 Message received from ${message.author.tag} in #${message.channel.name}: ${message.content}`);
@@ -74,7 +104,7 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!list-zeldas") ||
         message.content.toLowerCase().startsWith("!list-thread-counts");
 
-    if (isCommand) {
+    if (isCommand && !(isAskNaviChannel && isMuCommand)) {
         const hasAuthorizedRole = message.member?.roles?.cache?.some(
             role => role.name === "Moderators" || role.name === "Legend"
         );

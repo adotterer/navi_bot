@@ -101,7 +101,7 @@ Generate the matchup summary now:`;
         await message.channel.send("-# Note: Responses are AI generated based on community messages. Verify with trusted sources.");
         
         // Tag katyparry for verification
-        await message.channel.send(`<@596207448935628812> Please verify the above matchup notes are accurate! 🔎`);
+        await message.channel.send(`-# <@596207448935628812> Please verify the above matchup notes are accurate! 🔎`);
         
         console.log(`✅ Generated match-up notes for ${character}`);
     } catch (error) {
@@ -199,7 +199,7 @@ Provide the best possible answer now:`;
         await message.channel.send("-# Note: Responses are AI generated based on community messages. Verify with trusted sources.");
 
         // Tag katyparry for verification
-        await message.channel.send(`<@596207448935628812> Please verify the above answer is accurate! 🔎`);
+        await message.channel.send(`-# <@596207448935628812> Please verify the above answer is accurate! 🔎`);
 
         console.log(`✅ Answered MU question for ${displayName}`);
     } catch (error) {
