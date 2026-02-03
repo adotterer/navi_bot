@@ -73,6 +73,11 @@ client.on("messageCreate", async (message) => {
 
         // Allow MU commands only
         if (!isMuCommand) {
+            const hasAuthorizedRole = message.member?.roles?.cache?.some(
+            role => role.name === "Moderators" || role.name === "Legend"
+            );
+
+            if (!hasAuthorizedRole) {
             try {
                 await message.delete();
             } catch (error) {

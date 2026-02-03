@@ -1,0 +1,56 @@
+# Character Aliases & Related Characters
+
+## Related Character Groups
+
+When you query these characters, the bot automatically pulls data from all related characters:
+
+**Pokémon Trainer**
+→ Also pulls: squirtle, ivysaur, charizard
+
+**Pyra**
+→ Also pulls: mythra
+
+**Mythra**
+→ Also pulls: pyra
+
+---
+
+## Nickname Aliases
+
+You can use these shorthand names when asking about matchups:
+
+**bayo** → bayonetta
+**banjo** → banjo-and-kazooie
+**banjo & kazooie** → banjo-and-kazooie
+**banjo and kazooie** → banjo-and-kazooie
+**bowserjr, bowserj** → bowser-jr
+**bubba** → king-k-rool
+**cf, captain falcon, capfalcon** → captain-falcon
+**zard, char** → charizard
+**isa** → isabelle
+**ivy** → ivysaur
+**pt** → pokemon-trainer
+**d3, dedede** → king-dedede
+**diddy** → diddy-kong
+**dk, DK** → donkey-kong
+**icies, iceclimbers, ice climbers** → ice-climbers
+**kaz** → kazuya
+**krool, k.rool, k rool** → king-k-rool
+**mac, lm, littlemac** → little-mac
+**mk, metaknight** → meta-knight
+**min min, minmin** → min-min
+**rosa, luma, rosalina, rosalina & luma, rosalina and luma** → rosalina-and-luma
+**wiifit, wii fit, wft** → wii-fit-trainer
+**yink, young link** → young-link
+**palu** → palutena
+**pika** → pikachu
+**pit, dark pit** → pit|dark-pit
+**simon, richter, richter belmont** → simon-richter
+**peach, daisy** → peach|daisy
+**plant** → piranha-plant
+**GaW, Mr. G&W, mr g&w, g&w, G&W, game and watch, game & watch** → mr-game-and-watch
+**m2** → mewtwo
+**dr.mario, dr mario** → dr-mario
+**ganon** → ganondorf
+**dh** → duck-hunt
+**zss, zero suit samus** → zero-suit-samus

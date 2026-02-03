@@ -67,9 +67,6 @@ export const nicknameAliases = {
     "dr mario": "dr-mario",
     ganon: "ganondorf",
     dh: "duck-hunt",
-
-
-
     "Mr. G&W": "mr-game-and-watch",
     "mr g&w": "mr-game-and-watch",
     "g&w": "mr-game-and-watch",
