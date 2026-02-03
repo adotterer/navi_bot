@@ -82,7 +82,8 @@ export function normalizeCharacterText(text) {
     return text
         .toLowerCase()
         .replace(/['']/g, "")
-        .replace(/[^a-z0-9|\s]/g, " ")
+        .replace(/[|︱｜]/g, "|")
+        .replace(/[^a-z0-9|\s\-]/g, " ")
         .replace(/\s+/g, " ")
         .trim();
 }
