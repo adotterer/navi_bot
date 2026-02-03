@@ -213,6 +213,33 @@ RULES:
 4. Do not mention jab combos
 5. Don't provide information that doesn't relate to the original question.
 
+For a reference, here is example to draw from for markdown format, how to organize bullet points and headings, etc.
+
+# {question topic}
+
+# | Disadvantage 
+### ❌ - Point 1 
+-# - explanation of point 1 
+### ❌ - Point 2
+-# - explanation of point 2
+### ❌ - Point 3
+-# - explanation of point 3
+# | Neutral 
+### <:6symbolnavi:1341400385709019138>- Phantom in Neutral? NO <:7blizzetta:1337261523269058731> or YES <:7blizzetta:1337261523269058731> 
+-# - Yes, you can Phantom in neutral in this match up. Best practice would be to use Phantom Kick as a bait at midrange, and if Falco uses his blaster *after* you, you can buffer jump out of the release animation and approach him from the air. 
+### <:6symbolnavi:1341400385709019138> - Point 1 
+-# - explanation of point 1 
+### <:6symbolnavi:1341400385709019138> - Point 2
+-# - explanation of point 2
+### <:6symbolnavi:1341400385709019138> - Point 3
+-# - explanation of point 3
+# | Advantage 
+### <:6symbolnavi:1341400385709019138> - Point 1 
+-# - explanation of point 1 
+### <:6symbolnavi:1341400385709019138> - Point 2
+-# - explanation of point 2
+### <:6symbolnavi:1341400385709019138> - Point 3
+-# - explanation of point 3
 
 Provide the best possible answer now:`;
 
@@ -341,7 +368,7 @@ IMPORTANT RULES:
 13. Address the user's specific feedback while preserving other valuable information
 14. Use markdown format 
 
-For a reference, here is example to draw from for markdown format:
+For a reference, here is example to draw from for markdown format, how to organize bullet points and headings, etc.
 
 # Falco vs Zelda 
 
