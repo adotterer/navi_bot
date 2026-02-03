@@ -81,10 +81,11 @@ export const nicknameAliases = {
 export function normalizeCharacterText(text) {
     return text
         .toLowerCase()
-        .replace(/['']/g, "")
-        .replace(/[|︱｜]/g, "|")
-        .replace(/[^a-z0-9|\s\-]/g, " ")
-        .replace(/\s+/g, " ")
+        .replace(/['']s\b/g, "")           // Remove possessive 's (e.g., "peach's" -> "peach")
+        .replace(/['']/g, "")              // Remove other apostrophes
+        .replace(/[|︱｜]/g, "|")           // Normalize pipe characters
+        .replace(/[^a-z0-9|\s\-]/g, " ")  // Remove special characters except pipes, spaces, hyphens
+        .replace(/\s+/g, " ")              // Collapse multiple spaces
         .trim();
 }
 
@@ -131,12 +132,25 @@ export function resolveCharacterFromText(text, aliasMap) {
     const normalizedText = normalizeCharacterText(text);
     const aliases = Array.from(aliasMap.keys()).sort((a, b) => b.length - a.length);
 
+    let zeldaMatch = null;
+    let otherMatch = null;
+
     for (const alias of aliases) {
         const pattern = new RegExp(`(^|\\s)${escapeRegex(alias)}(\\s|$)`);
         if (pattern.test(normalizedText)) {
-            return { slug: aliasMap.get(alias), alias };
+            if (alias === 'zelda') {
+                zeldaMatch = { slug: aliasMap.get(alias), alias };
+            } else {
+                otherMatch = { slug: aliasMap.get(alias), alias };
+                break; // Found a non-zelda character, use it
+            }
         }
     }
 
+    // If we found a non-Zelda character, use that (ignore Zelda match)
+    if (otherMatch) {
+        return otherMatch;
+    }
+    // If we only found Zelda, return null (user needs to specify opponent)
     return null;
 }
