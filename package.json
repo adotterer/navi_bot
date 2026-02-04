@@ -13,7 +13,7 @@
   "description": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.490.0",
-    "@google/generative-ai": "^0.21.0",
+    "@google/genai": "^1.39.0",
     "axios": "^1.13.4",
     "discord.js": "^14.25.1",
     "dotenv": "^17.2.3",
