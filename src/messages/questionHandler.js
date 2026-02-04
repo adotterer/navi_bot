@@ -1,8 +1,10 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from '@google/genai';
 import { sendSplitMessage } from "../shared/messageSplitter.js";
 import { fetchFromS3, uploadToS3 } from "../shared/s3Helper.js";
 
-const genai = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const genAI = new GoogleGenAI({
+    apiKey: process.env.GOOGLE_API_KEY
+});
 
 export async function handleQuestion(message) {
     const content = message.content.trim();
@@ -43,9 +45,15 @@ ${question}
 
 Provide a concise, helpful answer using the context above when relevant. Keep your response focused and practical.`;
 
-        const model = genai.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const result = await model.generateContent(fullPrompt);
-        const answer = result.response.text();
+        const response = await genAI.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: [{
+                role: 'user',
+                parts: [{ text: fullPrompt }]
+            }]
+        });
+
+        const answer = response.response.text();
 
         await sendSplitMessage(message, answer, true);
     } catch (error) {
