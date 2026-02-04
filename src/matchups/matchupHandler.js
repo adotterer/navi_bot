@@ -3,7 +3,7 @@ import { fetchFromS3, isModelOverloaded, fetchAllMessages } from '../shared/s3He
 import { buildCharacterAliasMap, resolveCharacterFromText, relatedCharacters } from './characterAliases.js';
 import { sendSplitMessage } from '../shared/messageSplitter.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
-
+import { EmbedBuilder } from 'discord.js';
 const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
     defaultModel: process.env.GEMINI_MODEL || 'gemini-3-flash-preview'
@@ -17,7 +17,7 @@ const genAI = new GoogleGenAI({
 async function fetchMultiCharacterData(characterSlug) {
     const related = relatedCharacters[characterSlug] || [];
     const allCharacters = [characterSlug, ...related];
-    
+
     // Fetch all character data in parallel
     const dataPromises = allCharacters.map(async (char) => {
         try {
@@ -35,22 +35,22 @@ async function fetchMultiCharacterData(characterSlug) {
             return { character: char, messages: [], error: error.message };
         }
     });
-    
+
     const results = await Promise.all(dataPromises);
-    
+
     // Log any fetch failures
     results.forEach(r => {
         if (r.error) {
             console.warn(`Fetch failed for ${r.character}: ${r.error}`);
         }
     });
-    
+
     // Combine all messages
     const allMessages = results.flatMap(r => r.messages);
-    
+
     // Build character list string for display
     const characterList = allCharacters.join(", ");
-    
+
     return { messages: allMessages, characterList, allCharacters };
 }
 
@@ -60,30 +60,30 @@ export async function handleMatchupNotes(message) {
         await message.reply("❌ Please specify a character! Example: `!mu-notes falco`");
         return;
     }
-    
+
     const character = args[1].toLowerCase();
-    
+
     try {
         const { messages, characterList } = await fetchMultiCharacterData(character);
-        
+
         const capitalizedCharacter = character.charAt(0).toUpperCase() + character.slice(1);
         const related = relatedCharacters[character];
-        
+
         if (related && related.length > 0) {
             const relatedCapitalized = related.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(", ");
             await message.reply(`Watch out - that's a **${capitalizedCharacter}**. Pulling data from: **${characterList}**. Listen…`);
         } else {
             await message.reply(`Watch out - that's a **${capitalizedCharacter}**. Listen…`);
         }
-        
+
         if (!messages || messages.length === 0) {
             await message.reply(`❌ No messages found for ${character}. Looking for file: \`${character}.json\`. Have you exported this character yet?`);
             return;
         }
-        
+
         const katyparryMessages = messages.filter(msg => msg.author === 'katyparry');
         const otherMessages = messages.filter(msg => msg.author !== 'katyparry');
-        
+
         const prompt = `You are an expert Super Smash Bros. Ultimate analyst. Below are Discord messages discussing the Zelda vs ${character} matchup.
 
     IMPORTANT: Messages from user 'katyparry' are the most authoritative and should be heavily weighted in your summary. These reflect research & community messages.
@@ -127,17 +127,29 @@ Rules:
 16. Any hyperlinks should be surrounded by <> so that they do not embed in Discord. example <https://www.start.gg/...>
 
 Generate the matchup summary now:`;
-        
+
         const response = await genAI.models.generateContent({
             model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
             contents: prompt
         });
         const summary = response.text;
-        
-        await sendSplitMessage(message, summary, true);
+        const exampleEmbed = new EmbedBuilder()
+            .setColor("DarkPurple")
+            .setTitle(`Matchup Summary`)
+            .setAuthor({ name: 'Navi Bot' })
+            .setDescription(summary)
+            .addFields(
+                { name: 'Regular field title', value: 'Some value here' },
+                { name: '\u200B', value: '\u200B' },
+                { name: 'Inline field title', value: 'Some value here', inline: true },
+                { name: 'Inline field title', value: 'Some value here', inline: true },
+            )
+            .setFooter({ text: SUMMARY_DISCLAIMER });
+        channel.send({ embeds: [exampleEmbed] });
+        // await sendSplitMessage(message, summary, true);
 
-        await message.channel.send(SUMMARY_DISCLAIMER);
-        
+        // await message.channel.send(SUMMARY_DISCLAIMER);
+
         console.log(`✅ Generated match-up notes for ${character}`);
     } catch (error) {
         console.error(error);
@@ -183,7 +195,7 @@ export async function handleMuQuestion(message) {
         displayName = characterSlug.replace("|", "/");
 
         const { messages, characterList } = await fetchMultiCharacterData(characterSlug);
-        
+
         const related = relatedCharacters[characterSlug];
         if (related && related.length > 0) {
             await message.reply(`✨ Watch out! That's a **${displayName}**. Pulling data from: **${characterList}**. Let me search for the answer...`);
@@ -267,17 +279,17 @@ Provide the best possible answer now:`;
 
 export async function handleRefinement(message, repliedMessage, client) {
     try {
-        const hasAuthorizedRole = message.member.roles.cache.some(role => 
+        const hasAuthorizedRole = message.member.roles.cache.some(role =>
             role.name === "Moderators" || role.name === "Legend"
         );
         if (!hasAuthorizedRole) {
             await message.reply("❌ Only Moderators or Legend members can refine match-up notes.");
             return;
         }
-        
+
         const recentMessages = await message.channel.messages.fetch({ limit: 20 });
         let characterName = null;
-        
+
         for (const msg of recentMessages.values()) {
             if (msg.author.id === client.user.id && msg.content.includes("Watch out! That's a **")) {
                 const match = msg.content.match(/Watch out! That's a \*\*(.+?)\*\*/);
@@ -287,52 +299,52 @@ export async function handleRefinement(message, repliedMessage, client) {
                 }
             }
         }
-        
+
         if (!characterName) {
             await message.reply("❌ Could not determine which character's notes to refine. Please use !mu-notes <character> to generate fresh notes.");
             return;
         }
-        
+
         await message.reply(`⏳ Refining match-up notes for **${characterName}** based on your feedback...`);
-        
+
         let previousSummary = repliedMessage.content;
-        
+
         if (previousSummary.includes("**Part ")) {
             const allMessages = await message.channel.messages.fetch({ limit: 50 });
             const botMessages = Array.from(allMessages.values())
                 .filter(m => m.author.id === client.user.id && m.content.includes("**Part "))
                 .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
-            
+
             const repliedIndex = botMessages.findIndex(m => m.id === repliedMessage.id);
             if (repliedIndex !== -1) {
                 let startIndex = repliedIndex;
                 let endIndex = repliedIndex;
-                
+
                 while (startIndex > 0 && botMessages[startIndex - 1].content.includes("**Part ")) {
                     startIndex--;
                 }
-                
+
                 while (endIndex < botMessages.length - 1 && botMessages[endIndex + 1].content.includes("**Part ")) {
                     endIndex++;
                 }
-                
+
                 previousSummary = botMessages
                     .slice(startIndex, endIndex + 1)
                     .map(m => m.content.replace(/\*\*Part \d+:\*\*\n/, ''))
                     .join('');
             }
         }
-        
+
         const guild = message.guild;
         const channel = guild.channels.cache.find(ch => ch.name === characterName.toLowerCase());
-        
+
         if (!channel) {
             await message.reply(`❌ Channel for ${characterName} not found!`);
             return;
         }
-        
+
         const channelMessages = await fetchAllMessages(channel);
-        
+
         const userFeedback = message.content;
         const refinementPrompt = `You previously generated this match-up summary:
 
@@ -383,11 +395,11 @@ ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
             contents: refinementPrompt
         });
         const refinedSummary = response.text;
-        
+
         await sendSplitMessage(message, `**Refined Summary:**\n${refinedSummary}`, false);
 
         await message.channel.send(SUMMARY_DISCLAIMER);
-        
+
         console.log(`✅ Refined match-up notes for ${characterName} based on user feedback`);
     } catch (error) {
         if (isModelOverloaded(error)) {
