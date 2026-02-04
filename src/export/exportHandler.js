@@ -59,6 +59,14 @@ export async function handleExportCharacter(message) {
         await handleExportMatchups(message);
         return;
     }
+    if (lowerInput === "glossary") {
+        await handleExportGlossary(message);
+        return;
+    }
+    if (lowerInput === "fundies") {
+        await handleExportFundies(message);
+        return;
+    }
 
     const aliasMap = buildCharacterAliasMap(guild);
     const match = resolveCharacterFromText(lowerInput, aliasMap);
@@ -92,7 +100,7 @@ export async function handleExportMatchups(message) {
     const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
     
     try {
-        await message.reply("⏳ Exporting all Match Ups channels...");
+        await message.reply("⏳ Exporting all Match Ups channels, glossary, and fundies...");
         
         let totalChannels = 0;
         let totalMessages = 0;
@@ -129,6 +137,44 @@ export async function handleExportMatchups(message) {
                     console.error(`❌ Error exporting #${channel.name}:`, error.message);
                 }
             }
+        }
+
+        // Export glossary
+        try {
+            const glossaryChannel = guild.channels.cache.find(
+                ch => ch.isTextBased() && ch.name.toLowerCase().includes("glossary")
+            );
+            if (glossaryChannel) {
+                console.log(`📥 Exporting glossary...`);
+                const messages = await fetchAllMessages(glossaryChannel);
+                const jsonData = JSON.stringify(messages, null, 2);
+                const s3Url = await uploadToS3("glossary.json", jsonData);
+                exportedFiles.push(`[glossary](${s3Url}) - ${messages.length} messages`);
+                totalMessages += messages.length;
+                totalChannels++;
+                console.log(`✅ Exported glossary: ${messages.length} messages`);
+            }
+        } catch (error) {
+            console.error(`❌ Error exporting glossary:`, error.message);
+        }
+
+        // Export fundies
+        try {
+            const fundiesChannel = guild.channels.cache.find(
+                ch => ch.isTextBased() && ch.name.toLowerCase().includes("fundies")
+            );
+            if (fundiesChannel) {
+                console.log(`📥 Exporting fundies...`);
+                const messages = await fetchAllMessages(fundiesChannel);
+                const jsonData = JSON.stringify(messages, null, 2);
+                const s3Url = await uploadToS3("fundies.json", jsonData);
+                exportedFiles.push(`[fundies](${s3Url}) - ${messages.length} messages`);
+                totalMessages += messages.length;
+                totalChannels++;
+                console.log(`✅ Exported fundies: ${messages.length} messages`);
+            }
+        } catch (error) {
+            console.error(`❌ Error exporting fundies:`, error.message);
         }
         
         await message.reply(
@@ -189,5 +235,71 @@ export async function handleListThreadCounts(message) {
     } catch (error) {
         console.error(error);
         await message.reply("❌ Error counting messages: " + error.message);
+    }
+}
+
+async function handleExportGlossary(message) {
+    const guild = message.guild;
+    if (!guild) {
+        await message.reply("❌ This command must be used in a server.");
+        return;
+    }
+
+    try {
+        await message.reply(`⏳ Exporting glossary...`);
+
+        // Find glossary channel in the guild
+        const glossaryChannel = guild.channels.cache.find(
+            ch => ch.isTextBased() && ch.name.toLowerCase().includes("glossary")
+        );
+
+        if (!glossaryChannel) {
+            await message.reply(`❌ Glossary channel not found in this server.`);
+            return;
+        }
+
+        const messages = await fetchAllMessages(glossaryChannel);
+        const jsonData = JSON.stringify(messages, null, 2);
+        const filename = "glossary.json";
+
+        const s3Url = await uploadToS3(filename, jsonData);
+        await message.reply(`✅ Exported glossary: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        console.log(`✅ Exported ${messages.length} messages from glossary channel`);
+    } catch (error) {
+        console.error(error);
+        await message.reply("❌ Error exporting glossary: " + error.message);
+    }
+}
+
+async function handleExportFundies(message) {
+    const guild = message.guild;
+    if (!guild) {
+        await message.reply("❌ This command must be used in a server.");
+        return;
+    }
+
+    try {
+        await message.reply(`⏳ Exporting fundies...`);
+
+        // Find fundies channel in the guild
+        const fundiesChannel = guild.channels.cache.find(
+            ch => ch.isTextBased() && ch.name.toLowerCase().includes("fundies")
+        );
+
+        if (!fundiesChannel) {
+            await message.reply(`❌ Fundies channel not found in this server.`);
+            return;
+        }
+
+        const messages = await fetchAllMessages(fundiesChannel);
+        const jsonData = JSON.stringify(messages, null, 2);
+        const filename = "fundies.json";
+
+        const s3Url = await uploadToS3(filename, jsonData);
+        await message.reply(`✅ Exported fundies: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        console.log(`✅ Exported ${messages.length} messages from fundies channel`);
+    } catch (error) {
+        console.error(error);
+        await message.reply("❌ Error exporting fundies: " + error.message);
     }
 }

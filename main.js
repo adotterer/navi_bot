@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 // Import handlers
 import { handleExportCharacter, handleExportMatchups, handleListThreadCounts } from './src/export/exportHandler.js';
 import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/matchups/matchupHandler.js';
+import { handleQuestion } from './src/messages/questionHandler.js';
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
 import { initializeScheduler } from './src/shared/scheduler.js';
 import { checkTodaysTournaments } from './src/tournaments/dailyTournamentCheck.js';
@@ -116,6 +117,7 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!mu-q") ||
+        message.content.toLowerCase().startsWith("!q ") ||
         message.content.toLowerCase().startsWith("!list-categories") ||
         message.content.toLowerCase().startsWith("!matches-today") ||
         message.content.toLowerCase().startsWith("!add-zelda") ||
@@ -175,6 +177,12 @@ client.on("messageCreate", async (message) => {
     if (message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!mu-q")) {
         await handleMuQuestion(message);
+        return;
+    }
+
+    // ===== GENERAL QUESTION =====
+    if (message.content.toLowerCase().startsWith("!q ")) {
+        await handleQuestion(message);
         return;
     }
 
