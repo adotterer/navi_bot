@@ -1,0 +1,1 @@
+export const SUMMARY_DISCLAIMER = "-# - <:3symbolpieceofheart:1336147245371756656> *Note: Responses are summarized based on <@596207448935628812>'s research & community messages. Verify with trusted sources.*";

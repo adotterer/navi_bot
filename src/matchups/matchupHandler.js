@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { fetchFromS3, isModelOverloaded, fetchAllMessages } from '../shared/s3Helper.js';
 import { buildCharacterAliasMap, resolveCharacterFromText, relatedCharacters } from './characterAliases.js';
 import { sendSplitMessage } from '../shared/messageSplitter.js';
+import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
 
 const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -85,7 +86,7 @@ export async function handleMatchupNotes(message) {
         
         const prompt = `You are an expert Super Smash Bros. Ultimate analyst. Below are Discord messages discussing the Zelda vs ${character} matchup.
 
-IMPORTANT: Messages from user 'katyparry' are the most authoritative and should be heavily weighted in your summary.
+    IMPORTANT: Messages from user 'katyparry' are the most authoritative and should be heavily weighted in your summary. These reflect research & community messages.
 
 === PRIORITY MESSAGES (from katyparry) ===
 ${katyparryMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
@@ -94,36 +95,19 @@ ${katyparryMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
 ${otherMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
 
 === YOUR TASK ===
-Create a comprehensive matchup summary following this format. Falco and Lucas is just an example - adapt the content for ${character}.
+Create a comprehensive matchup summary following this format. This example is just a template - adapt the content for ${character}.
 
-# Falco vs Zelda 
-# > Disadvantage 
-## ❌- Don’t Try To Punish Down Tilt
--# - <:6symbolnavi:1341400385709019138> Lucas’s down tilt is -6 on shield. This move is extremely difficult to punish…etc
-## ✅ Use Nayru’s to Stall offstage 
--# - <:6symbolnavi:1341400385709019138> Using this tactic will allow you to outwait Lucas attempts to edgeguard you with bair, which will spike you if you get attacked.
-# > Neutral 
-blah blah blah
-etc.
-# > Advantage 
-etc.
-# > How does Falco kill Zelda?
-etc.
-# > How does Zelda kill Falco?
-etc.
-#  | Match Up Basics
-etc.
-##  | Stage Ban Priority 
-### ❌ - 1. Yoshi’s Island 
--# <:6symbolnavi:1341400385709019138> Platform extensions, easy for him to recover up the sides, Zelda can't ledge trap with Phantom, instant ban everytime
-### ❌ - 2. Town & City 
--# <:6symbolnavi:1341400385709019138> Platform extensions, can take advantage of the higher ceiling better than Zelda can
-### ❌ - 3. Kalos 
--# <:6symbolnavi:1341400385709019138> Easy for him to recover up the sides, can use the platforms to escape Zelda's ledgetrapping]
-### ❌ - 4. Battlefield 
--# <:6symbolnavi:1341400385709019138> Can be interchanged based on comfort level.
--# <:6symbolnavi:1341400385709019138> Platform extensions, can take advantage of the higher ceiling better than Zelda can.
-
+# Punishing Cloud's Forward Air
+## >  Strategy & Execution
+### ✅ Use Level 3 Phantom Trap
+-# - <:6symbolnavi:1341400385709019138> A reliable 50/50 mix-up involves jumping back while charging Phantom. If Cloud approaches with Fair, release the level 3 Phantom so he hits it and gets stuck in hitlag (Fair hitlag is extended for 21 frames). Wait for the Phantom pieces to break and the purple smoke to appear, then punish with a dash attack.
+### ✅ Parrying Landing Aerials
+-# - <:6symbolnavi:1341400385709019138> Parrying is the primary way to punish Cloud’s landing aerials like Fair, which are often safe on shield. A successful parry usually allows for a dash attack. Depending on the spacing, you may also be able to punish with a Lightning Kick or Up B.
+### ✅ Spacing with Aerials
+-# - <:6symbolnavi:1341400385709019138> Use empty hops to manage your positioning and bait the attack. Do not move towards Cloud while using your own Fair, as this is horrendously unsafe. Instead, properly space for a Bair, Fair, or a Short Hop Up Air to catch him after he commits to his Fair.
+### ❌ Avoid Immediate Shield Follow-ups
+-# - <:6symbolnavi:1341400385709019138> Do not always try to punish Cloud immediately after he hits your shield, as he tends to win close-quarters boxing situations. It is often better to hold shield, roll, or retreat. Staying grounded gives you better access to tilts and rolls to reposition safely.
+-# - <:3symbolpieceofheart:1336147245371756656> *Note: Responses are summarized based on <@596207448935628812>'s research & community messages. Verify with trusted sources.*
 
 Rules:
 1. Base everything on the actual messages provided
@@ -152,10 +136,7 @@ Generate the matchup summary now:`;
         
         await sendSplitMessage(message, summary, true);
 
-        await message.channel.send("-# Note: Responses are summarized based on community messages. Verify with trusted sources.");
-        
-        // Tag katyparry for verification
-        await message.channel.send(`-# <@596207448935628812> Please verify the above matchup notes are accurate! 🔎`);
+        await message.channel.send(SUMMARY_DISCLAIMER);
         
         console.log(`✅ Generated match-up notes for ${character}`);
     } catch (error) {
@@ -223,7 +204,7 @@ export async function handleMuQuestion(message) {
 QUESTION:
 "${rawQuestion}"
 
-IMPORTANT: Messages from user 'katyparry' are the most authoritative and should be heavily weighted in your answer.
+IMPORTANT: Messages from user 'katyparry' are the most authoritative and should be heavily weighted in your answer. These reflect research & community messages.
 
 === PRIORITY MESSAGES (from katyparry) ===
 ${katyparryMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
@@ -240,24 +221,18 @@ RULES:
 6. Do NOT add any blank lines between bullet pairs, between bullets and sections, or between sections. Keep compact formatting throughout with no extra empty lines.
 7. Do NOT mention any usernames or quote users. Present all advice as Navi Bot's own guidance (even if informed by those messages).
 
-For a reference, here is example to draw from for markdown format, how to organize bullet points and headings, etc. The actual content is just copy paste our styleguide:
+For a reference, here is example to draw from for markdown format, how to organize bullet points and headings, etc. The actual content is just copy paste from our styleguide:
 
-# {question topic}
-
-# > Fundamental Laws: Don'ts
-
-###  ❌ Do Not Buffer Defensive Options In Disadvantage
--# - <:6symbolnavi:1341400385709019138> Good players know to **wait** in their advantage state so they can **react** to you acting preemptively, 
-### ❌ Do Not Skip the Ledge
--# - <:6symbolnavi:1341400385709019138> Skipping the ledge usually involves burning a resource that is easy to react to (directional airdodge), or easy to punish by taking center stage (double jumping onto stage.) If you do not go to the ledge, you are making things VERY easy for your opponent, because now they don't have to work harder to frame trap you from the ledge. In addition, all of your options from the ledge will have intangibility, giving you a chance to navigate back to neutral. 
--# - <:6symbolnavi:1341400385709019138> Remember, when you're offstage you gain intangibility based on how long you've been offstage (see <#1466584974818803985> for more information. 
-### ❌ Do Not Rush the Kill
--# - <:6symbolnavi:1341400385709019138> When your opponent is at high percent - or at a percentage where you can kill them - only going for the kill is going to show them how you like to kill, and you will teach them how to avoid your attempts to kill. A good question to ask yourself is "Does my opponent even pay attention to **their own** percent? 
-# > Fundamental Laws: Dos
-### ✅ Do Keep Yourself Available
--# - <:6symbolnavi:1341400385709019138> Using non-committal options is generally best in **all** situations. If you act without **reason** or **purpose** - you will might opportunities that you could have taken advantage of.
-### ✅  Do Default to Center/Return to Center
--# - <:6symbolnavi:1341400385709019138> Stage control is the most important aspect to this game because it keeps your options free, and allows you to bait approaches and throw retreating aerials to occupy the space you were previously in, know as covering your **after-image**. In everything you do, you want to **default** to returning to center stage. If you throw out an attack and you miss, for example - you want to immediately dash back to **return** to center.
+# Punishing Cloud's Forward Air
+## >  Strategy & Execution
+### ✅ Use Level 3 Phantom Trap
+-# - <:6symbolnavi:1341400385709019138> A reliable 50/50 mix-up involves jumping back while charging Phantom. If Cloud approaches with Fair, release the level 3 Phantom so he hits it and gets stuck in hitlag (Fair hitlag is extended for 21 frames). Wait for the Phantom pieces to break and the purple smoke to appear, then punish with a dash attack.
+### ✅ Parrying Landing Aerials
+-# - <:6symbolnavi:1341400385709019138> Parrying is the primary way to punish Cloud’s landing aerials like Fair, which are often safe on shield. A successful parry usually allows for a dash attack. Depending on the spacing, you may also be able to punish with a Lightning Kick or Up B.
+### ✅ Spacing with Aerials
+-# - <:6symbolnavi:1341400385709019138> Use empty hops to manage your positioning and bait the attack. Do not move towards Cloud while using your own Fair, as this is horrendously unsafe. Instead, properly space for a Bair, Fair, or a Short Hop Up Air to catch him after he commits to his Fair.
+### ❌ Avoid Immediate Shield Follow-ups
+-# - <:6symbolnavi:1341400385709019138> Do not always try to punish Cloud immediately after he hits your shield, as he tends to win close-quarters boxing situations. It is often better to hold shield, roll, or retreat. Staying grounded gives you better access to tilts and rolls to reposition safely.
 
 Provide the best possible answer now:`;
 
@@ -269,10 +244,7 @@ Provide the best possible answer now:`;
         const answer = response.text;
         await sendSplitMessage(message, answer, true);
 
-        await message.channel.send("-# Note: Responses are summarized based on community messages. Verify with trusted sources.");
-
-        // Tag katyparry for verification
-        await message.channel.send(`-# <@596207448935628812> Please verify the above answer is accurate! 🔎`);
+        await message.channel.send(SUMMARY_DISCLAIMER);
 
         console.log(`✅ Answered MU question for ${displayName}`);
     } catch (error) {
@@ -390,20 +362,16 @@ IMPORTANT RULES:
 
 For a reference, here is example to draw from for markdown format, how to organize bullet points and headings, etc.
 
-# {question topic}
-
-###  ❌ Do Not Buffer Defensive Options In Disadvantage
--# - <:6symbolnavi:1341400385709019138> Good players know to **wait** in their advantage state so they can **react** to you acting preemptively, 
-### ❌ Do Not Skip the Ledge
--# - <:6symbolnavi:1341400385709019138> Skipping the ledge usually involves burning a resource that is easy to react to (directional airdodge), or easy to punish by taking center stage (double jumping onto stage.) If you do not go to the ledge, you are making things VERY easy for your opponent, because now they don't have to work harder to frame trap you from the ledge. In addition, all of your options from the ledge will have intangibility, giving you a chance to navigate back to neutral. 
--# - <:6symbolnavi:1341400385709019138> Remember, when you're offstage you gain intangibility based on how long you've been offstage (see <#1466584974818803985> for more information. 
-### ❌ Do Not Rush the Kill
--# - <:6symbolnavi:1341400385709019138> When your opponent is at high percent - or at a percentage where you can kill them - only going for the kill is going to show them how you like to kill, and you will teach them how to avoid your attempts to kill. A good question to ask yourself is "Does my opponent even pay attention to **their own** percent? 
-# > Fundamental Laws: Dos
-### ✅ Do Keep Yourself Available
--# - <:6symbolnavi:1341400385709019138> Using non-committal options is generally best in **all** situations. If you act without **reason** or **purpose** - you will might opportunities that you could have taken advantage of.
-### ✅  Do Default to Center/Return to Center
--# - <:6symbolnavi:1341400385709019138> Stage control is the most important aspect to this game because it keeps your options free, and allows you to bait approaches and throw retreating aerials to occupy the space you were previously in, know as covering your **after-image**. In everything you do, you want to **default** to returning to center stage. If you throw out an attack and you miss, for example - you want to immediately dash back to **return** to center.
+# Punishing Cloud's Forward Air
+## >  Strategy & Execution
+### ✅ Use Level 3 Phantom Trap
+-# - <:6symbolnavi:1341400385709019138> A reliable 50/50 mix-up involves jumping back while charging Phantom. If Cloud approaches with Fair, release the level 3 Phantom so he hits it and gets stuck in hitlag (Fair hitlag is extended for 21 frames). Wait for the Phantom pieces to break and the purple smoke to appear, then punish with a dash attack.
+### ✅ Parrying Landing Aerials
+-# - <:6symbolnavi:1341400385709019138> Parrying is the primary way to punish Cloud’s landing aerials like Fair, which are often safe on shield. A successful parry usually allows for a dash attack. Depending on the spacing, you may also be able to punish with a Lightning Kick or Up B.
+### ✅ Spacing with Aerials
+-# - <:6symbolnavi:1341400385709019138> Use empty hops to manage your positioning and bait the attack. Do not move towards Cloud while using your own Fair, as this is horrendously unsafe. Instead, properly space for a Bair, Fair, or a Short Hop Up Air to catch him after he commits to his Fair.
+### ❌ Avoid Immediate Shield Follow-ups
+-# - <:6symbolnavi:1341400385709019138> Do not always try to punish Cloud immediately after he hits your shield, as he tends to win close-quarters boxing situations. It is often better to hold shield, roll, or retreat. Staying grounded gives you better access to tilts and rolls to reposition safely.
 
 Original Discord Messages:
 ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
@@ -416,7 +384,7 @@ ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
         
         await sendSplitMessage(message, `**Refined Summary:**\n${refinedSummary}`, false);
 
-        await message.channel.send("-# Note: Responses are summarized based on community messages. Verify with trusted sources.");
+        await message.channel.send(SUMMARY_DISCLAIMER);
         
         console.log(`✅ Refined match-up notes for ${characterName} based on user feedback`);
     } catch (error) {
