@@ -52,6 +52,42 @@ export function initializeScheduler(client) {
                 }
             }
 
+            // Export glossary
+            try {
+                const glossaryChannel = guild.channels.cache.find(
+                    ch => ch.isTextBased() && ch.name.toLowerCase().includes("glossary")
+                );
+                if (glossaryChannel) {
+                    console.log(`📥 Exporting glossary...`);
+                    const messages = await fetchAllMessages(glossaryChannel);
+                    const jsonData = JSON.stringify(messages, null, 2);
+                    await uploadToS3("glossary.json", jsonData);
+                    totalMessages += messages.length;
+                    totalChannels++;
+                    console.log(`✅ Exported glossary: ${messages.length} messages`);
+                }
+            } catch (error) {
+                console.error(`❌ Error exporting glossary:`, error.message);
+            }
+
+            // Export fundies
+            try {
+                const fundiesChannel = guild.channels.cache.find(
+                    ch => ch.isTextBased() && ch.name.toLowerCase().includes("fundies")
+                );
+                if (fundiesChannel) {
+                    console.log(`📥 Exporting fundies...`);
+                    const messages = await fetchAllMessages(fundiesChannel);
+                    const jsonData = JSON.stringify(messages, null, 2);
+                    await uploadToS3("fundies.json", jsonData);
+                    totalMessages += messages.length;
+                    totalChannels++;
+                    console.log(`✅ Exported fundies: ${messages.length} messages`);
+                }
+            } catch (error) {
+                console.error(`❌ Error exporting fundies:`, error.message);
+            }
+
             const endTime = new Date();
             const duration = Math.round((endTime - startTime) / 1000); // seconds
             
