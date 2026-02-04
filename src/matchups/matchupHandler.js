@@ -134,17 +134,17 @@ Generate the matchup summary now:`;
         });
         const summary = response.text;
         const exampleEmbed = new EmbedBuilder()
-            .setColor("DarkPurple")
-            .setTitle(`Matchup Summary`)
+            .setColor("#36AAD4")
+            // .setTitle(`Matchup Summary`)
             .setAuthor({ name: 'Navi Bot' })
-            .setDescription(summary)
+            .setDescription(summary + '\n' + SUMMARY_DISCLAIMER)
             .addFields(
                 { name: 'Regular field title', value: 'Some value here' },
-                { name: '\u200B', value: '\u200B' },
-                { name: 'Inline field title', value: 'Some value here', inline: true },
                 { name: 'Inline field title', value: 'Some value here', inline: true },
             )
-            .setFooter({ text: SUMMARY_DISCLAIMER });
+
+
+
         message.channel.send({ embeds: [exampleEmbed] });
         // await sendSplitMessage(message, summary, true);
 
