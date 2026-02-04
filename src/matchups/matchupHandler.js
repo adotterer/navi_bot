@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { fetchFromS3, isModelOverloaded, fetchAllMessages } from '../shared/s3Helper.js';
 import { buildCharacterAliasMap, resolveCharacterFromText, relatedCharacters } from './characterAliases.js';
-import { sendSplitMessage } from '../shared/messageSplitter.js';
+import { sendSplitMessage, createSplitEmbeds } from '../shared/messageSplitter.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
 import { EmbedBuilder } from 'discord.js';
 const genAI = new GoogleGenAI({
@@ -61,30 +61,40 @@ export async function handleMatchupNotes(message) {
         return;
     }
 
-    const character = args[1].toLowerCase();
+    let characterSlug;
+    let displayName;
 
     try {
-        const { messages, characterList } = await fetchMultiCharacterData(character);
+        const aliasMap = buildCharacterAliasMap(message.guild);
+        const characterMatch = resolveCharacterFromText(args[1], aliasMap);
 
-        const capitalizedCharacter = character.charAt(0).toUpperCase() + character.slice(1);
-        const related = relatedCharacters[character];
+        if (!characterMatch) {
+            await message.reply("❌ I couldn't recognize that character. Please use the character name or a known alias. Example: `!mu-notes falco`");
+            return;
+        }
+
+        characterSlug = characterMatch.slug;
+        displayName = characterSlug.replace("|", "/");
+
+        const { messages, characterList } = await fetchMultiCharacterData(characterSlug);
+
+        const related = relatedCharacters[characterSlug];
 
         if (related && related.length > 0) {
-            const relatedCapitalized = related.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(", ");
-            await message.reply(`Watch out - that's a **${capitalizedCharacter}**. Pulling data from: **${characterList}**. Listen…`);
+            await message.reply(`Watch out - that's a **${displayName}**. Pulling data from: **${characterList}**. Listen…`);
         } else {
-            await message.reply(`Watch out - that's a **${capitalizedCharacter}**. Listen…`);
+            await message.reply(`Watch out - that's a **${displayName}**. Listen…`);
         }
 
         if (!messages || messages.length === 0) {
-            await message.reply(`❌ No messages found for ${character}. Looking for file: \`${character}.json\`. Have you exported this character yet?`);
+            await message.reply(`❌ No messages found for ${displayName}. Looking for file: \`${characterSlug}.json\`. Have you exported this character yet?`);
             return;
         }
 
         const katyparryMessages = messages.filter(msg => msg.author === 'katyparry');
         const otherMessages = messages.filter(msg => msg.author !== 'katyparry');
 
-        const prompt = `You are an expert Super Smash Bros. Ultimate analyst. Below are Discord messages discussing the Zelda vs ${character} matchup.
+        const prompt = `You are an expert Super Smash Bros. Ultimate analyst. Below are Discord messages discussing the Zelda vs ${displayName} matchup.
 
     IMPORTANT: Messages from user 'katyparry' are the most authoritative and should be heavily weighted in your summary. These reflect research & community messages.
 
@@ -133,21 +143,11 @@ Generate the matchup summary now:`;
             contents: prompt
         });
         const summary = response.text;
-        const exampleEmbed = new EmbedBuilder()
-            .setColor("#36AAD4")
-            // .setTitle(`Matchup Summary`)
-            // .setAuthor({ name: 'Navi Bot' })
-            .setDescription(summary)
-            .addFields({ name: '', value: SUMMARY_DISCLAIMER })
+        
+        const embeds = createSplitEmbeds(EmbedBuilder, summary, "#36AAD4", SUMMARY_DISCLAIMER);
+        message.channel.send({ embeds });
 
-
-
-        message.channel.send({ embeds: [exampleEmbed] });
-        // await sendSplitMessage(message, summary, true);
-
-        // await message.channel.send(SUMMARY_DISCLAIMER);
-
-        console.log(`✅ Generated match-up notes for ${character}`);
+        console.log(`✅ Generated match-up notes for ${displayName}`);
     } catch (error) {
         console.error(error);
         if (isModelOverloaded(error)) {
@@ -158,7 +158,7 @@ Generate the matchup summary now:`;
             return;
         }
         if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') {
-            await message.reply(`❌ File ${filename} not found in S3. Have you exported this character yet?`);
+            await message.reply(`❌ File ${characterSlug}.json not found in S3. Have you exported this character yet?`);
         } else {
             await message.reply("❌ Error generating match-up notes: " + error.message);
         }

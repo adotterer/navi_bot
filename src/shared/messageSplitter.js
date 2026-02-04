@@ -4,6 +4,7 @@
  */
 
 export const MAX_DISCORD_LENGTH = 1900; // Safe buffer below Discord's 2000 char limit
+export const MAX_EMBED_DESCRIPTION_LENGTH = 4096; // Discord's embed description limit
 
 /**
  * Splits a message into chunks that respect Discord's character limit while preserving:
@@ -167,4 +168,70 @@ export async function sendSplitMessage(message, text, useReply = false) {
             await message.channel.send(chunks[i]);
         }
     }
+}
+
+/**
+ * Splits text for Discord embed descriptions (4096 character limit).
+ * Uses the same safe-split logic as splitMessage to preserve Discord syntax.
+ * 
+ * @param {string} text - The text to split
+ * @param {number} maxLength - Maximum length per chunk (default: 4096)
+ * @returns {string[]} - Array of description chunks
+ */
+export function splitEmbedDescription(text, maxLength = MAX_EMBED_DESCRIPTION_LENGTH) {
+    if (!text) return [];
+    if (text.length <= maxLength) return [text];
+
+    const chunks = [];
+    let remainingText = text;
+
+    while (remainingText.length > 0) {
+        if (remainingText.length <= maxLength) {
+            chunks.push(remainingText);
+            break;
+        }
+
+        // Find the best split point within maxLength
+        let splitPoint = findSafeSplitPoint(remainingText, maxLength);
+        
+        chunks.push(remainingText.substring(0, splitPoint));
+        remainingText = remainingText.substring(splitPoint);
+    }
+
+    return chunks;
+}
+
+/**
+ * Creates an array of EmbedBuilder objects with split descriptions.
+ * Reuses the same safe-split logic as splitMessage and splitEmbedDescription.
+ * Adds "Part X of Y" indicators if content spans multiple embeds.
+ * Disclaimer field only appears on the final embed.
+ * 
+ * @param {Object} EmbedBuilder - Discord.js EmbedBuilder class
+ * @param {string} description - The full description text
+ * @param {string} color - Hex color code (e.g., "#36AAD4")
+ * @param {string|null} disclaimerField - Optional disclaimer text (only added to final embed)
+ * @returns {Array<EmbedBuilder>} - Array of configured EmbedBuilder objects
+ */
+export function createSplitEmbeds(EmbedBuilder, description, color, disclaimerField = null) {
+    const chunks = splitEmbedDescription(description);
+    
+    return chunks.map((chunk, index) => {
+        const embed = new EmbedBuilder().setColor(color);
+        
+        // Add "Part X of Y" indicator if multiple chunks
+        if (chunks.length > 1) {
+            const partIndicator = `**Part ${index + 1} of ${chunks.length}:**\n`;
+            embed.setDescription(partIndicator + chunk);
+        } else {
+            embed.setDescription(chunk);
+        }
+        
+        // Only add disclaimer field to the last embed
+        if (index === chunks.length - 1 && disclaimerField) {
+            embed.addFields({ name: '', value: disclaimerField });
+        }
+        
+        return embed;
+    });
 }
