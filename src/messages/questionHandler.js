@@ -1,7 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
-import { sendSplitMessage } from "../shared/messageSplitter.js";
+import { sendSplitMessage, createSplitEmbeds } from "../shared/messageSplitter.js";
 import { fetchFromS3 } from "../shared/s3Helper.js";
 import { SUMMARY_DISCLAIMER } from "../shared/responseNotices.js";
+import { EmbedBuilder } from 'discord.js';
 
 const genAI = new GoogleGenAI({
     apiKey: process.env.GOOGLE_API_KEY
@@ -75,9 +76,9 @@ Provide the best possible answer now:`;
         });
 
         const answer = response.text;
-
-        await sendSplitMessage(message, answer, true);
-        await message.channel.send(SUMMARY_DISCLAIMER);
+        
+        const embeds = createSplitEmbeds(EmbedBuilder, answer, "#36AAD4", SUMMARY_DISCLAIMER);
+        message.channel.send({ embeds });
     } catch (error) {
         console.error("Error in handleQuestion:", error);
         await message.reply("❌ Error processing question: " + error.message);

@@ -252,9 +252,9 @@ Provide the best possible answer now:`;
         });
 
         const answer = response.text;
-        await sendSplitMessage(message, answer, true);
-
-        await message.channel.send(SUMMARY_DISCLAIMER);
+        
+        const embeds = createSplitEmbeds(EmbedBuilder, answer, "#36AAD4", SUMMARY_DISCLAIMER);
+        message.channel.send({ embeds });
 
         console.log(`✅ Answered MU question for ${displayName}`);
     } catch (error) {
@@ -392,10 +392,10 @@ ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
             contents: refinementPrompt
         });
         const refinedSummary = response.text;
-
-        await sendSplitMessage(message, `**Refined Summary:**\n${refinedSummary}`, false);
-
-        await message.channel.send(SUMMARY_DISCLAIMER);
+        
+        const refinedWithTitle = `**Refined Summary:**\n${refinedSummary}`;
+        const embeds = createSplitEmbeds(EmbedBuilder, refinedWithTitle, "#36AAD4", SUMMARY_DISCLAIMER);
+        message.channel.send({ embeds });
 
         console.log(`✅ Refined match-up notes for ${characterName} based on user feedback`);
     } catch (error) {
