@@ -136,12 +136,9 @@ Generate the matchup summary now:`;
         const exampleEmbed = new EmbedBuilder()
             .setColor("#36AAD4")
             // .setTitle(`Matchup Summary`)
-            .setAuthor({ name: 'Navi Bot' })
-            .setDescription(summary + '\n' + SUMMARY_DISCLAIMER)
-            .addFields(
-                { name: 'Regular field title', value: 'Some value here' },
-                { name: 'Inline field title', value: 'Some value here', inline: true },
-            )
+            // .setAuthor({ name: 'Navi Bot' })
+            .setDescription(summary)
+            .addFields({ name: '', value: SUMMARY_DISCLAIMER })
 
 
 
