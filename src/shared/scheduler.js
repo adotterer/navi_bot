@@ -176,7 +176,14 @@ export function initializeScheduler(client) {
                         timeZone: 'America/New_York'
                     });
                     const streamInfo = tournament.streams.length > 0
-                        ? tournament.streams.map(s => `${s.streamName} (${s.streamSource})`).join(', ')
+                        ? tournament.streams.map(s => {
+                            if (s.streamSource === 'TWITCH') {
+                                return `<https://twitch.tv/${s.streamName}>`;
+                            } else if (s.streamSource === 'YOUTUBE') {
+                                return `<https://youtube.com/@${s.streamName}>`;
+                            }
+                            return `${s.streamName} (${s.streamSource})`;
+                        }).join(', ')
                         : 'No streams listed';
 
                     const playersList = tournament.zeldaPlayers
@@ -188,7 +195,7 @@ export function initializeScheduler(client) {
                         `🎮 Event: ${tournament.eventName}\n` +
                         `👤 Zelda Player(s):\n${playersList}\n` +
                         `📺 Streams: ${streamInfo}\n` +
-                        `🔗 https://www.start.gg/${tournament.tournamentSlug}`;
+                        `🔗 <https://www.start.gg/${tournament.tournamentSlug}>`;
 
                     await channel.send(messageContent);
                     postedCount++;
