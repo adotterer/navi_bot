@@ -20,6 +20,10 @@ export function initializeScheduler(client) {
             const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
             let totalChannels = 0;
             let totalMessages = 0;
+            let glossaryMessages = 0;
+            let fundiesMessages = 0;
+            let glossaryExported = false;
+            let fundiesExported = false;
             const startTime = new Date();
 
             for (const categoryName of categoryNames) {
@@ -62,6 +66,8 @@ export function initializeScheduler(client) {
                     const messages = await fetchAllMessages(glossaryChannel);
                     const jsonData = JSON.stringify(messages, null, 2);
                     await uploadToS3("glossary.json", jsonData);
+                    glossaryMessages = messages.length;
+                    glossaryExported = true;
                     totalMessages += messages.length;
                     totalChannels++;
                     console.log(`✅ Exported glossary: ${messages.length} messages`);
@@ -80,6 +86,8 @@ export function initializeScheduler(client) {
                     const messages = await fetchAllMessages(fundiesChannel);
                     const jsonData = JSON.stringify(messages, null, 2);
                     await uploadToS3("fundies.json", jsonData);
+                    fundiesMessages = messages.length;
+                    fundiesExported = true;
                     totalMessages += messages.length;
                     totalChannels++;
                     console.log(`✅ Exported fundies: ${messages.length} messages`);
@@ -94,7 +102,12 @@ export function initializeScheduler(client) {
             console.log(`✅ Weekly export completed: ${totalChannels} channels, ${totalMessages} total messages`);
             
             // Send notification to Moderators chat channel
-            await notifyModerators(guild, totalChannels, totalMessages, duration);
+            await notifyModerators(guild, totalChannels, totalMessages, duration, {
+                glossaryExported,
+                glossaryMessages,
+                fundiesExported,
+                fundiesMessages
+            });
         } catch (error) {
             console.error('❌ Scheduled export failed:', error);
             // Still notify moderators of failure
@@ -197,7 +210,7 @@ export function initializeScheduler(client) {
 }
 
 // Helper function to send success notification to audit-logs
-async function notifyModerators(guild, channelsExported, messagesExported, duration) {
+async function notifyModerators(guild, channelsExported, messagesExported, duration, extraExports = {}) {
     try {
         // Find the audit-logs channel
         const auditLogsChannel = guild.channels.cache.find(
@@ -210,7 +223,14 @@ async function notifyModerators(guild, channelsExported, messagesExported, durat
         }
 
         // Send notification
-        const message = `✅ **Daily Matchup Export Complete**\n\n📊 Summary:\n• **Channels Exported:** ${channelsExported}\n• **Total Messages:** ${messagesExported.toLocaleString()}\n• **Duration:** ${duration}s\n• **Status:** All data synced to S3 for AI analysis\n\n🤖 Your matchup AI now has the latest community insights!`;
+        const glossaryLine = extraExports.glossaryExported
+            ? `• **Glossary:** ${extraExports.glossaryMessages.toLocaleString()} messages`
+            : `• **Glossary:** Not found`;
+        const fundiesLine = extraExports.fundiesExported
+            ? `• **Fundies:** ${extraExports.fundiesMessages.toLocaleString()} messages`
+            : `• **Fundies:** Not found`;
+
+        const message = `✅ **Daily Export Complete**\n\n📊 Summary:\n• **Channels Exported:** ${channelsExported}\n• **Total Messages:** ${messagesExported.toLocaleString()}\n• **Duration:** ${duration}s\n${glossaryLine}\n${fundiesLine}\n• **Status:** All data synced to S3 for AI analysis\n\n🤖 Navi now has the latest community insights!`;
 
         await auditLogsChannel.send(message);
         console.log('📢 Notification sent to audit-logs');
