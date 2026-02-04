@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { sendSplitMessage } from "../shared/messageSplitter.js";
-import { fetchFromS3, uploadToS3 } from "../shared/s3Helper.js";
+import { fetchFromS3 } from "../shared/s3Helper.js";
 
 const genAI = new GoogleGenAI({
     apiKey: process.env.GOOGLE_API_KEY
@@ -43,19 +43,37 @@ export async function handleQuestion(message) {
 ${contextString ? `**Available Context:**\n${contextString}\n\n` : ""}**User Question:**
 ${question}
 
-Provide a concise, helpful answer using the context above when relevant. Keep your response focused and practical.`;
+RULES:
+1. Answer only using information from the context above
+2. If the context doesn't address the question, say you couldn't find relevant information
+3. Be concise and actionable
+4. Use Discord markdown formatting (**, *, headings)
+5. Do NOT add any blank lines between bullet pairs, between bullets and sections, or between sections. Keep compact formatting throughout with no extra empty lines.
+6. Do NOT mention any usernames. Present all advice as Navi Bot's own guidance.
+
+For reference, here is the format style to follow:
+
+# Question Topic
+
+### ✅ Key Strategy
+-# - <:6symbolnavi:1341400385709019138> Explanation of the strategy and why it works effectively.
+-# - <:6symbolnavi:1341400385709019138> Additional context or related information if relevant.
+
+### ❌ Common Mistake
+-# - <:6symbolnavi:1341400385709019138> What to avoid and why it doesn't work in this situation.
+
+Provide the best possible answer now:`;
 
         const response = await genAI.models.generateContent({
-            model: 'gemini-1.5-flash',
-            contents: [{
-                role: 'user',
-                parts: [{ text: fullPrompt }]
-            }]
+            model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
+            contents: fullPrompt
         });
 
-        const answer = response.response.text();
+        const answer = response.text;
 
         await sendSplitMessage(message, answer, true);
+        await message.channel.send("-# Note: Responses are summarized based on community messages. Verify with trusted sources.");
+        await message.channel.send(`-# <@596207448935628812> Please verify the above answer is accurate! 🔎`);
     } catch (error) {
         console.error("Error in handleQuestion:", error);
         await message.reply("❌ Error processing question: " + error.message);
