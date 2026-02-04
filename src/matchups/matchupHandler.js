@@ -105,7 +105,7 @@ ${katyparryMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
 ${otherMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
 
 === YOUR TASK ===
-Create a comprehensive matchup summary following this format. This example is just a template - adapt the content for ${character}.
+Create a comprehensive matchup summary following this format. This example is just a template - adapt the content for ${displayName}.
 
 # Punishing Cloud's Forward Air
 ## >  Strategy & Execution
