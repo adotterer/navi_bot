@@ -303,7 +303,7 @@ client.on("messageCreate", async (message) => {
                     `🎮 Event: ${tournament.eventName}\n` +
                     `👤 Zelda Player(s):\n${playersList}\n` +
                     `📺 Streams: ${streamInfo}\n` +
-                    `🔗 https://www.start.gg/${tournament.tournamentSlug}`;
+                    `🔗 <https://www.start.gg/${tournament.tournamentSlug}>`;
 
                 await message.channel.send(messageContent);
             }
