@@ -97,18 +97,19 @@ ${otherMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
 Create a comprehensive matchup summary following this format. Falco and Lucas is just an example - adapt the content for ${character}.
 
 # Falco vs Zelda 
-# | Disadvantage 
+# > Disadvantage 
 ## ❌- Don’t Try To Punish Down Tilt
 -# - <:6symbolnavi:1341400385709019138> Lucas’s down tilt is -6 on shield. This move is extremely difficult to punish…etc
 ## ✅ Use Nayru’s to Stall offstage 
 -# - <:6symbolnavi:1341400385709019138> Using this tactic will allow you to outwait Lucas attempts to edgeguard you with bair, which will spike you if you get attacked.
-# | Neutral 
+# > Neutral 
+blah blah blah
 etc.
-# | Advantage 
+# > Advantage 
 etc.
-# | How does Falco kill Zelda?
+# > How does Falco kill Zelda?
 etc.
-# | How does Zelda kill Falco?
+# > How does Zelda kill Falco?
 etc.
 #  | Match Up Basics
 etc.
@@ -243,7 +244,7 @@ For a reference, here is example to draw from for markdown format, how to organi
 
 # {question topic}
 
-# | Disadvantage 
+# > Disadvantage 
 ## ❌- Don’t Try To Punish Down Tilt
 -# - <:6symbolnavi:1341400385709019138> Lucas’s down tilt is -6 on shield. This move is extremely difficult to punish…etc
 ## ✅ Use Nayru’s to Stall offstage 
@@ -382,7 +383,7 @@ For a reference, here is example to draw from for markdown format, how to organi
 
 # Falco vs Zelda 
 
-# | Disadvantage 
+# > Disadvantage 
 ## ❌- Don’t Try To Punish Down Tilt
 -# - <:6symbolnavi:1341400385709019138> Lucas’s down tilt is -6 on shield. This move is extremely difficult to punish…etc
 ## ✅ Use Nayru’s to Stall offstage 
