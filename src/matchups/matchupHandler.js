@@ -145,7 +145,7 @@ Generate the matchup summary now:`;
                 { name: 'Inline field title', value: 'Some value here', inline: true },
             )
             .setFooter({ text: SUMMARY_DISCLAIMER });
-        channel.send({ embeds: [exampleEmbed] });
+        message.channel.send({ embeds: [exampleEmbed] });
         // await sendSplitMessage(message, summary, true);
 
         // await message.channel.send(SUMMARY_DISCLAIMER);
