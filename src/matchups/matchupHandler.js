@@ -107,7 +107,6 @@ Create a comprehensive matchup summary following this format. This example is ju
 -# - <:6symbolnavi:1341400385709019138> Use empty hops to manage your positioning and bait the attack. Do not move towards Cloud while using your own Fair, as this is horrendously unsafe. Instead, properly space for a Bair, Fair, or a Short Hop Up Air to catch him after he commits to his Fair.
 ### ❌ Avoid Immediate Shield Follow-ups
 -# - <:6symbolnavi:1341400385709019138> Do not always try to punish Cloud immediately after he hits your shield, as he tends to win close-quarters boxing situations. It is often better to hold shield, roll, or retreat. Staying grounded gives you better access to tilts and rolls to reposition safely.
--# - <:3symbolpieceofheart:1336147245371756656> *Note: Responses are summarized based on <@596207448935628812>'s research & community messages. Verify with trusted sources.*
 
 Rules:
 1. Base everything on the actual messages provided
