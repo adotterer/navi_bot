@@ -40,6 +40,9 @@ const MOVE_ABBREVIATIONS = {
     'ftilt': 'Forward Tilt',
     'utilt': 'Up Tilt',
     'dtilt': 'Down Tilt',
+    'pivotgrab': 'Pivot Grab',
+    'pivot grab': 'Pivot Grab',
+    'pivot': 'Pivot Grab',
 };
 
 const frameDataCache = {};

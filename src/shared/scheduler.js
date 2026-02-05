@@ -207,7 +207,7 @@ export function initializeScheduler(client) {
     // Runs daily at 8:30 AM EST to check for Zelda players in tournaments
     // Cron format: minute hour day month dayOfWeek
     // '30 8 * * *' = Every day at 8:30 AM America/New_York
-    const dailyTournamentTask = cron.schedule('30 8 * * *', async () => {
+    const dailyTournamentTask = cron.schedule('30 11 * * *', async () => {
         console.log('🎮 Starting daily tournament check for Zelda players...');
         
         try {
