@@ -209,7 +209,7 @@ export async function handleStatsLookup(message, args) {
         });
         
         const embed = new EmbedBuilder()
-            .setColor('#FFD700')
+            .setColor("#36AAD4")
             .setTitle(`📊 ${displayName}`)
             .setDescription(`**${charDisplayName}**\n\n${statsText}`)
         
