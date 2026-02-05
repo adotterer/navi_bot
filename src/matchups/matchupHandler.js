@@ -118,6 +118,20 @@ Create a comprehensive matchup summary following this format. This example is ju
 ### ❌ Avoid Immediate Shield Follow-ups
 -# - <:6symbolnavi:1341400385709019138> Do not always try to punish Cloud immediately after he hits your shield, as he tends to win close-quarters boxing situations. It is often better to hold shield, roll, or retreat. Staying grounded gives you better access to tilts and rolls to reposition safely.
 
+
+<:6symbolnavi:1341400385709019138> is the default icon for Navi Bot's advice bullet points
+
+you may also use these when relevant:
+
+<:6symbolnavi:1341400385709019138> general/tips 
+<:6acnlganon:1341460148161609930> General hazard, MU specific stuff/MU knowledge you can use against them
+<a:6mcgoddessservingfarore:1343330440240693270> General Farore's/Up Oos tip
+<a:6mcgoddessservingnayru:1343320090984054817> General Nayru's tech/tip in the MU
+<a:6mcgoddessservingdin:1341429490177413120> Din's fire is potent in this scenario/tech
+<a:6mcgoddesslookingfarore:1343332732738080918> Up B hazard, don't Up against this move, etc.
+<a:6mcgoddesslookingnayru:1343327209590620171> Don't guess with Nayru's/reflect
+<a:6mcgoddesslookingdin:1343327832675192922> Don't use Din's in this scenario
+
 Rules:
 1. Base everything on the actual messages provided
 2. Do NOT make up information not mentioned in the messages
@@ -245,6 +259,19 @@ For a reference, here is example to draw from for markdown format, how to organi
 -# - <:6symbolnavi:1341400385709019138> Use empty hops to manage your positioning and bait the attack. Do not move towards Cloud while using your own Fair, as this is horrendously unsafe. Instead, properly space for a Bair, Fair, or a Short Hop Up Air to catch him after he commits to his Fair.
 ### ❌ Avoid Immediate Shield Follow-ups
 -# - <:6symbolnavi:1341400385709019138> Do not always try to punish Cloud immediately after he hits your shield, as he tends to win close-quarters boxing situations. It is often better to hold shield, roll, or retreat. Staying grounded gives you better access to tilts and rolls to reposition safely.
+
+<:6symbolnavi:1341400385709019138> is the default icon for Navi Bot's advice bullet points
+
+you may also use these when relevant:
+
+<:6symbolnavi:1341400385709019138> general/tips 
+<:6acnlganon:1341460148161609930> General hazard, MU specific stuff/MU knowledge you can use against them
+<a:6mcgoddessservingfarore:1343330440240693270> General Farore's/Up Oos tip
+<a:6mcgoddessservingnayru:1343320090984054817> General Nayru's tech/tip in the MU
+<a:6mcgoddessservingdin:1341429490177413120> Din's fire is potent in this scenario/tech
+<a:6mcgoddesslookingfarore:1343332732738080918> Up B hazard, don't Up against this move, etc.
+<a:6mcgoddesslookingnayru:1343327209590620171> Don't guess with Nayru's/reflect
+<a:6mcgoddesslookingdin:1343327832675192922> Don't use Din's in this scenario
 
 Provide the best possible answer now:`;
 
