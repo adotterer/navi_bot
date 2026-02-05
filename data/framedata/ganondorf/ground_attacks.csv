@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab,7,26,,,11.0,13,10,,-8,7—8,18
-Forward Tilt,10,39,,,13.0/14.0,9/10,12/13,,-17/-16,10—12,27
-Up Tilt,60,95,,Flames hit on frame 62 above Ganon,24.0/13.0,14/9,21/12,,-14,60—61(62—63) / Windboxes 6—52,43
-Down Tilt,10,35,,,14.0,10,13,,-12,10—12,23
-Dash Attack,10,37,,,15.0/11.0,10/8,14/13,,-13/-11,10—12/13—19,18
-Forward Smash,29,69,,Charge hold is frame 14. Hits targets above him on frame 29,24.0,14,15,,-24,29—31,38
-Up Smash,20,61,,Charge hold is frame 9,24.0/21.0,14/13,15/14,,-25,20—25,36
-Down Smash,15/35,59,,Charge hold is frame 4,5.0/15.0,6/10,4/10,,-39/-13,15—18/35—38,21
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab,7,26,,,11.0,13,10,,-8,7—8,18,https://ultimateframedata.com/hitboxes/ganondorf/GanondorfJab.gif
+Forward Tilt,10,39,,,13.0/14.0,9/10,12/13,Close/Far,-17/-16,10—12,27,https://ultimateframedata.com/hitboxes/ganondorf/GanondorfFTilt.gif
+Up Tilt,60,95,,Flames hit on frame 62 above Ganon,24.0/13.0,14/9,21/12,Early and Late leg/Late explosion,-14,60—61(62—63) / Windboxes 6—52,43,https://ultimateframedata.com/hitboxes/ganondorf/GanondorfUTilt.gif
+Down Tilt,10,35,,,14.0,10,13,,-12,10—12,23,https://ultimateframedata.com/hitboxes/ganondorf/GanondorfDTilt.gif
+Dash Attack,10,37,,,15.0/11.0,10/8,14/13,Early/Late,-13/-11,10—12/13—19,18,https://ultimateframedata.com/hitboxes/ganondorf/GanondorfDashAttack.gif
+Forward Smash,29,69,,Charge hold is frame 14. Hits targets above him on frame 29,24.0,14,15,,-24,29—31,38,https://ultimateframedata.com/hitboxes/ganondorf/GanondorfFSmash.gif
+Up Smash,20,61,,Charge hold is frame 9,24.0/21.0,14/13,15/14,Far/Close,-25,20—25,36,https://ultimateframedata.com/hitboxes/ganondorf/GanondorfUSmash.gif
+Down Smash,15/35,59,,Charge hold is frame 4,5.0/15.0,6/10,4/10,First/Second,-39/-13,15—18/35—38,21,https://ultimateframedata.com/hitboxes/ganondorf/GanondorfDSmash.gif

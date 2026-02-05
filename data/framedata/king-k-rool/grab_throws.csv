@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,8,40,,,,,,,,8—10,30
-Dash Grab,11,48,,,,,,,,11—13,35
-Pivot Grab,12,43,,,,,,,,12—14,29
-Pummel,,,,**,**,,,,,,
-Forward Throw,28,39,,,**,,,,,,
-Backward Throw,32,62,,,**,,,,,,
-Up Throw,67,103,,,**,,,,,,
-Down Throw,40,73,,Buries,**,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,8,40,,,,,,,,8—10,30,https://ultimateframedata.com/hitboxes/king_k_rool/KingKRoolGrab.gif
+Dash Grab,11,48,,,,,,,,11—13,35,https://ultimateframedata.com/hitboxes/king_k_rool/KingKRoolDashGrab.gif
+Pivot Grab,12,43,,,,,,,,12—14,29,https://ultimateframedata.com/hitboxes/king_k_rool/KingKRoolPivotGrab.gif
+Pummel,,,,**,**,,,,,,,https://ultimateframedata.com/hitboxes/king_k_rool/KingKRoolPummel.gif
+Forward Throw,28,39,,,**,,,,,,,https://ultimateframedata.com/hitboxes/king_k_rool/KingKRoolFThrow.gif
+Backward Throw,32,62,,,**,,,,,,,https://ultimateframedata.com/hitboxes/king_k_rool/KingKRoolBThrow.gif
+Up Throw,67,103,,,**,,,,,,,https://ultimateframedata.com/hitboxes/king_k_rool/KingKRoolUThrow.gif
+Down Throw,40,73,,Buries,**,,,,,,,https://ultimateframedata.com/hitboxes/king_k_rool/KingKRoolDThrow.gif

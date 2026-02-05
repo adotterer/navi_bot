@@ -1,5 +1,5 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Egg Lay),19,49/41,,Egg appears on frame 33 when successful. Total frames when successful is 62. Total frames is 41 on whiff.,,,,,,19—22,27
-Side B (Egg Roll),32,--,,Takes 39 frames to emerge.,10.8—12.8,8—9,10—12,,-29 to -27,,
-Up B (Egg Throw),16,55,,Eggs explode automatically on frame 60.,6.0,6,3,,-30,16—**,
-"Down B (Yoshi Bomb, Yoshi Bomb Air)","7/27, 19","77, --","39, 39","Total frames assumes level ground. Passes through platforms, voluntarily if you fall long enough. Stars appear on frame 4 of landing.","4.0/15.0/4.0, 12.0/4.0","5/10/3, 9/3","5/14/0, 11/0",,"-32, -32","7/27/*, 19/*",
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Egg Lay),19,49/41,,Egg appears on frame 33 when successful. Total frames when successful is 62. Total frames is 41 on whiff.,,,,,,19—22,27,https://ultimateframedata.com/hitboxes/yoshi/YoshiEggLay.gif
+Side B (Egg Roll),32,--,,Takes 39 frames to emerge.,10.8—12.8,8—9,10—12,,-29 to -27,,,https://ultimateframedata.com/hitboxes/yoshi/YoshiEggRoll.png
+Up B (Egg Throw),16,55,,Eggs explode automatically on frame 60.,6.0,6,3,,-30,16—**,,https://ultimateframedata.com/hitboxes/yoshi/YoshiEggThrow.png
+"Down B (Yoshi Bomb, Yoshi Bomb Air)","7/27, 19","77, --","39, 39","Total frames assumes level ground. Passes through platforms, voluntarily if you fall long enough. Stars appear on frame 4 of landing.","4.0/15.0/4.0, 12.0/4.0","5/10/3, 9/3","5/14/0, 11/0","Rising/falling/star, falling/star","-32, -32","7/27/*, 19/*",,https://ultimateframedata.com/hitboxes/yoshi/YoshiYoshiBombG.gif

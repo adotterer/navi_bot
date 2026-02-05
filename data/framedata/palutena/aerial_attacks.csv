@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral Air,5...,51,12,"Autocancels on frame 1-3 and 40 onward. Final hitbox has an inner and outer circle as of 7.0.0 -- inner circle only hits aerial opponents, outer circle only hits grounded opponents.",1.4/5.0,4/9,2/3,,-10/-9,5—27/29—30 (rehit: 4),21
-Forward Air,9,44,9,Autocancels on frame 1-3 and 24 onward,10.0,8,4,,-5,9—11,33
-Back Air,8,49,10,Arm invinicibility on frame 7-10. Autocancels on frame 1-2 and 35 onward,12.0,11,5,,-5,8—10,39
-Up Air,10...,51,14,Autocancels on frame 1-2 and 42 onward,1.0/5.0,4/9,2/3,,-12/-11,10—22/24—25 (rehit: 3),26
-Down Air,10,58,11,Autocancels on frame 1-2 and 48 onward,11.0,13,4,,-7,10—11,47
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,5...,51,12,"Autocancels on frame 1-3 and 40 onward. Final hitbox has an inner and outer circle as of 7.0.0 -- inner circle only hits aerial opponents, outer circle only hits grounded opponents.",1.4/5.0,4/9,2/3,Multi/Final,-10/-9,5—27/29—30 (rehit: 4),21,https://ultimateframedata.com/hitboxes/palutena/PalutenaNAir.gif
+Forward Air,9,44,9,Autocancels on frame 1-3 and 24 onward,10.0,8,4,,-5,9—11,33,https://ultimateframedata.com/hitboxes/palutena/PalutenaFAir.gif
+Back Air,8,49,10,Arm invinicibility on frame 7-10. Autocancels on frame 1-2 and 35 onward,12.0,11,5,,-5,8—10,39,https://ultimateframedata.com/hitboxes/palutena/PalutenaBAir.gif
+Up Air,10...,51,14,Autocancels on frame 1-2 and 42 onward,1.0/5.0,4/9,2/3,Multi/Final,-12/-11,10—22/24—25 (rehit: 3),26,https://ultimateframedata.com/hitboxes/palutena/PalutenaUAir.gif
+Down Air,10,58,11,Autocancels on frame 1-2 and 48 onward,11.0,13,4,,-7,10—11,47,https://ultimateframedata.com/hitboxes/palutena/PalutenaDAir.gif

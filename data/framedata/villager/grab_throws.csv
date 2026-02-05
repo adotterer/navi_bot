@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,14,43,,,,,,,,14—16,27
-Dash Grab,16,47,,,,,,,,16—18,29
-Pivot Grab,17,44,,,,,,,,17—19,25
-Pummel,3,19,,Total frames includes 13 frames of hitlag,1.3,,,,,,
-Forward Throw,15,45,,,9.0,,,,,,
-Backward Throw,11,45,,,11.0,,,,,,
-Up Throw,13,45,,,10.0,,,,,,
-Down Throw,18,35,,,6.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,14,43,,,,,,,,14—16,27,https://ultimateframedata.com/hitboxes/villager/VillagerGrab.gif
+Dash Grab,16,47,,,,,,,,16—18,29,https://ultimateframedata.com/hitboxes/villager/VillagerDashGrab.gif
+Pivot Grab,17,44,,,,,,,,17—19,25,https://ultimateframedata.com/hitboxes/villager/VillagerPivotGrab.gif
+Pummel,3,19,,Total frames includes 13 frames of hitlag,1.3,,,,,,,https://ultimateframedata.com/hitboxes/villager/VillagerPummel.gif
+Forward Throw,15,45,,,9.0,,,,,,,https://ultimateframedata.com/hitboxes/villager/VillagerFThrow.gif
+Backward Throw,11,45,,,11.0,,,,,,,https://ultimateframedata.com/hitboxes/villager/VillagerBThrow.gif
+Up Throw,13,45,,,10.0,,,,,,,https://ultimateframedata.com/hitboxes/villager/VillagerUThrow.gif
+Down Throw,18,35,,,6.0,,,,,,,https://ultimateframedata.com/hitboxes/villager/VillagerDThrow.gif

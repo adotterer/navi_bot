@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,12,58,,,,,,,,12—33,25
-Dash Grab,14,66,,,,,,,,14—35,31
-Pivot Grab,15,61,,,,,,,,15—36,25
-Pummel,1,19,,Total frames includes 13 frames of hitlag,1.3,,,,,,
-Forward Throw,13,33,,,8.0,,,,,,
-Backward Throw,25,59,,,11.0,,,,,,
-Up Throw,18,37,,,5.0,,,,,,
-Down Throw,16/24/32/34,64,,multi/final,1.5/6.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,12,58,,,,,,,,12—33,25,https://ultimateframedata.com/hitboxes/pac_man/PacManGrab.gif
+Dash Grab,14,66,,,,,,,,14—35,31,https://ultimateframedata.com/hitboxes/pac_man/PacManDashGrab.gif
+Pivot Grab,15,61,,,,,,,,15—36,25,https://ultimateframedata.com/hitboxes/pac_man/PacManPivotGrab.gif
+Pummel,1,19,,Total frames includes 13 frames of hitlag,1.3,,,,,,,https://ultimateframedata.com/hitboxes/pac_man/PacManPummel.gif
+Forward Throw,13,33,,,8.0,,,,,,,https://ultimateframedata.com/hitboxes/pac_man/PacManFThrow.gif
+Backward Throw,25,59,,,11.0,,,,,,,https://ultimateframedata.com/hitboxes/pac_man/PacManBThrow.gif
+Up Throw,18,37,,,5.0,,,,,,,https://ultimateframedata.com/hitboxes/pac_man/PacManUThrow.gif
+Down Throw,16/24/32/34,64,,multi/final,1.5/6.0,,,,,,,https://ultimateframedata.com/hitboxes/pac_man/PacManDThrow.gif

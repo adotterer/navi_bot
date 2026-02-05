@@ -1,12 +1,12 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,2,15,,Transitions to jab 2 as early as frame 5,1.8,8,3,,-10,2—3,12
-Jab 2,2,18,,Transitions to rapid jab as early as frame 7,1.0,5,2,,-14,2—3,15
-Rapid Jab,5/7/9...,40,,,0.5,4,2,,,,
-Rapid Jab Finisher,4,40,,,2.0,14,3,,-33,4—5,35
-Forward Tilt,6,27,,,8.0/8.3/8.5,7/7/7,8/8/8,,-13/-13/-13,6—8,19
-Up Tilt,5,29,,,6.0,6,7,,-17,5—12,17
-Down Tilt,7,27,,,8.0,7,8,,-12,7—8,19
-Dash Attack,6,35,,,11.0/6.0,9/6,11/6,,-18,6—9(10—17),18
-Forward Smash,17,67,,Charge hold is frame 5,18.0,18,12,,-38,17—18,49
-Up Smash,8,47,,Legs intangibile on frame 8-11. Charge hold is frame 3,14.0/10.0,11/9,10/7,,-29,8—12(13—14),33
-Down Smash,9,43,,Charge hold is frame 2,13.0,11,9,,-25,9—10,33
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,2,15,,Transitions to jab 2 as early as frame 5,1.8,8,3,,-10,2—3,12,https://ultimateframedata.com/hitboxes/mii_brawler/MiiBrawlerJab1.gif
+Jab 2,2,18,,Transitions to rapid jab as early as frame 7,1.0,5,2,,-14,2—3,15,https://ultimateframedata.com/hitboxes/mii_brawler/MiiBrawlerJab2.gif
+Rapid Jab,5/7/9...,40,,,0.5,4,2,,,,,https://ultimateframedata.com/hitboxes/mii_brawler/MiiBrawlerJabRapid.gif
+Rapid Jab Finisher,4,40,,,2.0,14,3,,-33,4—5,35,https://ultimateframedata.com/hitboxes/mii_brawler/MiiBrawlerJabRapidFinisher.gif
+Forward Tilt,6,27,,,8.0/8.3/8.5,7/7/7,8/8/8,neutral/down/up,-13/-13/-13,6—8,19,https://ultimateframedata.com/hitboxes/mii_brawler/MiiBrawlerFTilt.gif
+Up Tilt,5,29,,,6.0,6,7,,-17,5—12,17,https://ultimateframedata.com/hitboxes/mii_brawler/MiiBrawlerUTilt.gif
+Down Tilt,7,27,,,8.0,7,8,,-12,7—8,19,https://ultimateframedata.com/hitboxes/mii_brawler/MiiBrawlerDTilt.gif
+Dash Attack,6,35,,,11.0/6.0,9/6,11/6,Early/Late,-18,6—9(10—17),18,https://ultimateframedata.com/hitboxes/mii_brawler/MiiBrawlerDashAttack.gif
+Forward Smash,17,67,,Charge hold is frame 5,18.0,18,12,,-38,17—18,49,https://ultimateframedata.com/hitboxes/mii_brawler/MiiBrawlerFSmash.gif
+Up Smash,8,47,,Legs intangibile on frame 8-11. Charge hold is frame 3,14.0/10.0,11/9,10/7,Early/Late,-29,8—12(13—14),33,https://ultimateframedata.com/hitboxes/mii_brawler/MiiBrawlerUSmash.gif
+Down Smash,9,43,,Charge hold is frame 2,13.0,11,9,,-25,9—10,33,https://ultimateframedata.com/hitboxes/mii_brawler/MiiBrawlerDSmash.gif

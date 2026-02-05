@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,12,52,,Hand grabbox active for the first 2 frames,,,,,,12—18,34
-Dash Grab,14,60,,Hand grabbox active for the first 2 frames,,,,,,14—20,40
-Pivot Grab,15,55,,Hand grabbox active for the first 2 frames,,,,,,15—21,34
-Pummel,1,16,,Total frames includes 10 frames of hitlag,1.0,,,,,,
-Forward Throw,12/14,39,,,3.0/4.0,,,,,,
-Backward Throw,18,45,,,7.0,,,,,,
-Up Throw,27/28,49,,,5.0/2.0,,,,,,
-Down Throw,22/24,49,,,3.0/4.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,12,52,,Hand grabbox active for the first 2 frames,,,,,,12—18,34,https://ultimateframedata.com/hitboxes/toon_link/ToonLinkGrab.gif
+Dash Grab,14,60,,Hand grabbox active for the first 2 frames,,,,,,14—20,40,https://ultimateframedata.com/hitboxes/toon_link/ToonLinkDashGrab.gif
+Pivot Grab,15,55,,Hand grabbox active for the first 2 frames,,,,,,15—21,34,https://ultimateframedata.com/hitboxes/toon_link/ToonLinkPivotGrab.gif
+Pummel,1,16,,Total frames includes 10 frames of hitlag,1.0,,,,,,,https://ultimateframedata.com/hitboxes/toon_link/ToonLinkPummel.gif
+Forward Throw,12/14,39,,,3.0/4.0,,,,,,,https://ultimateframedata.com/hitboxes/toon_link/ToonLinkFThrow.gif
+Backward Throw,18,45,,,7.0,,,,,,,https://ultimateframedata.com/hitboxes/toon_link/ToonLinkBThrow.gif
+Up Throw,27/28,49,,,5.0/2.0,,,,,,,https://ultimateframedata.com/hitboxes/toon_link/ToonLinkUThrow.gif
+Down Throw,22/24,49,,,3.0/4.0,,,,,,,https://ultimateframedata.com/hitboxes/toon_link/ToonLinkDThrow.gif

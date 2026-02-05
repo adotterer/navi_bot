@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Ice Shot),18/19,55,,,3.5/3.5,5,2,,-29(-24),18/19—**,
-"Side B, both (Squal Hammer, both)",10/14/18/23/28/34/40/51,77,29,Landing lag only occurs if you enter special fall.,2.0/4.0,4/8,3/5,,-21,10/14/18/23/28/34/40/51—52,25
-"Side B, alone (Squal Hammer, alone)",10/13/15/18/21/24/28/32/37/42/49,77,29,Landing lag only occurs if you enter special fall.,1.2/2.0,4/4,3/3,,-24,10/13/15/18/21/24/28/32/37/42/49—50,27
-Up B (Belay),13,--,27,Hitting somebody with this move reduces its height gain for your climber. The AI is invulnerable frame 1-15 and invincible frame 16-33,16.0,10,14,,,16—33,
-Down B (Blizzard),16/21/26/31/36/41/46/51/56,84,,The game randomly picks an angle between 60 and 115 for each shot and then flips to face in front of the Ice Climbers. The angles thus vary between -30 and 25.,1.8%/1.0%/1.0%,4,2,,-22(-15),lul,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Ice Shot),18/19,55,,,3.5/3.5,5,2,,-29(-24),18/19—**,,https://ultimateframedata.com/hitboxes/ice_climbers/IceClimbersIceShot.png
+"Side B, both (Squal Hammer, both)",10/14/18/23/28/34/40/51,77,29,Landing lag only occurs if you enter special fall.,2.0/4.0,4/8,3/5,,-21,10/14/18/23/28/34/40/51—52,25,https://ultimateframedata.com/hitboxes/ice_climbers/PopoSquallHammerDuo.gif
+"Side B, alone (Squal Hammer, alone)",10/13/15/18/21/24/28/32/37/42/49,77,29,Landing lag only occurs if you enter special fall.,1.2/2.0,4/4,3/3,,-24,10/13/15/18/21/24/28/32/37/42/49—50,27,https://ultimateframedata.com/hitboxes/ice_climbers/PopoSqualHammerSolo.gif
+Up B (Belay),13,--,27,Hitting somebody with this move reduces its height gain for your climber. The AI is invulnerable frame 1-15 and invincible frame 16-33,16.0,10,14,,,16—33,,https://ultimateframedata.com/hitboxes/ice_climbers/NanaBelay.gif
+Down B (Blizzard),16/21/26/31/36/41/46/51/56,84,,The game randomly picks an angle between 60 and 115 for each shot and then flips to face in front of the Ice Climbers. The angles thus vary between -30 and 25.,1.8%/1.0%/1.0%,4,2,,-22(-15),lul,,https://ultimateframedata.com/hitboxes/ice_climbers/PopoBlizzard.gif

@@ -1,12 +1,12 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,2,14,,Transitions to Jab 2 as early as frame 4,1.8,8,3,,-9,2,12
-Jab 2,3,15,,Transitions to Rapid Jab as early as frame 5,1.6,5,3,,-9,3,12
-Rapid Jab,5/7/9/11...,--,,,0.2,4,,,,5/7/9/11...,
-Rapid Jab Finisher,3,39,,,3.0,15,4,,-32,3—4,35
-Forward Tilt,5,23,,,8.0/7.0,7/7,8/4,,-10/-11,5—8,15
-Up Tilt,4,20,,Leg intangibility on frame 4-10. Tipper deals reduced knockback.,5.0/4.0,6/5,6/5,,-10/-9,4—5/6—10,10
-Down Tilt,4,20,,,6.0,6,6,,-9,4—6,14
-Dash Attack,9,51,,,12.0/9.0/6.0,**,**,,-31,9—17/18—26/27—34,17
-Forward Smash,13,47,,Charge hold is frame 4,15.0/11.0,12/8,10/8,,-23,13—15/16—19,28
-Up Smash,12,45,,Leg intangibility on frame 12-17. Charge hold is frame 8.,(15.0%/14.0%)/(14.0%/13.0%)/(13.0%/12.0%),10/9/9,11/9/8,,-22/-24,12—14/15—16/17,28
-Down Smash,7,50,,Leg intangibility on frame 2-11. Charge hold is frame 2.,14.0/10.0,10,10,,-33,7—11/12—19,31
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,2,14,,Transitions to Jab 2 as early as frame 4,1.8,8,3,,-9,2,12,https://ultimateframedata.com/hitboxes/kirby/KirbyJab1.gif
+Jab 2,3,15,,Transitions to Rapid Jab as early as frame 5,1.6,5,3,,-9,3,12,https://ultimateframedata.com/hitboxes/kirby/KirbyJab2.gif
+Rapid Jab,5/7/9/11...,--,,,0.2,4,,,,5/7/9/11...,,https://ultimateframedata.com/hitboxes/kirby/KirbyJabRapid.gif
+Rapid Jab Finisher,3,39,,,3.0,15,4,,-32,3—4,35,https://ultimateframedata.com/hitboxes/kirby/KirbyJabRapidEnd.gif
+Forward Tilt,5,23,,,8.0/7.0,7/7,8/4,Close/Far,-10/-11,5—8,15,https://ultimateframedata.com/hitboxes/kirby/KirbyFTilt.gif
+Up Tilt,4,20,,Leg intangibility on frame 4-10. Tipper deals reduced knockback.,5.0/4.0,6/5,6/5,Early/Late,-10/-9,4—5/6—10,10,https://ultimateframedata.com/hitboxes/kirby/KirbyUTilt.gif
+Down Tilt,4,20,,,6.0,6,6,,-9,4—6,14,https://ultimateframedata.com/hitboxes/kirby/KirbyDTilt.gif
+Dash Attack,9,51,,,12.0/9.0/6.0,**,**,Early/Late/Latest,-31,9—17/18—26/27—34,17,https://ultimateframedata.com/hitboxes/kirby/KirbyDashAttack.gif
+Forward Smash,13,47,,Charge hold is frame 4,15.0/11.0,12/8,10/8,Early/Late,-23,13—15/16—19,28,https://ultimateframedata.com/hitboxes/kirby/KirbyFSmash.gif
+Up Smash,12,45,,Leg intangibility on frame 12-17. Charge hold is frame 8.,(15.0%/14.0%)/(14.0%/13.0%)/(13.0%/12.0%),10/9/9,11/9/8,"(Clean/Mid/Late, all split like Close/Tip)",-22/-24,12—14/15—16/17,28,https://ultimateframedata.com/hitboxes/kirby/KirbyUSmash.gif
+Down Smash,7,50,,Leg intangibility on frame 2-11. Charge hold is frame 2.,14.0/10.0,10,10,,-33,7—11/12—19,31,https://ultimateframedata.com/hitboxes/kirby/KirbyDSmash.gif

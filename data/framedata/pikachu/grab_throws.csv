@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,7,36,,,,,,,,7—8,28
-Dash Grab,11,44,,,,,,,,11—12,32
-Pivot Grab,12,39,,,,,,,,12—13,26
-Pummel,1,16,,Total frames includes 11 frames of hitlag,1.0,,,,,,
-Forward Throw,11/15/19/23/30,43,,,2.0/2.0,,,,,,
-Backward Throw,26,49,,,9.0,,,,,,
-Up Throw,14/16,35,,,3.0/5.0,,,,,,
-Down Throw,29,51,,,5.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,7,36,,,,,,,,7—8,28,https://ultimateframedata.com/hitboxes/pikachu/PikachuGrab.gif
+Dash Grab,11,44,,,,,,,,11—12,32,https://ultimateframedata.com/hitboxes/pikachu/PikachuDashGrab.gif
+Pivot Grab,12,39,,,,,,,,12—13,26,https://ultimateframedata.com/hitboxes/pikachu/PikachuPivotGrab.gif
+Pummel,1,16,,Total frames includes 11 frames of hitlag,1.0,,,,,,,https://ultimateframedata.com/hitboxes/pikachu/PikachuPummel.gif
+Forward Throw,11/15/19/23/30,43,,,2.0/2.0,,,,,,,https://ultimateframedata.com/hitboxes/pikachu/PikachuFThrow.gif
+Backward Throw,26,49,,,9.0,,,,,,,https://ultimateframedata.com/hitboxes/pikachu/PikachuBThrow.gif
+Up Throw,14/16,35,,,3.0/5.0,,,,,,,https://ultimateframedata.com/hitboxes/pikachu/PikachuUThrow.gif
+Down Throw,29,51,,,5.0,,,,,,,https://ultimateframedata.com/hitboxes/pikachu/PikachuDThrow.gif

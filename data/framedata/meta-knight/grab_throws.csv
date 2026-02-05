@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,7,36,,,,,,,,7—8,28
-Dash Grab,11,44,,,,,,,,11—12,32
-Pivot Grab,12,39,,,,,,,,12—13,26
-Pummel,1,15,,Total frames includes 10 frames of hitlag,1.0,,,,,,
-Forward Throw,8/10,27,,,6.0/3.0,,,,,,
-Backward Throw,16/18,34,,,7.0/3.0,,,,,,
-Up Throw,46,77,,Meta Knight is airborne when he can act. Startup assumes level ground,10.0,,,,,,
-Down Throw,11—13/17—19/23—25/29—31/35—37/41—43/47—49/53—55/59—61/73—74,86,,,0.5/1.0/2.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,7,36,,,,,,,,7—8,28,https://ultimateframedata.com/hitboxes/meta_knight/MetaKnightGrab.gif
+Dash Grab,11,44,,,,,,,,11—12,32,https://ultimateframedata.com/hitboxes/meta_knight/MetaKnightDashGrab.gif
+Pivot Grab,12,39,,,,,,,,12—13,26,https://ultimateframedata.com/hitboxes/meta_knight/MetaKnightPivotGrab.gif
+Pummel,1,15,,Total frames includes 10 frames of hitlag,1.0,,,,,,,https://ultimateframedata.com/hitboxes/meta_knight/MetaKnightPummel.gif
+Forward Throw,8/10,27,,,6.0/3.0,,,,,,,https://ultimateframedata.com/hitboxes/meta_knight/MetaKnightFThrow.gif
+Backward Throw,16/18,34,,,7.0/3.0,,,,,,,https://ultimateframedata.com/hitboxes/meta_knight/MetaKnightBThrow.gif
+Up Throw,46,77,,Meta Knight is airborne when he can act. Startup assumes level ground,10.0,,,,,,,https://ultimateframedata.com/hitboxes/meta_knight/MetaKnightUThrow.gif
+Down Throw,11—13/17—19/23—25/29—31/35—37/41—43/47—49/53—55/59—61/73—74,86,,,0.5/1.0/2.0,,,,,,,https://ultimateframedata.com/hitboxes/meta_knight/MetaKnightDThrow.gif

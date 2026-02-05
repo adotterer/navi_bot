@@ -1,8 +1,8 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Pocket),8 (Start of projectile pocket),50,,Invulnerable on frame 5-23. Pockets projectiles on frame 8-23.,**,**,**,,**,8—23 (pocket),
-"Pocket, Throw",9,30,,This is not the same throw as with a holdable item,**,**,**,,**,,
-Side B (Lloid Rocket),52,35,,,7.0/5.0,7/6,3/3,,+27,52—116(117—176),
-Up B (Balloon Trip),,--,30/20,First landing lag is from free fall. Second is with balloons still attached,,,,,,,
-"Down B (Timber Plant, Timber Water)","--, 5","38, 49",,,,,,,,"--, 5—20",18
-Timber Tree Grow/Fall,46/16,--,,Refers to how long after water touches sprout/Tree is chopped a second time,18.0/25.0,11/14,6/7,,+14 / -11,,
-Timber Axe,6,47/54,,"Second total frames is hitting a tree, and includes 13 frames of hitlag for Villager",14.0,10,13,,-28/-35,6—8,39
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Pocket),8 (Start of projectile pocket),50,,Invulnerable on frame 5-23. Pockets projectiles on frame 8-23.,**,**,**,,**,8—23 (pocket),,https://ultimateframedata.com/hitboxes/villager/VillagerPocket.gif
+"Pocket, Throw",9,30,,This is not the same throw as with a holdable item,**,**,**,,**,,,
+Side B (Lloid Rocket),52,35,,,7.0/5.0,7/6,3/3,Early/Late,+27,52—116(117—176),,https://ultimateframedata.com/hitboxes/villager/VillagerLloidRocketFly.png
+Up B (Balloon Trip),,--,30/20,First landing lag is from free fall. Second is with balloons still attached,,,,,,,,https://ultimateframedata.com/hitboxes/villager/VillagerBalloonHurtbox.png
+"Down B (Timber Plant, Timber Water)","--, 5","38, 49",,,,,,,,"--, 5—20",18,
+Timber Tree Grow/Fall,46/16,--,,Refers to how long after water touches sprout/Tree is chopped a second time,18.0/25.0,11/14,6/7,,+14 / -11,,,https://ultimateframedata.com/hitboxes/villager/VillagerTimberGrowth.gif
+Timber Axe,6,47/54,,"Second total frames is hitting a tree, and includes 13 frames of hitlag for Villager",14.0,10,13,,-28/-35,6—8,39,https://ultimateframedata.com/hitboxes/villager/VillagerTimberAxe.gif

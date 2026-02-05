@@ -1,12 +1,12 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,2,18,,Transitions to Jab 2 as early as frame 5,2.0,8,3,,-13,2—3,15
-Jab 2,3,18,,Transitions to Jab 3 as early as frame 6,2.0,5,3,,-12,3—4,14
-Jab 3,6,30,,,4.0,11,5,,-19,6—7,23
-Forward Tilt,5,32,,,9.0,7,9,,-18,5—7,25
-Up Tilt,5,27,,,6.0,7,9,,-15,5—10,17
-Down Tilt,5,13,,,5.0,6,6,,-2,5—8,5
-Dash Attack,4/8/12/16/25,47,,,2.0/4.0,4/14,3/5,,-17,4/8/12/16/25,22
-Forward Smash,12,41,,Charge hold is frame 4,15.0,10,11,,-18,12—13,28
-Up Smash,9,39,,Head intangibility on frame 9-13. Charge hold is frame 6,14.0/12.0,10,10,,-20,9—13,26
-Down Smash,6/14,37,,Charge hold is frame 2.,15.0/14.0,10/10,11/11,,-20/-12,6—7/14—15,22
-Down Taunt,45,69,,,2.0,,,,-21,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,2,18,,Transitions to Jab 2 as early as frame 5,2.0,8,3,,-13,2—3,15,https://ultimateframedata.com/hitboxes/luigi/LuigiJab1.gif
+Jab 2,3,18,,Transitions to Jab 3 as early as frame 6,2.0,5,3,,-12,3—4,14,https://ultimateframedata.com/hitboxes/luigi/LuigiJab2.gif
+Jab 3,6,30,,,4.0,11,5,,-19,6—7,23,https://ultimateframedata.com/hitboxes/luigi/LuigiJab3.gif
+Forward Tilt,5,32,,,9.0,7,9,,-18,5—7,25,https://ultimateframedata.com/hitboxes/luigi/LuigiFTilt.gif
+Up Tilt,5,27,,,6.0,7,9,,-15,5—10,17,https://ultimateframedata.com/hitboxes/luigi/LuigiUTilt.gif
+Down Tilt,5,13,,,5.0,6,6,,-2,5—8,5,https://ultimateframedata.com/hitboxes/luigi/LuigiDTilt.gif
+Dash Attack,4/8/12/16/25,47,,,2.0/4.0,4/14,3/5,Multi/final,-17,4/8/12/16/25,22,https://ultimateframedata.com/hitboxes/luigi/LuigiDashAttack.gif
+Forward Smash,12,41,,Charge hold is frame 4,15.0,10,11,,-18,12—13,28,https://ultimateframedata.com/hitboxes/luigi/LuigiFSmash.gif
+Up Smash,9,39,,Head intangibility on frame 9-13. Charge hold is frame 6,14.0/12.0,10,10,Far/Close,-20,9—13,26,https://ultimateframedata.com/hitboxes/luigi/LuigiUSmash.gif
+Down Smash,6/14,37,,Charge hold is frame 2.,15.0/14.0,10/10,11/11,Close/Far,-20/-12,6—7/14—15,22,https://ultimateframedata.com/hitboxes/luigi/LuigiDSmash.gif
+Down Taunt,45,69,,,2.0,,,,-21,,,https://ultimateframedata.com/hitboxes/luigi/LuigiDTaunt.gif

@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,8,35,,,,,,,,8—10,25
-Dash Grab,11,43,,,,,,,,11—13,30
-Pivot Grab,12,38,,,,,,,,12—14,24
-Pummel,2,21,Total frames includes 14 frames of hitlag.,,1.6,,,,,,
-Forward Throw,20/21,54,,,4.0/8.0,,,,,,
-Backward Throw,48,69,,,7.0,,,,,,
-Up Throw,24/25,43,,,4.0/4.0,,,,,,
-Down Throw,22/30,54,,,4.0/7.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,8,35,,,,,,,,8—10,25,https://ultimateframedata.com/hitboxes/wario/WarioGrab.gif
+Dash Grab,11,43,,,,,,,,11—13,30,https://ultimateframedata.com/hitboxes/wario/WarioDashGrab.gif
+Pivot Grab,12,38,,,,,,,,12—14,24,https://ultimateframedata.com/hitboxes/wario/WarioPivotGrab.gif
+Pummel,2,21,Total frames includes 14 frames of hitlag.,,1.6,,,,,,,https://ultimateframedata.com/hitboxes/wario/WarioPummel.gif
+Forward Throw,20/21,54,,,4.0/8.0,,,,,,,https://ultimateframedata.com/hitboxes/wario/WarioFThrow.gif
+Backward Throw,48,69,,,7.0,,,,,,,https://ultimateframedata.com/hitboxes/wario/WarioBThrow.gif
+Up Throw,24/25,43,,,4.0/4.0,,,,,,,https://ultimateframedata.com/hitboxes/wario/WarioUThrow.gif
+Down Throw,22/30,54,,,4.0/7.0,,,,,,,https://ultimateframedata.com/hitboxes/wario/WarioDThrow.gif

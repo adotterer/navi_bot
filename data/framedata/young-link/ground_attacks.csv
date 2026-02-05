@@ -1,14 +1,14 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,4,17,,Transitions to Jab 2 as early as frame 7,2.0,7,3,,-10,4—5,12
-Jab 2,6,16,,Transitions to Jab 3 as early as frame 9 and Rapid Jab on 11,1.5,5,3,,-7,6—7,9
-Jab 3,6,35,,,3.5,11,4,,-25,6—7,28
-Rapid Jab,3/5/7,--,,,0.3,4,-,,,,
-Rapid Jab Finisher,4,45,,,2.5,10,4,,-37,4—5,40
-Forward Tilt,10,33,,,12.0/11.0,11/8,11/10,,-12/-13,10—12,21
-Up Tilt,9,31,,,8.0,7,8,,-14,9—14,17
-Down Tilt,8,25,,,10.0/9.0/7.0,8/7/7,10/9/7,,-7/-8/-10,8—9,16
-Dash Attack,8,34,,,11.0/10.0,10/8,10/10,,-16,8—10,24
-Forward Smash 1,15,47,,Transitions to Forward Smash 2 as early as frame 20. Charge hold is frame 9,6.0,6,5,,-27,15—16,31
-Forward Smash 2,11,49,,,12.0,13,8,,-30,11—12,37
-Up Smash,10/25/41,69,,Charge hold is frame 5,3.0/8.0,5/7,3/6,,-22,10—14/25—29/41—45,24
-Down Smash,9/21,49,,Charge hold frame is 3,13.0/10.0/12.0/9.0,9/8/9/7,9/7/8/7,,-31/-33/-20/-21,9—10/21—22,27
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,4,17,,Transitions to Jab 2 as early as frame 7,2.0,7,3,,-10,4—5,12,https://ultimateframedata.com/hitboxes/young_link/YoungLinkJab1.gif
+Jab 2,6,16,,Transitions to Jab 3 as early as frame 9 and Rapid Jab on 11,1.5,5,3,,-7,6—7,9,https://ultimateframedata.com/hitboxes/young_link/YoungLinkJab2.gif
+Jab 3,6,35,,,3.5,11,4,,-25,6—7,28,https://ultimateframedata.com/hitboxes/young_link/YoungLinkJab3.gif
+Rapid Jab,3/5/7,--,,,0.3,4,-,,,,,https://ultimateframedata.com/hitboxes/young_link/YoungLinkJabRapid.gif
+Rapid Jab Finisher,4,45,,,2.5,10,4,,-37,4—5,40,https://ultimateframedata.com/hitboxes/young_link/YoungLinkJabRapidEnd.gif
+Forward Tilt,10,33,,,12.0/11.0,11/8,11/10,Close/Far,-12/-13,10—12,21,https://ultimateframedata.com/hitboxes/young_link/YoungLinkFTilt.gif
+Up Tilt,9,31,,,8.0,7,8,,-14,9—14,17,https://ultimateframedata.com/hitboxes/young_link/YoungLinkUTilt.gif
+Down Tilt,8,25,,,10.0/9.0/7.0,8/7/7,10/9/7,Close/Medium/Far,-7/-8/-10,8—9,16,https://ultimateframedata.com/hitboxes/young_link/YoungLinkDTilt.gif
+Dash Attack,8,34,,,11.0/10.0,10/8,10/10,Close/Far,-16,8—10,24,https://ultimateframedata.com/hitboxes/young_link/YoungLinkDashAttack.gif
+Forward Smash 1,15,47,,Transitions to Forward Smash 2 as early as frame 20. Charge hold is frame 9,6.0,6,5,,-27,15—16,31,https://ultimateframedata.com/hitboxes/young_link/YoungLinkFSmash1.gif
+Forward Smash 2,11,49,,,12.0,13,8,,-30,11—12,37,https://ultimateframedata.com/hitboxes/young_link/YoungLinkFSmash2.gif
+Up Smash,10/25/41,69,,Charge hold is frame 5,3.0/8.0,5/7,3/6,Multi/Final,-22,10—14/25—29/41—45,24,https://ultimateframedata.com/hitboxes/young_link/YoungLinkUSmash.gif
+Down Smash,9/21,49,,Charge hold frame is 3,13.0/10.0/12.0/9.0,9/8/9/7,9/7/8/7,"Close/far, Close/far",-31/-33/-20/-21,9—10/21—22,27,https://ultimateframedata.com/hitboxes/young_link/YoungLinkDSmash.gif

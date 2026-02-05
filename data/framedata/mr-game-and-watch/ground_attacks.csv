@@ -1,11 +1,11 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab,4,15,,Transitions to rapid jab as early as 7.,3.0,7,4,,-7,4—5,10
-Rapid Jab,5/11/17...,--,,,0.8,4,-,,,,
-Rapid Jab Finisher,2,34,,,3.0,11,4,,-28,2,32
-Forward Tilt,8,37,,,12.0/10.0/6.0,9,11,,-18,8—9(10—20),17
-Up Tilt,10/20,33,,,7.0/7.0,7/7,7/7,,-16/-6,10—12/20—22,11
-Down Tilt,6,42,,Can only hit grounded opponents. More info.,9.0,7,9,,-27,6—8,34
-Dash Attack,6,38,,,10.0/6.5,8/6,10/7,,-21,6—9(10—19),19
-Forward Smash,17,42,,Charge hold is frame 7,14.0/18.0,10/11,10/12,,-15/-13,17—18,24
-Up Smash,21,38,,Invincible on frame 21-25. Charge hold is frame 15,16.0,10,11,,-6,21—25,13
-Down Smash,12,37,,"Charge hold is frame 6, hammer heads ground the opponent.",13.0/15.0,9/10,9/10,,-16/-15,12—16,21
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab,4,15,,Transitions to rapid jab as early as 7.,3.0,7,4,,-7,4—5,10,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchJab.gif
+Rapid Jab,5/11/17...,--,,,0.8,4,-,,,,,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchJabRapid.gif
+Rapid Jab Finisher,2,34,,,3.0,11,4,,-28,2,32,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchJabRapidFinisher.gif
+Forward Tilt,8,37,,,12.0/10.0/6.0,9,11,Early Far/Early Close/Late,-18,8—9(10—20),17,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchFTilt.gif
+Up Tilt,10/20,33,,,7.0/7.0,7/7,7/7,,-16/-6,10—12/20—22,11,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchUTilt.gif
+Down Tilt,6,42,,Can only hit grounded opponents. More info.,9.0,7,9,,-27,6—8,34,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchDTilt.gif
+Dash Attack,6,38,,,10.0/6.5,8/6,10/7,Early/Late,-21,6—9(10—19),19,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchDashAttack.gif
+Forward Smash,17,42,,Charge hold is frame 7,14.0/18.0,10/11,10/12,Close/Far,-15/-13,17—18,24,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchFSmash.gif
+Up Smash,21,38,,Invincible on frame 21-25. Charge hold is frame 15,16.0,10,11,,-6,21—25,13,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchUSmash.gif
+Down Smash,12,37,,"Charge hold is frame 6, hammer heads ground the opponent.",13.0/15.0,9/10,9/10,Close/Far,-16/-15,12—16,21,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchDSmash.gif

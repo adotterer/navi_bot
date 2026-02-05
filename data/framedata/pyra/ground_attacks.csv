@@ -1,13 +1,13 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,3,21,,transitions to jab 2 on frame 7,3.0,6,4,,-14,3—5,16
-Jab 2,5,31,,Transitions to jab 3 on frame 14 or Rapid on 13,2.0,5,3,,-23,5—6,25
-Jab 3,5,35,,,5.0,9,6,,-24,5—7,28
-Rapid Jab,9/13/17...,--,,,0.6,4,4,,,9/13/17...,
-Rapid Jab Finisher,6,37,,,5.0,11,6,,-25,6—7,30
-Forward Tilt,12,37,,,11.5,10,15,,-10/-9,12—13,24
-Up Tilt,11,39,,,9.5,10,9,,-19,11—16,23
-Down Tilt,9,26,,,6.0/8.0,8/9,6/8,,-11/-9,9—11,15
-Dash Attack,17,52,,,10.5/12.5,*/10,*/17,,-18,17—18,34
-Forward Smash,20,67,,charge hold on frame 5,20.0,16,13,,-34,20—23,44
-Up Smash,15/17,66,,Charge hold is frame 6,3.5/13.5/12.0,5/10,4/9,,-47/-40,15—16/17—23/24—33,33
-Down Smash,12/18,47,,"Charge hold on frame 2. Blade and leg can both hit the same shield. Third and fourth advantage assume this scenario, first and second are single, far hits.",11.0/13.5/8.0/10.0,10/11/9/10,8/9/6/7,,-26/-28/-20/-22,12—14/18—20,27
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,3,21,,transitions to jab 2 on frame 7,3.0,6,4,,-14,3—5,16,https://ultimateframedata.com/hitboxes/Pyra/PyraJab1.gif
+Jab 2,5,31,,Transitions to jab 3 on frame 14 or Rapid on 13,2.0,5,3,,-23,5—6,25,https://ultimateframedata.com/hitboxes/Pyra/PyraJab2.gif
+Jab 3,5,35,,,5.0,9,6,,-24,5—7,28,https://ultimateframedata.com/hitboxes/Pyra/PyraJab3.gif
+Rapid Jab,9/13/17...,--,,,0.6,4,4,,,9/13/17...,,https://ultimateframedata.com/hitboxes/Pyra/PyraJabRapid.gif
+Rapid Jab Finisher,6,37,,,5.0,11,6,,-25,6—7,30,https://ultimateframedata.com/hitboxes/Pyra/PyraJabRapidFinisher.gif
+Forward Tilt,12,37,,,11.5,10,15,Early/Late,-10/-9,12—13,24,https://ultimateframedata.com/hitboxes/Pyra/PyraFTilt.gif
+Up Tilt,11,39,,,9.5,10,9,,-19,11—16,23,https://ultimateframedata.com/hitboxes/Pyra/PyraUTilt.gif
+Down Tilt,9,26,,,6.0/8.0,8/9,6/8,Close/Far,-11/-9,9—11,15,https://ultimateframedata.com/hitboxes/Pyra/PyraDTilt.gif
+Dash Attack,17,52,,,10.5/12.5,*/10,*/17,Closest/Far,-18,17—18,34,https://ultimateframedata.com/hitboxes/Pyra/PyraDashAttack.gif
+Forward Smash,20,67,,charge hold on frame 5,20.0,16,13,,-34,20—23,44,https://ultimateframedata.com/hitboxes/Pyra/PyraFSmash.gif
+Up Smash,15/17,66,,Charge hold is frame 6,3.5/13.5/12.0,5/10,4/9,hit 1/early hit 2/late hit 2,-47/-40,15—16/17—23/24—33,33,https://ultimateframedata.com/hitboxes/Pyra/PyraUSmash.gif
+Down Smash,12/18,47,,"Charge hold on frame 2. Blade and leg can both hit the same shield. Third and fourth advantage assume this scenario, first and second are single, far hits.",11.0/13.5/8.0/10.0,10/11/9/10,8/9/6/7,blade close/far / leg close/far,-26/-28/-20/-22,12—14/18—20,27,https://ultimateframedata.com/hitboxes/Pyra/PyraDSmash.gif

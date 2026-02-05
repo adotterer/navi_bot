@@ -1,32 +1,33 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
 Neutral B (Frizz/Frizzle/Kafrizz),[10(+7)]  [11(+25)]  [16(2/8/14/20)],43/51/67,,"Frizz: Takes 7 frames to enter charge state and 5 frames to exit charge state. Cost: 6MP 
 		Frizzle: Takes 25 frames to reach this level of charge. Cost: 16MP
-		Kafrizz: Eruption upon reaching a target hits on frame (2/8/14/20). Cost: 36 MP",9.0/18.0/19.0(3.0),7/8/25,4/4/2,,-22/-28/-24,[10—65]  [11—56]  [16—73],
+		Kafrizz: Eruption upon reaching a target hits on frame (2/8/14/20). Cost: 36 MP",9.0/18.0/19.0(3.0),7/8/25,4/4/2,-- / -- / projectile/eruption,-22/-28/-24,[10—65]  [11—56]  [16—73],,
 "Side B, (Zap/Zapple/Kazap)",[9/13(+7)]  [10/15(+16)]  [43/50/72/75/81],30/50/126,**,"Zap: 7 frames to enter charge state. Bolt does not occur on block. Cost: 8MP
 		Zapple: Takes 16 frames to reach this level of charge. Second hit does not occur on block. Cost: 18 MP
-		Kazap: Final hit does not occur on a blocking opponent. Cost: 42MP. Bolt generated on frame 37 (+7 charge). 15% heavy armor on frames 43—78. Psych Up only affects first hit (another 0.8%). Oomph affects all but the last hit (another 14%).",4.0,11/17 / 9 / 14/9/12,6/4 / 6 / 4/**/4,,-12/-25/-29,[9—13/1—8]  [10—15/1—8]  [43—49/50/72/75/81—83/1—8],
+		Kazap: Final hit does not occur on a blocking opponent. Cost: 42MP. Bolt generated on frame 37 (+7 charge). 15% heavy armor on frames 43—78. Psych Up only affects first hit (another 0.8%). Oomph affects all but the last hit (another 14%).",4.0,11/17 / 9 / 14/9/12,6/4 / 6 / 4/**/4,"close/far/bolt / first/second bolt / ""first/second/
+third/bolt""",-12/-25/-29,[9—13/1—8]  [10—15/1—8]  [43—49/50/72/75/81—83/1—8],,https://ultimateframedata.com/hitboxes/hero/HeroZapNoMana.gif
 Up B (Woosh/Swoosh/Kaswoosh),[4(+3)]  [6/13/20/27(+13)]  [39/49/59/69/79/89],,12/23/29,"Woosh: Takes 3 frames to enter charge state. Cost: 5MP
 		Swoosh: Takes 13 frames to reach this level of charge. Cost: 9MP
-		Kaswoosh: Cost: 18 MP. Failing to cast any level of charge results in 12 landing lag.",7.0 / 3.0/4.0 / 3.0/4.0,7 / 5/5 / 5/5,3 / 2/2 / 2/2,,**,,
-Down B (Menu/Select),--,19,,,**,**,**,,,--,
-Bang,5,38,,Cost: 9MP,1.5/14.0,--/11,--/5,,-16,5—39/1—21,
-Kaboom,6,43,,Cost: 37MP. Explosion frames 17—40. Windbox frames 1—16.,2.0/26.0,4/15,2/8,,+2,6—27/1—16/17—40,3
-Sizz,6,39,,Cost: 8MP (doesn't erupt on shields),1.5/12.0,5,2,,-26,6—19/1—24,15
-Sizzle,6,43,,Cost: 20MP (doesn't erupt on shields),3.0/22.0,5,2,,-30,6—17/1—24,19
-Whack,6,41,,"Cost: 10MP (chance to instantly obliterate opponent, higher chance with higher opponent %)",1.0,4,2,,-29,6—125,
-Thwack,23,58,,"Cost: 30MP (chance to instantly obliterate opponent, higher chance with higher opponent %)",3.0,5,2,,-28,22—33,25
-Kamikazee,44/50,??,,"Invulnerable for entire duration. Unblockable. Cost: 1MP. Time slows after frame 41, giving victims about two frames to act. Hit 2 does 50.0 damage in the center or 35.0 damage on the outer hitbox.",0.1 / 50.0 (35.0),Unblockable,Unblockable,,,44—49/50,
-Magic Burst,23/33/43/53/63/73/83/93/101,151,,Cost: All MP. Hitbox size and damage increases based on how much MP you have. Hero does not suffer hitlag from this attack.,1.0—4.2/2.7—11.0,4—5/7—13,2—4/4—10,,-36 — -24,23/33/43/53/63/73/83/93/101,50
-Snooze,6,47,,Cost: 16MP. Can put airborne opponents to sleep,,,,,,,
-Heal,,39,,Cost: 7MP. Heals 11.0 damage on frame 6. Amount not affected by 1v1 multiplier.,Heals 11.0,,,,,--,
-Oomph,,42,,Cost: 16MP. Damage of (only) melee attacks multiplied by 1.6. Damage received multiplied by 1.2. Lasts 10 seconds.,,,,,,,
-Acceleratle,,34,,Cost: 13MP. Zoom-zoom!,,,,,,,
-Bounce,,34,,Cost: 14MP. Begins reflecting on frame 6,,,,,,,
-Kaclang,,344,,Cost: 6MP. Invincible on frame 15-315,,,,,,,
-Zoom,,,,Cost: 8MP. Can act before landing back onstage,,,,,,,
-Hocus Pocus,,,,"Cost: 4MP. Casts a random spell. Can also put Hero to sleep, turn Hero invisible, shrink Hero, or mushroom grow Hero.",,,,,,,
-Flame Slash,6,38,,Cost: 12MP,22.0,12,19,,-13,6—8,30
-Kacrackle Slash,6,35,,Cost: 11MP,17.0,10,15,,-12,6—8,27
-Hatchet Man,37,88,,Cost: 15MP. Shield Breaks (except sour spot).,35.0,Shield Breaks,"Shield Breaks (-24, sour spot)",,Shield Breaks,37—40,48
-Metal Slash,11,39,,Cost: 6MP,1.0,4,2,,-26,11—12,27
-Psych Up,,45,,"Cost: 14MP. Raises the damage and knockback of Hero’s next attack, will last until a move fully connects or is blocked by an opponent’s shield.",,,,,,--,
+		Kaswoosh: Cost: 18 MP. Failing to cast any level of charge results in 12 landing lag.",7.0 / 3.0/4.0 / 3.0/4.0,7 / 5/5 / 5/5,3 / 2/2 / 2/2,Multi/Final,**,,,
+Down B (Menu/Select),--,19,,,**,**,**,,,--,,
+Bang,5,38,,Cost: 9MP,1.5/14.0,--/11,--/5,Projectile/Explosion,-16,5—39/1—21,,
+Kaboom,6,43,,Cost: 37MP. Explosion frames 17—40. Windbox frames 1—16.,2.0/26.0,4/15,2/8,Projectile/Explosion,+2,6—27/1—16/17—40,3,https://ultimateframedata.com/hitboxes/hero/Kaboom.gif
+Sizz,6,39,,Cost: 8MP (doesn't erupt on shields),1.5/12.0,5,2,Projectile/Explosion,-26,6—19/1—24,15,
+Sizzle,6,43,,Cost: 20MP (doesn't erupt on shields),3.0/22.0,5,2,Projectile/Explosion,-30,6—17/1—24,19,https://ultimateframedata.com/hitboxes/hero/Sizzle.gif
+Whack,6,41,,"Cost: 10MP (chance to instantly obliterate opponent, higher chance with higher opponent %)",1.0,4,2,,-29,6—125,,
+Thwack,23,58,,"Cost: 30MP (chance to instantly obliterate opponent, higher chance with higher opponent %)",3.0,5,2,,-28,22—33,25,https://ultimateframedata.com/hitboxes/hero/Thwack.png
+Kamikazee,44/50,??,,"Invulnerable for entire duration. Unblockable. Cost: 1MP. Time slows after frame 41, giving victims about two frames to act. Hit 2 does 50.0 damage in the center or 35.0 damage on the outer hitbox.",0.1 / 50.0 (35.0),Unblockable,Unblockable,,,44—49/50,,https://ultimateframedata.com/hitboxes/hero/Kamikazee.gif
+Magic Burst,23/33/43/53/63/73/83/93/101,151,,Cost: All MP. Hitbox size and damage increases based on how much MP you have. Hero does not suffer hitlag from this attack.,1.0—4.2/2.7—11.0,4—5/7—13,2—4/4—10,Multi/Final,-36 — -24,23/33/43/53/63/73/83/93/101,50,https://ultimateframedata.com/hitboxes/hero/Magic Burst.gif
+Snooze,6,47,,Cost: 16MP. Can put airborne opponents to sleep,,,,,,,,
+Heal,,39,,Cost: 7MP. Heals 11.0 damage on frame 6. Amount not affected by 1v1 multiplier.,Heals 11.0,,,,,--,,
+Oomph,,42,,Cost: 16MP. Damage of (only) melee attacks multiplied by 1.6. Damage received multiplied by 1.2. Lasts 10 seconds.,,,,,,,,
+Acceleratle,,34,,Cost: 13MP. Zoom-zoom!,,,,,,,,
+Bounce,,34,,Cost: 14MP. Begins reflecting on frame 6,,,,,,,,
+Kaclang,,344,,Cost: 6MP. Invincible on frame 15-315,,,,,,,,https://ultimateframedata.com/hitboxes/hero/HeroKaclang.png
+Zoom,,,,Cost: 8MP. Can act before landing back onstage,,,,,,,,
+Hocus Pocus,,,,"Cost: 4MP. Casts a random spell. Can also put Hero to sleep, turn Hero invisible, shrink Hero, or mushroom grow Hero.",,,,,,,,
+Flame Slash,6,38,,Cost: 12MP,22.0,12,19,,-13,6—8,30,https://ultimateframedata.com/hitboxes/hero/HeroFlameSlash.gif
+Kacrackle Slash,6,35,,Cost: 11MP,17.0,10,15,,-12,6—8,27,https://ultimateframedata.com/hitboxes/hero/HeroKacrackleSlash.gif
+Hatchet Man,37,88,,Cost: 15MP. Shield Breaks (except sour spot).,35.0,Shield Breaks,"Shield Breaks (-24, sour spot)",,Shield Breaks,37—40,48,https://ultimateframedata.com/hitboxes/hero/HeroHatchetMan.gif
+Metal Slash,11,39,,Cost: 6MP,1.0,4,2,,-26,11—12,27,https://ultimateframedata.com/hitboxes/hero/HeroMetalSlash.gif
+Psych Up,,45,,"Cost: 14MP. Raises the damage and knockback of Hero’s next attack, will last until a move fully connects or is blocked by an opponent’s shield.",,,,,,--,,

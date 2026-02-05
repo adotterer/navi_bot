@@ -1,13 +1,13 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,4,25,,Transitions to jab 2 as early as frame 8,2.0,7,3,,-18,4—5,20
-Jab 2,5,29,,Transitions to jab 3 as early as frame 8. To rapid jab as early as 7,2.0,5,3,,-21,5—6,23
-Jab 3,3,31,,,4.0,11,5,,-23,3,28
-Rapid Jab,6/8/10...,--,,,0.5,4,3,,,6/8/10...,
-Rapid Jab Finisher,4,47,,,2.0,9,3,,-40,4—5,42
-Forward Tilt,10,39,,,7.0/10.0,7/10,7/10,,-22/-19,10—14,25
-Up Tilt,6/15,32,,,4.0/5.0,5/6,5/6,,-23/-13,6—8/15—16,16
-Down Tilt,6,25,,,6.0,6,6,,-13,6—7,18
-Dash Attack,7,38,,,11.0,8,14,,-17,7—9,29
-Forward Smash,10/21,54,,Charge hold is frame 3,5.0/10.0,6/8,4/7,,-26,10/21—22,32
-Up Smash,6/7/10/18,51,,Charge hold is frame 2,3.0/*/2.0/8.0,5/*/4/9,3/*/3/6,,-27,6/7/10/18,33
-Down Smash,5/18,40,,Charge hold is frame 2,12.0/10.0,9/8,8/7,,-27/-28/-14/-15,5—6/18—20,20
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,4,25,,Transitions to jab 2 as early as frame 8,2.0,7,3,,-18,4—5,20,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitJab1.gif
+Jab 2,5,29,,Transitions to jab 3 as early as frame 8. To rapid jab as early as 7,2.0,5,3,,-21,5—6,23,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitJab2.gif
+Jab 3,3,31,,,4.0,11,5,,-23,3,28,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitJab3.gif
+Rapid Jab,6/8/10...,--,,,0.5,4,3,,,6/8/10...,,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitJabRapid.gif
+Rapid Jab Finisher,4,47,,,2.0,9,3,,-40,4—5,42,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitJabRapidEnd.gif
+Forward Tilt,10,39,,,7.0/10.0,7/10,7/10,Close/Far,-22/-19,10—14,25,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitFTilt.gif
+Up Tilt,6/15,32,,,4.0/5.0,5/6,5/6,,-23/-13,6—8/15—16,16,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitUTilt.gif
+Down Tilt,6,25,,,6.0,6,6,,-13,6—7,18,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitDTilt.gif
+Dash Attack,7,38,,,11.0,8,14,,-17,7—9,29,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitDashAttack.gif
+Forward Smash,10/21,54,,Charge hold is frame 3,5.0/10.0,6/8,4/7,,-26,10/21—22,32,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitFSmash.gif
+Up Smash,6/7/10/18,51,,Charge hold is frame 2,3.0/*/2.0/8.0,5/*/4/9,3/*/3/6,First/First Late/Second/Third,-27,6/7/10/18,33,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitUSmash.gif
+Down Smash,5/18,40,,Charge hold is frame 2,12.0/10.0,9/8,8/7,Close/Far,-27/-28/-14/-15,5—6/18—20,20,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitDSmash.gif

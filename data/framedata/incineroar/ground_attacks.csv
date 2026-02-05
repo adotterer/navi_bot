@@ -1,11 +1,11 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,5,23,,Transitions to jab 2 on frame 8,2.5,5,4,,-14,5—6,17
-Jab 2,4,31,,Transitions to jab 3 on frame 13,2.8,6,4,,-23,4—5,26
-Jab 3,4,37,,,6.7,6,5,,-28,4—5,32
-Forward Tilt,12,36,,,13.0/12.0,11,12,,-12,12—14,22
-Up Tilt,6,34,,Head intangibility on frame 6-11,9.0,7,9,,-19,6—11,23
-Down Tilt,9,29,,Leg intangibility on frame 8-12,9.0,7,9,,-11,9—11,18
-Dash Attack,8,41,,,13.0/9.0,9/7,12/9,,-21,8—11/12—15,26
-Forward Smash,16,51,,Charge hold is frame 1,20.0/16.0,14/10,13/11,,-22/-24,16—18,33
-Up Smash,13,47,,Arm intangibility on frame 13-18. Charge hold is frame 5,17.0,10,11,,-23,13—18,29
-Down Smash,18,57,,Charge hold is frame 1,17.0,10,11,,-28,18—20,37
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,5,23,,Transitions to jab 2 on frame 8,2.5,5,4,,-14,5—6,17,https://ultimateframedata.com/hitboxes/incineroar/IncineroarJab1.gif
+Jab 2,4,31,,Transitions to jab 3 on frame 13,2.8,6,4,,-23,4—5,26,https://ultimateframedata.com/hitboxes/incineroar/IncineroarJab2.gif
+Jab 3,4,37,,,6.7,6,5,,-28,4—5,32,https://ultimateframedata.com/hitboxes/incineroar/IncineroarJab3.gif
+Forward Tilt,12,36,,,13.0/12.0,11,12,Far/Close,-12,12—14,22,https://ultimateframedata.com/hitboxes/incineroar/IncineroarFTilt.gif
+Up Tilt,6,34,,Head intangibility on frame 6-11,9.0,7,9,,-19,6—11,23,https://ultimateframedata.com/hitboxes/incineroar/IncineroarUTilt.gif
+Down Tilt,9,29,,Leg intangibility on frame 8-12,9.0,7,9,,-11,9—11,18,https://ultimateframedata.com/hitboxes/incineroar/IncineroarDTilt.gif
+Dash Attack,8,41,,,13.0/9.0,9/7,12/9,Early/Late,-21,8—11/12—15,26,https://ultimateframedata.com/hitboxes/incineroar/IncineroarDashAttack.gif
+Forward Smash,16,51,,Charge hold is frame 1,20.0/16.0,14/10,13/11,Close/Far,-22/-24,16—18,33,https://ultimateframedata.com/hitboxes/incineroar/IncineroarFSmash.gif
+Up Smash,13,47,,Arm intangibility on frame 13-18. Charge hold is frame 5,17.0,10,11,,-23,13—18,29,https://ultimateframedata.com/hitboxes/incineroar/IncineroarUSmash.gif
+Down Smash,18,57,,Charge hold is frame 1,17.0,10,11,,-28,18—20,37,https://ultimateframedata.com/hitboxes/incineroar/IncineroarDSmash.gif

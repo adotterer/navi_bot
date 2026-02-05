@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral Air,6/15,45,9,Autocancels on frame 47 onward,4.7/6.6,6/6,3/3,,-6/-6,6—7/15—21,24
-Forward Air,10,29,8,Autocancels on frame 31 onward,9.0,7,4,,-4,10—12,17
-Back Air,8,35,10,Autocancels on frame 1-2 and 32 onward. Turns the character around.,10.9,10,4,,-6,8—10,25
-Up Air,5,41,8,Autocancels on frame 1-2 and 38 onward,7.6,7,4,,-4,5—12,29
-Down Air,16,51,14,Autocancels on frame 1-2 and 52 onward,14.2/11.875,12,5,,-9/-9,16—17,34
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,6/15,45,9,Autocancels on frame 47 onward,4.7/6.6,6/6,3/3,,-6/-6,6—7/15—21,24,https://ultimateframedata.com/hitboxes/chrom/ChromNAir.gif
+Forward Air,10,29,8,Autocancels on frame 31 onward,9.0,7,4,,-4,10—12,17,https://ultimateframedata.com/hitboxes/chrom/ChromFAir.gif
+Back Air,8,35,10,Autocancels on frame 1-2 and 32 onward. Turns the character around.,10.9,10,4,,-6,8—10,25,https://ultimateframedata.com/hitboxes/chrom/ChromBAir.gif
+Up Air,5,41,8,Autocancels on frame 1-2 and 38 onward,7.6,7,4,,-4,5—12,29,https://ultimateframedata.com/hitboxes/chrom/ChromUAir.gif
+Down Air,16,51,14,Autocancels on frame 1-2 and 52 onward,14.2/11.875,12,5,Sweet/Sour,-9/-9,16—17,34,https://ultimateframedata.com/hitboxes/chrom/ChromDAir.gif

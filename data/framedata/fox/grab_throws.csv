@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,6,36,,,,,,,,6—7,29
-Dash Grab,10,44,,,,,,,,10—11,33
-Pivot Grab,11,39,,,,,,,,11—12,27
-Pummel,1,15,Total frames includes 10 frames of hitlag.,,1.0,,,,,,
-Forward Throw,10/11,33,,,4.0/3.0,,,,,,
-Backward Throw,10/16/19/22,49,,"Victim is thrown at 10. Blaster shots at 16, 19, 22.",2.0/2.0,,,,,,
-Up Throw,7/18/21/24,49,,"Victim is thrown at 7. Blaster shots at 18, 21, 24.",2.0/2.0,,,,,,
-Down Throw,26/29/32/34,54,,,2.0/1.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,6,36,,,,,,,,6—7,29,https://ultimateframedata.com/hitboxes/fox/FoxGrab.gif
+Dash Grab,10,44,,,,,,,,10—11,33,https://ultimateframedata.com/hitboxes/fox/FoxDashGrab.gif
+Pivot Grab,11,39,,,,,,,,11—12,27,https://ultimateframedata.com/hitboxes/fox/FoxPivotGrab.gif
+Pummel,1,15,Total frames includes 10 frames of hitlag.,,1.0,,,,,,,https://ultimateframedata.com/hitboxes/fox/FoxPummel.gif
+Forward Throw,10/11,33,,,4.0/3.0,,,,,,,https://ultimateframedata.com/hitboxes/fox/FoxFThrow.gif
+Backward Throw,10/16/19/22,49,,"Victim is thrown at 10. Blaster shots at 16, 19, 22.",2.0/2.0,,,,,,,https://ultimateframedata.com/hitboxes/fox/FoxBThrow.gif
+Up Throw,7/18/21/24,49,,"Victim is thrown at 7. Blaster shots at 18, 21, 24.",2.0/2.0,,,,,,,https://ultimateframedata.com/hitboxes/fox/FoxUTHrow.gif
+Down Throw,26/29/32/34,54,,,2.0/1.0,,,,,,,https://ultimateframedata.com/hitboxes/fox/FoxDThrow.gif

@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral Air,4/20,45,7,Autocancels on frame 1-3 and 43 onward,6.0/3.0/6.0/4.0/5.0,6/6,3/3,,-4/-4,4—12(13—17)/20—26(27—42),3
-Forward Air,5,37,10,Autocancels on frame 1-4 and 27 onward,7.0 / 4.5,7/5,3/3,,-7/-7,5—6/7—17,20
-Back Air,9,49,16,Autocancels on frame 1-4 and 34 onward,12.0,9,5,,-11,9—11,38
-Up Air,8,46,7,Autocancels on frame 1-3 and 37 onward,13.0,9,5,,-2,8—9,37
-Down Air,9/11/13/15/17/19/21,47,18,Autocancels on frame 1-2 and 42 onward,1.3/4.0,4/11,2/3,,-16/-15,9/11/13/15/17/19/21,26
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,4/20,45,7,Autocancels on frame 1-3 and 43 onward,6.0/3.0/6.0/4.0/5.0,6/6,3/3,Early Hit 1/Late Hit 1 Hands/Late Hit 1 Body/Early Hit 2/Late Hit 2,-4/-4,4—12(13—17)/20—26(27—42),3,https://ultimateframedata.com/hitboxes/wario/WarioNAir.gif
+Forward Air,5,37,10,Autocancels on frame 1-4 and 27 onward,7.0 / 4.5,7/5,3/3,Early/Late,-7/-7,5—6/7—17,20,https://ultimateframedata.com/hitboxes/wario/WarioFAir.gif
+Back Air,9,49,16,Autocancels on frame 1-4 and 34 onward,12.0,9,5,,-11,9—11,38,https://ultimateframedata.com/hitboxes/wario/WarioBAir.gif
+Up Air,8,46,7,Autocancels on frame 1-3 and 37 onward,13.0,9,5,,-2,8—9,37,https://ultimateframedata.com/hitboxes/wario/WarioUAir.gif
+Down Air,9/11/13/15/17/19/21,47,18,Autocancels on frame 1-2 and 42 onward,1.3/4.0,4/11,2/3,Multi/Final,-16/-15,9/11/13/15/17/19/21,26,https://ultimateframedata.com/hitboxes/wario/WarioDAir.gif

@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,6,34,,,,,,,,6—7,27
-Dash Grab,9,42,,,,,,,,9—10,32
-Pivot Grab,10,37,,,,,,,,10—11,26
-Pummel,1,19,Total frames includes 13 frames of hitlag.,,1.3,,,,,,
-Forward Throw,26,40,,,8.0,,,,,,
-Backward Throw,26,40,,,8.0,,,,,,
-Up Throw,26,40,,,12.0,,,,,,
-Down Throw,35,49,,,4.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,6,34,,,,,,,,6—7,27,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchGrab.gif
+Dash Grab,9,42,,,,,,,,9—10,32,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchDashGrab.gif
+Pivot Grab,10,37,,,,,,,,10—11,26,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchPivotGrab.gif
+Pummel,1,19,Total frames includes 13 frames of hitlag.,,1.3,,,,,,,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGameWatchPummel.gif
+Forward Throw,26,40,,,8.0,,,,,,,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchFThrow.gif
+Backward Throw,26,40,,,8.0,,,,,,,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchBThrow.gif
+Up Throw,26,40,,,12.0,,,,,,,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGameWatchUThrow.gif
+Down Throw,35,49,,,4.0,,,,,,,https://ultimateframedata.com/hitboxes/mr_game_and_watch/MrGame_WatchDThrow.gif

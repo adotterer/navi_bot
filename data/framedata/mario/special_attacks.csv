@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Fireball),17,49,,Fireball disappears on frame 88.,5.0/4.0,6/5,3/2,,-23,17—21(22—46/47—86),
-Side B (Cape),12,35,,Reflects on frame 9-20.,7.0,7,7,,-16,12—14,21
-Up B (Super Jump Punch),3...,--,30,Invulnerable on frame 3-6. Hits 2-6 rehit rate of 2.,5.0 / 0.6 / 3.0,6/4/5,6/2/4,,,3-6/7-16/17-18,
-Down B (F.L.U.D.D.),2 (+19),48,,Startup is 2 from a charging state. Entering charge state takes 19 frames and is shield cancellable on 20.,,,,,,21—**,
-"Down B, Fully Charged (F.L.U.D.D.)",21,67,,Takes 100 frames to reach full charge.,,,,,,21—**,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Fireball),17,49,,Fireball disappears on frame 88.,5.0/4.0,6/5,3/2,Early/Late,-23,17—21(22—46/47—86),,https://ultimateframedata.com/hitboxes/mario/MarioFireball.png
+Side B (Cape),12,35,,Reflects on frame 9-20.,7.0,7,7,,-16,12—14,21,https://ultimateframedata.com/hitboxes/mario/MarioCape.gif
+Up B (Super Jump Punch),3...,--,30,Invulnerable on frame 3-6. Hits 2-6 rehit rate of 2.,5.0 / 0.6 / 3.0,6/4/5,6/2/4,First/multihit/Final,,3-6/7-16/17-18,,https://ultimateframedata.com/hitboxes/mario/MarioSuperJumpPunch.gif
+Down B (F.L.U.D.D.),2 (+19),48,,Startup is 2 from a charging state. Entering charge state takes 19 frames and is shield cancellable on 20.,,,,,,21—**,,https://ultimateframedata.com/hitboxes/mario/MarioFLUDD.png
+"Down B, Fully Charged (F.L.U.D.D.)",21,67,,Takes 100 frames to reach full charge.,,,,,,21—**,,

@@ -1,13 +1,13 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,5,27,,Transitions to jab 2 as early as frame 9,2.0/2.5,7/8,3/4,,-19/-18,5—6,21
-Jab 2,4,29,,Transitions to jab 3 as early as frame 9 and rapid as early as 8.,2.0,5,3,,-22,4—5,24
-Jab 3,6,30,,,3.0/4.0,9/10,4/5,,-20/-19,6—7,23
-Rapid Jab,12/16/20...,--,,,0.5,4,,,**,,
-Rapid Jab Finisher,3,39,,,3.0,14,4,,-32,3—4,35
-Forward Tilt,8,34,,,10.5,8,10,,-16,8—9,25
-Up Tilt,7,35,,,9.0,7,9,,-19,7—8(9—16),19
-Down Tilt,5,30,,,7.5,7,8,,-17,5—7,23
-Dash Attack,12/14/16/18/20/23,49,,,2.0/3.0,4/9,--/4,,-22,12/14/16/18/20/23,26
-Forward Smash,12/17,56,,Charging hold is frame 12 and includes a hitbox that hits every 5 frames,0.5/11.0/12.0/16.7,4/9/9/16,2/13/13/17,,-26/-26/-22,12—**/17—18,38
-Up Smash,13,51,,Charge hold is frame 9,10.0/13.0/15.0,8/9/14,7/9/10,,-31/-29/-28,13—17,34
-Down Smash,13,48,,Charge hold is frame 8,11.0/9.0/14.0,8/7/14,8/7/10,,-27/-28/-25,13—15,33
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,5,27,,Transitions to jab 2 as early as frame 9,2.0/2.5,7/8,3/4,Close/Far,-19/-18,5—6,21,https://ultimateframedata.com/hitboxes/corrin/CorrinJab1.gif
+Jab 2,4,29,,Transitions to jab 3 as early as frame 9 and rapid as early as 8.,2.0,5,3,,-22,4—5,24,https://ultimateframedata.com/hitboxes/corrin/CorrinJab2.gif
+Jab 3,6,30,,,3.0/4.0,9/10,4/5,Close/Far,-20/-19,6—7,23,https://ultimateframedata.com/hitboxes/corrin/CorrinJab3.gif
+Rapid Jab,12/16/20...,--,,,0.5,4,,,**,,,https://ultimateframedata.com/hitboxes/corrin/CorrinJabRapid.gif
+Rapid Jab Finisher,3,39,,,3.0,14,4,,-32,3—4,35,https://ultimateframedata.com/hitboxes/corrin/CorrinJabRapidEnd.gif
+Forward Tilt,8,34,,,10.5,8,10,,-16,8—9,25,https://ultimateframedata.com/hitboxes/corrin/CorrinFTilt.gif
+Up Tilt,7,35,,,9.0,7,9,,-19,7—8(9—16),19,https://ultimateframedata.com/hitboxes/corrin/CorrinUTilt.gif
+Down Tilt,5,30,,,7.5,7,8,,-17,5—7,23,https://ultimateframedata.com/hitboxes/corrin/CorrinDTilt.gif
+Dash Attack,12/14/16/18/20/23,49,,,2.0/3.0,4/9,--/4,Multi/Final,-22,12/14/16/18/20/23,26,https://ultimateframedata.com/hitboxes/corrin/CorrinDashAttack.gif
+Forward Smash,12/17,56,,Charging hold is frame 12 and includes a hitbox that hits every 5 frames,0.5/11.0/12.0/16.7,4/9/9/16,2/13/13/17,Charging/Close/Far/Tipper,-26/-26/-22,12—**/17—18,38,https://ultimateframedata.com/hitboxes/corrin/CorrinFSmashCharge.gif
+Up Smash,13,51,,Charge hold is frame 9,10.0/13.0/15.0,8/9/14,7/9/10,Close/Far/Tipper,-31/-29/-28,13—17,34,https://ultimateframedata.com/hitboxes/corrin/CorrinUSmash.gif
+Down Smash,13,48,,Charge hold is frame 8,11.0/9.0/14.0,8/7/14,8/7/10,Front/Back/Tipper,-27/-28/-25,13—15,33,https://ultimateframedata.com/hitboxes/corrin/CorrinDSmash.gif

@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,8,40,,,,,,,,8—10,30
-Dash Grab,11,48,,,,,,,,11—13,35
-Pivot Grab,12,43,,,,,,,,12—14,29
-Pummel,2,21,,Total frames include 14 frames of hitlag,1.6,,,,,,
-Forward Throw,36,58,,,12.0,,,,,,
-Backward Throw,19,38,,,12.0,,,,,,
-Up Throw,21/25/29/33/37/41/45/49/57,74,,,0.5/2.0/6.0,,,,,,
-Down Throw,35/37,84,,,10.0/4.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,8,40,,,,,,,,8—10,30,https://ultimateframedata.com/hitboxes/bowser/BowserGrab.gif
+Dash Grab,11,48,,,,,,,,11—13,35,https://ultimateframedata.com/hitboxes/bowser/BowserDashGrab.gif
+Pivot Grab,12,43,,,,,,,,12—14,29,https://ultimateframedata.com/hitboxes/bowser/BowserPivotrGrab.gif
+Pummel,2,21,,Total frames include 14 frames of hitlag,1.6,,,,,,,https://ultimateframedata.com/hitboxes/bowser/BowserPummel.gif
+Forward Throw,36,58,,,12.0,,,,,,,https://ultimateframedata.com/hitboxes/bowser/BowserFThrow.gif
+Backward Throw,19,38,,,12.0,,,,,,,https://ultimateframedata.com/hitboxes/bowser/BowserBThrow.gif
+Up Throw,21/25/29/33/37/41/45/49/57,74,,,0.5/2.0/6.0,,,,,,,https://ultimateframedata.com/hitboxes/bowser/BowserUThrow.gif
+Down Throw,35/37,84,,,10.0/4.0,,,,,,,https://ultimateframedata.com/hitboxes/bowser/BowserDThrow.gif

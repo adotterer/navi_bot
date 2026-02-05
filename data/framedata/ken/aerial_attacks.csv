@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral Air,6,27,5,Special Cancellable. Autocancels on frame 28 onward,6.5/4.0,"10/8, 11/10","3/3, 4/3",,"-2/-2, -1/-2",6—8(9—17),10
-Forward Air,8,36,11,Special Cancellable. Autocancels on frame 1-2 and 38 onward,"9.0/14.0, 8.0/12.0","15/11, 13/11","5/4, 5/4",,"-7/-6, -7/-6",8—9(10—14),22
-Back Air,8,41,10,Special Cancellable. Autocancels on frame 25 onward,16.0/13.0,16/14,6/5,,-4/-5,8—9,32
-Up Air,5,35,11,Special Cancellable. Autocancels on frame 19 onward,6.5,10,3,,-8,5—9,26
-Down Air,8,45,15,Special Cancellable. Autocancels on frame 1-2 and 33 onward,12.0,13,5,,-10,8—12,33
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,6,27,5,Special Cancellable. Autocancels on frame 28 onward,6.5/4.0,"10/8, 11/10","3/3, 4/3","Early/Late Foot, Early/Late Knee","-2/-2, -1/-2",6—8(9—17),10,https://ultimateframedata.com/hitboxes/ken/KenNAir.gif
+Forward Air,8,36,11,Special Cancellable. Autocancels on frame 1-2 and 38 onward,"9.0/14.0, 8.0/12.0","15/11, 13/11","5/4, 5/4","Early foot/knee, Late foot/knee","-7/-6, -7/-6",8—9(10—14),22,https://ultimateframedata.com/hitboxes/ken/KenFAir.gif
+Back Air,8,41,10,Special Cancellable. Autocancels on frame 25 onward,16.0/13.0,16/14,6/5,Close/Far,-4/-5,8—9,32,https://ultimateframedata.com/hitboxes/ken/KenBAir.gif
+Up Air,5,35,11,Special Cancellable. Autocancels on frame 19 onward,6.5,10,3,,-8,5—9,26,https://ultimateframedata.com/hitboxes/ken/KenUAir.gif
+Down Air,8,45,15,Special Cancellable. Autocancels on frame 1-2 and 33 onward,12.0,13,5,,-10,8—12,33,https://ultimateframedata.com/hitboxes/ken/KenDAir.gif

@@ -1,14 +1,14 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Flare Blade),21-260,44-283,,Startup is 10 from release. 11 frames to enter charge state.,8.0—50.0,7—22,8—...,,-15 to Shieldbreak,21—24 (or 10—14 from release),20
-"Side B, Hit 1 (Double-Edge Dance, Hit 1)",9,39/29,,Second total frames is from the air. Can transition to next slash as early as frame 12.,3.0/2.0,5/4,4/3,,-26/-16(air),9—11,28
-"Double-Edge Dance, Hit 2 Neutral",5,38,,Can transition to next slash as early as frame 8.,3.0/2.0,5/4,4/3,,-29/-30,5—7,31
-"Double-Edge Dance, Hit 3 Neutral",4,43,,Can transition to next slash as early as frame 7.,4.0/3.0,5/5,5/4,,-34/-35,4—6,37
-"Double-Edge Dance, Hit 4 Neutral",7,58,,,6.0/4.0,11/5,6/5,,-45/-46,7—9,49
-"Double-Edge Dance, Hit 2 Up",4,38,,Can transition to next slash as early as frame 8.,3.0/2.0,5/4,4/3,,-34/-35,4—6,32
-"Double-Edge Dance, Hit 3 Up",5,43,,,4.0/3.0,5/5,5/4,,-33/-34,5—7,36
-"Double-Edge Dance, Hit 4 Up",6,44,,,7.0/5.0,9/8,7/6,,-31/-32,6—10,34
-"Double-Edge Dance, Hit 3 Down",5,44,,Can transition to next slash as early as frame 8,4.0/3.0,5/5,5/4,,-34/-35,5—7,37
-"Double-Edge Dance, Hit 4 Down",7/10/13/16/19,71,,,2.0/5.0,4/9,-/6,,-46,7/10/13/16/19—21,50
-Up B (Blazer),9/11...,--,30,Super Armor on frame 4-10 from the ground. Intangible on frame 9.,5.5/1.1/8.0,6/4/15,-/2/8,,**,9/11—19(rehit: 3) / 20—21,
-Down B (Counter),8 (Start of Counter),67,,Invulnerable on frames 7-9. Counters on 8-29 from 8-27.,,,,,,,
-"Counter, Attack",4,40,,Invulnerable on frame 1-5. In addition to counter freeze frames,,,,,,4—5,35
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Flare Blade),21-260,44-283,,Startup is 10 from release. 11 frames to enter charge state.,8.0—50.0,7—22,8—...,,-15 to Shieldbreak,21—24 (or 10—14 from release),20,https://ultimateframedata.com/hitboxes/roy/RoyFlareBlade.gif
+"Side B, Hit 1 (Double-Edge Dance, Hit 1)",9,39/29,,Second total frames is from the air. Can transition to next slash as early as frame 12.,3.0/2.0,5/4,4/3,Close/Far,-26/-16(air),9—11,28,https://ultimateframedata.com/hitboxes/roy/RoyDoubleEdgedDance1.gif
+"Double-Edge Dance, Hit 2 Neutral",5,38,,Can transition to next slash as early as frame 8.,3.0/2.0,5/4,4/3,Close/Far,-29/-30,5—7,31,https://ultimateframedata.com/hitboxes/roy/RoyDoubleEdgedDance2Side.gif
+"Double-Edge Dance, Hit 3 Neutral",4,43,,Can transition to next slash as early as frame 7.,4.0/3.0,5/5,5/4,Close/Far,-34/-35,4—6,37,https://ultimateframedata.com/hitboxes/roy/RoyDoubleEdgedDance3Side.gif
+"Double-Edge Dance, Hit 4 Neutral",7,58,,,6.0/4.0,11/5,6/5,Close/Far,-45/-46,7—9,49,https://ultimateframedata.com/hitboxes/roy/RoyDoubledEdgeDance4Side.gif
+"Double-Edge Dance, Hit 2 Up",4,38,,Can transition to next slash as early as frame 8.,3.0/2.0,5/4,4/3,,-34/-35,4—6,32,https://ultimateframedata.com/hitboxes/roy/RoyDoubleEdgedDance2Up.gif
+"Double-Edge Dance, Hit 3 Up",5,43,,,4.0/3.0,5/5,5/4,Close/Far,-33/-34,5—7,36,https://ultimateframedata.com/hitboxes/roy/RoyDoubleEdgedDance3Up.gif
+"Double-Edge Dance, Hit 4 Up",6,44,,,7.0/5.0,9/8,7/6,Close/Far,-31/-32,6—10,34,https://ultimateframedata.com/hitboxes/roy/RoyDoubleEdgedDance4Up.gif
+"Double-Edge Dance, Hit 3 Down",5,44,,Can transition to next slash as early as frame 8,4.0/3.0,5/5,5/4,Close/Far,-34/-35,5—7,37,https://ultimateframedata.com/hitboxes/roy/RoyDoubleEdgedDance3Down.gif
+"Double-Edge Dance, Hit 4 Down",7/10/13/16/19,71,,,2.0/5.0,4/9,-/6,multi/final,-46,7/10/13/16/19—21,50,https://ultimateframedata.com/hitboxes/roy/RoyDoubleEdgedDance4Down.gif
+Up B (Blazer),9/11...,--,30,Super Armor on frame 4-10 from the ground. Intangible on frame 9.,5.5/1.1/8.0,6/4/15,-/2/8,First/multi/final,**,9/11—19(rehit: 3) / 20—21,,https://ultimateframedata.com/hitboxes/roy/RoyBlazerG.gif
+Down B (Counter),8 (Start of Counter),67,,Invulnerable on frames 7-9. Counters on 8-29 from 8-27.,,,,,,,,https://ultimateframedata.com/hitboxes/roy/RoyCounter.gif
+"Counter, Attack",4,40,,Invulnerable on frame 1-5. In addition to counter freeze frames,,,,,,4—5,35,https://ultimateframedata.com/hitboxes/roy/RoyCounterHit.gif

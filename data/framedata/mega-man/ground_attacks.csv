@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab,7/19/31,35/47/59,,Cannon and projectile hits generate on same frame.,3.0/4.0/2.0,4/4/4,3/2/2,,-25/-23/-20,7 [7-8/9-12/13-36] / 19 [19-20/11-24/25-42] / 31 [31-32/33-36/37-54],
-Forward Tilt,7/19/31,33/45/57,,Does not have a hitbox before the projectile comes out.,3.0/4.0/2.0,4/4/4,3/2/2,,-25/-23/-20,7-8(9-12/13-36) / 19-20(11-24/25-42) / 31-32(33-36/37-54),
-Up Tilt,6,70/52/54,,Total frames refer to use on level ground/over an edge/under a platform. Invulnerable on frame 5-7,17.0/12.0/8.0,15/9/7,15/11/8,,-49/-31/-33,6(7—9/10—16),54
-Down Tilt,5,46,,Leg intangibility on frame 3-12,8.0/5.0,7/6,8/6,,-33,5—8(9—21),25
-Dash Attack,7/10/13/16/19/22/25/35,59,,,1.2/4.0,4/5,2/8,,-16,7/10/13/16/19/22/25/35,24
-Forward Smash,19,54,,Charge hold is frame 9,11.5,13,4,,-18,19—42(79—108/199—222),
-Up Smash,8/11/15/19/23/27/31,68,,Charge hold is frame 4,2.0/1.5/6.0,-/3/9,-/0/5,,-32,8/11—12/15—16/19—20/23—24/27—28/31,37
-Down Smash,17,78,,Charge hold is frame 4,17.0,11,11,,-50,17(18—19/20—33),45
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab,7/19/31,35/47/59,,Cannon and projectile hits generate on same frame.,3.0/4.0/2.0,4/4/4,3/2/2,Cannon/Projectiles,-25/-23/-20,7 [7-8/9-12/13-36] / 19 [19-20/11-24/25-42] / 31 [31-32/33-36/37-54],,https://ultimateframedata.com/hitboxes/mega_man/MegaManJab.gif
+Forward Tilt,7/19/31,33/45/57,,Does not have a hitbox before the projectile comes out.,3.0/4.0/2.0,4/4/4,3/2/2,Cannon/Projectiles,-25/-23/-20,7-8(9-12/13-36) / 19-20(11-24/25-42) / 31-32(33-36/37-54),,
+Up Tilt,6,70/52/54,,Total frames refer to use on level ground/over an edge/under a platform. Invulnerable on frame 5-7,17.0/12.0/8.0,15/9/7,15/11/8,Early/late/later,-49/-31/-33,6(7—9/10—16),54,https://ultimateframedata.com/hitboxes/mega_man/MegaManUTilt.gif
+Down Tilt,5,46,,Leg intangibility on frame 3-12,8.0/5.0,7/6,8/6,Early/late,-33,5—8(9—21),25,https://ultimateframedata.com/hitboxes/mega_man/MegaManDTilt.gif
+Dash Attack,7/10/13/16/19/22/25/35,59,,,1.2/4.0,4/5,2/8,Multi/final,-16,7/10/13/16/19/22/25/35,24,https://ultimateframedata.com/hitboxes/mega_man/MegaManDashAttack.gif
+Forward Smash,19,54,,Charge hold is frame 9,11.5,13,4,,-18,19—42(79—108/199—222),,https://ultimateframedata.com/hitboxes/mega_man/MegaManFSmashMinimum.gif
+Up Smash,8/11/15/19/23/27/31,68,,Charge hold is frame 4,2.0/1.5/6.0,-/3/9,-/0/5,First/multi/final,-32,8/11—12/15—16/19—20/23—24/27—28/31,37,https://ultimateframedata.com/hitboxes/mega_man/MegaManUSmash.gif
+Down Smash,17,78,,Charge hold is frame 4,17.0,11,11,,-50,17(18—19/20—33),45,https://ultimateframedata.com/hitboxes/mega_man/MegaManDSmash.gif

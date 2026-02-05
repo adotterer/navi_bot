@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,6,34,,,,,,,,6—7,27
-Dash Grab,9,42,,,,,,,,9—10,32
-Pivot Grab,9,36,,,,,,,,9—10,26
-Pummel,,,**,**,**,,,,,,
-Forward Throw,13/14,31,,,**,,,,,,
-Backward Throw,19,34,,,**,,,,,,
-Up Throw,20,49,,,**,,,,,,
-Down Throw,20/30/31,47,,,**,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,6,34,,,,,,,,6—7,27,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantGrab.gif
+Dash Grab,9,42,,,,,,,,9—10,32,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDashGrab.gif
+Pivot Grab,9,36,,,,,,,,9—10,26,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantPivotGrab.gif
+Pummel,,,**,**,**,,,,,,,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantPummel.gif
+Forward Throw,13/14,31,,,**,,,,,,,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantFThrow.gif
+Backward Throw,19,34,,,**,,,,,,,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantBThrow.gif
+Up Throw,20,49,,,**,,,,,,,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantUThrow.gif
+Down Throw,20/30/31,47,,,**,,,,,,,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDThrow.gif

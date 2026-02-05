@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,6,34,,,,,,,,6—7,27
-Dash Grab,8,42,,,,,,,,8—9,33
-Pivot Grab,9,37,,,,,,,,9—10,27
-Pummel,1,19,**,Total frames includes 13 frames of hitlag,1.5,,,,,,
-Forward Throw,9,29,,,8.0,,,,,,
-Backward Throw,14,39,,,10.0,,,,,,
-Up Throw,16,37,,,7.0,,,,,,
-Down Throw,23,40,,,7.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,6,34,,,,,,,,6—7,27,https://ultimateframedata.com/hitboxes/joker/JokerGrab.gif
+Dash Grab,8,42,,,,,,,,8—9,33,https://ultimateframedata.com/hitboxes/joker/JokerDashGrab.gif
+Pivot Grab,9,37,,,,,,,,9—10,27,https://ultimateframedata.com/hitboxes/joker/JokerPivotGrab.gif
+Pummel,1,19,**,Total frames includes 13 frames of hitlag,1.5,,,,,,,https://ultimateframedata.com/hitboxes/joker/JokerPummel.gif
+Forward Throw,9,29,,,8.0,,,,,,,https://ultimateframedata.com/hitboxes/joker/JokerFThrow.gif
+Backward Throw,14,39,,,10.0,,,,,,,https://ultimateframedata.com/hitboxes/joker/JokerBThrow.gif
+Up Throw,16,37,,,7.0,,,,,,,https://ultimateframedata.com/hitboxes/joker/JokerUThrow.gif
+Down Throw,23,40,,,7.0,,,,,,,https://ultimateframedata.com/hitboxes/joker/JokerDThrow.gif

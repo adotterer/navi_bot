@@ -1,10 +1,10 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,3,20,,Transitions to jab 2 as early as frame 11,3.0,5,4,,-13,3—4,16
-Jab 2,3,20,,,3.0,10,4,,-13,3—4,16
-Forward Tilt,7,33,,,7.0/8.0/10.0,7,8,,-18,7—9,24
-Up Tilt,4/6,26,,,3.0/5.0/6.0,5/6,4/6,,-14,4—5/6—7,19
-Down Tilt,3,14,,,5.0,6,6,,-5,3,11
-Dash Attack,7,31,,,7.0,7,7,,-17,7—8,23
-Forward Smash,16,54,,Charge hold is frame 6,15.0/11.5/6.0,15/13/9,10/8/5,,-28/-30/-33,16—17,37
-Up Smash,10/14,48,,Charge hold is frame 7,3.0/14.0/13.0,5/10,3/10,,-35/-24,10—11/14—18,30
-Down Smash,7/11/16,45,,Charge hold is frame 3,3.5/3.0/5.0,5/12,3/4,,-25,7—8/11—12/16,29
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,3,20,,Transitions to jab 2 as early as frame 11,3.0,5,4,,-13,3—4,16,https://ultimateframedata.com/hitboxes/rob/ROBJab1.gif
+Jab 2,3,20,,,3.0,10,4,,-13,3—4,16,https://ultimateframedata.com/hitboxes/rob/ROBJab2.gif
+Forward Tilt,7,33,,,7.0/8.0/10.0,7,8,Close/Mid/Far,-18,7—9,24,https://ultimateframedata.com/hitboxes/rob/ROBFTilt.gif
+Up Tilt,4/6,26,,,3.0/5.0/6.0,5/6,4/6,Hit 1/Hit 2 Far/Hit 3 Close,-14,4—5/6—7,19,https://ultimateframedata.com/hitboxes/rob/ROBUTilt.gif
+Down Tilt,3,14,,,5.0,6,6,,-5,3,11,https://ultimateframedata.com/hitboxes/rob/ROBDTilt.gif
+Dash Attack,7,31,,,7.0,7,7,,-17,7—8,23,https://ultimateframedata.com/hitboxes/rob/ROBDashAttack.gif
+Forward Smash,16,54,,Charge hold is frame 6,15.0/11.5/6.0,15/13/9,10/8/5,Close/Far/Farther,-28/-30/-33,16—17,37,https://ultimateframedata.com/hitboxes/rob/ROBFSmash.gif
+Up Smash,10/14,48,,Charge hold is frame 7,3.0/14.0/13.0,5/10,3/10,Hit 1/Hit 2 Close/Hit 2 Far,-35/-24,10—11/14—18,30,https://ultimateframedata.com/hitboxes/rob/ROBUSmash.gif
+Down Smash,7/11/16,45,,Charge hold is frame 3,3.5/3.0/5.0,5/12,3/4,Multi Close/Multi Far/Final,-25,7—8/11—12/16,29,https://ultimateframedata.com/hitboxes/rob/ROBDSmash.gif

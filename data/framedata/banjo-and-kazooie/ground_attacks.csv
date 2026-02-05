@@ -1,13 +1,13 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,4,27,,Transitions to Jab 2 as early as frame 8,2.2,8,3,,-20,4—6,21
-Jab 2,4,24,,Transitions to Jab 3 as early as frame 10 or Rapid on 9.,2.2,7,3,,-17,4—6,18
-Jab 3,5,31,,,3.8,10,5,,-21,5—7,24
-Rapid Jab,5/7/9...,--,,,0.4,4,3,,,,
-Rapid Jab Finisher,7,41,,,1.6,9,3,,-31,7—8,33
-Forward Tilt,7,28,,,9.0/7.0,8/7,9/7,,-12/-14,7—9,19
-Up Tilt,11,31,,Kazooie has hurtboxes on frames 1—24.,10.0,8,10,,-10,11—14,17
-Down Tilt,12,37,,,6.0/5.0/4.0,7/6/6,6/6/5,,-19/-19,12—17(18—21),16
-Dash Attack,9,36,,,12.0/8.0,10/7,11/8,,-16,9—12(13—20),16
-Forward Smash,19,52,,Charge hold is frame 9,16.0,12,11,,-22,19—21,31
-Up Smash,9...,65,,Charge hold is frame 6,1.0/1.5/3.6,4/4/10,2/**/4,,-35,9—10/13—25 (rehit: 2)/26—27,40
-Down Smash,13,46,,Charge hold is frame 2,15.0,10,10,,-23,13—17,29
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,4,27,,Transitions to Jab 2 as early as frame 8,2.2,8,3,,-20,4—6,21,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieJab1.gif
+Jab 2,4,24,,Transitions to Jab 3 as early as frame 10 or Rapid on 9.,2.2,7,3,,-17,4—6,18,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieJab2.gif
+Jab 3,5,31,,,3.8,10,5,,-21,5—7,24,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieJab3.gif
+Rapid Jab,5/7/9...,--,,,0.4,4,3,,,,,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieJabRapid.gif
+Rapid Jab Finisher,7,41,,,1.6,9,3,,-31,7—8,33,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieJabRapidEnd.gif
+Forward Tilt,7,28,,,9.0/7.0,8/7,9/7,Far/Close,-12/-14,7—9,19,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieFTilt.gif
+Up Tilt,11,31,,Kazooie has hurtboxes on frames 1—24.,10.0,8,10,,-10,11—14,17,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieUTilt.gif
+Down Tilt,12,37,,,6.0/5.0/4.0,7/6/6,6/6/5,Far/Close/Late,-19/-19,12—17(18—21),16,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieDTilt.gif
+Dash Attack,9,36,,,12.0/8.0,10/7,11/8,Early/Late,-16,9—12(13—20),16,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieDashAttack.gif
+Forward Smash,19,52,,Charge hold is frame 9,16.0,12,11,,-22,19—21,31,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieFSmash.gif
+Up Smash,9...,65,,Charge hold is frame 6,1.0/1.5/3.6,4/4/10,2/**/4,First/Multi/Final,-35,9—10/13—25 (rehit: 2)/26—27,40,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieUSmash.gif
+Down Smash,13,46,,Charge hold is frame 2,15.0,10,10,,-23,13—17,29,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieDSmash.gif

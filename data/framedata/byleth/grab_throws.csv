@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,6,39,,,,,,,,6—7,32
-Dash Grab,10,48,,,,,,,,10—11,37
-Pivot Grab,11,42,,,,,,,,11—12,30
-Pummel,1,22,**,Total frames includes 17 frames of hitlag (plus one in 1v1),**,,,,,,
-Forward Throw,13,35,,,6.0,,,,,,
-Backward Throw,30,43,,,7.0,,,,,,
-Up Throw,15,37,,,9.0,,,,,,
-Down Throw,13,31,,,5.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,6,39,,,,,,,,6—7,32,https://ultimateframedata.com/hitboxes/byleth/BylethGrab.gif
+Dash Grab,10,48,,,,,,,,10—11,37,https://ultimateframedata.com/hitboxes/byleth/BylethDashGrab.gif
+Pivot Grab,11,42,,,,,,,,11—12,30,https://ultimateframedata.com/hitboxes/byleth/BylethPivotGrab.gif
+Pummel,1,22,**,Total frames includes 17 frames of hitlag (plus one in 1v1),**,,,,,,,https://ultimateframedata.com/hitboxes/byleth/BylethPummel.gif
+Forward Throw,13,35,,,6.0,,,,,,,https://ultimateframedata.com/hitboxes/byleth/BylethFThrow.gif
+Backward Throw,30,43,,,7.0,,,,,,,https://ultimateframedata.com/hitboxes/byleth/BylethBThrow.gif
+Up Throw,15,37,,,9.0,,,,,,,https://ultimateframedata.com/hitboxes/byleth/BylethUThrow.gif
+Down Throw,13,31,,,5.0,,,,,,,https://ultimateframedata.com/hitboxes/byleth/BylethDThrow.gif

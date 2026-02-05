@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,6,34,,,,,,,,6—7,27
-Dash Grab,8,39,,,,,,,,8—9,30
-Pivot Grab,9,37,,,,,,,,9—10,27
-Pummel,1,15,,Total frames includes 10 frames of hitlag,1.0,,,,,,
-Forward Throw,11/13,34,,,2.0/6.0,,,,,,
-Backward Throw,27,44,,,8.0,,,,,,
-Up Throw,16/18,37,,,2.0/5.0,,,,,,
-Down Throw,22/30,46,,,2.0/5.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,6,34,,,,,,,,6—7,27,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleGrab.gif
+Dash Grab,8,39,,,,,,,,8—9,30,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleDashGrab.gif
+Pivot Grab,9,37,,,,,,,,9—10,27,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtlePivotGrab.gif
+Pummel,1,15,,Total frames includes 10 frames of hitlag,1.0,,,,,,,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtlePummel.gif
+Forward Throw,11/13,34,,,2.0/6.0,,,,,,,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleFThrow.gif
+Backward Throw,27,44,,,8.0,,,,,,,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleBThrow.gif
+Up Throw,16/18,37,,,2.0/5.0,,,,,,,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleUThrow.gif
+Down Throw,22/30,46,,,2.0/5.0,,,,,,,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleDThrow.gif

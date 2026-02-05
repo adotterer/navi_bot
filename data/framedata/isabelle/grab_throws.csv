@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,14,43,,,,,,,,14—16,27
-Dash Grab,15,46,,,,,,,,16—17,29
-Pivot Grab,17,44,,,,,,,,17—19,25
-Pummel,,,**,,**,,,,,,
-Forward Throw,15,45,,,**,,,,,,
-Backward Throw,14,49,,,**,,,,,,
-Up Throw,20,52,,,**,,,,,,
-Down Throw,18,35,,,**,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,14,43,,,,,,,,14—16,27,https://ultimateframedata.com/hitboxes/isabelle/IsabelleGrab.gif
+Dash Grab,15,46,,,,,,,,16—17,29,https://ultimateframedata.com/hitboxes/isabelle/IsabelleDashGrab.gif
+Pivot Grab,17,44,,,,,,,,17—19,25,https://ultimateframedata.com/hitboxes/isabelle/IsabellePivotGrab.gif
+Pummel,,,**,,**,,,,,,,https://ultimateframedata.com/hitboxes/isabelle/IsabellePummel.gif
+Forward Throw,15,45,,,**,,,,,,,https://ultimateframedata.com/hitboxes/isabelle/IsabelleFThrow.gif
+Backward Throw,14,49,,,**,,,,,,,https://ultimateframedata.com/hitboxes/isabelle/IsabelleBThrow.gif
+Up Throw,20,52,,,**,,,,,,,https://ultimateframedata.com/hitboxes/isabelle/IsabelleUThrow.gif
+Down Throw,18,35,,,**,,,,,,,https://ultimateframedata.com/hitboxes/isabelle/IsabelleDThrow.gif

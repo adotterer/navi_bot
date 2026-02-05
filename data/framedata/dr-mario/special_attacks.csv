@@ -1,5 +1,5 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Megavitamin Pill),17,49,,,5.8/4.7,6/6,3/3,,-23,17—46/47—86,
-Side B (Super Sheet),12,35,,Reflects on frame 9-22.,8.2,7,8,,-15,12—16,19
-Up B (Super Jump Punch),3,--,30,,14.1 / 7.0,10/7,13/7,,,3—5/6—19,
-Down B (Dr. Tornado),10/14/18/22/26/30/40,74,,"Armor on frames 2-10, but only on the ground.",1.8/3.5,4/11,3/4,,-30,10/14/18/22/26/30/40—41,33
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Megavitamin Pill),17,49,,,5.8/4.7,6/6,3/3,Early/Late,-23,17—46/47—86,,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioMegavitamin.png
+Side B (Super Sheet),12,35,,Reflects on frame 9-22.,8.2,7,8,,-15,12—16,19,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioSuperSheet.gif
+Up B (Super Jump Punch),3,--,30,,14.1 / 7.0,10/7,13/7,Early/Late,,3—5/6—19,,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioSuperJumpPunch.gif
+Down B (Dr. Tornado),10/14/18/22/26/30/40,74,,"Armor on frames 2-10, but only on the ground.",1.8/3.5,4/11,3/4,Multi/Final,-30,10/14/18/22/26/30/40—41,33,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioDrTornadoG.gif

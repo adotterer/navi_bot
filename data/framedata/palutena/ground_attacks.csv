@@ -1,11 +1,11 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,8,24,,Transitions to rapid jab as early as frame 13,3.0,8,4,,-12,8—9,15
-Rapid Jab,4/7/10...,--,,,0.6,4,-,,,4/7/10...,
-Rapid Jab Finisher,3,39,,,3.5,11,4,,-32,3,36
-Forward Tilt,14/24,59,,Right-arm intangible 14—35,6.0/7.0,6/7,6/7,,-28,14—23/24—35,24
-Up Tilt,8...,55,,,1.4/4.5,4/7,3/4,,-27,8—22/24—25 (rehit: 3),30
-Down Tilt,14,39,,,8.5 (grounded opponents) // 5.0 (aerial opponents),7,8,,-17,14—27,12
-Dash Attack,6,40,,"Head, torso, and arm invincibility on frame 5-6. Arm invincibility continues frame 7-16",11.0/7.0,8/7,10/7,,-23/-21,6—9/10—17,23
-Forward Smash,18,63,,Charge hold is frame 10,16.0/13.0,10/9,11/9,,-34/-36,18—20,43
-Up Smash,18,63,,Charge hold is frame 12. Damage values are Early(Close/Mid/Far)/Late(Close/Mid/Far).,(16.0%/12.0%/9.0%)/(13.0%/9.0%/7.0%),10/9,11/8,,-34/-37,18—29/30—35,28
-Down Smash,17,68,,Charge hold is frame 13,15.0/13.0,14/9,10/9,,-41/-42,17—19,49
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,8,24,,Transitions to rapid jab as early as frame 13,3.0,8,4,,-12,8—9,15,https://ultimateframedata.com/hitboxes/palutena/PalutenaJab1.gif
+Rapid Jab,4/7/10...,--,,,0.6,4,-,,,4/7/10...,,https://ultimateframedata.com/hitboxes/palutena/PalutenaJabRapid.gif
+Rapid Jab Finisher,3,39,,,3.5,11,4,,-32,3,36,https://ultimateframedata.com/hitboxes/palutena/PalutenaJabRapidEnd.gif
+Forward Tilt,14/24,59,,Right-arm intangible 14—35,6.0/7.0,6/7,6/7,,-28,14—23/24—35,24,https://ultimateframedata.com/hitboxes/palutena/PalutenaFTilt.gif
+Up Tilt,8...,55,,,1.4/4.5,4/7,3/4,Multi/Final,-27,8—22/24—25 (rehit: 3),30,https://ultimateframedata.com/hitboxes/palutena/PalutenaUTilt.gif
+Down Tilt,14,39,,,8.5 (grounded opponents) // 5.0 (aerial opponents),7,8,,-17,14—27,12,https://ultimateframedata.com/hitboxes/palutena/PalutenaDTilt.gif
+Dash Attack,6,40,,"Head, torso, and arm invincibility on frame 5-6. Arm invincibility continues frame 7-16",11.0/7.0,8/7,10/7,Early/Late,-23/-21,6—9/10—17,23,https://ultimateframedata.com/hitboxes/palutena/PalutenaDashAttack.gif
+Forward Smash,18,63,,Charge hold is frame 10,16.0/13.0,10/9,11/9,Close/Far,-34/-36,18—20,43,https://ultimateframedata.com/hitboxes/palutena/PalutenaFSmash.gif
+Up Smash,18,63,,Charge hold is frame 12. Damage values are Early(Close/Mid/Far)/Late(Close/Mid/Far).,(16.0%/12.0%/9.0%)/(13.0%/9.0%/7.0%),10/9,11/8,Early/Late,-34/-37,18—29/30—35,28,https://ultimateframedata.com/hitboxes/palutena/PalutenaUSmash.gif
+Down Smash,17,68,,Charge hold is frame 13,15.0/13.0,14/9,10/9,Close/Far,-41/-42,17—19,49,https://ultimateframedata.com/hitboxes/palutena/PalutenaDSmash.gif

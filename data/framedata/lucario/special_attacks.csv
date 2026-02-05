@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Aura Sphere),9 (+8),43,,9 startup from charge.Takes 8 frames to enter charge state and 4 frames to cancel charge with shield. Charging sphere becomes hitbox on 9 and hits every six frames,4.5 -11.3 | 6.0 - 17.2 | 11.0 - 27.6,6-8 | 7-11 | 8-15,3-4 | 3-6 | 4-8,,-26 | -25 | -23,17—**,
-"Aura Sphere, Full Charge",17,51,,Takes 99 frames to reach full charge.,11.3 | 17.2 | 27.6,8 | 11 | 15,4 | 6 | 8,,-23 | -18 | -11,17—**,
-Side B (Force Palm),(9)24,63,,Grabs on frame 9 if on the ground.,7.8/3.5 | 11.5/5.4 | 19.0/8.6,7/5 | 9/6 | 12/7,8/4 | 11/6 | 17/8,,-24/-30 | -19/-27 | -10/-24,24—25,38
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Aura Sphere),9 (+8),43,,9 startup from charge.Takes 8 frames to enter charge state and 4 frames to cancel charge with shield. Charging sphere becomes hitbox on 9 and hits every six frames,4.5 -11.3 | 6.0 - 17.2 | 11.0 - 27.6,6-8 | 7-11 | 8-15,3-4 | 3-6 | 4-8,,-26 | -25 | -23,17—**,,
+"Aura Sphere, Full Charge",17,51,,Takes 99 frames to reach full charge.,11.3 | 17.2 | 27.6,8 | 11 | 15,4 | 6 | 8,,-23 | -18 | -11,17—**,,
+Side B (Force Palm),(9)24,63,,Grabs on frame 9 if on the ground.,7.8/3.5 | 11.5/5.4 | 19.0/8.6,7/5 | 9/6 | 12/7,8/4 | 11/6 | 17/8,Close/far,-24/-30 | -19/-27 | -10/-24,24—25,38,https://ultimateframedata.com/hitboxes/lucario/LucarioForcePalm.gif
 "Force Palm, Throw","Throw Hit: 23, Throw: 29",42,,,"Throw Hit: ** | 10.0 | **
-		Throw: 8.5  | 13.0 | 20.8",,,,,Throw Hit: 23—24,18
-Up B (Extreme Speed),46,--,40/37,28 endlag if you end on the ground. Hitbox on frame 1 if you crash directly into ground/wall/ceiling. This bounce is a 37 frame animation on the ground,3.9/2.6 | 6.0/4.0 | 9.6/6.4,6/6 | 7/6 | 9/8,5/5 | 6/5 | 9/7,,-23/-31 | -22/-31 | -19/-29,46—47(1),
-Down B (Double Team),5 (Start of Counter),70,,Invulnerable on frame 4. Counters on frame 5-24,,,,,,5—24(counter),
-"Double Team, Counterattack",8,47,,Invulnerable on frame 1-17 in addition to counter freeze frames.,8.2 | 12.5 | 20.0,15 | 16 | 18,8 | 12 | 18,,-31 | -27 | -21,,
+		Throw: 8.5  | 13.0 | 20.8",,,,,Throw Hit: 23—24,18,https://ultimateframedata.com/hitboxes/lucario/LucarioForcePalmThrow.gif
+Up B (Extreme Speed),46,--,40/37,28 endlag if you end on the ground. Hitbox on frame 1 if you crash directly into ground/wall/ceiling. This bounce is a 37 frame animation on the ground,3.9/2.6 | 6.0/4.0 | 9.6/6.4,6/6 | 7/6 | 9/8,5/5 | 6/5 | 9/7,,-23/-31 | -22/-31 | -19/-29,46—47(1),,https://ultimateframedata.com/hitboxes/lucario/LucarioExtremeSpeedG.gif
+Down B (Double Team),5 (Start of Counter),70,,Invulnerable on frame 4. Counters on frame 5-24,,,,,,5—24(counter),,https://ultimateframedata.com/hitboxes/lucario/LucarioDoubleTeam.gif
+"Double Team, Counterattack",8,47,,Invulnerable on frame 1-17 in addition to counter freeze frames.,8.2 | 12.5 | 20.0,15 | 16 | 18,8 | 12 | 18,,-31 | -27 | -21,,,https://ultimateframedata.com/hitboxes/lucario/LucarioDoubleTeamHit.gif

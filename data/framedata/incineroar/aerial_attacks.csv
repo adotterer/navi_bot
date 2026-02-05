@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral Air,5,41,11,Autocancels on frame 1-3 and 36 onward,13.0/7.0,9/7,5/3,,-6/-8,5—6/7—25,16
-Forward Air,8,44,14,Autocancels on frame 1-6 and 46 onward,12.0/13.0/9.0/9.6,9/10,5/5,,-9/-9,8—10(11—14),30
-Back Air,7,41,11,Autocancels on frame 1-5 and 36 onward,11.0/13.0,8/10,4/5,,-7/-6,7—10,31
-Up Air,7,31,8,Autocancels on frame 1-5 and 26 onward,8.0,7,4,,-4,7—11,20
-Down Air,16,44,16,Autocancels on frame 1-3 and 45 onward,15.0/14.0/9.0/8.0,10/10/7,5/5/4,,-11/-11/-12,16—19/20—21,23
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,5,41,11,Autocancels on frame 1-3 and 36 onward,13.0/7.0,9/7,5/3,Early/Late,-6/-8,5—6/7—25,16,https://ultimateframedata.com/hitboxes/incineroar/IncineroarNAir.gif
+Forward Air,8,44,14,Autocancels on frame 1-6 and 46 onward,12.0/13.0/9.0/9.6,9/10,5/5,Close/Far,-9/-9,8—10(11—14),30,https://ultimateframedata.com/hitboxes/incineroar/IncineroarFAir.gif
+Back Air,7,41,11,Autocancels on frame 1-5 and 36 onward,11.0/13.0,8/10,4/5,Close/Far,-7/-6,7—10,31,https://ultimateframedata.com/hitboxes/incineroar/IncineroarBAir.gif
+Up Air,7,31,8,Autocancels on frame 1-5 and 26 onward,8.0,7,4,,-4,7—11,20,https://ultimateframedata.com/hitboxes/incineroar/IncineroarUAir.gif
+Down Air,16,44,16,Autocancels on frame 1-3 and 45 onward,15.0/14.0/9.0/8.0,10/10/7,5/5/4,Meteor/Close/Late,-11/-11/-12,16—19/20—21,23,https://ultimateframedata.com/hitboxes/incineroar/IncineroarDAir.gif

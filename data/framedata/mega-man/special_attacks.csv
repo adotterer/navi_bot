@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Metal Blade),16,42,,Projectile hits every 6 frames. Add 2 to startup and total frames when throwing backward,5.0,6,3,,-17,,
-Side B (Crash Bomber),19,44,,Does not attach to shields. Explosion occurs about 2.5 seconds later and hits on frame 1/6/11/16/21,1.0/4.0,4/5,-/2,,**,19—69,
-Up B (Rush Coil),--,41,,Invulnerable on frame 7-10. Rush dissapears at Frame ~130,,,,,,--,
-Down B (Leaf Shield),9—**,35,,Hits every 11 frames. Leaves do not disappear after hitting something. Hold the button to move with the shield. Can delay 40 frames before an automatic throw.,1.5,4,3,,**,9—**,
-"Leaf Shield, Throw",--,55,,Hits every 11 frames.,3.8,5,2,,**,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Metal Blade),16,42,,Projectile hits every 6 frames. Add 2 to startup and total frames when throwing backward,5.0,6,3,,-17,,,https://ultimateframedata.com/hitboxes/mega_man/MegaManMetalBlade.png
+Side B (Crash Bomber),19,44,,Does not attach to shields. Explosion occurs about 2.5 seconds later and hits on frame 1/6/11/16/21,1.0/4.0,4/5,-/2,Multi/Final,**,19—69,,https://ultimateframedata.com/hitboxes/mega_man/MegaManCrashBomber.png
+Up B (Rush Coil),--,41,,Invulnerable on frame 7-10. Rush dissapears at Frame ~130,,,,,,--,,
+Down B (Leaf Shield),9—**,35,,Hits every 11 frames. Leaves do not disappear after hitting something. Hold the button to move with the shield. Can delay 40 frames before an automatic throw.,1.5,4,3,,**,9—**,,https://ultimateframedata.com/hitboxes/mega_man/MegaManLeafShield.gif
+"Leaf Shield, Throw",--,55,,Hits every 11 frames.,3.8,5,2,,**,,,https://ultimateframedata.com/hitboxes/mega_man/MegaManLeafShieldFly.gif

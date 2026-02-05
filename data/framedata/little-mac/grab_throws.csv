@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,9,38,,,,,,,,9—10,28
-Dash Grab,13,46,,,,,,,,13—14,32
-Pivot Grab,14,41,,,,,,,,14—15,26
-Pummel,1,15,,Total frames includes 10 frames of hitlag,1.0,,,,,,
-Forward Throw,15/17,44,,Meter filled: 0.12/0.12 arrows.,4.0/4.0,,,,,,
-Backward Throw,17/19,47,,Meter filled: 0.12/0.15 arrows.,4.0/5.0,,,,,,
-Up Throw,10/12,40,,Meter filled: 0.12/0.09 arrows.,4.0/3.0,,,,,,
-Down Throw,14/16,44,,Meter filled: 0.12/0.09 arrows.,4.0/3.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,9,38,,,,,,,,9—10,28,https://ultimateframedata.com/hitboxes/little_mac/LittleMacGrab.gif
+Dash Grab,13,46,,,,,,,,13—14,32,https://ultimateframedata.com/hitboxes/little_mac/LittleMacDashGrab.gif
+Pivot Grab,14,41,,,,,,,,14—15,26,https://ultimateframedata.com/hitboxes/little_mac/LittleMacPivotGrab.gif
+Pummel,1,15,,Total frames includes 10 frames of hitlag,1.0,,,,,,,https://ultimateframedata.com/hitboxes/little_mac/LittleMacPummel.gif
+Forward Throw,15/17,44,,Meter filled: 0.12/0.12 arrows.,4.0/4.0,,,,,,,https://ultimateframedata.com/hitboxes/little_mac/LittleMacFThrow.gif
+Backward Throw,17/19,47,,Meter filled: 0.12/0.15 arrows.,4.0/5.0,,,,,,,https://ultimateframedata.com/hitboxes/little_mac/LittleMacBThrow.gif
+Up Throw,10/12,40,,Meter filled: 0.12/0.09 arrows.,4.0/3.0,,,,,,,https://ultimateframedata.com/hitboxes/little_mac/LittleMacUThrow.gif
+Down Throw,14/16,44,,Meter filled: 0.12/0.09 arrows.,4.0/3.0,,,,,,,https://ultimateframedata.com/hitboxes/little_mac/LittleMacDThrow.gif

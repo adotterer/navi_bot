@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Silver Bow),16—76,See Notes,,"Total frames vary depending on which move is used: Forward, Grounded : 46 | Forward, Aerial : 43 | Up, Grounded : 42 | Up, Aerial : 40",5.5—14.0,6—10,3—5,,-21 to -15,16—55 (sideways) || 17—56 (up),
-Side B (Electroshock Arm),18,79/49,,Startup is 2 upon reaching a target. Super Armor begins on frame 11 and ends on the frame he begins swing.,12.0,16,11,,-36,16—35(detector),
-"Side B, Air (Electrodash Arm, Air)",21,104/51,30,Startup is 2 upon reaching a target. 55 endlag on the swing if you don't land,9.5,12,9,,-40,19—35(detector),
-Up B (Power of Flight),--,--,40,"Invulnerable on frame 9-19, 15-19 in the air. Can Sweetspot ledges starting on frame 24.",,,,,,--,
-Down B (Guardian Orbitars),7 (Start of Reflect),43—124,,Reflects/blocks as early as frame 7. 18 endlag on release.,,,,,,--,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Silver Bow),16—76,See Notes,,"Total frames vary depending on which move is used: Forward, Grounded : 46 | Forward, Aerial : 43 | Up, Grounded : 42 | Up, Aerial : 40",5.5—14.0,6—10,3—5,,-21 to -15,16—55 (sideways) || 17—56 (up),,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitSilverBowMinimum.gif
+Side B (Electroshock Arm),18,79/49,,Startup is 2 upon reaching a target. Super Armor begins on frame 11 and ends on the frame he begins swing.,12.0,16,11,,-36,16—35(detector),,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitElectroshockArmG.gif
+"Side B, Air (Electrodash Arm, Air)",21,104/51,30,Startup is 2 upon reaching a target. 55 endlag on the swing if you don't land,9.5,12,9,,-40,19—35(detector),,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitElectroshockArmA.gif
+Up B (Power of Flight),--,--,40,"Invulnerable on frame 9-19, 15-19 in the air. Can Sweetspot ledges starting on frame 24.",,,,,,--,,https://ultimateframedata.com/hitboxes/dark_pit/DPitUpBLedge.png
+Down B (Guardian Orbitars),7 (Start of Reflect),43—124,,Reflects/blocks as early as frame 7. 18 endlag on release.,,,,,,--,,https://ultimateframedata.com/hitboxes/dark_pit/DarkPitGuardianOrbitars.gif

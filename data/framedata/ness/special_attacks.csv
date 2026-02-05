@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (PK Flash),40—117,61—138,,"On release, startup is 14 and total frames is 35.",11.0—27.0,13—24,4—8,,-4 to +11,40—44/117—121,
-Side B (PK Fire),18,55,12 (Air version),Will not erupt on shields. The flame pillar has a rehit rate of 7 and lasts about 100 frames,6.0/1.0,6,3,,-28,18—37,18
-Up B (PK Thunder),20,--,,39 endlag after hitting a target,11.0/1.0,13/3,4/10,,-22,20—139,
-"Up B, Self-hit (PK Thunder 2)",1,56,24,Invulnerable on frame 1-32. Landing lag is if you enter special fall.,25.0/21.0,17/16,22/18,,-33,1—10/11—32,24
-Down B (PSI Magnet),7 (7 is start of absorb),24,,Begins absorbing on frame 7. Total frame is the minimum duration. Endlag is otherwise 9 on release.,4.0,5,5,,-12,7—12 (absorb),
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (PK Flash),40—117,61—138,,"On release, startup is 14 and total frames is 35.",11.0—27.0,13—24,4—8,,-4 to +11,40—44/117—121,,https://ultimateframedata.com/hitboxes/ness/NessPKFlash.png
+Side B (PK Fire),18,55,12 (Air version),Will not erupt on shields. The flame pillar has a rehit rate of 7 and lasts about 100 frames,6.0/1.0,6,3,Spark/Pillar,-28,18—37,18,https://ultimateframedata.com/hitboxes/ness/NessPKFireG.gif
+Up B (PK Thunder),20,--,,39 endlag after hitting a target,11.0/1.0,13/3,4/10,Direct/Tail,-22,20—139,,
+"Up B, Self-hit (PK Thunder 2)",1,56,24,Invulnerable on frame 1-32. Landing lag is if you enter special fall.,25.0/21.0,17/16,22/18,Early/Late,-33,1—10/11—32,24,https://ultimateframedata.com/hitboxes/ness/NessPKThunder2.gif
+Down B (PSI Magnet),7 (7 is start of absorb),24,,Begins absorbing on frame 7. Total frame is the minimum duration. Endlag is otherwise 9 on release.,4.0,5,5,,-12,7—12 (absorb),,https://ultimateframedata.com/hitboxes/ness/NessPSIMagnet.gif

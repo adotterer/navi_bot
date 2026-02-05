@@ -1,11 +1,11 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,6,19,,Transitions to jab 2 as early as frame 9,3.0,7,4,,-9,6—7,12
-Jab 2,6,22,,Transitions to jab 3 as early as frame 9,3.0,6,4,,-12,6—7,15
-Jab 3,6,38,,,5.0,12,6,,-26,6—8,30
-Forward Tilt,10,34,,,12.0,9,8,,-16,10—11,23
-Up Tilt,8,32,,,7.0,7,7,,-17,8—12,20
-Down Tilt,5,19,,,8.0,7,8,,-6,5—6,13
-Dash Attack,9,41,,,10.0,10,14,,-18,9—10,31
-Forward Smash,15,59,,Charge hold is frame 9,14.0/15.0/16.0,10/10/10,10/10/11,,-34/-34/-33,15—17,42
-Up Smash,11/14/21,59,,Charge hold is frame 9. Front/low hit is the 11f startup hit.,4.0/3.0/7.0,5/7/14,-/3/6,,-32,11—12/14—15/21—22,37
-Down Smash,7/15,53,,Charge hold is frame 3,12.0/15.0,9/10,8/10,,-38/-28,7—8/15—16,37
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,6,19,,Transitions to jab 2 as early as frame 9,3.0,7,4,,-9,6—7,12,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterJab1.gif
+Jab 2,6,22,,Transitions to jab 3 as early as frame 9,3.0,6,4,,-12,6—7,15,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterJab2.gif
+Jab 3,6,38,,,5.0,12,6,,-26,6—8,30,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterJab3.gif
+Forward Tilt,10,34,,,12.0,9,8,,-16,10—11,23,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterFTilt.gif
+Up Tilt,8,32,,,7.0,7,7,,-17,8—12,20,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterUTilt.gif
+Down Tilt,5,19,,,8.0,7,8,,-6,5—6,13,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterDTilt.gif
+Dash Attack,9,41,,,10.0,10,14,,-18,9—10,31,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterDashAttack.gif
+Forward Smash,15,59,,Charge hold is frame 9,14.0/15.0/16.0,10/10/10,10/10/11,Close/Far,-34/-34/-33,15—17,42,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterFSmash.gif
+Up Smash,11/14/21,59,,Charge hold is frame 9. Front/low hit is the 11f startup hit.,4.0/3.0/7.0,5/7/14,-/3/6,,-32,11—12/14—15/21—22,37,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterUSmash.gif
+Down Smash,7/15,53,,Charge hold is frame 3,12.0/15.0,9/10,8/10,,-38/-28,7—8/15—16,37,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterDSmash.gif

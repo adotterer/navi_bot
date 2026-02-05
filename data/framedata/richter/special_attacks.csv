@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Axe),30,66,,,15.0,15,15,,-6,30—97,
-Side B (Cross),19,44,,9 frame animation of catching the cross if no other action is being performed.,8.0/6.0/5.0,7/7/6,3/3/3,,-15,19—64,
-Up B (Uppercut),6/9/...,--,26,Intangible frames 5-6.,2.0/1.5/6.0,6/4/6,-/3/6,,**,6/9—20/21 (rehit: 3),
-Down B (Holy Water),18,45,,Lands on level ground at frame 32 if nothing is in the way. Explodes on contact with the ground or a wall. Bottle will explode if it takes 6% or more damage. When it hits a shield it takes 0% damage but when it hits a character it takes 3%. Touching the ground loses all 6% damage. Click here for more information.,2.0—2.9,4,2,,**,18...,27
-Holy Water Explosion,1/4/7/15/23/31/39/47/55,--,,"Simon's explosion is Fire-type damage, Richter's explosion is Aura-type damage.",1.4,**,**,,**,1/4/7/15/23/31/39/47/55,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Axe),30,66,,,15.0,15,15,,-6,30—97,,https://ultimateframedata.com/hitboxes/richter/RichterAxe.gif
+Side B (Cross),19,44,,9 frame animation of catching the cross if no other action is being performed.,8.0/6.0/5.0,7/7/6,3/3/3,Smash/Tilt/Return,-15,19—64,,https://ultimateframedata.com/hitboxes/richter/RichterCross.png
+Up B (Uppercut),6/9/...,--,26,Intangible frames 5-6.,2.0/1.5/6.0,6/4/6,-/3/6,First/Multi/Final,**,6/9—20/21 (rehit: 3),,https://ultimateframedata.com/hitboxes/richter/RichterUppercut.gif
+Down B (Holy Water),18,45,,Lands on level ground at frame 32 if nothing is in the way. Explodes on contact with the ground or a wall. Bottle will explode if it takes 6% or more damage. When it hits a shield it takes 0% damage but when it hits a character it takes 3%. Touching the ground loses all 6% damage. Click here for more information.,2.0—2.9,4,2,,**,18...,27,https://ultimateframedata.com/hitboxes/Richter/DSpecial.png
+Holy Water Explosion,1/4/7/15/23/31/39/47/55,--,,"Simon's explosion is Fire-type damage, Richter's explosion is Aura-type damage.",1.4,**,**,,**,1/4/7/15/23/31/39/47/55,,https://ultimateframedata.com/hitboxes/Richter/RichterHolyWater.gif

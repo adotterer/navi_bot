@@ -111,6 +111,9 @@ function parseFrameDataSection($, sectionElement) {
     const activeFrames = $container.find('.activeframes').text().trim();
     const endLag = $container.find('.endlag').text().trim();
     
+    // Extract GIF URL from data-src attribute
+    const gifUrl = $container.find('img[data-src]').attr('data-src') || '';
+    
     // Only add if we have a move name
     if (moveName) {
       moves.push({
@@ -125,7 +128,8 @@ function parseFrameDataSection($, sectionElement) {
         whichHitbox: whichHitbox === '--' ? '' : whichHitbox,
         onShield: advantage === '--' ? '' : advantage,
         activeFrames: activeFrames === '**' ? '' : activeFrames,
-        endLag: endLag.trim() === '--' ? '' : endLag.trim()
+        endLag: endLag.trim() === '--' ? '' : endLag.trim(),
+        gifUrl: gifUrl ? `${BASE_URL}/${gifUrl}` : ''
       });
     }
   });
@@ -196,7 +200,8 @@ function moveDataToCsv(moves) {
     'Property 1',
     'On Shield',
     'Active Frames',
-    'End Lag'
+    'End Lag',
+    'GIF URL'
   ];
   
   const csvLines = [headers.join(',')];
@@ -211,10 +216,11 @@ function moveDataToCsv(moves) {
       move.baseDamage,
       move.shieldLag,
       move.shieldStun,
-      move.property1,
+      move.whichHitbox,
       move.onShield,
       move.activeFrames,
-      move.endLag
+      move.endLag,
+      move.gifUrl || ''
     ];
     
     // Escape CSV values that contain commas, quotes, or newlines

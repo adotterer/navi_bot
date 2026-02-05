@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral Air,8/11/14/17/18,47,15,Autocancels on frame 1-4 and 40 onward,2.0/3.0,4/9,2/2,,-13/-13,8—17/18—19,28
-Forward Air,7,44,13,Autocancels on frame 1-2 and 36 onward,9.0/11.0,7/8,4/4,,-9/-9,7—9,35
-Back Air,14,61,16,Autocancels on frame 1-4 and 43 onward,14.5,10,5,,-11,14—15,46
-Up Air,7,38,10,Autocancels on frame 22 onward. Head and stem intangibility 7—9.,10.0,7,4,,-6,7—9,29
-Down Air,9,44,18,Autocancels on frame 1-2 and 33 onward,11.0/9.0,8/7,4/4,,-14/-14,9—11/12—14,30
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,8/11/14/17/18,47,15,Autocancels on frame 1-4 and 40 onward,2.0/3.0,4/9,2/2,Multi/Final,-13/-13,8—17/18—19,28,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantNAir.gif
+Forward Air,7,44,13,Autocancels on frame 1-2 and 36 onward,9.0/11.0,7/8,4/4,Close/Far,-9/-9,7—9,35,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantFAir.gif
+Back Air,14,61,16,Autocancels on frame 1-4 and 43 onward,14.5,10,5,,-11,14—15,46,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantBAir.gif
+Up Air,7,38,10,Autocancels on frame 22 onward. Head and stem intangibility 7—9.,10.0,7,4,,-6,7—9,29,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantUAir.gif
+Down Air,9,44,18,Autocancels on frame 1-2 and 33 onward,11.0/9.0,8/7,4/4,Early/Late,-14/-14,9—11/12—14,30,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDAir.gif

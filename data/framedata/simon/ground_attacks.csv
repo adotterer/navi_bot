@@ -1,14 +1,14 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,5,29,,Transitions to Jab 2 on frame 11. Transitions to Whip dangle from 9.,2.0,7,3,,-21,5,24
-Jab 2,3,29,,Transitions to rapid jab on frame 10.,2.0,5,3,,-23,3—4,25
-Rapid Jab,9/12/15...,--,,,0.5,4,,,,,
-Rapid Jab Finisher,3,44,,,2.5,10,4,,-37,,
-Whip Dangle,--,--,,Can initiate from Jab and F-Tilt. 19 lag from putting it away.,1.0/1.5,0/0,3/3,,**,,
-Forward Tilt,12,30,,,10.0/12.0/2.0,8/9,10/11,,-8/-7,12—13,17
-Up Tilt,10,37,,,10.0/2.0,8,10,,-17,10—22,15
-Down Tilt 1,7,44,,Can cancel hitlag from first hit with second.,5.0,6,6,,-31,7—23,21
-Down Tilt 2,8,57/43,,Total frames is 57 on level ground. 43 if you go over an edge.,7.0/3.5,8/5,7/4,,-42/-28,8—19/20—28,29
-Dash Attack,10/13/16/19/22/24,54,,,2.0/3.5,4/5,-/4,,-26,10/13/16/19/22/24,30
-Forward Smash,24,62,,Charge hold is frame 5,14.0/16.0/18.0,11/13,10/12,,-28/-26,24—25,37
-Up Smash,16,53,,Charge hold is frame 2,16.0/14.0,10/10,10/11,,-27/-26,16—18,35
-Down Smash,14/20,55,,Charge hold is frame 2,12.0/14.0/16.0,9/10,8/11,,-33/-30/-27/-24,14—15/20—21,34
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,5,29,,Transitions to Jab 2 on frame 11. Transitions to Whip dangle from 9.,2.0,7,3,,-21,5,24,https://ultimateframedata.com/hitboxes/Simon/SimonJab1.gif
+Jab 2,3,29,,Transitions to rapid jab on frame 10.,2.0,5,3,,-23,3—4,25,https://ultimateframedata.com/hitboxes/Simon/SimonJab2.gif
+Rapid Jab,9/12/15...,--,,,0.5,4,,,,,,https://ultimateframedata.com/hitboxes/Simon/SimonJabRapid.gif
+Rapid Jab Finisher,3,44,,,2.5,10,4,,-37,,,https://ultimateframedata.com/hitboxes/Simon/SimonJabRapidEnd.gif
+Whip Dangle,--,--,,Can initiate from Jab and F-Tilt. 19 lag from putting it away.,1.0/1.5,0/0,3/3,Chain/Ball,**,,,https://ultimateframedata.com/hitboxes/simon/SimonWhipDangleThingy.png
+Forward Tilt,12,30,,,10.0/12.0/2.0,8/9,10/11,Chain/Ball,-8/-7,12—13,17,https://ultimateframedata.com/hitboxes/Simon/SimonFTilt.gif
+Up Tilt,10,37,,,10.0/2.0,8,10,Ball/Chain,-17,10—22,15,https://ultimateframedata.com/hitboxes/Simon/SimonUTilt.gif
+Down Tilt 1,7,44,,Can cancel hitlag from first hit with second.,5.0,6,6,,-31,7—23,21,https://ultimateframedata.com/hitboxes/Simon/SimonDTilt1.gif
+Down Tilt 2,8,57/43,,Total frames is 57 on level ground. 43 if you go over an edge.,7.0/3.5,8/5,7/4,Early/Late,-42/-28,8—19/20—28,29,https://ultimateframedata.com/hitboxes/Simon/SimonDTilt2.gif
+Dash Attack,10/13/16/19/22/24,54,,,2.0/3.5,4/5,-/4,,-26,10/13/16/19/22/24,30,https://ultimateframedata.com/hitboxes/Simon/SimonDashAttack.gif
+Forward Smash,24,62,,Charge hold is frame 5,14.0/16.0/18.0,11/13,10/12,Chain/Ball,-28/-26,24—25,37,https://ultimateframedata.com/hitboxes/Simon/SimonFSmash.gif
+Up Smash,16,53,,Charge hold is frame 2,16.0/14.0,10/10,10/11,Ball/Chain,-27/-26,16—18,35,https://ultimateframedata.com/hitboxes/Simon/SimonUSmash.gif
+Down Smash,14/20,55,,Charge hold is frame 2,12.0/14.0/16.0,9/10,8/11,Chain/Ball,-33/-30/-27/-24,14—15/20—21,34,https://ultimateframedata.com/hitboxes/Simon/SimonDSmash.gif

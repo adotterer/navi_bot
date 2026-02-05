@@ -1,13 +1,13 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,2,20,,transitions to jab 2 on frame 5,2.0,4,3,,-15,2—4,16
-Jab 2,4,30,,Transitions to jab 3 on frame 13 or Rapid on 12,2.0,4,3,,-23,4—5,25
-Jab 3,4,29,,,4.0,8,5,,-20,4—6,23
-Rapid Jab,8/12/16...,--,,,0.4,4,4,,,8/12/16...,
-Rapid Jab Finisher,6,37,,,3.0,7,4,,-27,6—7,30
-Forward Tilt,8,25,,,5.5,6,6,,-11,8—9,16
-Up Tilt,7,26,,,4.0,5,5,,-14,7—12,14
-Down Tilt,5,20,,,3.0/4.0,5/5,4/5,,-11/-10,5—7,13
-Dash Attack,9,39,,,7.0/8.5,*/7,*/8,,-22,9—10,29
-Forward Smash,14,49,,charge hold on frame 3,13.5,9,9,,-26,14—17,32
-Up Smash,9/12/17/22/26,52,,charge hold on frame 4,2.0/1.5/6.0,4/4/6,3/2/5,,-40/-21,9—10/11—24(rehit: 5)/26—27,25
-Down Smash,8/14,44,,"Charge hold on frame 2. Blade and leg can both hit the same shield. Third and fourth advantage assume this scenario, first and second are single, far hits.",9.0 / 10.5 / 6.0 / 7.5,7/8/6/7,*/8/5/6,,-28/-30/-22/-24,8—10/14—16,28
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,2,20,,transitions to jab 2 on frame 5,2.0,4,3,,-15,2—4,16,https://ultimateframedata.com/hitboxes/Mythra/MythraJab1.gif
+Jab 2,4,30,,Transitions to jab 3 on frame 13 or Rapid on 12,2.0,4,3,,-23,4—5,25,https://ultimateframedata.com/hitboxes/Mythra/MythraJab2.gif
+Jab 3,4,29,,,4.0,8,5,,-20,4—6,23,https://ultimateframedata.com/hitboxes/Mythra/MythraJab3.gif
+Rapid Jab,8/12/16...,--,,,0.4,4,4,,,8/12/16...,,https://ultimateframedata.com/hitboxes/Mythra/MythraJabRapid.gif
+Rapid Jab Finisher,6,37,,,3.0,7,4,,-27,6—7,30,https://ultimateframedata.com/hitboxes/Mythra/MythraJabRapidFinisher.gif
+Forward Tilt,8,25,,,5.5,6,6,,-11,8—9,16,https://ultimateframedata.com/hitboxes/Mythra/MythraFTilt.gif
+Up Tilt,7,26,,,4.0,5,5,,-14,7—12,14,https://ultimateframedata.com/hitboxes/Mythra/MythraUTilt.gif
+Down Tilt,5,20,,,3.0/4.0,5/5,4/5,Close/Far,-11/-10,5—7,13,https://ultimateframedata.com/hitboxes/Mythra/MythraDTilt.gif
+Dash Attack,9,39,,,7.0/8.5,*/7,*/8,Closest/Far,-22,9—10,29,https://ultimateframedata.com/hitboxes/Mythra/MythraDashAttack.gif
+Forward Smash,14,49,,charge hold on frame 3,13.5,9,9,,-26,14—17,32,https://ultimateframedata.com/hitboxes/Mythra/MythraFSmash.gif
+Up Smash,9/12/17/22/26,52,,charge hold on frame 4,2.0/1.5/6.0,4/4/6,3/2/5,launcher/multihits/final hit,-40/-21,9—10/11—24(rehit: 5)/26—27,25,https://ultimateframedata.com/hitboxes/Mythra/MythraUSmash.gif
+Down Smash,8/14,44,,"Charge hold on frame 2. Blade and leg can both hit the same shield. Third and fourth advantage assume this scenario, first and second are single, far hits.",9.0 / 10.5 / 6.0 / 7.5,7/8/6/7,*/8/5/6,blade close/far / leg close/far,-28/-30/-22/-24,8—10/14—16,28,https://ultimateframedata.com/hitboxes/Mythra/MythraDSmash.gif

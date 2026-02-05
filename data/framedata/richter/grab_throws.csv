@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,10,37,,,,,,,,10—11,26
-Dash Grab,13,45,,,,,,,,13—14,31
-Pivot Grab,14,42,,,,,,,,14—15,27
-Pummel,1,18,**,Total frames includes 12 frames of hitlag,1.3,,,,,,
-Forward Throw,24,41,,,7.0,,,,,,
-Backward Throw,18,41,,,7.0,,,,,,
-Up Throw,25/26,46,,,6.0/4.0,,,,,,
-Down Throw,33,48,,,8.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,10,37,,,,,,,,10—11,26,https://ultimateframedata.com/hitboxes/richter/RichterGrab.gif
+Dash Grab,13,45,,,,,,,,13—14,31,https://ultimateframedata.com/hitboxes/richter/RichterDashGrab.gif
+Pivot Grab,14,42,,,,,,,,14—15,27,https://ultimateframedata.com/hitboxes/richter/RichterPivotGrab.gif
+Pummel,1,18,**,Total frames includes 12 frames of hitlag,1.3,,,,,,,https://ultimateframedata.com/hitboxes/richter/RichterPummel.gif
+Forward Throw,24,41,,,7.0,,,,,,,https://ultimateframedata.com/hitboxes/richter/RichterFThrow.gif
+Backward Throw,18,41,,,7.0,,,,,,,https://ultimateframedata.com/hitboxes/richter/RichterBThrow.gif
+Up Throw,25/26,46,,,6.0/4.0,,,,,,,https://ultimateframedata.com/hitboxes/richter/RichterUThrow.gif
+Down Throw,33,48,,,8.0,,,,,,,https://ultimateframedata.com/hitboxes/richter/RichterDThrow.gif

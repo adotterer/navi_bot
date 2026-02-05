@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,7,37,,,,,,,,7—8,29
-Dash Grab,12,44,,,,,,,,12—13,31
-Pivot Grab,13,39,,,,,,,,13—14,25
-Pummel,1,19,,total frames includes 14 frames of hitlag (plus one in 1v1),1.5,,,,,,
-Forward Throw,10/11,27,,,3.5/5.5,,,,,,
-Backward Throw,15/17,35,,,3.0/4.0,,,,,,
-Up Throw,9,29,,,5.0,,,,,,
-Down Throw,20/28,48,,,4.0/4.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,7,37,,,,,,,,7—8,29,https://ultimateframedata.com/hitboxes/Pyra/PyraGrab.gif
+Dash Grab,12,44,,,,,,,,12—13,31,https://ultimateframedata.com/hitboxes/Pyra/PyraDashGrab.gif
+Pivot Grab,13,39,,,,,,,,13—14,25,https://ultimateframedata.com/hitboxes/Pyra/PyraPivotGrab.gif
+Pummel,1,19,,total frames includes 14 frames of hitlag (plus one in 1v1),1.5,,,,,,,https://ultimateframedata.com/hitboxes/Pyra/PyraPummel.gif
+Forward Throw,10/11,27,,,3.5/5.5,,,,,,,https://ultimateframedata.com/hitboxes/Pyra/PyraFThrow.gif
+Backward Throw,15/17,35,,,3.0/4.0,,,,,,,https://ultimateframedata.com/hitboxes/Pyra/PyraBThrow.gif
+Up Throw,9,29,,,5.0,,,,,,,https://ultimateframedata.com/hitboxes/Pyra/PyraUThrow.gif
+Down Throw,20/28,48,,,4.0/4.0,,,,,,,https://ultimateframedata.com/hitboxes/Pyra/PyraDThrow.gif

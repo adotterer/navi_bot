@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral Air,7/19/31,33/45/57,,Cannon and projectile hits generate on same frame.,3.0/4.0/2.0,4/4/4,3/2/2,,-25/-23/-20,7—9 [7-8/9-12/13-36] / 19—21 [19-20/11-24/25-42] / 31—34 [31-32/33-36/37-54],
-Forward Air,9,40,11,Autocancels on frame 1-2 and 39 onward,8.5/8.0/5.0,7/7/6,4/4/3,,-7/-7/-8,9—11(12—17),23
-Back Air,4/7/10,44,20,Autocancels on frame 1-3 and 40 onward,3.0/4.0/5.0,5/5/6,2/3/3,,-18/-17/-17,4—5/7—8/10—11,33
-Up Air,11...,53,20,Autocancels on frame 51 onward,3.0/1.0/2.0,-/4/4,-/2/2,,,11—17/18—31/32—54/55—61 (rehit: 3/5/5/5),
-Down Air,23,64,14,Autocancels on frame 1-4 and 55 onward,14.0/12.0,10/9,5/5,,+1/+0,23—25(26—35),29
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,7/19/31,33/45/57,,Cannon and projectile hits generate on same frame.,3.0/4.0/2.0,4/4/4,3/2/2,Cannon/Cannon(air)/Projectile,-25/-23/-20,7—9 [7-8/9-12/13-36] / 19—21 [19-20/11-24/25-42] / 31—34 [31-32/33-36/37-54],,https://ultimateframedata.com/hitboxes/mega_man/MegaManNAir.gif
+Forward Air,9,40,11,Autocancels on frame 1-2 and 39 onward,8.5/8.0/5.0,7/7/6,4/4/3,Far/Close/Late,-7/-7/-8,9—11(12—17),23,https://ultimateframedata.com/hitboxes/mega_man/MegaManFAir.gif
+Back Air,4/7/10,44,20,Autocancels on frame 1-3 and 40 onward,3.0/4.0/5.0,5/5/6,2/3/3,,-18/-17/-17,4—5/7—8/10—11,33,https://ultimateframedata.com/hitboxes/mega_man/MegaManBAir.gif
+Up Air,11...,53,20,Autocancels on frame 51 onward,3.0/1.0/2.0,-/4/4,-/2/2,Early/late/final,,11—17/18—31/32—54/55—61 (rehit: 3/5/5/5),,https://ultimateframedata.com/hitboxes/mega_man/MegaManUAir.gif
+Down Air,23,64,14,Autocancels on frame 1-4 and 55 onward,14.0/12.0,10/9,5/5,Early/Meteor,+1/+0,23—25(26—35),29,https://ultimateframedata.com/hitboxes/mega_man/MegaManDAir.gif

@@ -1,7 +1,7 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Fire Breath),23/30/37/44...,77,,Total frames is minimum usage. Endlag is 31 frames on release.,1.8,4,2,,,23/30/37/44...,33
-Side B (Flying Slam),6,52,,"40 frames endlag after a slam, but can be cancelled by landing on a platform. 23 frames of invulnerability after a successful grab. Whether Bowser or his opponent has more control over the direction of the slam is determined by whoever has less damage.",,,,,,6,46
-Up B (Whirling Fortress),6...,81,18,,1.0/6.0,4/6,2/6,,-36,6—38/39 (rehit: 5),42
-"Up B, Air (Whirling Fortress, Air)",6...,--,36,Mash special button for more height,7.0/1.0/2.0,7/3/6,-/2/3,,,6—7/8—11/12—15/16—19/20—23/24—27/28—31/32—35/36—39/40—43/44—47/48—51 (rehit: 5),
-Down B (Bowser Bomb),11/37.../1,66,,Landing hit on frame 1.,4.0/20.0/11.0,5/12/8,5/18/-,,,11/37.../1—2,29
-"Down B, Air (Bowser Bomb, Air)",31.../1,--,55,Landing hit on frame 1.,20.0/11.0,12/8,18/-,,,31.../1—2,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Fire Breath),23/30/37/44...,77,,Total frames is minimum usage. Endlag is 31 frames on release.,1.8,4,2,,,23/30/37/44...,33,
+Side B (Flying Slam),6,52,,"40 frames endlag after a slam, but can be cancelled by landing on a platform. 23 frames of invulnerability after a successful grab. Whether Bowser or his opponent has more control over the direction of the slam is determined by whoever has less damage.",,,,,,6,46,https://ultimateframedata.com/hitboxes/bowser/BowserFlyingSlamGrabG.gif
+Up B (Whirling Fortress),6...,81,18,,1.0/6.0,4/6,2/6,Multi/Final,-36,6—38/39 (rehit: 5),42,https://ultimateframedata.com/hitboxes/bowser/BowserWhirlingFortressG.gif
+"Up B, Air (Whirling Fortress, Air)",6...,--,36,Mash special button for more height,7.0/1.0/2.0,7/3/6,-/2/3,First/multi/final,,6—7/8—11/12—15/16—19/20—23/24—27/28—31/32—35/36—39/40—43/44—47/48—51 (rehit: 5),,https://ultimateframedata.com/hitboxes/bowser/BowserWhirlingFortressA.gif
+Down B (Bowser Bomb),11/37.../1,66,,Landing hit on frame 1.,4.0/20.0/11.0,5/12/8,5/18/-,Rise/fall/landing,,11/37.../1—2,29,https://ultimateframedata.com/hitboxes/bowser/BowserBowserBombG.gif
+"Down B, Air (Bowser Bomb, Air)",31.../1,--,55,Landing hit on frame 1.,20.0/11.0,12/8,18/-,Fall/landing,,31.../1—2,,https://ultimateframedata.com/hitboxes/bowser/BowserBowserBomb.png

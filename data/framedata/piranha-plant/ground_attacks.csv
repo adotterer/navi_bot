@@ -1,14 +1,14 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,2,19,,Transitions to jab 2 on frame 5,2.4,10,3,,-13,2—3,16
-Jab 2,2,20,,Transitions to jab 3 as early as frame 8 and rapid as early as frame 7,2.2,5,3,,-15,2—3,17
-Jab 3,7,25,,,4.4,,10,,-13,7—8,17
-Rapid Jab,6/10/14...,--,,,0.6,4,5,,**,6/10/14...,
-Rapid Jab Finisher,7,40,,,3.4,,15,,-29,6—7,33
-Forward Tilt 1,7,27,,Transitions to F-tilt 2 as early as frame 12,5.5,8,6,,-14,7—8,19
-Forward Tilt 2,5,31,,,6.0,9,6,,-20,5—6,25
-Up Tilt,6,26,,Head intangibility on frame 6-13,9.0/7.0,7/7,9/7,,-11/-13,6—13,13
-Down Tilt,9,26,,,6.0/7.0,6/7,6/7,,-10/-10,9—11,15
-Dash Attack,7,47,,,10.0/7.0,8/7,12/9,,-28,7—9/10—14,33
-Forward Smash,16,51,,Head intangibility on frame 16-17. Charge hold is frame 5,15.0/19.0,10/13,10/13,,-25/-22,16—17,34
-Up Smash,12/16,51,,Head intangibility on frame 12-18. Charge hold is frame 6,3.0/12.0,5/10,3/8,,-27,12—15/16—18,33
-Down Smash,10/14,43,,Charge hold is frame 5,12.0/14.0,9/10,8/10,,-24,10—11/14—15,28
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,2,19,,Transitions to jab 2 on frame 5,2.4,10,3,,-13,2—3,16,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantJab1.gif
+Jab 2,2,20,,Transitions to jab 3 as early as frame 8 and rapid as early as frame 7,2.2,5,3,,-15,2—3,17,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantJab2.gif
+Jab 3,7,25,,,4.4,,10,5,-13,7—8,17,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantJab3.gif
+Rapid Jab,6/10/14...,--,,,0.6,4,5,,**,6/10/14...,,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantJabRapid.gif
+Rapid Jab Finisher,7,40,,,3.4,,15,4,-29,6—7,33,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantJabRapidEnd.gif
+Forward Tilt 1,7,27,,Transitions to F-tilt 2 as early as frame 12,5.5,8,6,,-14,7—8,19,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantFTilt1.gif
+Forward Tilt 2,5,31,,,6.0,9,6,,-20,5—6,25,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantFTilt2.gif
+Up Tilt,6,26,,Head intangibility on frame 6-13,9.0/7.0,7/7,9/7,Head/Body,-11/-13,6—13,13,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantUTilt.gif
+Down Tilt,9,26,,,6.0/7.0,6/7,6/7,Close/Far,-10/-10,9—11,15,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDTilt.gif
+Dash Attack,7,47,,,10.0/7.0,8/7,12/9,Early/Late,-28,7—9/10—14,33,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDashAttack.gif
+Forward Smash,16,51,,Head intangibility on frame 16-17. Charge hold is frame 5,15.0/19.0,10/13,10/13,Close/Far,-25/-22,16—17,34,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantFSmash.gif
+Up Smash,12/16,51,,Head intangibility on frame 12-18. Charge hold is frame 6,3.0/12.0,5/10,3/8,,-27,12—15/16—18,33,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantUSmash.gif
+Down Smash,10/14,43,,Charge hold is frame 5,12.0/14.0,9/10,8/10,,-24,10—11/14—15,28,https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDSmash.gif

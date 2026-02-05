@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral Air,10,59,8,Autocancels on frame 1-2 and 50 onward,7.5/6.0,7/6,3/3,,-5,10—14/15—22,37
-Forward Air,11,51,14,Autocancels on frame 42 onward,13.0,9,5,,-9,11—15,36
-Back Air,7,54,11,Autocancels on frame 1-2 and 35 onward,14.0,10,5,,-6,7—9,45
-Up Air,13,56,9,Autocancels on frame 1-5 and 51 onward,11.0,8,4,,-5,13—18,38
-Down Air,16,54,14,Autocancels on frame 1-4 and 48 onward,15.0,10,5,,-9,16—17,37
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,10,59,8,Autocancels on frame 1-2 and 50 onward,7.5/6.0,7/6,3/3,Early/Late,-5,10—14/15—22,37,https://ultimateframedata.com/hitboxes/ike/IkeNAir.gif
+Forward Air,11,51,14,Autocancels on frame 42 onward,13.0,9,5,,-9,11—15,36,https://ultimateframedata.com/hitboxes/ike/IkeFAir.gif
+Back Air,7,54,11,Autocancels on frame 1-2 and 35 onward,14.0,10,5,,-6,7—9,45,https://ultimateframedata.com/hitboxes/ike/IkeBAir.gif
+Up Air,13,56,9,Autocancels on frame 1-5 and 51 onward,11.0,8,4,,-5,13—18,38,https://ultimateframedata.com/hitboxes/ike/IkeUAir.gif
+Down Air,16,54,14,Autocancels on frame 1-4 and 48 onward,15.0,10,5,,-9,16—17,37,https://ultimateframedata.com/hitboxes/ike/IkeDAir.gif

@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral Air,6,46,10,Autocancels on frame 1-5 and 47 onward,7.0/5.5,7/6,3/3,,-7/-7,6—7(8—19),27
-Forward Air,9,35,8,Autocancels on frame 1-8 and 30 onward,9.0,6,4,,-4,9—12,23
-Back Air,13,41,13,Autocancels on frame 1-5 and 42 onward,12.0/9.0,9/7,5/4,,-8/-9,13(14—16),25
-Up Air,7,37,9,Autocancels on frame 1-3 and 38 onward,10.0,7,4,,-5,7—12,25
-Down Air,12...,51,26,Landing hit on frame 1. Autocancels on frame 1-11 and 41 onward,2.0/3.0,4/5,2/4,,-21,12—28(rehit: 2)/1—5,23
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,6,46,10,Autocancels on frame 1-5 and 47 onward,7.0/5.5,7/6,3/3,Early/Late,-7/-7,6—7(8—19),27,https://ultimateframedata.com/hitboxes/corrin/CorrinNAir.gif
+Forward Air,9,35,8,Autocancels on frame 1-8 and 30 onward,9.0,6,4,,-4,9—12,23,https://ultimateframedata.com/hitboxes/corrin/CorrinFAir.gif
+Back Air,13,41,13,Autocancels on frame 1-5 and 42 onward,12.0/9.0,9/7,5/4,Early/Late,-8/-9,13(14—16),25,https://ultimateframedata.com/hitboxes/corrin/CorrinBAir.gif
+Up Air,7,37,9,Autocancels on frame 1-3 and 38 onward,10.0,7,4,,-5,7—12,25,https://ultimateframedata.com/hitboxes/corrin/CorrinUAir.gif
+Down Air,12...,51,26,Landing hit on frame 1. Autocancels on frame 1-11 and 41 onward,2.0/3.0,4/5,2/4,Falling/Landing,-21,12—28(rehit: 2)/1—5,23,https://ultimateframedata.com/hitboxes/corrin/CorrinDAir.gif

@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,7,36,,,,,,,,7—8,28
-Dash Grab,10,44,,,,,,,,10—11,33
-Pivot Grab,11,39,,,,,,,,11—12,27
-Pummel,1,20,Total frames includes 14 frames of hitlag.,,1.6,,,,,,
-Forward Throw,5/8,32,,,3.5/4.0,,,,,,
-Backward Throw,20/22,37,,,3.0/4.0,,,,,,
-Up Throw,18/20,42,,,3.5/4.0,,,,,,
-Down Throw,35/40,57,,,3.0/4.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,7,36,,,,,,,,7—8,28,https://ultimateframedata.com/hitboxes/ike/IkeGrab.gif
+Dash Grab,10,44,,,,,,,,10—11,33,https://ultimateframedata.com/hitboxes/ike/IkeDashGrab.gif
+Pivot Grab,11,39,,,,,,,,11—12,27,https://ultimateframedata.com/hitboxes/ike/IkePivotGrab.gif
+Pummel,1,20,Total frames includes 14 frames of hitlag.,,1.6,,,,,,,https://ultimateframedata.com/hitboxes/ike/IkePummel.gif
+Forward Throw,5/8,32,,,3.5/4.0,,,,,,,https://ultimateframedata.com/hitboxes/ike/IkeFThrow.gif
+Backward Throw,20/22,37,,,3.0/4.0,,,,,,,https://ultimateframedata.com/hitboxes/ike/IkeBThrow.gif
+Up Throw,18/20,42,,,3.5/4.0,,,,,,,https://ultimateframedata.com/hitboxes/ike/IkeUThrow.gif
+Down Throw,35/40,57,,,3.0/4.0,,,,,,,https://ultimateframedata.com/hitboxes/ike/IkeDThrow.gif

@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,8,34,,,,,,,,8—10,24
-Dash Grab,11,42,,,,,,,,11—13,29
-Pivot Grab,12,39,,,,,,,,12—14,25
-Pummel,,,**,**,**,,,,,,
-Forward Throw,13,37,,,**,,,,,,
-Backward Throw,18,45,,,**,,,,,,
-Up Throw,14/19,43,,,**,,,,,,
-Down Throw,25,35,,,**,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,8,34,,,,,,,,8—10,24,https://ultimateframedata.com/hitboxes/ridley/RidleyGrab.gif
+Dash Grab,11,42,,,,,,,,11—13,29,https://ultimateframedata.com/hitboxes/ridley/RidleyDashGrab.gif
+Pivot Grab,12,39,,,,,,,,12—14,25,https://ultimateframedata.com/hitboxes/ridley/RidleyPivotGrab.gif
+Pummel,,,**,**,**,,,,,,,https://ultimateframedata.com/hitboxes/ridley/RidleyPummel.gif
+Forward Throw,13,37,,,**,,,,,,,https://ultimateframedata.com/hitboxes/ridley/RidleyFThrow.gif
+Backward Throw,18,45,,,**,,,,,,,https://ultimateframedata.com/hitboxes/ridley/RidleyBThrow.gif
+Up Throw,14/19,43,,,**,,,,,,,https://ultimateframedata.com/hitboxes/ridley/RidleyUThrow.gif
+Down Throw,25,35,,,**,,,,,,,https://ultimateframedata.com/hitboxes/ridley/RidleyDThrow.gif

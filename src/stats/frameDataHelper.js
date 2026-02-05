@@ -228,6 +228,11 @@ function createMoveEmbed(move, characterName, moveType) {
             { name: 'Active Frames', value: move['Active Frames'] || '--', inline: true }
         );
     
+    // Add GIF image if available
+    if (move['GIF URL'] && move['GIF URL'].trim()) {
+        embed.setImage(move['GIF URL']);
+    }
+    
     if (move['Notes'] && move['Notes'] !== '--') {
         embed.addFields({ name: 'Notes', value: move['Notes'] });
     }

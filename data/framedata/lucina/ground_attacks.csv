@@ -1,10 +1,10 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,5,25,,Transitions to Jab 2 as early as frame 11.,3.3,7,4,,-16,5—6,19
-Jab 2,4,28,,,4.7,7,5,,-19,4—5,23
-Forward Tilt,8,33,,,11.0,8,10,,-15,8—11,22
-Up Tilt,6,33,,,7.6/8.0,7/7,8/8,,-19,6—8/9—12,21
-Down Tilt,7,23,,,8.5,7,8,,-8,7—8,15
-Dash Attack,13,49,,,10.9,8,15,,-21,13—16,33
-Forward Smash,10,51,,Charge hold is frame 3.,15.0,10,10,,-31,10—13,38
-Up Smash,13,58,,Launcher and sword hits generate on the same frame. Charge hold is frame 5,3.0/14.2,0/10,4/10,,-41/-35,13—14/13—17,41
-Down Smash,6/21,55,,Charge hold is frame 4.,9.5/14.0,8/10,7/10,,-42/-24,6—7/21—23,32
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,5,25,,Transitions to Jab 2 as early as frame 11.,3.3,7,4,,-16,5—6,19,https://ultimateframedata.com/hitboxes/lucina/LucinaJab1.gif
+Jab 2,4,28,,,4.7,7,5,,-19,4—5,23,https://ultimateframedata.com/hitboxes/lucina/LucinaJab2.gif
+Forward Tilt,8,33,,,11.0,8,10,,-15,8—11,22,https://ultimateframedata.com/hitboxes/lucina/LucinaFTilt.gif
+Up Tilt,6,33,,,7.6/8.0,7/7,8/8,Early/Late,-19,6—8/9—12,21,https://ultimateframedata.com/hitboxes/lucina/LucinaUTilt.gif
+Down Tilt,7,23,,,8.5,7,8,,-8,7—8,15,https://ultimateframedata.com/hitboxes/lucina/LucinaDTilt.gif
+Dash Attack,13,49,,,10.9,8,15,,-21,13—16,33,https://ultimateframedata.com/hitboxes/lucina/LucinaDashAttack.gif
+Forward Smash,10,51,,Charge hold is frame 3.,15.0,10,10,,-31,10—13,38,https://ultimateframedata.com/hitboxes/lucina/LucinaFSmash.gif
+Up Smash,13,58,,Launcher and sword hits generate on the same frame. Charge hold is frame 5,3.0/14.2,0/10,4/10,Body Launcher/Sword,-41/-35,13—14/13—17,41,https://ultimateframedata.com/hitboxes/lucina/LucinaUSmash.gif
+Down Smash,6/21,55,,Charge hold is frame 4.,9.5/14.0,8/10,7/10,,-42/-24,6—7/21—23,32,https://ultimateframedata.com/hitboxes/lucina/LucinaDSmash.gif

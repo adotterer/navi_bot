@@ -1,11 +1,11 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,4,25,,Transitions to jab 2 as early as frame 9,2.0,7,3,,-18,4—5,20
-Jab 2,3,29,,Transitions to jab 2 as early as frame 9,2.0,4,3,,-23,3—4,25
-Jab 3,5,39,,Can bury,3.0,10,4,,-30,5—6,33
-Forward Tilt,6,32,,,11.0,8,10,,-16,6—10,22
-Up Tilt,5,29,,Arm intangibility on frame 3-12,10.0,8,10,,-14,5—12,17
-Down Tilt,9,38,,,13.5,9,12,,-17,9—12,26
-Dash Attack,6,38,,,10.0/6.0,8/6,12/10,,-20,6—8(9—13),25
-Forward Smash,16,56,,Charge hold is frame 6,15.5,10,10,,-30,16—19,37
-Up Smash,11,54,,Invulnerable on frame 9-12. Charge hold is frame 4,15.0/18.0,10/15,10/12,,-33/-31,11—12(13—19),35
-Down Smash,18,46,,Charge hold frame is 4,12.0,9,8,,-25,18—21,25
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,4,25,,Transitions to jab 2 as early as frame 9,2.0,7,3,,-18,4—5,20,https://ultimateframedata.com/hitboxes/wii_fit_trainer/WiiFitTrainerJab1.gif
+Jab 2,3,29,,Transitions to jab 2 as early as frame 9,2.0,4,3,,-23,3—4,25,https://ultimateframedata.com/hitboxes/wii_fit_trainer/WiiFitTrainerJab2.gif
+Jab 3,5,39,,Can bury,3.0,10,4,,-30,5—6,33,https://ultimateframedata.com/hitboxes/wii_fit_trainer/WiiFitTrainerJab3.gif
+Forward Tilt,6,32,,,11.0,8,10,,-16,6—10,22,https://ultimateframedata.com/hitboxes/wii_fit_trainer/WiiFitTrainerFTilt.gif
+Up Tilt,5,29,,Arm intangibility on frame 3-12,10.0,8,10,,-14,5—12,17,https://ultimateframedata.com/hitboxes/wii_fit_trainer/WiiFitTrainerUTilt.gif
+Down Tilt,9,38,,,13.5,9,12,,-17,9—12,26,https://ultimateframedata.com/hitboxes/wii_fit_trainer/WiiFitTrainerDTilt.gif
+Dash Attack,6,38,,,10.0/6.0,8/6,12/10,Early/Late,-20,6—8(9—13),25,https://ultimateframedata.com/hitboxes/wii_fit_trainer/WiiFitTrainerDashAttack.gif
+Forward Smash,16,56,,Charge hold is frame 6,15.5,10,10,,-30,16—19,37,https://ultimateframedata.com/hitboxes/wii_fit_trainer/WiiFitTrainerFSmash.gif
+Up Smash,11,54,,Invulnerable on frame 9-12. Charge hold is frame 4,15.0/18.0,10/15,10/12,Body/Arms,-33/-31,11—12(13—19),35,https://ultimateframedata.com/hitboxes/wii_fit_trainer/WiiFitTrainerUSmash.gif
+Down Smash,18,46,,Charge hold frame is 4,12.0,9,8,,-25,18—21,25,https://ultimateframedata.com/hitboxes/wii_fit_trainer/WiiFitTrainerDSmash.gif

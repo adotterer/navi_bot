@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,6,39,,,,,,,,6—7,32
-Dash Grab,9,46,,,,,,,,9—10,36
-Pivot Grab,10,41,,,,,,,,10—11,30
-Pummel,1,19,**,Total frames includes 13 frames of hitlag,1.3,,,,,,
-Forward Throw,28,37,,,9.0,,,,,,
-Backward Throw,30,42,,,11.0,,,,,,
-Up Throw,13,37,,,7.0,,,,,,
-Down Throw,13,35,,,9.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,6,39,,,,,,,,6—7,32,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaGrab.gif
+Dash Grab,9,46,,,,,,,,9—10,36,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaDashGrab.gif
+Pivot Grab,10,41,,,,,,,,10—11,30,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaPivotGrab.gif
+Pummel,1,19,**,Total frames includes 13 frames of hitlag,1.3,,,,,,,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaPummel.gif
+Forward Throw,28,37,,,9.0,,,,,,,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaFThrow.gif
+Backward Throw,30,42,,,11.0,,,,,,,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaBThrow.gif
+Up Throw,13,37,,,7.0,,,,,,,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaUThrow.gif
+Down Throw,13,35,,,9.0,,,,,,,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaDThrow.gif

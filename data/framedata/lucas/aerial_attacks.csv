@@ -1,7 +1,7 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral Air,7.../26,44,12,Autocancels on frame 37 onward,2.0/4.0,7/10,2/3,,-10/-9,7—21 (rehit: 5) / 26,23
-Forward Air,9,41,7,Autocancels on frame 34 onward,9.0/12.5,7/15,4/5,,-3/-2,9—10/11—12,29
-Back Air,15,39,9,Autocancels on frame 1-2 and 34 onward,9.0 / 12.0 / 7.0,11/13/10,4/5/3,,-5/-4/-6,15—19(19—22),17
-Up Air,7,31,7,Autocancels on frame 34 onward,11.0,9,4,,-3,7—10,21
-Down Air,10/18/26/34,56,16,Autocancels on frame 47 onward,3.5/5.0,8/9,2/3,,-14/-13,10—12/18—20/26—28/34—35,21
-Z Air,9,51,8,Tethers on frame 7.,5.0/3.0,6,6,,-2,9—12(13—21),30
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,7.../26,44,12,Autocancels on frame 37 onward,2.0/4.0,7/10,2/3,Multi/Final,-10/-9,7—21 (rehit: 5) / 26,23,https://ultimateframedata.com/hitboxes/lucas/LucasNAir.gif
+Forward Air,9,41,7,Autocancels on frame 34 onward,9.0/12.5,7/15,4/5,Close/Far,-3/-2,9—10/11—12,29,https://ultimateframedata.com/hitboxes/lucas/LucasFAir.gif
+Back Air,15,39,9,Autocancels on frame 1-2 and 34 onward,9.0 / 12.0 / 7.0,11/13/10,4/5/3,Close/medium/far,-5/-4/-6,15—19(19—22),17,https://ultimateframedata.com/hitboxes/lucas/LucasBAir.gif
+Up Air,7,31,7,Autocancels on frame 34 onward,11.0,9,4,,-3,7—10,21,https://ultimateframedata.com/hitboxes/lucas/LucasUAir.gif
+Down Air,10/18/26/34,56,16,Autocancels on frame 47 onward,3.5/5.0,8/9,2/3,Multi/Final,-14/-13,10—12/18—20/26—28/34—35,21,https://ultimateframedata.com/hitboxes/lucas/LucasDAir.gif
+Z Air,9,51,8,Tethers on frame 7.,5.0/3.0,6,6,,-2,9—12(13—21),30,https://ultimateframedata.com/hitboxes/lucas/LucasZAir.gif

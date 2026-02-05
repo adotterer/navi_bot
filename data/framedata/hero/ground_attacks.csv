@@ -1,12 +1,12 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,6,25,,Transitions to jab 2 as early as frame 9,3.0,6,4,,-15,6—7,18
-Jab 2,6,25,,Transitions to jab 3 as early as frame 9,3.0,5,4,,-15,6—7,18
-Jab 3,7,37,,,4.0,10,5,,-25,7—9,28
-Forward Tilt 1,9,36,,"Transitions to next attack as early as frame 18. Arm, head, leg invincibility on frame 9. Arm invincibility on frame 10-11.",5.0,8,6,,-21,9—11,25
-Forward Tilt 2,8,47,,,8.0,8,8,,-31,8—9,38
-Up Tilt,8,41,,,9.0/11.0/11.0,8,10,,-23,8—9/10—11,30
-Down Tilt,6,32,,,7.0,7,7,,-19,6—10,22
-Dash Attack,21,51,,,13.0/15.0,9/11,12/14,,-16,21/22—23,28
-Forward Smash,17,65,,,18.0/36.0 (Sour: 16.0/32.0),14/27,12/22,,-36 (-26),17—19,46
-Up Smash,13,53,,Normal/Crit,16.0/32.0 (Sour: 14.0/28.0),13/27,11/20,,-29 (-19),13—17,36
-Down Smash,9/20,55,,Damage listed is the same for both the first and second hit.,Normal: 13.0/26.0 (Sour: 11.0/22.0),8/9 / 25/27,8/9 / 14/17,,-37/-26 (-29/-18),9—10/20—21,34
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,6,25,,Transitions to jab 2 as early as frame 9,3.0,6,4,,-15,6—7,18,https://ultimateframedata.com/hitboxes/hero/HeroJab1.gif
+Jab 2,6,25,,Transitions to jab 3 as early as frame 9,3.0,5,4,,-15,6—7,18,https://ultimateframedata.com/hitboxes/hero/HeroJab2.gif
+Jab 3,7,37,,,4.0,10,5,,-25,7—9,28,https://ultimateframedata.com/hitboxes/hero/HeroJab3.gif
+Forward Tilt 1,9,36,,"Transitions to next attack as early as frame 18. Arm, head, leg invincibility on frame 9. Arm invincibility on frame 10-11.",5.0,8,6,,-21,9—11,25,https://ultimateframedata.com/hitboxes/hero/HeroFTilt1.gif
+Forward Tilt 2,8,47,,,8.0,8,8,,-31,8—9,38,https://ultimateframedata.com/hitboxes/hero/HeroFTilt2.gif
+Up Tilt,8,41,,,9.0/11.0/11.0,8,10,Early/Late,-23,8—9/10—11,30,https://ultimateframedata.com/hitboxes/hero/HeroUTilt.gif
+Down Tilt,6,32,,,7.0,7,7,,-19,6—10,22,https://ultimateframedata.com/hitboxes/hero/HeroDTilt.gif
+Dash Attack,21,51,,,13.0/15.0,9/11,12/14,Close/Far,-16,21/22—23,28,https://ultimateframedata.com/hitboxes/hero/HeroDashAttack.gif
+Forward Smash,17,65,,,18.0/36.0 (Sour: 16.0/32.0),14/27,12/22,Normal/Crit,-36 (-26),17—19,46,https://ultimateframedata.com/hitboxes/hero/HeroFSmash.gif
+Up Smash,13,53,,Normal/Crit,16.0/32.0 (Sour: 14.0/28.0),13/27,11/20,Normal/Crit,-29 (-19),13—17,36,https://ultimateframedata.com/hitboxes/hero/HeroUSmash.gif
+Down Smash,9/20,55,,Damage listed is the same for both the first and second hit.,Normal: 13.0/26.0 (Sour: 11.0/22.0),8/9 / 25/27,8/9 / 14/17,Normal/Crit,-37/-26 (-29/-18),9—10/20—21,34,https://ultimateframedata.com/hitboxes/hero/HeroDSmash.gif

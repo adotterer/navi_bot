@@ -1,14 +1,14 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Shieldbreaker),19—79,50—110,,"On release, startup is 8 and total frames is 39",8.5—23,13—18,8—Shieldbreak,,-23 to Shieldbreak,19—20 (or frames 8—9 after release),31
-Side B (Dancing Blade),9,39/29,,Second total frames is the air version. Can transition to next slash on frame 12-30,2.8,5,4,,-26/-16,9—11,28
-Dancing Blade 2 Neutral,5,38,,Can transition to next slash on frame 8-29,2.8,5,4,,-29,5—7,31
-Dancing Blade 3 Neutral,4,43,,Can transition to next slash on frame 7-24,3.3,5,4,,-35,4—6,37
-Dancing Blade 4 Neutral,7,55,,,4.7,7,5,,-43,7—9,46
-Dancing Blade 2 Up,4,38,,Can transition to next slash on frame 8-29,2.8,5,4,,-30,4—7,31
-Dancing Blade 3 Up,5,43,,Can transition to next slash on frame 8-24,3.3,5,4,,-34,5—7,36
-Dancing Blade 4 Up,6,44,,,5.6,6,6,,-32,6—10,34
-Dancing Blade 3 Down,5,43,,Can transition to next slash on frame 8-24,3.3,5,4,,-34,5—7,36
-Dancing Blade 4 Down,7,74,,,2.0/4.2,4/5,-/5,,-50,7/10/13/16/19—21,53
-Up B (Dolphin Slash),5,--,24,Intangibile on frame 4-5. 1-5 in the air.,11.0/7.0,8/7,10/7,,,5—6/6—11,
-Down B (Counter),6 (Start of Counter),64,,Intangibility on 5-6 when detecting. Counter window 6-27.,,,,,,,
-"Counter, Attack",4,40,,"Intangible on frame 1-8 in addition to counter freeze frames. 8% Minimum base damage, x1.2 enemy's attack.",,,,,,4—7,33
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Shieldbreaker),19—79,50—110,,"On release, startup is 8 and total frames is 39",8.5—23,13—18,8—Shieldbreak,,-23 to Shieldbreak,19—20 (or frames 8—9 after release),31,https://ultimateframedata.com/hitboxes/lucina/LucinaShieldbreaker.gif
+Side B (Dancing Blade),9,39/29,,Second total frames is the air version. Can transition to next slash on frame 12-30,2.8,5,4,,-26/-16,9—11,28,https://ultimateframedata.com/hitboxes/lucina/LucinaDancingBlade1.gif
+Dancing Blade 2 Neutral,5,38,,Can transition to next slash on frame 8-29,2.8,5,4,,-29,5—7,31,https://ultimateframedata.com/hitboxes/lucina/LucinaDancingBlade2.gif
+Dancing Blade 3 Neutral,4,43,,Can transition to next slash on frame 7-24,3.3,5,4,,-35,4—6,37,https://ultimateframedata.com/hitboxes/lucina/LucinaDancingBlade3.gif
+Dancing Blade 4 Neutral,7,55,,,4.7,7,5,,-43,7—9,46,https://ultimateframedata.com/hitboxes/lucina/LucinaDancingBlade4.gif
+Dancing Blade 2 Up,4,38,,Can transition to next slash on frame 8-29,2.8,5,4,,-30,4—7,31,https://ultimateframedata.com/hitboxes/lucina/LucinaDancingBlade2Up.gif
+Dancing Blade 3 Up,5,43,,Can transition to next slash on frame 8-24,3.3,5,4,,-34,5—7,36,https://ultimateframedata.com/hitboxes/lucina/LucinaDancingBlade3Up.gif
+Dancing Blade 4 Up,6,44,,,5.6,6,6,,-32,6—10,34,https://ultimateframedata.com/hitboxes/lucina/LucinaDancingBlade4Up.gif
+Dancing Blade 3 Down,5,43,,Can transition to next slash on frame 8-24,3.3,5,4,,-34,5—7,36,https://ultimateframedata.com/hitboxes/lucina/LucinaDancingBlade3Down.gif
+Dancing Blade 4 Down,7,74,,,2.0/4.2,4/5,-/5,Multi/Final,-50,7/10/13/16/19—21,53,https://ultimateframedata.com/hitboxes/lucina/LucinaDancingBlade4Down.gif
+Up B (Dolphin Slash),5,--,24,Intangibile on frame 4-5. 1-5 in the air.,11.0/7.0,8/7,10/7,Early/Late,,5—6/6—11,,https://ultimateframedata.com/hitboxes/lucina/LucinaDolphinSlashG.gif
+Down B (Counter),6 (Start of Counter),64,,Intangibility on 5-6 when detecting. Counter window 6-27.,,,,,,,,https://ultimateframedata.com/hitboxes/lucina/LucinaCounter.gif
+"Counter, Attack",4,40,,"Intangible on frame 1-8 in addition to counter freeze frames. 8% Minimum base damage, x1.2 enemy's attack.",,,,,,4—7,33,https://ultimateframedata.com/hitboxes/lucina/LucinaCounterHit.gif

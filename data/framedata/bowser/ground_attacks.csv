@@ -1,10 +1,10 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,7,25,,Transitions to Jab 2 as early as frame 10. Arm intangibility on frame 7-8,4.0,8,5,,-13,7—8,17
-Jab 2,9,25,,Arm intangibility on frame 9-11,7.0,12,7,,-9,9—11,14
-Forward Tilt,10,37,,Damage based heavy armor (4%) on frame 7-9. Arm intangibility on frame 10-14,13.0,9,12,,-15,10—14,23
-Up Tilt,11,40,,Damage based heavy armor (4%) on frame 8-10. Arm intangibility on frame 11-16,11.0,8,10,,-19,11—16,24
-Down Tilt,10/15,45,,Damage based heavy armor (4%) on frame 7-9. Arm intangibility on frame 10-12 and 15-17,7.0/8.0,7/7,-/8,,-22,10—12/15—17,28
-Dash Attack,11,55,,,12.0/10.0,9/8,11/10,,-33,11—14/15—20,35
-Forward Smash,22,69,,Damage based heavy armor (10%) frame 17-19. Leg Invincible 20-25. Charge hold frame 3,(23.0%/20.0%)/(17.0%/14.0%),14,15,,-32,22—23(24—27),42
-Up Smash,16/37,57,,Damage based heavy armor (8%) frame 11-13 and 28-31. Invincible 14-27. Charge hold frame 9,22.0/16.0/12.0,13/10/9,14/11/8,,-27/-30/-12,16—23/37,20
-Down Smash,12/28,72,,Damage based heavy armor (8%) frame 5-11. Charge hold is frame 4,16.0/15.0,10/10,11/10,,-49/-34,12—14/28—30,42
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,7,25,,Transitions to Jab 2 as early as frame 10. Arm intangibility on frame 7-8,4.0,8,5,,-13,7—8,17,https://ultimateframedata.com/hitboxes/bowser/BowserJab1.gif
+Jab 2,9,25,,Arm intangibility on frame 9-11,7.0,12,7,,-9,9—11,14,https://ultimateframedata.com/hitboxes/bowser/BowserJab2.gif
+Forward Tilt,10,37,,Damage based heavy armor (4%) on frame 7-9. Arm intangibility on frame 10-14,13.0,9,12,,-15,10—14,23,https://ultimateframedata.com/hitboxes/bowser/BowserFTilt.gif
+Up Tilt,11,40,,Damage based heavy armor (4%) on frame 8-10. Arm intangibility on frame 11-16,11.0,8,10,,-19,11—16,24,https://ultimateframedata.com/hitboxes/bowser/BowserUTilt.gif
+Down Tilt,10/15,45,,Damage based heavy armor (4%) on frame 7-9. Arm intangibility on frame 10-12 and 15-17,7.0/8.0,7/7,-/8,,-22,10—12/15—17,28,https://ultimateframedata.com/hitboxes/bowser/BowserDTilt.gif
+Dash Attack,11,55,,,12.0/10.0,9/8,11/10,Early/Late,-33,11—14/15—20,35,https://ultimateframedata.com/hitboxes/bowser/BowserDashAttack.gif
+Forward Smash,22,69,,Damage based heavy armor (10%) frame 17-19. Leg Invincible 20-25. Charge hold frame 3,(23.0%/20.0%)/(17.0%/14.0%),14,15,(Clean/Late both split Far/Close),-32,22—23(24—27),42,https://ultimateframedata.com/hitboxes/bowser/BowserFSmash.gif
+Up Smash,16/37,57,,Damage based heavy armor (8%) frame 11-13 and 28-31. Invincible 14-27. Charge hold frame 9,22.0/16.0/12.0,13/10/9,14/11/8,Sweet/sour/landing hit,-27/-30/-12,16—23/37,20,https://ultimateframedata.com/hitboxes/bowser/BowserUSmash.gif
+Down Smash,12/28,72,,Damage based heavy armor (8%) frame 5-11. Charge hold is frame 4,16.0/15.0,10/10,11/10,,-49/-34,12—14/28—30,42,https://ultimateframedata.com/hitboxes/bowser/BowserDSmash.gif

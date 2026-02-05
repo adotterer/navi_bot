@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,6,37,,,,,,,,6—7,30
-Dash Grab,9,45,,,,,,,,9—10,35
-Pivot Grab,10,40,,,,,,,,10—11,29
-Pummel,1,19,,Total frames includes 13 frames of hitlag,1.3,,,,,,
-Forward Throw,10,32,,,8.0,,,,,,
-Backward Throw,18,43,,,11.0,,,,,,
-Up Throw,12,39,,,7.0,,,,,,
-Down Throw,17,39,,,4.5,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,6,37,,,,,,,,6—7,30,https://ultimateframedata.com/hitboxes/mega_man/MegaManGrab.gif
+Dash Grab,9,45,,,,,,,,9—10,35,https://ultimateframedata.com/hitboxes/mega_man/MegaManDashGrab.gif
+Pivot Grab,10,40,,,,,,,,10—11,29,https://ultimateframedata.com/hitboxes/mega_man/MegaManPivotGrab.gif
+Pummel,1,19,,Total frames includes 13 frames of hitlag,1.3,,,,,,,https://ultimateframedata.com/hitboxes/mega_man/MegaManPummel.gif
+Forward Throw,10,32,,,8.0,,,,,,,https://ultimateframedata.com/hitboxes/mega_man/MegaManFThrow.gif
+Backward Throw,18,43,,,11.0,,,,,,,https://ultimateframedata.com/hitboxes/mega_man/MegaManBThrow.gif
+Up Throw,12,39,,,7.0,,,,,,,https://ultimateframedata.com/hitboxes/mega_man/MegaManUThrow.gif
+Down Throw,17,39,,,4.5,,,,,,,https://ultimateframedata.com/hitboxes/mega_man/MegaManDThrow.gif

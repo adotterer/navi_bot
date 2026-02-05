@@ -1,11 +1,11 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Pocket),8 (Start of projectile pocket),50,,Invulnerable on frame 5-23. Pockets projectiles on frame 8-23.,**,**,**,,,8—23,27
-"Pocket, Throw",9,30,,This is not the same throw as with a holdable item,**,**,**,,**,,
-Side B (Fishing Rod),21,--,,Frame 50 is the earliest you can reel in.,**,**,**,,**,"21—43 (Ground), 21—70+ (Air), 18 (Tether)",
-"Fishing Rod, Reel In",2,38,,,**,**,**,,**,2—11,27
-"Fishing Rod, Throw Forward",15,45,,,14.0—17.0,**,**,,**,,
-"Fishing Rod, Throw Back",13,35,,,11.0—14.0,**,**,,**,,
-"Fishing Rod, Throw Up",22,43,,,12.0—15.0,**,**,,**,,
-"Fishing Rod, Throw Down",18/22,39,,,9.5—15.0,**,**,,**,,
-Up B (Balloon Trip),,--,20/30,"20 landing lag if you land inside the swing. 30 if you land from special fall. Has a ""fuel"" mechanic.",**,**,**,,**,,
-Down B (Lloid Trap),9/17/25/34/43/51,49/26,,Proximity activation as early as 51. 49 total frames to plant. 26 total frames to manually activate. Several characters can safely run past this trap.,**,4/4/11,2/2/4,,**,9/17/25/34/43/51,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Pocket),8 (Start of projectile pocket),50,,Invulnerable on frame 5-23. Pockets projectiles on frame 8-23.,**,**,**,,,8—23,27,https://ultimateframedata.com/hitboxes/isabelle/IsabellePocket.gif
+"Pocket, Throw",9,30,,This is not the same throw as with a holdable item,**,**,**,,**,,,
+Side B (Fishing Rod),21,--,,Frame 50 is the earliest you can reel in.,**,**,**,,**,"21—43 (Ground), 21—70+ (Air), 18 (Tether)",,
+"Fishing Rod, Reel In",2,38,,,**,**,**,,**,2—11,27,
+"Fishing Rod, Throw Forward",15,45,,,14.0—17.0,**,**,,**,,,https://ultimateframedata.com/hitboxes/isabelle/IsabelleFishingRodFThrow.gif
+"Fishing Rod, Throw Back",13,35,,,11.0—14.0,**,**,,**,,,https://ultimateframedata.com/hitboxes/isabelle/IsabelleFishingRodBThrow.gif
+"Fishing Rod, Throw Up",22,43,,,12.0—15.0,**,**,,**,,,https://ultimateframedata.com/hitboxes/isabelle/IsabelleFishingRodUThrow.gif
+"Fishing Rod, Throw Down",18/22,39,,,9.5—15.0,**,**,,**,,,https://ultimateframedata.com/hitboxes/isabelle/IsabelleFishingRodDThrow.gif
+Up B (Balloon Trip),,--,20/30,"20 landing lag if you land inside the swing. 30 if you land from special fall. Has a ""fuel"" mechanic.",**,**,**,,**,,,https://ultimateframedata.com/hitboxes/isabelle/IsabelleBalloonHurtbox.png
+Down B (Lloid Trap),9/17/25/34/43/51,49/26,,Proximity activation as early as 51. 49 total frames to plant. 26 total frames to manually activate. Several characters can safely run past this trap.,**,4/4/11,2/2/4,,**,9/17/25/34/43/51,,https://ultimateframedata.com/hitboxes/isabelle/IsabelleLloidTrap.gif

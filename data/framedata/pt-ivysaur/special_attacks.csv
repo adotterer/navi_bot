@@ -1,5 +1,5 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Bullet Seed),7,44 ground (after last seed) / 31 air (after last seed),,"Startup is initial launcher and then the timing each bullet spawns, not necessarily when they impact. Numbers refer to minimum use. Each",3.0/1.5/1.3/3.0,5/4/4/5,4/2/2/2,,-34,"7, 13—20, 19—26, 25—32, 31—38...",6
-Side B (Razor Leaf),24,48,,,8.0/6.0/4.0,7/6/5,3/3/2,,-14,24-34/35-53/54-73,
-Up B (Vinewhip),15,47,,Tethers on frame 13. Does not induce special fall.,11.0/13.0,8/9,10/12,,-22/-20,15—17,30
-Down B (Pokemon Change),--,39,,Invulnerable on frame 1-25. ~140 frame period before you can change again.,,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Bullet Seed),7,44 ground (after last seed) / 31 air (after last seed),,"Startup is initial launcher and then the timing each bullet spawns, not necessarily when they impact. Numbers refer to minimum use. Each",3.0/1.5/1.3/3.0,5/4/4/5,4/2/2/2,First/multi/later multi/final,-34,"7, 13—20, 19—26, 25—32, 31—38...",6,https://ultimateframedata.com/hitboxes/pt_ivysaur/IvysaurBulletSeedG.gif
+Side B (Razor Leaf),24,48,,,8.0/6.0/4.0,7/6/5,3/3/2,Early/late/later,-14,24-34/35-53/54-73,,https://ultimateframedata.com/hitboxes/pt_ivysaur/IvysaurRazorLeafTilt.gif
+Up B (Vinewhip),15,47,,Tethers on frame 13. Does not induce special fall.,11.0/13.0,8/9,10/12,Close/Far,-22/-20,15—17,30,
+Down B (Pokemon Change),--,39,,Invulnerable on frame 1-25. ~140 frame period before you can change again.,,,,,,,,

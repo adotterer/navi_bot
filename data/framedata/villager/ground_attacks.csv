@@ -1,13 +1,13 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,3,21,,Transitions to jab 2 as early as frame 6.,1.0,5,2,,-16,3—4,17
-Jab 2,3,23,,Transitions to rapid jab as early as frame 5,1.0,5,2,,-18,3—4,19
-Rapid Jab,3/8/12...,--,,Alternates between four and five frames between punches.,1.0,5,2,,,,
-Rapid Jab Finisher,4/5,38,,,2.0,9,3,,-28,,
-Forward Tilt,8,33,,,9.0,7,9,,-16,8—11,22
-Up Tilt,7/22,47,,,5.0/6.0,6/7,6/6,,-34/-19,7—18/22—25,22
-Down Tilt,9,37,,,12.0/10.0,9/8,11/10,,-17/-18,9—11,26
-Dash Attack,9...,42,,,10.0/6.0,8/6,4/3,,-22,"9-14/15-22 (Normal)
-		9-14/15-68 (Off-Ledge)",
-Forward Smash,25,49,,Charge hold is frame 16,15.0/17.0,10/11,10/11,,-4,25—30(31—144),
-Up Smash,12...,53,,Charge hold is frame 7,3.0/1.0/4.0,5/-/9,3/-/4,,-8,12—13/17—18/21—22/25—26/29—30/33—34,19
-Down Smash,9/29,49,,Charge hold is frame 3,6.0/3.0,6/4,5/0,,-35/-15,9(10—11)/29(30—31),18
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,3,21,,Transitions to jab 2 as early as frame 6.,1.0,5,2,,-16,3—4,17,https://ultimateframedata.com/hitboxes/villager/VillagerJab1.gif
+Jab 2,3,23,,Transitions to rapid jab as early as frame 5,1.0,5,2,,-18,3—4,19,https://ultimateframedata.com/hitboxes/villager/VillagerJab2.gif
+Rapid Jab,3/8/12...,--,,Alternates between four and five frames between punches.,1.0,5,2,,,,,
+Rapid Jab Finisher,4/5,38,,,2.0,9,3,,-28,,,https://ultimateframedata.com/hitboxes/villager/VillagerJab1End.gif
+Forward Tilt,8,33,,,9.0,7,9,,-16,8—11,22,https://ultimateframedata.com/hitboxes/villager/VillagerFTilt.gif
+Up Tilt,7/22,47,,,5.0/6.0,6/7,6/6,,-34/-19,7—18/22—25,22,https://ultimateframedata.com/hitboxes/villager/VillagerUTilt.gif
+Down Tilt,9,37,,,12.0/10.0,9/8,11/10,Close/Far,-17/-18,9—11,26,https://ultimateframedata.com/hitboxes/villager/VillagerDTilt.gif
+Dash Attack,9...,42,,,10.0/6.0,8/6,4/3,Early/Late,-22,"9-14/15-22 (Normal)
+		9-14/15-68 (Off-Ledge)",,https://ultimateframedata.com/hitboxes/villager/VillagerDashAttack.gif
+Forward Smash,25,49,,Charge hold is frame 16,15.0/17.0,10/11,10/11,Early/Late,-4,25—30(31—144),,https://ultimateframedata.com/hitboxes/villager/VillagerFSmash.gif
+Up Smash,12...,53,,Charge hold is frame 7,3.0/1.0/4.0,5/-/9,3/-/4,,-8,12—13/17—18/21—22/25—26/29—30/33—34,19,https://ultimateframedata.com/hitboxes/villager/VillagerUSmash.gif
+Down Smash,9/29,49,,Charge hold is frame 3,6.0/3.0,6/4,5/0,Close/Far,-35/-15,9(10—11)/29(30—31),18,https://ultimateframedata.com/hitboxes/villager/VillagerDSmash.gif

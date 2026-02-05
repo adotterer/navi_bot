@@ -1,8 +1,8 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Chomp),8 (11 Grab Release),41 (19 Grab Release),,25 endlag from release of the button. Can eat projectiles on frame 9—. With the exception of Bike being eaten on frame 2. Animation for eating a projectile is 25 frames. 55 for the Bike.,,,,,,8—16 (Can hold: 8—64),
-Side B (Wario Bike),20/24,--,,"Startup is 24 if mounting a bike laying on the ground. Frame 20 is the earliest you can jump, turnaround, wheelie. Wario seems to suffer more shieldlag than the defender on any hit.",0.6—11.4,"4-8, 6-13(Wario)",2—4,,**,20—**,
-"Wario Bike, Wheelie",4/54,64,,Bike armor on frame 10. Jump animation takes 28 frames.,5.0/13.0,"8/9, 11/14(Wario)",3/5,,-60/-10,,
-"Wario Bike, Turnaround",6,45,,Looking for Bike animation takes 39 frames,7.0,"8, 12(Wario)",3,,-40,,
-Bike (Thrown / Item),--,--,,,,,,,,--,
-Up B (Corkscrew),6/8/12/16/20/29,--,20,,5.0/1.0/4.0,6/4/11,-/2/5,,**,6—7/8—11/12—15/16—19/20—23/29—30,
-Down B (Wario Waft),"16, 10, 8, 12","79, 64, 54, 63",,Full Waft has armor on frames 4—13.,"0.0, 12.0+, 20.0+, 27.0/20.0","--, 10, 13, 19/12","--, 13, 20, 23/18",,"--, -41, -24, -28","16—18, 10—11, 8—11, 12—13/14—29",50
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Chomp),8 (11 Grab Release),41 (19 Grab Release),,25 endlag from release of the button. Can eat projectiles on frame 9—. With the exception of Bike being eaten on frame 2. Animation for eating a projectile is 25 frames. 55 for the Bike.,,,,,,8—16 (Can hold: 8—64),,https://ultimateframedata.com/hitboxes/wario/WarioChomp.gif
+Side B (Wario Bike),20/24,--,,"Startup is 24 if mounting a bike laying on the ground. Frame 20 is the earliest you can jump, turnaround, wheelie. Wario seems to suffer more shieldlag than the defender on any hit.",0.6—11.4,"4-8, 6-13(Wario)",2—4,,**,20—**,,https://ultimateframedata.com/hitboxes/wario/WarioBikeDrive.gif
+"Wario Bike, Wheelie",4/54,64,,Bike armor on frame 10. Jump animation takes 28 frames.,5.0/13.0,"8/9, 11/14(Wario)",3/5,,-60/-10,,,https://ultimateframedata.com/hitboxes/wario/WarioBikeWheelie.gif
+"Wario Bike, Turnaround",6,45,,Looking for Bike animation takes 39 frames,7.0,"8, 12(Wario)",3,,-40,,,https://ultimateframedata.com/hitboxes/wario/WarioBikeTurn.gif
+Bike (Thrown / Item),--,--,,,,,,,,--,,https://ultimateframedata.com/hitboxes/wario/WarioBikeThrown.png
+Up B (Corkscrew),6/8/12/16/20/29,--,20,,5.0/1.0/4.0,6/4/11,-/2/5,First/Multi/Final,**,6—7/8—11/12—15/16—19/20—23/29—30,,https://ultimateframedata.com/hitboxes/wario/WarioCorkscrew.gif
+Down B (Wario Waft),"16, 10, 8, 12","79, 64, 54, 63",,Full Waft has armor on frames 4—13.,"0.0, 12.0+, 20.0+, 27.0/20.0","--, 10, 13, 19/12","--, 13, 20, 23/18","Stage 1, Stage 2, Stage 3, Final Stage Early/Late","--, -41, -24, -28","16—18, 10—11, 8—11, 12—13/14—29",50,https://ultimateframedata.com/hitboxes/wario/WarioWarioWaftToot.gif

@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,12,46,,,,,,,,12—17,29
-Dash Grab,14,54,,,,,,,,14—19,35
-Pivot Grab,15,49,,,,,,,,15—20,29
-Pummel,1,19,,Total frames includes 13 frames of hitlag,1.3,,,,,,
-Forward Throw,23,52,,,10.0,,,,,,
-Backward Throw,20,52,,,10.0,,,,,,
-Up Throw,25,55,,,10.0,,,,,,
-Down Throw,41,57,,,11.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,12,46,,,,,,,,12—17,29,https://ultimateframedata.com/hitboxes/lucas/LucasGrab.gif
+Dash Grab,14,54,,,,,,,,14—19,35,https://ultimateframedata.com/hitboxes/lucas/LucasDashGrab.gif
+Pivot Grab,15,49,,,,,,,,15—20,29,https://ultimateframedata.com/hitboxes/lucas/LucasPivotGrab.gif
+Pummel,1,19,,Total frames includes 13 frames of hitlag,1.3,,,,,,,https://ultimateframedata.com/hitboxes/lucas/LucasPummel.gif
+Forward Throw,23,52,,,10.0,,,,,,,https://ultimateframedata.com/hitboxes/lucas/LucasFThrow.gif
+Backward Throw,20,52,,,10.0,,,,,,,https://ultimateframedata.com/hitboxes/lucas/LucasBThrow.gif
+Up Throw,25,55,,,10.0,,,,,,,https://ultimateframedata.com/hitboxes/lucas/LucasUThrow.gif
+Down Throw,41,57,,,11.0,,,,,,,https://ultimateframedata.com/hitboxes/lucas/LucasDThrow.gif

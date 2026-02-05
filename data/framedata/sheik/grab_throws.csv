@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,6,36,,,,,,,,6—7,29
-Dash Grab,9,44,,,,,,,,9—10,34
-Pivot Grab,11,39,,,,,,,,11—12,27
-Pummel,1,15,Total frames includes 10 frames of hitlag.,,1.0,,,,,,
-Forward Throw,20/22,39,,,5.0/2.0,,,,,,
-Backward Throw,15/17,35,,,5.0/2.0,,,,,,
-Up Throw,19/21,49,,,3.0/3.0,,,,,,
-Down Throw,26/30,53,,"Active 26—29, releases on 30.",3.0/3.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,6,36,,,,,,,,6—7,29,https://ultimateframedata.com/hitboxes/sheik/SheikGrab.gif
+Dash Grab,9,44,,,,,,,,9—10,34,https://ultimateframedata.com/hitboxes/sheik/SheikDashGrab.gif
+Pivot Grab,11,39,,,,,,,,11—12,27,https://ultimateframedata.com/hitboxes/sheik/SheikPivotGrab.gif
+Pummel,1,15,Total frames includes 10 frames of hitlag.,,1.0,,,,,,,https://ultimateframedata.com/hitboxes/sheik/SheikPummel.gif
+Forward Throw,20/22,39,,,5.0/2.0,,,,,,,https://ultimateframedata.com/hitboxes/sheik/SheikFThrow.gif
+Backward Throw,15/17,35,,,5.0/2.0,,,,,,,https://ultimateframedata.com/hitboxes/sheik/SheikBThrow.gif
+Up Throw,19/21,49,,,3.0/3.0,,,,,,,https://ultimateframedata.com/hitboxes/sheik/SheikUThrow.gif
+Down Throw,26/30,53,,"Active 26—29, releases on 30.",3.0/3.0,,,,,,,https://ultimateframedata.com/hitboxes/sheik/SheikDThrow.gif

@@ -1,12 +1,12 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,8,38,,,,,,,,8—10,28
-Dash Grab,11,46,,,,,,,,11—13,33
-Pivot Grab,12,41,,,,,,,,12—14,27
-Pummel,2,21,,Total frames includes 15 frames of hitlag,1.6,,,,,,
-Cargo Forward Throw,15,45,,,12.0,,,,,,
-Cargo Backward Throw,16,42,,,13.0,,,,,,
-Cargo Up Throw,15,29,,,12.0,,,,,,
-Cargo Down Throw,17,44,,,11.0,,,,,,
-Backward Throw,15,39,,,11.0,,,,,,
-Up Throw,14,43,,,9.0,,,,,,
-Down Throw,19,54,,,7.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,8,38,,,,,,,,8—10,28,https://ultimateframedata.com/hitboxes/donkey_kong/DonkeyKongGrab.gif
+Dash Grab,11,46,,,,,,,,11—13,33,https://ultimateframedata.com/hitboxes/donkey_kong/DonkeyKongDashGrab.gif
+Pivot Grab,12,41,,,,,,,,12—14,27,https://ultimateframedata.com/hitboxes/donkey_kong/DonkeyKongPivotGrab.gif
+Pummel,2,21,,Total frames includes 15 frames of hitlag,1.6,,,,,,,https://ultimateframedata.com/hitboxes/donkey_kong/DonkeyKongPummel.gif
+Cargo Forward Throw,15,45,,,12.0,,,,,,,https://ultimateframedata.com/hitboxes/donkey_kong/DonkeyKongCargoFThrow.gif
+Cargo Backward Throw,16,42,,,13.0,,,,,,,https://ultimateframedata.com/hitboxes/donkey_kong/DonkeyKongCargoBThrow.gif
+Cargo Up Throw,15,29,,,12.0,,,,,,,https://ultimateframedata.com/hitboxes/donkey_kong/DonkeyKongCargoUThrow.gif
+Cargo Down Throw,17,44,,,11.0,,,,,,,https://ultimateframedata.com/hitboxes/donkey_kong/DonkeyKongCargoDThrow.gif
+Backward Throw,15,39,,,11.0,,,,,,,https://ultimateframedata.com/hitboxes/donkey_kong/DonkeyKongBThrow.gif
+Up Throw,14,43,,,9.0,,,,,,,https://ultimateframedata.com/hitboxes/donkey_kong/DonkeyKongUThrow.gif
+Down Throw,19,54,,,7.0,,,,,,,https://ultimateframedata.com/hitboxes/donkey_kong/DonkeyKongDThrow.gif

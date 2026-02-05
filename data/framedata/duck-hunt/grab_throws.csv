@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,6,34,,,,,,,,6—7,27
-Dash Grab,9,42,,,,,,,,9—10,32
-Pivot Grab,10,37,,,,,,,,10—11,26
-Pummel,1,19,Total frames includes 13 frames of hitlag.,,1.3,,,,,,
-Forward Throw,18,29,,,8.0,,,,,,
-Backward Throw,15,39,,,9.0,,,,,,
-Up Throw,18,47,,,6.0,,,,,,
-Down Throw,23/24,49,,,5.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,6,34,,,,,,,,6—7,27,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntGrab.gif
+Dash Grab,9,42,,,,,,,,9—10,32,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntDashGrab.gif
+Pivot Grab,10,37,,,,,,,,10—11,26,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntPivotGrab.gif
+Pummel,1,19,Total frames includes 13 frames of hitlag.,,1.3,,,,,,,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntPummel.gif
+Forward Throw,18,29,,,8.0,,,,,,,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntFThrow.gif
+Backward Throw,15,39,,,9.0,,,,,,,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntBThrow.gif
+Up Throw,18,47,,,6.0,,,,,,,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntUThrow.gif
+Down Throw,23/24,49,,,5.0,,,,,,,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntDThrow.gif

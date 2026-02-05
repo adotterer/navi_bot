@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,14,47,,Body grabbox only active for the first 2 frames,,,,,,14—20,27
-Dash Grab,16,51,,Body grabbox only active for the first 2 frames,,,,,,16—22,29
-Pivot Grab,17,49,,Body grabbox only active for the first 2 frames,,,,,,17—24,25
-Pummel,1,19,Total frames includes 13 frames of hitlag.,,1.3,,,,,,
-Forward Throw,15,37,,,9.0,,,,,,
-Backward Throw,15,37,,,10.0,,,,,,
-Up Throw,18,39,,"Collateral hitbox on frame 15, does 6.0%.",8.0,,,,,,
-Down Throw,18/29,40,,Collateral hitbox on frames 18—28.,3.0/3.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,14,47,,Body grabbox only active for the first 2 frames,,,,,,14—20,27,https://ultimateframedata.com/hitboxes/luigi/LuigiGrab.gif
+Dash Grab,16,51,,Body grabbox only active for the first 2 frames,,,,,,16—22,29,https://ultimateframedata.com/hitboxes/luigi/LuigiDashGrab.gif
+Pivot Grab,17,49,,Body grabbox only active for the first 2 frames,,,,,,17—24,25,https://ultimateframedata.com/hitboxes/luigi/LuigiPivotGrab.gif
+Pummel,1,19,Total frames includes 13 frames of hitlag.,,1.3,,,,,,,https://ultimateframedata.com/hitboxes/luigi/LuigiPummel.gif
+Forward Throw,15,37,,,9.0,,,,,,,https://ultimateframedata.com/hitboxes/luigi/LuigiFThrow.gif
+Backward Throw,15,37,,,10.0,,,,,,,https://ultimateframedata.com/hitboxes/luigi/LuigiBThrow.gif
+Up Throw,18,39,,"Collateral hitbox on frame 15, does 6.0%.",8.0,,,,,,,https://ultimateframedata.com/hitboxes/luigi/LuigiUThrow.gif
+Down Throw,18/29,40,,Collateral hitbox on frames 18—28.,3.0/3.0,,,,,,,https://ultimateframedata.com/hitboxes/luigi/LuigiDThrow.gif

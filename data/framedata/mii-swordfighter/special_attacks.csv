@@ -1,19 +1,19 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Gale Strike,20,67,,,13.0/11.0/10.0,9/8/8,5/4/4,,-33,20—37(38—55/56—71),
-Shuriken of Light,13,37,,,2.0/3.5/5.0/6.5,4/5/6/6,2/2/3/3,,-18,13—20(21—28/29—36/37—50),
-Blurring Blade,17/21/25/29/33/44,84,,Startup is 6 from charge release. Can be charged for 50 addittional frames for more damage,0.8—1.9/8.0—19.2,4—4/11—15,2—3/8—17,,-32 to -23,17—18/21—22/25—26/29—30/33—34/44—45,39
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Gale Strike,20,67,,,13.0/11.0/10.0,9/8/8,5/4/4,Early/Late/Later,-33,20—37(38—55/56—71),,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordFighterGaleStrike.gif
+Shuriken of Light,13,37,,,2.0/3.5/5.0/6.5,4/5/6/6,2/2/3/3,Early/late/later/latest,-18,13—20(21—28/29—36/37—50),,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordFighterShurikenofLight.gif
+Blurring Blade,17/21/25/29/33/44,84,,Startup is 6 from charge release. Can be charged for 50 addittional frames for more damage,0.8—1.9/8.0—19.2,4—4/11—15,2—3/8—17,Multi/Final,-32 to -23,17—18/21—22/25—26/29—30/33—34/44—45,39,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterBlurringBladeG.gif
 Airborne Assault,"Ground: 25, Air: 30",109,,"Startup is 2 upon reaching a target. Endlag on hit is 52 on level ground, 48 in the air. Stops at an edge with 44 frame endlag animation.",12.0,12,11,,-41,"Ground: 25—60 
 		Air: 30—65
-		Hit: 2—5",79
-Gale Stab (Charge),8/11,72/--,29 (Freefall),Charges between 7-8/10-11. Activates through invulnerability.,,,,,,8—21/11—24,51/35
-Gale Stab (Hit),2,34/--,29 (Freefall),Ledge grabs enabled starting on frame 7.,8.0—18.5,7—12,8—16,,-24 to -16,2—5,28/52
-Chakram,18,52,,Weak throw has rehit rate of 9 but will bounce off shields. Strong throw hits just once.,1.1/8.0,5/9,2/3,,-27/-20,18—89/18—40,
-Stone Scabbard,13/42,--,44,Invulnerable on frame 5-12. Landing hit on frame 1,4.0/3.0/5.0,7/5/13,5/4/6,,-37,,
-Skyward Slash Dash,15/19/22/25/28/31/34,77,20,Total frames assumes you end on the ground.,2.2/3.0/4.0,4/5/5,3/4/5,,-38,15/19—20/22—23/25—26/28—29/31—32/34—35,42
-Hero's Spin,8,78,,Can be charged for an additional 60 frames. 8f startup is only the front hit.,14.0—19.6,10—12,13—17,,-57 to -53,8—9(10—14/15—24/25—40),38
-Hero's Spin (Air),8/16/22/26/31/38/47,--,30,,3.0/2.0/5.0,5/4/12,4/3/6,,**,8/11/16/19/22/26/31/38/47—48,
-Blade Counter,5 (Start of Counter),59,,Intangible on frame 4-5. Counters on frame 5-26.,,,,,,5—26 (counter),
-"Blade Counter, Activated",21,Ground 38/ Air 41,,Intangible frames 1-23.,,,,,,21—22,16
-Reversal Slash,16 (5 is Start of Reflector),36,,Reflects on frame 5-24. Invulnerable on frame 17-26 if you hit somebody or reflect something,6.0,7,0,,-13,16—17,19
-Power Thrust,12,59,,,15.0/13.0/10.0,10/9/8,14/12/10,,-33,12—14(15—22/23—30),29
-Power Thrust (Air),14,58,39,Landing hit on frame 1—2,13.0/7.0,9/10,12/7,,-31,14—16/17—24/25—29,29
+		Hit: 2—5",79,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterAirborneAssault.gif
+Gale Stab (Charge),8/11,72/--,29 (Freefall),Charges between 7-8/10-11. Activates through invulnerability.,,,,Ground/Air,,8—21/11—24,51/35,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterGaleStabG.gif
+Gale Stab (Hit),2,34/--,29 (Freefall),Ledge grabs enabled starting on frame 7.,8.0—18.5,7—12,8—16,Ground/Air,-24 to -16,2—5,28/52,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterGaleStabGHit.gif
+Chakram,18,52,,Weak throw has rehit rate of 9 but will bounce off shields. Strong throw hits just once.,1.1/8.0,5/9,2/3,Weak Throw/Strong Throw,-27/-20,18—89/18—40,,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterChakram.png
+Stone Scabbard,13/42,--,44,Invulnerable on frame 5-12. Landing hit on frame 1,4.0/3.0/5.0,7/5/13,5/4/6,Rising/Falling/landing,-37,,,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterStoneScabbard.gif
+Skyward Slash Dash,15/19/22/25/28/31/34,77,20,Total frames assumes you end on the ground.,2.2/3.0/4.0,4/5/5,3/4/5,First/multi/final,-38,15/19—20/22—23/25—26/28—29/31—32/34—35,42,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterSkywardSlashDash.gif
+Hero's Spin,8,78,,Can be charged for an additional 60 frames. 8f startup is only the front hit.,14.0—19.6,10—12,13—17,Early/Lates,-57 to -53,8—9(10—14/15—24/25—40),38,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterHerosSpinG.gif
+Hero's Spin (Air),8/16/22/26/31/38/47,--,30,,3.0/2.0/5.0,5/4/12,4/3/6,First/multi/final,**,8/11/16/19/22/26/31/38/47—48,,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterHerosSpinA.gif
+Blade Counter,5 (Start of Counter),59,,Intangible on frame 4-5. Counters on frame 5-26.,,,,,,5—26 (counter),,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterBladeCounter.gif
+"Blade Counter, Activated",21,Ground 38/ Air 41,,Intangible frames 1-23.,,,,,,21—22,16,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterBladeCounterHit.gif
+Reversal Slash,16 (5 is Start of Reflector),36,,Reflects on frame 5-24. Invulnerable on frame 17-26 if you hit somebody or reflect something,6.0,7,0,,-13,16—17,19,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterReversalSlash.gif
+Power Thrust,12,59,,,15.0/13.0/10.0,10/9/8,14/12/10,Early/Late/Later,-33,12—14(15—22/23—30),29,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterPowerThrustG.gif
+Power Thrust (Air),14,58,39,Landing hit on frame 1—2,13.0/7.0,9/10,12/7,falling/landing,-31,14—16/17—24/25—29,29,https://ultimateframedata.com/hitboxes/mii_swordfighter/MiiSwordfighterPowerThrustA.gif

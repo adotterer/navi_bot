@@ -1,5 +1,5 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral B (Watergun),26,63,,"From a charging state, startup is 7 and total frames is 44. Takes 64 frames to fully charge.",,,,,,24—**,
-Side B (Withdraw),23,--,,26 endlag on hit. 34 endlag to cancel the move manually. Armor begins on 22. Getting footstooled places Squirtle in a ~155 frame helpless animation.,13.0—13.9,7,8,,-18,22—41/22—61,
-Up B (Waterfall),9...,--,30,,1.3/3.0,4/5,3/4,,,9—41/43—44 (rehit: 5),
-Down B (Pokemon Change),--,39,,Invulnerable on frame 1-25. ~140 frame period before you can change again.,,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Watergun),26,63,,"From a charging state, startup is 7 and total frames is 44. Takes 64 frames to fully charge.",,,,,,24—**,,
+Side B (Withdraw),23,--,,26 endlag on hit. 34 endlag to cancel the move manually. Armor begins on 22. Getting footstooled places Squirtle in a ~155 frame helpless animation.,13.0—13.9,7,8,,-18,22—41/22—61,,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleWithdraw.gif
+Up B (Waterfall),9...,--,30,,1.3/3.0,4/5,3/4,Multi/Final,,9—41/43—44 (rehit: 5),,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleWaterfall.gif
+Down B (Pokemon Change),--,39,,Invulnerable on frame 1-25. ~140 frame period before you can change again.,,,,,,,,

@@ -1,9 +1,9 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,6,34,,,,,,,,6—7,27
-Dash Grab,9,41,,,,,,,,9—10,31
-Pivot Grab,10,36,,,,,,,,10—11,25
-Pummel,1,15,,Total frames includes 10 frames of hitlag,1.0,,,,,,
-Forward Throw,45,58,,,2.0/5.0,,,,,,
-Backward Throw,41,49,,,8.0,,,,,,
-Up Throw,58,86,,Startup and total frames assume level ground. Endlag is always 30 after landing.	Deals 7.0 damage and knockback to anyone near Kirby on frames 45—53.,10.0,,,,,,
-Down Throw,9,87,,Throw releases on 58. Active: 9—10/13—14/17—18/21—22/25—26/29—30/33—34/37—38/41—42/56—57.,1.0/2.0,,,,,,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,6,34,,,,,,,,6—7,27,https://ultimateframedata.com/hitboxes/kirby/KirbyGrab.gif
+Dash Grab,9,41,,,,,,,,9—10,31,https://ultimateframedata.com/hitboxes/kirby/KirbyDashGrab.gif
+Pivot Grab,10,36,,,,,,,,10—11,25,https://ultimateframedata.com/hitboxes/kirby/KirbyPivotGrab.gif
+Pummel,1,15,,Total frames includes 10 frames of hitlag,1.0,,,,,,,https://ultimateframedata.com/hitboxes/kirby/KirbyPummel.gif
+Forward Throw,45,58,,,2.0/5.0,,,,,,,https://ultimateframedata.com/hitboxes/kirby/KirbyFThrow.gif
+Backward Throw,41,49,,,8.0,,,,,,,https://ultimateframedata.com/hitboxes/kirby/KirbyBThrow.gif
+Up Throw,58,86,,Startup and total frames assume level ground. Endlag is always 30 after landing.	Deals 7.0 damage and knockback to anyone near Kirby on frames 45—53.,10.0,,,,,,,https://ultimateframedata.com/hitboxes/kirby/KirbyUThrow.gif
+Down Throw,9,87,,Throw releases on 58. Active: 9—10/13—14/17—18/21—22/25—26/29—30/33—34/37—38/41—42/56—57.,1.0/2.0,,,,,,,https://ultimateframedata.com/hitboxes/kirby/KirbyDThrow.gif

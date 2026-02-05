@@ -1,12 +1,12 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Grab,7,39,,,,,,,,7—8,
-Dash Grab,9,43,,,,,,,,9—10,
-Pivot Grab,10,43,,,,,,,,10—11,
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Grab,7,39,,,,,,,,7—8,,https://ultimateframedata.com/hitboxes/kazuya/Shoto4Grab.gif
+Dash Grab,9,43,,,,,,,,9—10,,https://ultimateframedata.com/hitboxes/kazuya/Shoto4DashGrab.gif
+Pivot Grab,10,43,,,,,,,,10—11,,https://ultimateframedata.com/hitboxes/kazuya/Shoto4PivotGrab.gif
 "Gates of Hell (Gates of Hell, Success)
 		
-		DF, D, DF, Grab (323Grab)",7 (32/80/81),36 (104),,"Input sequence is ""Down-Forward > Down > Down-Forward > Grab""",-- (10.0/13.0/1.0),,,,,7—8,
-Pummel,5,33,,Total frames includes 17 frames of hitlag (plus one in 1v1),3.4,,,,,,
-Forward Throw,11/39/42,75,,,5.0/5.0/2.0,,,,,,
-Backward Throw,46,83,,,14.0,,,,,,
-Up Throw,14,65,,Fires Blaster on frame 40,2.0/10.0,,,,,,
-Down Throw,34/35,54,,,7.0/1.0,,,,,,
+		DF, D, DF, Grab (323Grab)",7 (32/80/81),36 (104),,"Input sequence is ""Down-Forward > Down > Down-Forward > Grab""",-- (10.0/13.0/1.0),,,,,7—8,,https://ultimateframedata.com/hitboxes/kazuya/Shoto4GatesOfHellGrab.gif
+Pummel,5,33,,Total frames includes 17 frames of hitlag (plus one in 1v1),3.4,,,,,,,https://ultimateframedata.com/hitboxes/kazuya/Shoto4Pummel.gif
+Forward Throw,11/39/42,75,,,5.0/5.0/2.0,,,,,,,https://ultimateframedata.com/hitboxes/kazuya/Shoto4FThrow.gif
+Backward Throw,46,83,,,14.0,,,,,,,https://ultimateframedata.com/hitboxes/kazuya/Shoto4BThrow.gif
+Up Throw,14,65,,Fires Blaster on frame 40,2.0/10.0,,,,,,,https://ultimateframedata.com/hitboxes/kazuya/Shoto4UThrow.gif
+Down Throw,34/35,54,,,7.0/1.0,,,,,,,https://ultimateframedata.com/hitboxes/kazuya/Shoto4DThrow.gif

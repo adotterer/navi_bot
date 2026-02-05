@@ -1,6 +1,6 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Neutral Air,6/15,45,9,Autocancels on frame 47 onward. The second hit uses a fixed weight for all characters. Every character will experience the same knockback at the same %.,6.0/4.0/8.5/5.0,8/5/10/6,3/3/4/3,,-6/-6/-5/-6,6—7/15—21,24
-Forward Air,10,29,8,Autocancels on frame 31 onward,11.0 / 7.0,11/7,4/3,,-4/-5,10—12,17
-Back Air,8,35,10,Autocancels on frame 1-2 and 32 onward. Turns the character around.,12.0/9.0,12/7,5/4,,-5/-6,8—10,25
-Up Air,5,41,8,Autocancels on frame 1-2 and 38 onward,9.0/6.0,10/6,4/3,,-4/-5,5—12,29
-Down Air,16,51,14,Autocancels on frame 1-2 and 52 onward,15.0/10.0,13/8,5/4,,-9/-10,16—17,34
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,6/15,45,9,Autocancels on frame 47 onward. The second hit uses a fixed weight for all characters. Every character will experience the same knockback at the same %.,6.0/4.0/8.5/5.0,8/5/10/6,3/3/4/3,"first close/far, second close/far",-6/-6/-5/-6,6—7/15—21,24,https://ultimateframedata.com/hitboxes/roy/RoyNAir.gif
+Forward Air,10,29,8,Autocancels on frame 31 onward,11.0 / 7.0,11/7,4/3,Close/Far,-4/-5,10—12,17,https://ultimateframedata.com/hitboxes/roy/RoyFAir.gif
+Back Air,8,35,10,Autocancels on frame 1-2 and 32 onward. Turns the character around.,12.0/9.0,12/7,5/4,Close/Far,-5/-6,8—10,25,https://ultimateframedata.com/hitboxes/roy/RoyBAir.gif
+Up Air,5,41,8,Autocancels on frame 1-2 and 38 onward,9.0/6.0,10/6,4/3,Close/Far,-4/-5,5—12,29,https://ultimateframedata.com/hitboxes/roy/RoyUAir.gif
+Down Air,16,51,14,Autocancels on frame 1-2 and 52 onward,15.0/10.0,13/8,5/4,Close/Far,-9/-10,16—17,34,https://ultimateframedata.com/hitboxes/roy/RoyDAir.gif

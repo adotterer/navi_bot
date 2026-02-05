@@ -1,10 +1,10 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
-Jab 1,3,17,,Transitions to Jab 2 as early as frame 15.,3.0,5,4,,-10,3—4,13
-Jab 2,6,29,,,8.0,7,8,,-15,6—9,20
-Forward Tilt,8,33,,Deals 1.0 more damage when angled.,8.0/9.0/10.0,7/7/8,8/9/10,,-17/-16/-15,8—10,23
-Up Tilt,15,39,,,13.0/12.0,9,12,,-12,15—18,21
-Down Tilt,6,44,,,12.0,9,12,,-26,6—8,36
-Dash Attack,8,41,,,10.0/6.0,8/6,10/6,,-23,8—9(10—13/14—18),23
-Forward Smash,10,48,,"Deals 1.0 more damage when angled up, 1.0 less when angled down. Charge hold frame is 3.",12.0/14.0,9/10,9/10,,-29/-28,10—11,37
-Up Smash,11/15/19/23/27,56,,Charge hold frame is 6,3.0/6.0,5/6,3/5,,-24,11—12/15—16/19—20/23—24/27—28,28
-Down Smash,9/17,44,,Charge hold frame is 3,10.0/12.0,8/9,8/9,,-27/-18,9—10/17—18,26
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,3,17,,Transitions to Jab 2 as early as frame 15.,3.0,5,4,,-10,3—4,13,https://ultimateframedata.com/hitboxes/dark_samus/DarkSamusJab1.gif
+Jab 2,6,29,,,8.0,7,8,,-15,6—9,20,https://ultimateframedata.com/hitboxes/dark_samus/DarkSamusJab2.gif
+Forward Tilt,8,33,,Deals 1.0 more damage when angled.,8.0/9.0/10.0,7/7/8,8/9/10,Close/Middle/Far,-17/-16/-15,8—10,23,https://ultimateframedata.com/hitboxes/dark_samus/DarkSamusFTilt.gif
+Up Tilt,15,39,,,13.0/12.0,9,12,Grounded/Aerial,-12,15—18,21,https://ultimateframedata.com/hitboxes/dark_samus/DarkSamusUTilt.gif
+Down Tilt,6,44,,,12.0,9,12,,-26,6—8,36,https://ultimateframedata.com/hitboxes/dark_samus/DarkSamusDTilt.gif
+Dash Attack,8,41,,,10.0/6.0,8/6,10/6,Early/Late/Later,-23,8—9(10—13/14—18),23,https://ultimateframedata.com/hitboxes/dark_samus/DarkSamusDashAttack.gif
+Forward Smash,10,48,,"Deals 1.0 more damage when angled up, 1.0 less when angled down. Charge hold frame is 3.",12.0/14.0,9/10,9/10,Close/Far,-29/-28,10—11,37,https://ultimateframedata.com/hitboxes/dark_samus/DarkSamusFSmash.gif
+Up Smash,11/15/19/23/27,56,,Charge hold frame is 6,3.0/6.0,5/6,3/5,Multihit/Final,-24,11—12/15—16/19—20/23—24/27—28,28,https://ultimateframedata.com/hitboxes/dark_samus/DarkSamusUSmash.gif
+Down Smash,9/17,44,,Charge hold frame is 3,10.0/12.0,8/9,8/9,,-27/-18,9—10/17—18,26,https://ultimateframedata.com/hitboxes/dark_samus/DarkSamusDSmash.gif
