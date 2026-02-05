@@ -109,11 +109,17 @@ function parseCSVLine(line) {
 }
 
 function loadCharacterFrameData(characterSlug) {
-    if (frameDataCache[characterSlug]) {
-        return frameDataCache[characterSlug];
+    // Pokemon Trainer characters have pt- prefix in directory names
+    const ptCharacters = ['squirtle', 'ivysaur', 'charizard'];
+    const frameDataSlug = ptCharacters.includes(characterSlug) 
+        ? `pt-${characterSlug}` 
+        : characterSlug;
+    
+    if (frameDataCache[frameDataSlug]) {
+        return frameDataCache[frameDataSlug];
     }
     
-    const characterDir = path.join(FRAMEDATA_DIR, characterSlug);
+    const characterDir = path.join(FRAMEDATA_DIR, frameDataSlug);
     
     if (!fs.existsSync(characterDir)) {
         return null;
@@ -138,10 +144,10 @@ function loadCharacterFrameData(characterSlug) {
             frameData.moves[moveType] = moves;
         }
         
-        frameDataCache[characterSlug] = frameData;
+        frameDataCache[frameDataSlug] = frameData;
         return frameData;
     } catch (error) {
-        console.error(`Error loading frame data for ${characterSlug}:`, error.message);
+        console.error(`Error loading frame data for ${frameDataSlug}:`, error.message);
         return null;
     }
 }
