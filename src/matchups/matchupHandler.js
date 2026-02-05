@@ -169,6 +169,7 @@ export async function handleMuQuestion(message) {
     const rawQuestion = message.content
         .replace(/^!mu-question\s*/i, "")
         .replace(/^!mu-q\s*/i, "")
+        .replace(/^!muq\s*/i, "")
         .trim();
 
     if (!rawQuestion) {

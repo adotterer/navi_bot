@@ -57,7 +57,8 @@ client.on("messageCreate", async (message) => {
     const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
-        message.content.toLowerCase().startsWith("!mu-q");
+        message.content.toLowerCase().startsWith("!mu-q") ||
+        message.content.toLowerCase().startsWith("!muq");
 
     if (isAskNaviChannel) {
         // Always allow katyparry messages
@@ -110,7 +111,8 @@ client.on("messageCreate", async (message) => {
     const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
-        message.content.toLowerCase().startsWith("!mu-q");
+        message.content.toLowerCase().startsWith("!mu-q") ||
+        message.content.toLowerCase().startsWith("!muq");
 
     // ===== COMMAND GATE: MODERATORS ONLY =====
     const isCommand = message.content.toLowerCase().startsWith("!export") ||
@@ -118,6 +120,7 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!mu-q") ||
+        message.content.toLowerCase().startsWith("!muq") ||
         message.content.toLowerCase().startsWith("!q ") ||
         message.content.toLowerCase().startsWith("!list-categories") ||
         message.content.toLowerCase().startsWith("!matches-today") ||
@@ -180,7 +183,8 @@ client.on("messageCreate", async (message) => {
 
     // ===== MU QUESTION =====
     if (message.content.toLowerCase().startsWith("!mu-question") ||
-        message.content.toLowerCase().startsWith("!mu-q")) {
+        message.content.toLowerCase().startsWith("!mu-q") ||
+        message.content.toLowerCase().startsWith("!muq")) {
         await handleMuQuestion(message);
         return;
     }
