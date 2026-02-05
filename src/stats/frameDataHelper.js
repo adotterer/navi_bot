@@ -168,6 +168,74 @@ function findMove(frameData, moveName) {
     return null;
 }
 
+function detectCharacterAndMoveInText(text, guild) {
+    // More flexible detection that finds character and move anywhere in the text
+    const aliasMap = buildCharacterAliasMap(guild);
+    const normalizeText = (txt) => txt.toLowerCase()
+        .replace(/['']s\b/g, "")
+        .replace(/['']/g, "")
+        .replace(/[|︱｜]/g, "|")
+        .replace(/[^a-z0-9|\s\-]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    
+    const normalizedText = normalizeText(text);
+    const words = normalizedText.split(/\s+/);
+    
+    // Find character mention
+    let foundCharacter = null;
+    const aliases = Array.from(aliasMap.keys()).sort((a, b) => b.length - a.length);
+    
+    for (const alias of aliases) {
+        if (normalizedText.includes(alias)) {
+            foundCharacter = {
+                slug: aliasMap.get(alias),
+                alias: alias
+            };
+            break;
+        }
+    }
+    
+    if (!foundCharacter) return null;
+    
+    // Find move mention (check abbreviations and common move names)
+    for (const word of words) {
+        // Check if it's an abbreviation
+        if (MOVE_ABBREVIATIONS[word]) {
+            return {
+                character: foundCharacter,
+                characterSlug: foundCharacter.slug,
+                move: word
+            };
+        }
+        
+        // Check common move patterns (air, tilt, smash, throw, special)
+        if (word.includes('air') || word.includes('tilt') || word.includes('smash') || 
+            word.includes('throw') || word.includes('special') || word === 'jab' || 
+            word === 'grab' || word === 'dash') {
+            return {
+                character: foundCharacter,
+                characterSlug: foundCharacter.slug,
+                move: word
+            };
+        }
+    }
+    
+    // Check two-word combinations
+    for (let i = 0; i < words.length - 1; i++) {
+        const twoWord = `${words[i]} ${words[i + 1]}`;
+        if (MOVE_ABBREVIATIONS[twoWord]) {
+            return {
+                character: foundCharacter,
+                characterSlug: foundCharacter.slug,
+                move: twoWord
+            };
+        }
+    }
+    
+    return null;
+}
+
 function parseCharacterAndMove(input, guild) {
     const aliasMap = buildCharacterAliasMap(guild);
     const parts = input.trim().split(/\s+/);
@@ -393,7 +461,7 @@ Provide your answer:`;
         await message.channel.send({ embeds });
         
         // Try to detect if a specific character + move was mentioned and show the GIF
-        const parsed = parseCharacterAndMove(question, message.guild);
+        const parsed = detectCharacterAndMoveInText(question, message.guild);
         if (parsed) {
             const frameData = loadCharacterFrameData(parsed.characterSlug);
             if (frameData) {
