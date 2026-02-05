@@ -139,13 +139,15 @@ export async function handleStatsLookup(message, args) {
         
         // Resolve character alias
         const aliasMap = buildCharacterAliasMap(message.guild);
-        const resolvedSlug = resolveCharacterFromText(characterInput, aliasMap);
+        const characterMatch = resolveCharacterFromText(characterInput, aliasMap);
         
-        console.log(`📊 Resolved character slug: ${resolvedSlug}`);
+        console.log(`📊 Resolved character match:`, characterMatch);
         
-        if (!resolvedSlug) {
+        if (!characterMatch || !characterMatch.slug) {
             return message.reply(`❌ Character "${characterInput}" not recognized. Try using a character name or nickname.`);
         }
+        
+        const resolvedSlug = characterMatch.slug;
         
         // Read the CSV
         const csvData = readStatCSV(statName);
