@@ -124,51 +124,68 @@ function findCharacterInCSV(data, characterName) {
 
 // Handle !stats <stat-name> <character>
 export async function handleStatsLookup(message, args) {
-    if (args.length < 2) {
-        const availableStats = Object.keys(statDisplayNames).join(', ');
-        return message.reply(`Usage: \`!stats <stat-name> <character>\`\nExample: \`!stats air-acceleration incin\`\n\n**Available stats:**\n${availableStats}`);
-    }
-    
-    const statName = args[0].toLowerCase();
-    const characterInput = args.slice(1).join(' ').toLowerCase();
-    
-    // Resolve character alias
-    const aliasMap = buildCharacterAliasMap();
-    const resolvedSlug = resolveCharacterFromText(characterInput, aliasMap);
-    
-    if (!resolvedSlug) {
-        return message.reply(`❌ Character "${characterInput}" not recognized. Try using a character name or nickname.`);
-    }
-    
-    // Read the CSV
-    const csvData = readStatCSV(statName);
-    
-    if (!csvData) {
-        const availableStats = Object.keys(statDisplayNames).join(', ');
-        return message.reply(`❌ Stat "${statName}" not found.\n\n**Available stats:**\n${availableStats}`);
-    }
-    
-    // Find the character in the data
-    const characterData = findCharacterInCSV(csvData.data, resolvedSlug);
-    
-    if (!characterData) {
-        return message.reply(`❌ No data found for ${resolvedSlug} in ${statDisplayNames[statName] || statName}.`);
-    }
-    
-    // Format the response
-    const displayName = statDisplayNames[statName] || statName;
-    const charDisplayName = characterData.Character;
-    
-    let response = `📊 **${displayName}** - ${charDisplayName}\n\n`;
-    
-    // Add all values except the character name
-    Object.entries(characterData).forEach(([key, value]) => {
-        if (key !== 'Character' && value) {
-            response += `**${key}:** ${value}\n`;
+    try {
+        console.log(`📊 Stats lookup request from ${message.author.tag}: args =`, args);
+        
+        if (args.length < 2) {
+            const availableStats = Object.keys(statDisplayNames).join(', ');
+            return message.reply(`Usage: \`!stats <stat-name> <character>\`\nExample: \`!stats air-acceleration incin\`\n\n**Available stats:**\n${availableStats}`);
         }
-    });
-    
-    message.reply(response.trim());
+        
+        const statName = args[0].toLowerCase();
+        const characterInput = args.slice(1).join(' ').toLowerCase();
+        
+        console.log(`📊 Stat: ${statName}, Character input: ${characterInput}`);
+        
+        // Resolve character alias
+        const aliasMap = buildCharacterAliasMap();
+        const resolvedSlug = resolveCharacterFromText(characterInput, aliasMap);
+        
+        console.log(`📊 Resolved character slug: ${resolvedSlug}`);
+        
+        if (!resolvedSlug) {
+            return message.reply(`❌ Character "${characterInput}" not recognized. Try using a character name or nickname.`);
+        }
+        
+        // Read the CSV
+        const csvData = readStatCSV(statName);
+        
+        console.log(`📊 CSV data loaded: ${csvData ? 'yes' : 'no'}, rows: ${csvData?.data?.length || 0}`);
+        
+        if (!csvData) {
+            const availableStats = Object.keys(statDisplayNames).join(', ');
+            return message.reply(`❌ Stat "${statName}" not found.\n\n**Available stats:**\n${availableStats}`);
+        }
+        
+        // Find the character in the data
+        const characterData = findCharacterInCSV(csvData.data, resolvedSlug);
+        
+        console.log(`📊 Character data found: ${characterData ? 'yes' : 'no'}`);
+        
+        if (!characterData) {
+            return message.reply(`❌ No data found for ${resolvedSlug} in ${statDisplayNames[statName] || statName}.`);
+        }
+        
+        // Format the response
+        const displayName = statDisplayNames[statName] || statName;
+        const charDisplayName = characterData.Character;
+        
+        let response = `📊 **${displayName}** - ${charDisplayName}\n\n`;
+        
+        // Add all values except the character name
+        Object.entries(characterData).forEach(([key, value]) => {
+            if (key !== 'Character' && value) {
+                response += `**${key}:** ${value}\n`;
+            }
+        });
+        
+        console.log(`📊 Sending response for ${charDisplayName}`);
+        message.reply(response.trim());
+        
+    } catch (error) {
+        console.error('❌ Error in handleStatsLookup:', error);
+        message.reply('❌ Sorry, I encountered an error looking up that stat. Check the bot logs for details.');
+    }
 }
 
 // Handle !sq <question> - AI-powered stats questions
