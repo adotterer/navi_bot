@@ -254,14 +254,14 @@ QUESTION: ${question}
 
 Provide a clear, factual answer based on the data. If comparing characters, show the relevant numbers. If asking about superlatives (fastest, heaviest, etc.), identify the character and their value.`;
         
-        const embeds = createSplitEmbeds(EmbedBuilder, aiResponse, '#FFD700', SUMMARY_DISCLAIMER);
-        message.channel.send({ embeds }
+        const response = await genAI.models.generateContent({
             model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp',
             contents: prompt
         });
         const aiResponse = response.text;
         
-        message.reply(`📊 **Stats Answer:**\n\n${aiResponse}`);
+        const embeds = createSplitEmbeds(EmbedBuilder, aiResponse, '#FFD700');
+        message.channel.send({ embeds });
         
     } catch (error) {
         console.error('Error in handleStatsQuestion:', error);
