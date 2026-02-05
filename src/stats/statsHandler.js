@@ -252,7 +252,18 @@ ${statsContext}
 
 QUESTION: ${question}
 
-Provide a clear, factual answer based on the data. If comparing characters, show the relevant numbers. If asking about superlatives (fastest, heaviest, etc.), identify the character and their value.`;
+Provide a clear, factual answer based on the data. If comparing characters, show the relevant numbers. If asking about superlatives (fastest, heaviest, etc.), identify the character and their value.
+
+Format your answer using Discord markdown, similar to this:
+
+**Sonic** is faster than **Zelda ** in every speed category:
+
+<:6symbolnavi:1341400385709019138> **Run Speed: **Sonic (3.85) vs. Zelda (1.43)
+<:6symbolnavi:1341400385709019138>**Dash Speed:** Sonic (2.31) vs. Zelda (1.958)
+<:6symbolnavi:1341400385709019138>**Walk Speed: **Sonic (1.444) vs. Zelda (0.914)
+<:6symbolnavi:1341400385709019138>**Air Speed: **Sonic (1.208) vs. Zelda (1.092)
+
+Provide your answer here:`;
         
         const response = await genAI.models.generateContent({
             model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp',
