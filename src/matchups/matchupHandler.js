@@ -69,7 +69,7 @@ export async function handleMatchupNotes(message) {
         const characterMatch = resolveCharacterFromText(args[1], aliasMap);
 
         if (!characterMatch) {
-            await message.reply("❌ I couldn't recognize that character. Please use the character name or a known alias. Example: `!mu-notes falco`");
+            await message.reply("❌ I couldn't recognize that character. Please use the character name or a known alias. Example: `!mu falco`. Specific questions use the !muq <question> command.");
             return;
         }
 

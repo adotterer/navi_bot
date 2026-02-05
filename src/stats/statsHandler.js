@@ -228,6 +228,9 @@ export async function handleStatsQuestion(message, question) {
         return message.reply('Usage: `!sq <question>`\nExample: `!sq who has faster air acceleration, zelda or mii gunner?`');
     }
     
+    // Send status message to let user know we're working on it
+    await message.reply('📊 Searching character data for your answer...');
+    
     try {
         // Get all available stats data
         const allStatsData = {};
@@ -241,8 +244,9 @@ export async function handleStatsQuestion(message, question) {
             }
         }
         
-        // Build context for AI
-        const statsContext = buildStatsContext(allStatsData);
+        // Build context for AI - only include relevant stats based on question
+        const relevantStats = getRelevantStats(question);
+        const statsContext = buildStatsContext(allStatsData, relevantStats);
         
         const prompt = `You are a Super Smash Bros. Ultimate stats expert. Answer the following question using ONLY the provided stats data. Be concise and specific.
 
@@ -270,7 +274,7 @@ Provide your answer here:`;
         });
         const aiResponse = response.text;
         
-        const embeds = createSplitEmbeds(EmbedBuilder, aiResponse, '#FFD700');
+        const embeds = createSplitEmbeds(EmbedBuilder, aiResponse, "#36AAD4");
         message.channel.send({ embeds });
         
     } catch (error) {
@@ -279,15 +283,82 @@ Provide your answer here:`;
     }
 }
 
-// Build a text summary of all stats for AI context
-function buildStatsContext(allStatsData) {
+// Get relevant stats based on question keywords
+function getRelevantStats(question) {
+    const keywords = question.toLowerCase();
+    const relevant = new Set();
+    
+    // Speed-related keywords
+    if (keywords.match(/speed|fast|quick|dash|run|walk/)) {
+        relevant.add('air-speed');
+        relevant.add('dash-and-run-speed');
+        relevant.add('walk-speed');
+    }
+    
+    // Weight/heaviness
+    if (keywords.match(/weight|heavy|light/)) {
+        relevant.add('weight');
+    }
+    
+    // Fall/gravity
+    if (keywords.match(/fall|gravity/)) {
+        relevant.add('fall-speed');
+        relevant.add('gravity');
+    }
+    
+    // Jump height
+    if (keywords.match(/jump|height/)) {
+        relevant.add('jump-height');
+        relevant.add('jump-durations');
+    }
+    
+    // Recovery/ledge
+    if (keywords.match(/recovery|ledge|edge|offstage/)) {
+        relevant.add('ledge-stats');
+        relevant.add('fall-speed');
+        relevant.add('gravity');
+    }
+    
+    // Grab/range
+    if (keywords.match(/grab|range|reach/)) {
+        relevant.add('grab-range');
+    }
+    
+    // Shield/OOS
+    if (keywords.match(/shield|oos|punish|landing/)) {
+        relevant.add('out-of-shield');
+        relevant.add('landing');
+    }
+    
+    // Dodging
+    if (keywords.match(/dodge|roll/)) {
+        relevant.add('neutral-air-dodges');
+        relevant.add('forward-rolls');
+        relevant.add('backward-rolls');
+    }
+    
+    // If no matches, return all stats
+    if (relevant.size === 0) {
+        return Object.keys(statDisplayNames);
+    }
+    
+    return Array.from(relevant);
+}
+
+// Build a text summary of stats for AI context
+function buildStatsContext(allStatsData, statNames = null) {
     let context = '';
     
-    for (const [statName, csvData] of Object.entries(allStatsData)) {
+    // If no specific stats provided, use all
+    const statsToInclude = statNames || Object.keys(allStatsData);
+    
+    for (const statName of statsToInclude) {
+        if (!allStatsData[statName]) continue;
+        
+        const csvData = allStatsData[statName];
         const displayName = statDisplayNames[statName] || statName;
         context += `\n## ${displayName}\n`;
         
-        // Include all data for accurate comparisons
         csvData.data.forEach(row => {
             context += formatRowForContext(row);
         });
