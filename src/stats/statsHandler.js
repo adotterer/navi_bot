@@ -212,7 +212,6 @@ export async function handleStatsLookup(message, args) {
             .setColor('#FFD700')
             .setTitle(`📊 ${displayName}`)
             .setDescription(`**${charDisplayName}**\n\n${statsText}`)
-            .setTimestamp();
         
         console.log(`📊 Sending response for ${charDisplayName}`);
         message.reply({ embeds: [embed] });
@@ -256,7 +255,7 @@ Provide a clear, factual answer based on the data. If comparing characters, show
 
 Format your answer using Discord markdown, similar to this:
 
-**Sonic** is faster than **Zelda ** in every speed category:
+**Sonic** is faster than **Zelda** in every speed category:
 
 <:6symbolnavi:1341400385709019138> **Run Speed: **Sonic (3.85) vs. Zelda (1.43)
 <:6symbolnavi:1341400385709019138>**Dash Speed:** Sonic (2.31) vs. Zelda (1.958)
