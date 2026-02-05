@@ -28,6 +28,7 @@ export const nicknameAliases = {
     diddy: "diddy-kong",
     dk: "donkey-kong",
     "DK": "donkey-kong",
+    "drmario": "dr-mario",
     "dr.mario": "dr-mario",
     "dr mario": "dr-mario",
     "game & watch": "mr-game-and-watch",
