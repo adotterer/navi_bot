@@ -138,7 +138,7 @@ export async function handleStatsLookup(message, args) {
         console.log(`📊 Stat: ${statName}, Character input: ${characterInput}`);
         
         // Resolve character alias
-        const aliasMap = buildCharacterAliasMap();
+        const aliasMap = buildCharacterAliasMap(message.guild);
         const resolvedSlug = resolveCharacterFromText(characterInput, aliasMap);
         
         console.log(`📊 Resolved character slug: ${resolvedSlug}`);
