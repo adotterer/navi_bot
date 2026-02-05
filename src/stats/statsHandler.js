@@ -1,15 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { GoogleGenerativeAI } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const STATS_DIR = path.join(__dirname, '../../data/stats');
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
+
+const genAI = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+    defaultModel: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp'
+});
 
 // Cache for CSV data
 const statsCache = {};
@@ -190,10 +193,6 @@ export async function handleStatsQuestion(message, question) {
         // Build context for AI
         const statsContext = buildStatsContext(allStatsData);
         
-        // Call Gemini AI
-        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-        
         const prompt = `You are a Super Smash Bros. Ultimate stats expert. Answer the following question using ONLY the provided stats data. Be concise and specific.
 
 STATS DATA:
@@ -203,8 +202,11 @@ QUESTION: ${question}
 
 Provide a clear, factual answer based on the data. If comparing characters, show the relevant numbers. If asking about superlatives (fastest, heaviest, etc.), identify the character and their value.`;
         
-        const result = await model.generateContent(prompt);
-        const aiResponse = result.response.text();
+        const response = await genAI.models.generateContent({
+            model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp',
+            contents: prompt
+        });
+        const aiResponse = response.text;
         
         message.reply(`📊 **Stats Answer:**\n\n${aiResponse}`);
         
