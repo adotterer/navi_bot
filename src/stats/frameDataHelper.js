@@ -279,16 +279,50 @@ export async function handleFrameDataLookup(message, args) {
     }
 }
 
-function buildFrameDataContext(limit = 5) {
+function buildFrameDataContext(question = '', guild = null, limit = 10) {
     const dirs = fs.readdirSync(FRAMEDATA_DIR).filter(f => 
         fs.statSync(path.join(FRAMEDATA_DIR, f)).isDirectory()
     );
     
     let context = '';
-    let charCount = 0;
+    let includedChars = new Set();
     
+    // Try to detect if a specific character is mentioned in the question
+    if (question && guild) {
+        const aliasMap = buildCharacterAliasMap(guild);
+        const questionLower = question.toLowerCase();
+        
+        // Check all aliases to see if they're in the question
+        for (const [alias, slug] of aliasMap.entries()) {
+            if (questionLower.includes(alias) && dirs.includes(slug)) {
+                // Add this character first
+                const frameData = loadCharacterFrameData(slug);
+                if (frameData) {
+                    const charName = slug.replace(/-/g, ' ').split(' ')
+                        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                        .join(' ');
+                    
+                    context += `\n**${charName}:**\n`;
+                    
+                    for (const [moveType, moves] of Object.entries(frameData.moves)) {
+                        context += `*${moveType.replace(/_/g, ' ')}:*\n`;
+                        for (const move of moves) {
+                            const stats = `Startup: ${move['Startup']}, Damage: ${move['Base Damage']}, On Shield: ${move['On Shield']}`;
+                            context += `- ${move['Move Name']}: ${stats}\n`;
+                        }
+                    }
+                    
+                    includedChars.add(slug);
+                }
+            }
+        }
+    }
+    
+    // Fill in remaining slots with other characters (if we have room)
+    let charCount = includedChars.size;
     for (const dir of dirs) {
         if (charCount >= limit) break;
+        if (includedChars.has(dir)) continue;
         
         const frameData = loadCharacterFrameData(dir);
         if (!frameData) continue;
@@ -322,7 +356,7 @@ export async function handleFrameDataQuestion(message, question) {
     try {
         await message.reply(`⏳ Analyzing frame data...`);
 
-        const frameDataContext = buildFrameDataContext(10);
+        const frameDataContext = buildFrameDataContext(question, message.guild, 5);
 
         const fullPrompt = `You are Navi Bot, a helpful assistant for Super Smash Bros Ultimate frame data analysis.
 
@@ -350,7 +384,7 @@ Provide your answer:`;
 
         const answer = response.text;
         
-        const embeds = createSplitEmbeds(EmbedBuilder, answer, "#FF6B9D", SUMMARY_DISCLAIMER);
+        const embeds = createSplitEmbeds(EmbedBuilder, answer, '#36AAD4', SUMMARY_DISCLAIMER);
         await message.channel.send({ embeds });
     } catch (error) {
         console.error("Error in handleFrameDataQuestion:", error);
