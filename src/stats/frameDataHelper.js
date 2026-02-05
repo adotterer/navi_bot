@@ -391,6 +391,24 @@ Provide your answer:`;
         
         const embeds = createSplitEmbeds(EmbedBuilder, answer, '#36AAD4', SUMMARY_DISCLAIMER);
         await message.channel.send({ embeds });
+        
+        // Try to detect if a specific character + move was mentioned and show the GIF
+        const parsed = parseCharacterAndMove(question, message.guild);
+        if (parsed) {
+            const frameData = loadCharacterFrameData(parsed.characterSlug);
+            if (frameData) {
+                const found = findMove(frameData, parsed.move);
+                if (found && found.move['GIF URL'] && found.move['GIF URL'].trim()) {
+                    const displayName = parsed.characterSlug
+                        .split('-')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                    
+                    const moveEmbed = createMoveEmbed(found.move, displayName, found.moveType);
+                    await message.channel.send({ embeds: [moveEmbed] });
+                }
+            }
+        }
     } catch (error) {
         console.error("Error in handleFrameDataQuestion:", error);
         await message.reply("❌ Error processing frame data question: " + error.message);
