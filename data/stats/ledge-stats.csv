@@ -1,0 +1,90 @@
+Character,Attack Range,Attack Frames,Neutral Getup,Roll,Jump
+Mario,15) F-,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Donkey Kong,03) S,1-25 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-28 intangible / 45 total,1-12 intangible / 14 total
+Link,02) S+,1-22 intangible / 55 total / -26 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Samus,05) A,1-27 intangible / 55 total / -21 on shield,1-31 intangible / 32 total,1-22 intangible / 45 total,1-12 intangible / 14 total
+Dark Samus,05) A,1-27 intangible / 55 total / -21 on shield,1-31 intangible / 32 total,1-22 intangible / 45 total,1-12 intangible / 14 total
+Yoshi,14) F,1-22 intangible / 55 total / -26 on shield,1-32 intangible / 33 total,1-22 intangible / 45 total,1-12 intangible / 14 total
+Kirby,12) E,1-22 intangible / 55 total / -26 on shield,1-32 intangible / 33 total,1-22 intangible / 45 total,1-12 intangible / 14 total
+Fox,11) D-,1-21 intangible / 55 total / -27 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Pikachu,13) E-,1-25 intangible / 55 total / -23 on shield,1-31 intangible / 32 total,1-24 intangible / 45 total,1-11 intangible / 13 total
+Luigi,15) F-,1-22 intangible / 55 total / -26 on shield,1-33 intangible / 34 total,1-29 intangible / 45 total,1-12 intangible / 14 total
+Ness,16) G,1-24 intangible / 55 total / -24 on shield,1-33 intangible / 34 total,1-20 intangible / 45 total,1-12 intangible / 14 total
+Captain Falcon,14) F,1-24 intangible / 55 total / -23 on shield,1-33 intangible / 34 total,1-23 intangible / 45 total,1-12 intangible / 14 total
+Jigglypuff,14) F,1-23 intangible / 55 total / -26 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Peach,11) D-,1-20 intangible / 55 total / -28 on shield,1-31 intangible / 32 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Daisy,11) D-,1-20 intangible / 55 total / -28 on shield,1-31 intangible / 32 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Bowser,01) SS,1-24 intangible / 55 total / -23 on shield,1-33 intangible / 34 total,1-24 intangible / 45 total,1-12 intangible / 14 total
+Ice Climbers,17) G-,1-26 intangible / 55 total / -23 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Sheik,09) C-,1-24 intangible / 55 total / -25 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Zelda,15) F-,1-26 intangible / 55 total / -25 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Dr. Mario,15) F-,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Pichu,13) E-,1-23 intangible / 55 total / -25 on shield,1-33 intangible / 34 total,1-29 intangible / 45 total,1-10 intangible / 12 total
+Falco,14) F,1-22 intangible / 55 total / -26 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Marth,06) B,1-25 intangible / 55 total / -23 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Lucina,06) B,1-25 intangible / 55 total / -23 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Ganondorf,02) S+,1-26 intangible / 55 total / -21 on shield,1-32 intangible / 33 total,1-24 intangible / 45 total,1-12 intangible / 14 total
+Mewtwo,02) S+,1-23 intangible / 55 total / -25 on shield,1-33 intangible / 34 total,1-23 intangible / 45 total,1-12 intangible / 14 total
+Roy,06) B,1-25 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Young Link,19) H-,1-23 intangible / 55 total / -25 on shield,1-31 intangible / 32 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Chrom,06) B,1-25 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Mr. Game & Watch,16) G,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-29 intangible / 45 total,1-12 intangible / 14 total
+Metaknight,11) D-,1-27 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Pit,07) B-,1-27 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Dark Pit,07) B-,1-27 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Zero Suit Samus,08) C,1-19 intangible / 55 total / -29 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Wario,10) D,1-20 intangible / 55 total / -27 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Snake,18) H,1-27 intangible / 55 total / -20 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Ike,06) B,1-21 intangible / 55 total / -26 on shield,1-33 intangible / 34 total,1-24 intangible / 45 total,1-12 intangible / 14 total
+Squirtle,18) H,1-30 intangible / 55 total / -18 on shield,1-33 intangible / 34 total,1-23 intangible / 45 total,1-10 intangible / 12 total
+Ivysaur,15) F-,1-23 intangible / 55 total / -25 on shield,1-33 intangible / 34 total,1-20 intangible / 45 total,1-12 intangible / 14 total
+Charizard,03) S,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-21 intangible / 45 total,1-12 intangible / 14 total
+Diddy Kong,08) C,1-25 intangible / 55 total / -23 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Lucas,19) H-,1-24 intangible / 55 total / -24 on shield,1-33 intangible / 34 total,1-20 intangible / 45 total,1-12 intangible / 14 total
+Sonic,12) E,1-21 intangible / 55 total / -27 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+King Dedede,08) C,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-28 intangible / 45 total,1-12 intangible / 14 total
+Olimar,11) D-,1-21 intangible / 55 total / -27 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Lucario,10) D,1-20 intangible / 55 total / -28 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+R.O.B.,06) B,1-22 intangible / 55 total / -26 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Toon Link,15) F-,1-23 intangible / 55 total / -25 on shield,1-33 intangible / 34 total,1-20 intangible / 45 total,1-12 intangible / 14 total
+Wolf,13) E-,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-24 intangible / 45 total,1-12 intangible / 14 total
+Villager,14) F,1-25 intangible / 55 total / -23 on shield,1-33 intangible / 34 total,1-24 intangible / 45 total,1-12 intangible / 14 total
+Mega Man,12) E,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-28 intangible / 45 total,1-12 intangible / 14 total
+Wii Fit Trainer,10) D,1-21 intangible / 55 total / -27 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Rosalina,07) B-,1-21 intangible / 55 total / -27 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Little Mac,16) G,1-25 intangible / 55 total / -23 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Greninja,12) E,1-24 intangible / 55 total / -24 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Mii Brawler,13) E-,1-25 intangible / 55 total / -23 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Mii Swordfighter,08) C,1-24 intangible / 55 total / -24 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Mii Gunner,06) B,1-22 intangible / 55 total / -26 on shield,1-33 intangible / 34 total,1-22 intangible / 45 total,1-12 intangible / 14 total
+Palutena,09) C-,1-25 intangible / 55 total / -23 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Pac-Man,05) A,1-22 intangible / 55 total / -26 on shield,1-30 intangible / 31 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Robin,08) C,1-27 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Shulk,04) S-,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-28 intangible / 45 total,1-12 intangible / 14 total
+Bowser Jr.,10) D,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Duck Hunt,10) D,1-20 intangible / 55 total / -28 on shield,1-33 intangible / 34 total,1-23 intangible / 45 total,1-10 intangible / 12 total
+Ryu,17) G-,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Ken,17) G-,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Cloud,04) S-,1-22 intangible / 55 total / -25 on shield,1-33 intangible / 34 total,1-22 intangible / 45 total,1-12 intangible / 14 total
+Corrin,07) B-,1-21 intangible / 55 total / -27 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Bayonetta,07) B-,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-21 intangible / 45 total,1-12 intangible / 14 total
+Inkling,12) E,1-20 intangible / 55 total / -28 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Ridley,04) S-,1-23 intangible / 55 total / -24 on shield,1-33 intangible / 34 total,1-19 intangible / 45 total,1-12 intangible / 14 total
+Simon,11) D-,1-23 intangible / 55 total / -25 on shield,1-33 intangible / 34 total,1-23 intangible / 45 total,1-12 intangible / 14 total
+Richter,11) D-,1-23 intangible / 55 total / -25 on shield,1-33 intangible / 34 total,1-23 intangible / 45 total,1-12 intangible / 14 total
+King K. Rool,03) S,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Isabelle,17) G-,1-23 intangible / 55 total / -25 on shield,1-33 intangible / 34 total,1-26 intangible / 45 total,1-12 intangible / 14 total
+Incineroar,12) E,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-18 intangible / 45 total,1-12 intangible / 14 total
+Piranha Plant,03) S,1-23 intangible / 55 total / -24 on shield,1-33 intangible / 34 total,1-25 intangible / 45 total,1-12 intangible / 14 total
+Joker,???,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-24 intangible / 45 total,1-12 intangible / 14 total
+Hero,???,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-30 intangible / 45 total,1-12 intangible / 14 total
+Banjo & Kazooie,???,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-30 intangible / 45 total,1-12 intangible / 14 total
+Byleth,???,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-30 intangible / 45 total,1-12 intangible / 14 total
+Terry,???,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-30 intangible / 45 total,1-12 intangible / 14 total
+Min Min,???,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-30 intangible / 45 total,1-12 intangible / 14 total
+Sephiroth,???,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-27 intangible / 45 total,1-12 intangible / 14 total
+Pyra,???,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-30 intangible / 45 total,1-12 intangible / 14 total
+Mythra,???,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-30 intangible / 45 total,1-12 intangible / 14 total
+Kazuya,???,1-26 intangible / 55 total / -21 on shield,1-33 intangible / 34 total,1-30 intangible / 45 total,1-12 intangible / 14 total
+Steve (Wood),???,1-26 intangible / 55 total / -22 on shield,1-33 intangible / 34 total,1-30 intangible / 45 total,1-12 intangible / 14 total
+Sora,???,1-23 intangible / 55 total / -26 on shield,1-33 intangible / 34 total,1-30 intangible / 45 total,1-12 intangible / 14 total

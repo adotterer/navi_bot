@@ -10,6 +10,7 @@ import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningRespons
 import { initializeScheduler } from './src/shared/scheduler.js';
 import { checkTodaysTournaments } from './src/tournaments/dailyTournamentCheck.js';
 import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaCommand.js';
+import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler.js';
 
 dotenv.config();
 
@@ -122,6 +123,8 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!matches-today") ||
         message.content.toLowerCase().startsWith("!add-zelda") ||
         message.content.toLowerCase().startsWith("!list-zeldas") ||
+        message.content.toLowerCase().startsWith("!stats") ||
+        message.content.toLowerCase().startsWith("!sq ") ||
         message.content.toLowerCase().startsWith("!list-thread-counts");
 
     if (isCommand && !(isAskNaviChannel && isMuCommand)) {
@@ -183,6 +186,20 @@ client.on("messageCreate", async (message) => {
     // ===== GENERAL QUESTION =====
     if (message.content.toLowerCase().startsWith("!q ")) {
         await handleQuestion(message);
+        return;
+    }
+
+    // ===== STATS LOOKUP =====
+    if (message.content.toLowerCase().startsWith("!stats")) {
+        const args = message.content.trim().split(/\s+/).slice(1);
+        await handleStatsLookup(message, args);
+        return;
+    }
+
+    // ===== STATS QUESTION =====
+    if (message.content.toLowerCase().startsWith("!sq ")) {
+        const question = message.content.slice(4).trim();
+        await handleStatsQuestion(message, question);
         return;
     }
 
