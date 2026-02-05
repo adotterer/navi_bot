@@ -182,17 +182,18 @@ function detectCharacterAndMoveInText(text, guild) {
     const normalizedText = normalizeText(text);
     const words = normalizedText.split(/\s+/);
     
-    // Find character mention
+    // Find character mention - prefer longest matches first
     let foundCharacter = null;
+    let longestMatchLength = 0;
     const aliases = Array.from(aliasMap.keys()).sort((a, b) => b.length - a.length);
     
     for (const alias of aliases) {
-        if (normalizedText.includes(alias)) {
+        if (normalizedText.includes(alias) && alias.length > longestMatchLength) {
             foundCharacter = {
                 slug: aliasMap.get(alias),
                 alias: alias
             };
-            break;
+            longestMatchLength = alias.length;
         }
     }
     
