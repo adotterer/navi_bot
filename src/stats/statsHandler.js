@@ -139,15 +139,39 @@ export async function handleStatsLookup(message, args) {
         
         // Resolve character alias
         const aliasMap = buildCharacterAliasMap(message.guild);
-        const characterMatch = resolveCharacterFromText(characterInput, aliasMap);
         
-        console.log(`📊 Resolved character match:`, characterMatch);
+        // For stats, we need to handle zelda like any other character
+        // so we can't use resolveCharacterFromText since it filters out zelda
+        // Instead, manually resolve from the alias map
+        const normalizedInput = characterInput.toLowerCase()
+            .replace(/['']s\b/g, "")
+            .replace(/['']/g, "")
+            .replace(/[|︱｜]/g, "|")
+            .replace(/[^a-z0-9|\s\-]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
         
-        if (!characterMatch || !characterMatch.slug) {
-            return message.reply(`❌ Character "${characterInput}" not recognized. Try using a character name or nickname.`);
+        let resolvedSlug = null;
+        
+        // Try direct lookup in alias map
+        if (aliasMap.has(normalizedInput)) {
+            resolvedSlug = aliasMap.get(normalizedInput);
+            console.log(`📊 Found in alias map: ${normalizedInput} -> ${resolvedSlug}`);
+        } else {
+            // Try a more lenient search
+            for (const [alias, slug] of aliasMap.entries()) {
+                if (alias.includes(normalizedInput) || normalizedInput.includes(alias)) {
+                    resolvedSlug = slug;
+                    console.log(`📊 Found partial match: ${normalizedInput} -> ${resolvedSlug}`);
+                    break;
+                }
+            }
         }
         
-        const resolvedSlug = characterMatch.slug;
+        if (!resolvedSlug) {
+            console.log(`📊 Character not found. Alias map has:`, Array.from(aliasMap.keys()).slice(0, 10));
+            return message.reply(`❌ Character "${characterInput}" not recognized. Try using a character name or nickname.`);
+        }
         
         // Read the CSV
         const csvData = readStatCSV(statName);
