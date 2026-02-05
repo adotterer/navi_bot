@@ -17,7 +17,7 @@ const genAI = new GoogleGenAI({
 
 // Move name abbreviations mapping
 const MOVE_ABBREVIATIONS = {
-    'rapid jab finisher': 'Rapid Jab',
+    'rapid jab finisher': 'Rapid Jab Finisher',
     'rapid jab': 'Rapid Jab',
     'jab': 'Jab',
     'fair': 'Forward Air',
