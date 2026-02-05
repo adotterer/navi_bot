@@ -149,9 +149,15 @@ export async function handleStatsLookup(message, args) {
                 
                 if (found) {
                     // Successfully found frame data, use that instead
+                    // Convert slug to display name (capitalize and replace hyphens)
+                    const displayName = parsed.characterSlug
+                        .split('-')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                    
                     const embed = new EmbedBuilder()
-                        .setColor('#FF6B9D')
-                        .setTitle(`${parsed.character.name} - ${found.move['Move Name'] || 'Move'}`)
+                        .setColor('#36AAD4')
+                        .setTitle(`${displayName} - ${found.move['Move Name'] || 'Move'}`)
                         .setDescription(`*${found.moveType.replace(/_/g, ' ').toUpperCase()}*`)
                         .addFields(
                             { name: 'Startup', value: found.move['Startup'] || '--', inline: true },

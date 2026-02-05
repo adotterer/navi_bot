@@ -195,7 +195,7 @@ function parseCharacterAndMove(input, guild) {
 
 function createMoveEmbed(move, characterName, moveType) {
     const embed = new EmbedBuilder()
-        .setColor('#FF6B9D')
+        .setColor('#36AAD4')
         .setTitle(`${characterName} - ${move['Move Name'] || 'Move'}`)
         .setDescription(`*${moveType.replace(/_/g, ' ').toUpperCase()}*`)
         .addFields(
