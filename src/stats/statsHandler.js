@@ -2,7 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
+import { EmbedBuilder } from 'discord.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
+import { createSplitEmbeds } from '../shared/messageSplitter.js';
+import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -192,21 +195,27 @@ export async function handleStatsLookup(message, args) {
             return message.reply(`❌ No data found for ${resolvedSlug} in ${statDisplayNames[statName] || statName}.`);
         }
         
-        // Format the response
+        // Format the response as an embed
         const displayName = statDisplayNames[statName] || statName;
         const charDisplayName = characterData.Character;
         
-        let response = `📊 **${displayName}** - ${charDisplayName}\n\n`;
+        let statsText = '';
         
         // Add all values except the character name
         Object.entries(characterData).forEach(([key, value]) => {
             if (key !== 'Character' && value) {
-                response += `**${key}:** ${value}\n`;
+                statsText += `**${key}:** ${value}\n`;
             }
         });
         
+        const embed = new EmbedBuilder()
+            .setColor('#FFD700')
+            .setTitle(`📊 ${displayName}`)
+            .setDescription(`**${charDisplayName}**\n\n${statsText}`)
+            .setTimestamp();
+        
         console.log(`📊 Sending response for ${charDisplayName}`);
-        message.reply(response.trim());
+        message.reply({ embeds: [embed] });
         
     } catch (error) {
         console.error('❌ Error in handleStatsLookup:', error);
@@ -245,7 +254,8 @@ QUESTION: ${question}
 
 Provide a clear, factual answer based on the data. If comparing characters, show the relevant numbers. If asking about superlatives (fastest, heaviest, etc.), identify the character and their value.`;
         
-        const response = await genAI.models.generateContent({
+        const embeds = createSplitEmbeds(EmbedBuilder, aiResponse, '#FFD700', SUMMARY_DISCLAIMER);
+        message.channel.send({ embeds }
             model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp',
             contents: prompt
         });
