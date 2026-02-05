@@ -1,0 +1,5 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Rollout),15+37...,67 (no charge),,"Reaches full charge at 51 frames. Max charge active frames are at 52-144 if released frame perfectly (93 active frames). Ending animation has 31 total frames if grounded or 36 when aerial. Jigglypuff is helpless if she does not land or grab an edge after a hit, but she will pass through shields.",10.0—20.0,9—12,11—18,,**,,
+Side B (Pound),13,39,,,11.0,8,15,,-11,13—28,11
+Up B (Sing),27/61/100,149,,,,,,,,27—36/61—70/100—115,34
+Down B (Rest),2,209 (186 on hit),,Invulnerable on frame 1-27,20.0,12,18,,-166,2—4,205

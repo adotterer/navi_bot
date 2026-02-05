@@ -1,0 +1,10 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Jab 1,2,27,,Transitions to Jab 2 as early as frame 7.,2.0,5,3,,-22,2,25
+Jab 2,2,29,,,3.0,9,4,,-23,2—3,26
+Forward Tilt,7,36,,,7.0/8.0/6.0,7/4/**,7/8/**,,-22/-21,7/8—9/10—15,21
+Up Tilt,9,37,,,8.0/10.0,7/8,8/10,,-20/-18,9—13,24
+Down Tilt,8,23,,,7.0,7,7,,-8,8—9,14
+Dash Attack,6/17,37,,First hit blockstrings into second hit,4.0/6.0,5/7,-/6,,-14,6—9/17—19,18
+Forward Smash,15,45,,Can make directional inputs to change weapon. Charge hold is frame 5.,15.0/13.5/18.0,10/10/11,10/9/12,,-20/-21/-18,15—17/15—17/15—17,28
+Up Smash,14,44,,Head and arm intangibility on frame 14-20. Charge hold is frame 9,17.0/15.0/12.0/10.0/12.0,10/11,10/11,,-20/-19,14—16/17—20,24
+Down Smash,6/10/14/18/22/26/30,54,,Charge hold is frame 2,2.0/3.0,4/15,3/3,,-21,6—7/10—11/14—15/18—19/ 22—23/26—27/30—31,23

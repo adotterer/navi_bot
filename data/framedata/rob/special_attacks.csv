@@ -1,0 +1,6 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Robo Beam),25,49,,Melee attack and projectile generate on same frame,"7.0/4.5/11.5, 7.0/15.0/22.0","7/5/7, 7/13/13","7/3/7, 7/5/14",,"-17/-16/-17, -17/-6/-10","25—27 (melee), 25—43 (small beam), 25—66 (large beam)",
+Side B (Arm Rotor),13...,85,,Multihits have no hitlag but do have shieldlag. Reflects on frame 13-35. Mashing extends the duration of the multihits.,1.5/3.0,4/12,3/4,,-37,13/14—21/22—37/44,41
+"Side B (Arm Rotor, Mashing)",13/18/23/28/33/38/ 43/48/53/58/66,107,,Multihits have no hitlag but do have shieldlag. Reflects on frame 13-60,1.5/3.0,4/12,3/4,,-37,--,
+Up B (Robo Burner),--,--,,Invulnerable on frame 2-4 on the ground. Ungrabbable on frames 1-24. Can act on frame 25. Fuel lasts up to 143 frames.,,,,,,--,
+Down B (Gyro),"3(+6), 9","36, 42",,3 startup from charging state. 6 frames to enter charging state. Reaches full charge on frame 98. Damage depends on current item velocity.,"3.6—10.7, 10.7","5—8, 8","2—4, 4",,"-26 to -21, -21",--,

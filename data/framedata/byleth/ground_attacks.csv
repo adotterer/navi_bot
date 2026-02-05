@@ -1,0 +1,13 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Jab 1,4,22,,**,1.5,8,3,,-15,4—5,17
+Jab 2,4,24,,**,2.0,7,3,,-17,4—5,19
+Jab 3,5,34,,**,4.5,12,5,,-22,5—7,27
+Rapid Jab,11,,,**,0.4,4,2,,**,11/14/17/20/23/...,
+Rapid Jab Finisher,6,50,,**,3.5,10,4,,-40,6—7,43
+Forward Tilt,8,34,,,11.0,8,10,,-15,8—10,24
+Up Tilt,9,34,,,10.0,8,10,,-15,9—15,19
+Down Tilt,13,35,,,8.0,7,8,,-14,13—15,20
+Dash Attack,9,44,,,9.0/13.0,7/13,9/12,,-26/-23,9—11,33
+Forward Smash,23,63,,Charge Hold is frame 14. The up-angled version is the most powerful.,Normal: 12.0/18.0 || Down: 11.5/17.25 || Up: 13.0/19.5,9/15 || 9/16 || 9/15,**,,-31/-27 || -32/-28 || -32/-28,23—25,38
+Up Smash,13,56,,Charge hold is frame 7.,2.0/2.0/2.0/10.0,5/4/8,3/3/7,,-22,13—16(rehit: 7)/17—27(rehit: 4)/28—29,27
+Down Smash,19/29,74,,Charge hold is frame 3. 8 Shield Damage.,23.0/23.0,18,15,,-40/-30,19—21/29—31,43

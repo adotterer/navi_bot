@@ -1,0 +1,7 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral Air,4,35,6,Autocancels on frame 1-3 and 32 onward,10.0/5.0,8/6,4/3,,-2/-3,4—5(6—27),8
+Forward Air,14/24,40,6,Autocancels on frame 41 onward,6.0/8.0/7.0,6/9,3/4,,-3/-2,14—15/24—25,15
+Back Air,6/18,29,6,Autocancels on frame 29 onward,5.0/7.0,6/8,3/3,,-3/-3,6—8/18—20,9
+Up Air,5,59,14,Autocancels on frame 1-4 and 56 onward,15.0/12.0,9,5,,-9,5—7(8—49),10
+Down Air,13,79,17,Autocancels on frame 1-12 and 65 onward. Can hit same target once again after 30 frames during pogo effect.,18.0/15.0/9.0,14/12,6/5,,Bounce: ** | Fast Fall: -11/-12,13—15(16—64),15
+Z Air,9,71,8,,4.0,5,5,,-3,9—16,55

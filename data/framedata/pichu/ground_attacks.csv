@@ -1,0 +1,9 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Jab,2,16,,Transitions to next Jab as early as frame 7.,1.2,4,3,,-11,2—3,13
+Forward Tilt,5,24,,1.2 base recoil damage,8.0,11,8,,-11,5—12,12
+Up Tilt,7,23,,,5.0,6,6,,-10,7—14,9
+Down Tilt,7,18,,,6.0,6,7,,-4,7—8,10
+Dash Attack,6,34,,,8.0/6.0,7/6,8/7,,-20,6—9/10—15,19
+Forward Smash,16/19/22/25/28/31,53,,Charge hold is frame 13. 2.4 base recoil damage,2.0/8.0,7/11,-/6,,-16,16—18/19—21/22—24/25—27/28—30/31—33,20
+Up Smash,9,40,,Ear intangibility on frame 9-11. Charge hold is frame 4.,14.0,10,10,,-21,9—11,29
+Down Smash,8/11/15/19/23,50,,Invulnerable on frame 7-10. Charge hold is frame 4. 1.5 base recoil damage,1.5/8.0,7/11,2/6,,-21,8—9/11—12/15—16/19—20/23—24,26

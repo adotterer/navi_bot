@@ -1,0 +1,19 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Jab 1,5,24,,"Startup and total frames assumes player presses and releases A/B in one frame, or buffers the attack. Transitions to jab 2 on frame 10",2.5,7,4,,-15,5—6,18
+Jab 2,8,31,,Transitions to rapid jab on frame 14 or jab 3 on frame 15,2.0,6,3,,-20,8—9,22
+Jab 3,6,35,,,5.5,14,6,,-23,6—7,28
+Rapid Jab,6/8/10...,--,,,0.5,4,,,,6/8/10...,
+Rapid Jab Finisher,7,41,,,5.0,15,6,,-28,6—7,34
+"Forward Tilt, Dragon",14,58 (53 air),,Endlag on hit is 28. Endlag on block is 39. Can fire other arm beginning on frame 17. Min Min can move and jump at any point of the animation,8.0,7,8,,-31,Ground: 14(15—24) // Air: 14(15—22),36
+"Forward Tilt, Power Dragon",14,58,,**,9.2,**,9,,-29,Ground: 14(15—24) // Air: 14(15—22),36
+"Forward Tilt, Ramram",14,51 (47 air),,Can fire other arm beginning on frame 17. Projectile does not launch if blocked. Endlag is 37 if blocked.,5.0,6/5,6/2,,-31,Ground: 14(15—21/22—29) // Air: 14(15—19/20—24),27
+"Forward Tilt, Megawatt",14,67 (59 air),,Can fire other arm beginning on frame 17. Endlag on hit is 22-29 depending on how far the arm must retract. Endlag on block is 40-44 depending on how far the arm must retract.,11.0,10,10,,-30 — -34,Ground: 14(15—32) // Air: 14(15—27),40
+Up Tilt,5,41,,"Sweetspots are Min Min's feet, legs are sourspots.",(Clean) 5.0/7.0 // (Late) 4.0/6.0,5/6/6/7,5/6/6/7,,-31/-30/-29,(5-6/7-11)(6-9/10-15),26
+Down Tilt,10,34,,leg intangibility on frame 10-14,7.0/5.0(5.5/3.5),6/7/6,6/7/6,,-18/-17,10-14/15-19,15
+Dash Attack,7,38,,,10.0/8.0,7/10/7,8/10/8,,-23,7—10/11—16,22
+"Forward Smash, Dragon (Laser)",16 (40),65 (87),,Charge hold frame 8. Can fire other arm beginning on frame 17. Endlag on hit is 30. Endlag on block is 40-41 depending on how far the arm must retract. You cannot fire the beam if you already made contact with a shield or clanked,12.0/16.0/13.0 (7.0),9/10/9 (7),8/11/9 (3),,-32/-29/-30 (-35),16(17—19/20—24/25—29) (40—50),15
+"Forward Smash, Power Dragon (Laser)",16 (40),65 (87),,**,15.0/20.0/16.25 (12.0),**,11/13/11 (4),,-31/-31/-29 (-34),Ground: 16(17—19/20—24/25—29) (40—50) // Air: 16(17—19/20—23/24—28) (40—50),15
+"Forward Smash, Ramram",16 (26),57 (55 air),,Can fire other arm beginning on frame 17. Projectile does not launch if blocked. Endlag is 39 if blocked. Charge hold frame 8.,10.0/12.0 (2.5),8/9/5,7/8/2,,-32/-31,Ground: 16(17—18/19—25/26—35) // Air: 16(17—18/19—24/25—32),25
+"Forward Smash, Megawatt",16,75 (70 air),,Charge hold frame 8. Can fire other arm beginning on frame 17. Endlag on hit is 22-31 depending on how far the arm must retract. Endlag on block is 41-47 depending on how far the arm must retract.,19.0/21.0/19.0,12/14/12,13/14/13,,-28 — -34,Ground: 16(17—19/20—31/32—38) // Air: 16(17—19/20—29/30—36),39
+Up Smash,8,53,,leg intangibility on frame 7-15. Reflects on frame 6-15. Charge hold frame 2,16.0/14.0,10/11/10/9,10/11/10/8,,-35/-34,8-10/11-13/14-16,37
+Down Smash,6,48,,leg intangibility on frame 6-8. Charge hold frame 2,15.0/13.0,9/10,9/10,,-33/-32,6—8,40

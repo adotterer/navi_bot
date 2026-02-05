@@ -1,0 +1,12 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Hadouken),12,57,,,"9.0/9.5/10.0, 11.25/11.875/12.5","9/10/10, 10/11/11","8/8/8, 10/10/10",,"-27/-28/-28, -26/-25/-25",12—18(19—93) / 12—17(18—78) / 12—16(17—61),
+Shakunetsu Hadouken,12,56,,"Hits on frame 1,2,3, and 4 with a final hit on frame 7. Rehit rate for light/medium is 2, rehit rate for heavy is 1.",1.1/9.3,10,3,,-23/-23/-27,12—21(22—79) / 12—20(21—72) / 12—19(20—66),
+Side B (Tatsumaki Senpukyaku),8,58—90,,"Wind-up active 8-9, later hits 29-30 and 45-46 (medium/heavy only). Total frames depends on distance traveled. Leg intangibility added in 7.0.0. The active frames listed are the front hitboxes only, and only one set of hitboxes can connect with an opponent.","11.0/11.0/12.0/13.0, 12.76/12.76/13.92/15.08","10/13/13/14, 14/14/15/15","10/10/11/12, 12/12/13/14",,"-40—-72/-35/-67/-65, -38—-70/-33/-64/-63","8-9, 13-15, 29-31, and 45-47",11
+"Side B, Air (Tatsumaki Senpukyaku, Air)",8,79,,Leg intangibility on frame 13-44,"11.0/10.0/11.0/12.0, 12.76/11.6/12.76/13.92","13/12/13/13, 14/13/14/15","10/10/10/11, 12/11/12/13",,"-62 to -61, -61 to -60",8—9/**,
+Up B (Shoryuken),6,--,22,Invulnerable on frame 5,13.0—15.0/7.0,19/20/21/10,12/13/14/7,,**,6(7—8/9—19),
+True Shoryuken,6,--,15,Arm intangibility on frame 1-14 Completely Invulnerable on frame 4-6.,15.6—18.0/8.4,21/22/23/11,14/15/16/8,,**,6(7—8/9—19),
+Down B (Focus Attack),"11 (+21), 11(+31), 11(+59)","55, 55, 114",,"Stage 1: Can dash from frame 26 of entering charge or immediately after a successful hit
+		Stage 2: Focus armor begins on frame 1 and lasts until the 11 frames of the punch
+		Stage 3: This stage is unblockable 
+		Damage-bsed armor notes: Armor starts at 16.8% and ends at 33.6% in Stage 3, going up 0.289% per frame held.","12.0, 10.0, 17.0","18, 20, unblockable","11, 10, unblockable",,"-33, -34, unblockable",32—33/42—43/70—71,
+"Focus Attack, Dash Cancel",--,19/19,,"First advantage is on stage 1 hit, second advantage is on stage 2 hit",,,,,-8/-9,,

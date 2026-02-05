@@ -1,0 +1,6 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Needle Storm),4/7/10/13/16 (+7),41/35,,Startup is 5 from a charging state. 7 frames to enter charge state. Takes 4 frames to exit charge with shield. Second total frames is for the air.,1.5/0.8,4/4,2/2,,-18,,
+"Needle Storm, Full Charge",11/14/17/20/23/26,48/42,16,86 frames to reach full charge. Second total frames is for the air.,1.5/0.8,4/4,2/2,,-15,,
+Side B (Burst Grenade),13/67/70/73/76/79/82/88,75—104,,"From release, startup is 29/32/35/38/41/44/50 and endlag is 39 frames. All but the final hit are just windboxes.",1.0/12.6,4/11,2/4,,+28,,
+Up B (Vanish),36/55,95,20,Invulnerable on frame 14-60 on the ground or 19-55 in the air. Landing lag only occurs if you enter special fall.,12.0/5.0,9/6,4/6,,-33,36—38/55—57,38
+Down B (Bouncing Fish),18/26,63/50/45,35/19,"First startup is if you attack early. Second landing lag is after a hit. Endlag is 79 on hit, or after 20 frames initiate a 29 total frames rebound attack with 3 startup. First total frames is on level ground. Second is in the air. Third is in the air if you attack early.",11.0,14,10,,-39,,

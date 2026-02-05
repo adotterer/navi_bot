@@ -1,0 +1,5 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Blaster),8/7,41/38,,Fire rate of one shot per 26 frames (23 frames in the air).,3.0,7,2,,-24/-22,8—34/7—33,7
+Side B (Falco Phantasm),13/18,50/66,16,"A frame 18 hit is impossible unless unnaturally inside of an opponent. Endlag is 31 when blocked on the ground, and 24 from the air. At lowest possible altitude Falco does not suffer hitlag from this attack. *Hitboxes actually trail behind the character and are not actually on Falco.*",7.0,10/7,3/3,,-20/-14,(13—18/17—22)/(18—27),23
+Up B (Fire Bird),20/22/24/26/28/30/32/43-46/47/49/51/53/55/57/59/61,85,18,Starts traveling on 44. That hit is the only one that deals 3 damage. Total frames assumes travel along the ground,2.0/3.0,4,3,,-21,20/22/24/26/28/30/32/43-46/47/49/51/53/55/57/59/61,24
+Down B (Reflector),5,44,,Reflects on frame 1-33,5.0,9,6,,-33,5—14,30

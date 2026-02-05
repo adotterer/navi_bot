@@ -1,0 +1,12 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Peanut Popgun),16/17—121/124,48,,Melee hitbox generated after projectile. Diddy does not suffer hitlag from melee attack,3.3—15.0/2.0,5—10/10—14,2—5/2—2,,-25 to -17/-19 to -13,,
+"Peanut Popgun, Misfire",123,228,,You can cancel charge into shield/air dodge as early as frame 14.,23.0,16,20,,-85,,
+Peanuts (Thrown),--,--,,,,,,,,--,
+Side B (Monkey Flip),18,47/61,26,"First total frames is in the air, second is along level ground.",,,,,,18—36,11
+"Monkey Flip, Attack",6,32,18,Total frames is in the air.,14.0/10.0,10/8,13/10,,-5/-8,6—10(11—25),7
+"Monkey Flip, Grab Success",11/29/59...,--,,,,,,,,,
+"Monkey Flip, Grab Attack",18/21,36,,,,,,,,,
+"Monkey Flip, Grab Jump",18/27,42,,,,,,,,,
+Up B (Rocketbarrel Boost),8—68,--,30,Touching a solid surface during boost activates explosion,10.0/8.0/6.0,8/7/6,10/8/6,,,8—9(10—16/17—35),
+"Rocketbarrel Boost, Explosion",1,57-59,,"Total frames assumes exploding on level ground, Diddy does not suffer hitlag from explosion",18.0,11,6,,-39 to -41,1—2,55
+Down B (Banana Peel),--,39,,Item generated on frame 20,,6,6,,,20 (banana appears),

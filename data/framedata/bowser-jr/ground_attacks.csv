@@ -1,0 +1,12 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Jab 1,4,19,,Transitions to jab 2 as early as frame 7,2.0,7,3,,-12,4—5,14
+Jab 2,4,29,,Transitions to rapid jab as early as frame 7,2.0,5,3,,-22,4—5,24
+Rapid Jab,4/7/10...,--,,,0.5,4,5,,,,
+Rapid Jab Finisher,6,42,,,3.0,10,4,,-32,6—7,35
+Forward Tilt,7,31,,,6.0/8.0,6/7,6/8,,-18/-16,7—9,22
+Up Tilt,7,30,,,6.0,7,6,,-19,7—14,16
+Down Tilt,4/12/23,40,,,2.0/6.0,4/7,3/6,,-11,4—6/12—14/23—25,15
+Dash Attack,8/11/14/17/20/25,47,,,1.8/4.0,4/8,3/5,,-17,8/11/14/17/20/25—26,21
+Forward Smash,18/21/24/27/30/35,55,,Charge hold is frame 5,1.0/11.0,4/13,2/8,,-12,18/21/24/27/30/35—37,18
+Up Smash,7/9/12/15/18/22,53,,Charge hold is frame 4,1.0/1.7/1.4/6.0,4/4/11,-/2/5,,-26,7—8/9/12/15/18/22—23,30
+Down Smash,12,59,,Charge hold is frame 2,18.0,14,12,,-32,12—14,45

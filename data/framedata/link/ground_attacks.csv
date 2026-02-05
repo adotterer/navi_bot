@@ -1,0 +1,12 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Jab 1,7,23,,Transitions to Jab 2 as early as frame 12,3.0,8,4,,-12,7—8,15
+Jab 2,5,25,,Transitions to Jab 3 as early as frame 8.,3.0,6,4,,-16,5—6,19
+Jab 3,6,34,,,4.0,11,5,,-23,6—7,27
+Forward Tilt,15,39,,Hits targets above him on frame 15,13.0,9,12,,-12,15(16—19),20
+Up Tilt,8,35,,,11.0,9,11,,-16,8—12,23
+Down Tilt,10,30,,,9.0,7,9,,-11,10—11,19
+Dash Attack,20,56,,,14.0/13.0/12.0,9,17,,-19,20—23,33
+Forward Smash 1,17,50,,Transitions to second swing as early as frame 22. Sword Sword Beam is active 17-48 when at minimum charge and 17-56 when at maximum charge (only when Link is at 0%). Beam does 5.0%. Charge hold frame is 9.,7.0/14.0,7/10/6,6/10/4,,-27/-23/**,17—18,32
+Forward Smash 2,10,60,,,13.0/12.0,14,9,,-41,10—11,49
+Up Smash,10/25/41,77,,Charge hold frame is 5.,4.0%/3.0%/(11.0%/10.0%/9.0%),5/5/8,4/3/8,,-28,10—13(14—15) / 25—28(29—30) / 41—45,32
+Down Smash,12/24,56,,Charge hold frame is 4,(16.0%/17.0%/14.0%)/(12.0%/11.0%/10.0%),(11/11/??)/(10/9/??),(11/12/??)/(9/9/??),,(-31/-32/??)/(-23/-23/??),12—13/24—25,31

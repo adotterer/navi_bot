@@ -1,0 +1,10 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Devil Blaster),27,82,,Shieldstun is 4 on all types of lasers when not blocked at point blank range.,11.0 / 12.0 / 10.0,13/13/12,11/12/10,,-31/-30/-33,27—43,
+"Devil Blaster, Air",27,67,,Shieldstun is 4 on all types of lasers when not blocked at point blank range.,10.0 / 11.0 / 9.0,12/13/11,10/11/9,,-18/-16/-20,27—43,
+Side B (Devil Fist),16,66 (68 Air),,"Invulnerable on frame 6-9. Kazuya does not suffer hitlag from this attack, but does suffer shieldlag. Hitting a shield stops him and forces 38-45 endlag, it seems that close hits suffer less endlag.",11.0/6.0,8/6,10/6,,-32?? to -39??,16/17—22,
+Up B (Devil Wings),12,66,24,Endlag can be cancelled if you land prematurely (like going up to the top battlefield platform),18.0 / 16.0 / 13.0 / 10.0 / 7.0,10...7,16...7,,-38,,
+Down B (Heaven's Door),14,49 (59 in air),,"10% damage based Armor on frame 5-13. 39 endlag from a successful ground slam, or 40 if you land on the same ground.",17.0,,,,,,
+Rage Drive (Non Input),14,57 (42 throw),,"Replaces Down-B during rage effect. 39 endlag from a successful ground slam, or 40 if you land on the same ground. Intangible frames 1—4, Super Armor frames 5—13.",12.6 / 14.3,,,,,14—15,
+"Rage Drive (Input)
+		
+		F, D, DF, Hold A/B (623 Hold-A/B)",10,54 (42 throw),,"39 endlag from a successful ground slam, or 40 if you land on the same ground. Intangible frames 1—3, Super Armor frames 4—10.",**,,,,,10—13,

@@ -1,0 +1,10 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Chef),18,54,,Projectile and melee attack generate on same frame. Generates new sausage every 32 frames,5.0/13.0,6/7,3/8,,-28,18—20/**,
+Side B (Judge),16,49,,"Judge 1: Deals 12.0 recoil and no knockback.
+		Judge 3: Deals bonus shield damage.
+		Judge 5: Hits on frame 16/19/22/25.
+		Judge 7: Spawns three food items.
+		Judge 8: Freezes the opponent.","1: 2.0, 2: 4.0, 3: 6.0, 4: 8.0, 5: 3.0, 6: 12.0, 7: 14.0, 8: 13.0, 9: 32.0","4, 5, 6, 7, 7, 9, 10, 9, 21","3, 5, 6, 8, 4, 11, 13, 12, 27",,"-30, -28, -27, -25, -20, -22, -20, -21, -6",16—23 (Judge 5: 16—18/19—21/22—24/25—27),22
+Up B (Fire),3/9,--,7,Invulnerable frame 5-13 Takes 7 frames to exit parachute by pressing down and avoiding landing lag. Can cancel directly with attacks as well. Opens parachute on frame 37.,3.0/6.0,7/6,4/6,,**,3—4/9—18,
+Down B (Oil Panic),6 (Start of Absorb/Reflect),43,,"Begins absorbing/reflecting on frame 6. Takes 13 frames to put away bucket after extended usage. Has a 2x Damage Multiplier per unit. Maximum Damage of 16% per unit, this is also the minimum damage output. If an attack deals more than 10% it fills 2 Units, 20% for 3. Takes 6F to turn around.",,,,,,6—30 (absorb),
+"Oil Panic, Overload",2,49,,Successful absorbs incur a 24 frame animation that is completely invulnerable.,16.0—48.0,**,**,,**,2—7(8—14/15—26),23

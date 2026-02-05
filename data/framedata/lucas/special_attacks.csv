@@ -1,0 +1,6 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (PK Freeze),40-92,66-118,,"From charge release, startup is 5 and total frames is 31",10.0—23.0,8—14,4—7,,-14 to -5,40—43(92—95),
+Side B (PK Fire),21,52,19,Explosion 1 frame after projectile hits something. Does not erupt on shields. PK Fire Burst is frames 1-20.,3.0/7.0/4.0,5,2,,-24,21—38(1—19),14
+Up B (PK Thunder),20,--,,Hits every six frames as it passes through somebody. 44 endlag when projectile ends,2.5/0.7,5,2,,,20—**,
+"Up B, Self-hit (PK Thunder 2)",1/4/6/8/10/12/14/17/20/23/26/29,60,30,Total frames refers to travel along the ground. Intangibility on frames 1-9.,5.0/2.0/1.5/10.0,9/7/7/15,-/-/-10,,-21,1—2/4—5/6—7/8—9/10—11/12—13/14—15/17—19/20—21/23—24/26—27/29—30,30
+Down B (PSI Magnet),19 (7 is start of absorb),27,,"Absorbs as early as frame 7. On release, startup is 1 with 9 total frames",8.0,11,8,,+0,19,8

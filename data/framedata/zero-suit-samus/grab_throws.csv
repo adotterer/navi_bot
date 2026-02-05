@@ -1,0 +1,9 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Grab,15,58,,Hand grab box only active for first 3 frames.,,,,,,15—25,33
+Dash Grab,17,66,,Hand grab box only active for first 3 frames.,,,,,,17—26,40
+Pivot Grab,18,61,,Hand grab box only active for first 3 frames.,,,,,,18—26,35
+Pummel,1,19,,Total frames includes 13 frames of hitlag,1.3,,,,,,
+Forward Throw,8/9,25,,,5.0/4.0,,,,,,
+Backward Throw,9/11,27,,,2.0/6.0,,,,,,
+Up Throw,3/5,40,,,2.0/8.0,,,,,,
+Down Throw,20/22,51,,,4.0/4.0,,,,,,

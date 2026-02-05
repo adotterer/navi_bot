@@ -1,0 +1,6 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral Air,2,15,10,Autocancels on frame 16 onward. Meter filled: (full/short) 0.06/0.051 arrows.,2.0,4,2,,-8,2,13
+Forward Air,10,36,13,Autocancels on frame 35 onward. Meter filled: (full/short) 0.15/0.1275 arrows.,5.0,6,3,,-10,10—12,24
+Back Air,11,37,16,Autocancels on frame 36 onward. Meter filled: (full/short) 0.18/0.153 arrows.,6.0,6,3,,-13,11—12,25
+Up Air,5,41,13,Autocancels on frame 40 onward. Meter filled: (full/short) 0.15/0.1275 arrows.,5.0,6/5,3/3,,-10,5—8,33
+Down Air,7,27,18,Autocancels on frame 25 onward. Meter filled: (full/short) 0.12/0.102 arrows.,5.0/4.0,6/5,3/3,,-15/-15,7—10,17

@@ -1,0 +1,6 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral Air,8,52,6,Autocancels on frame 1-3 and 49 onward.,10.0/8.0/6.0/4.0,8/7/6/5,4/4/3/3,,-2/-2/-3/-3,8—9/10—13/14—18/19—32,20
+Forward Air,10/17/25,47,8,Autocancels on frame 1-9 and 41 onward,4.0/4.0/6.0,5/5/8,3/3/3,,-5/-5/-5,10—11/17—18/25—27,20
+Back Air,6,40,10,Autocancels on frame 1-2 and 32 onward,13.0/8.0,11/7,5/4,,-5/-6,6—8/9—12,28
+Up Air,8,35,7,Autocancels on frame 1-7 and 20 onward.,10.0,8,4,,-3,8—13,22
+Down Air,18/21/24/27/30/34,54,16,Landing hit on frame 1. Autocancels on frame 1-17 and 48 onward,1.2/2.0/2.0,4/4/4,2/3/3,,-12,18—19/21—22/24—25/27—28/30—31/34,20

@@ -1,0 +1,10 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Jab,3,19,,Transitions to another jab on frame 13.,2.0,4,3,,-13,3—4,15
+Forward Tilt,8,36,,,9.0,7,9,,-19,8—11,25
+Up Tilt,6,29,,,8.0,7,8,,-15,6—13,16
+Down Tilt,9,31,,,13.0/8.0,9/7,12/8,,-10/-14,9—10,21
+Dash Attack,7,39,,"Projectile Attack. If done off ledge, the late hit of the projectile will fall 15—68 instead.",10.0/6.0,8/6,4/3,,-21,"7—12/13—19 (Normal)
+		7-12/13-66 (Off Ledge)",
+Forward Smash,14,45,,Charge hold is frame 6,17.0/8.0,10,11,,-20,14—16/17—19,26
+Up Smash,9/14,45,,"Isabelle will not suffer hitlag from this attack, improving combo potential. Charge hold is frame 8",2.0/12.0,0/11,4/8,,-12,9—10/14—16/17—18,27
+Down Smash,8/12,43,,Charge hold is frame 4,10.0/8.0,8/7,7/6,,-28/-25,8—9/12—13,30

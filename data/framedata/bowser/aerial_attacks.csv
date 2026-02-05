@@ -1,0 +1,6 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral Air,8/14/18/**,47,15,Autocancels on frame 1-3 and 41 onward,6.0,6,3,,-12,8—29/14—29/18—29/18—29,18
+Forward Air,11,41,14,Autocancels on frame 1-3 and 31 onward,13.0%/12.0%/11.0%,9/8,5/4,,-9/-10,11—14,27
+Back Air,9,44,24,Autocancels on frame 1-2 and 31 onward,19.0,12,7,,-17,9—11,33
+Up Air,9,44,17,Head intangibility on frame 3-13. Autocancels on frame 1-2 and 40 onward,15.0,10,5,,-12,9—13,31
+Down Air,17,77,34,Landing hit on frame 1. Autocancels on frame 1-13 and 70 onward. Leg/Arm/Head intangible from frames 14—60.,16.0/**/2.0,10/4,6/3,,-30,17—24/25—49/1—6,28

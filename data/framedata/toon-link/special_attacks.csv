@@ -1,0 +1,6 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Hero's Bow),18—60,39—82,,Startup is 1 from charge release. Reaches full charge on 60.,4.0—12.0,5—9,2—4,,-12 to -6,18—77,
+Side B (Boomerang),27,45,,9 frame animation of catching the boomerang if no other action is performed,5.0—9.6/3.0,6—8/5,3—4/2,,-9 to -6,27—36(37—77/78—173),
+Up B (Spin Attack),6...,77,,Multihits have shieldlag but no hitlag. Can be charged up to 60 frames for up to 60% additional damage. Startup is 3 on charge release,1.0/3.0,4/10,2/4,,-25,6—14/15—46/48 (rehit: 4),29
+"Up B, Air (Spin Attack, Air)",8...,--,30,,4.0/2.0/4.0,5/4/9,5/3/5,,,8—10/12—13/16—18/19—20/22—24/27—28/31—33/35/44—48,
+Down B (Bomb Pull),--,36,,"Explodes automatically on frame ~315. Bomb rotates on searchbox's center, not bomb's center.",,,,,,,

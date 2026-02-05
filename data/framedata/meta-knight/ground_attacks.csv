@@ -1,0 +1,12 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Rapid Jab,4/7/10...,15,,Rapid Jab loop is 22 frames.,1.0,4,-,,,4/7/10...,5
+Rapid Jab Finisher,3,30,,,2.0,12,3,,-24,3,27
+Forward Tilt 1,6,25,,Transitions to next hit as early as frame 10.,2.0,4,3,,-16,6,19
+Forward Tilt 2,2,27,,Transitions to next hit as early as frame 7,2.0,4,3,,-22,2,25
+Forward Tilt 3,2,30,,,4.0,11,5,,-23,2,28
+Up Tilt,8,34,,,6.0/7.0,7/8,6/7,,-20/-19,8—10/11—14,20
+Down Tilt,3,18,,,5.0,6,6,,-9,3—4,14
+Dash Attack,7,32,,,7.0/6.0,7/7,7/7,,-18,7—11,21
+Forward Smash,24,41,,Charge hold is frame 20,16.0,15,11,,-6,24,17
+Up Smash,8/12/17,49,,Charge hold is frame 3,4.0/3.0/5.0,5/5/12,3/3/4,,-28,8/12/17,32
+Down Smash,4/9,37,,Charge hold is frame 1,10.0/13.0,8/9,7/9,,-26/-19,4/9,28

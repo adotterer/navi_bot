@@ -1,0 +1,28 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Summon Crafting Table,,7,,"Steve can use Crafting Table during shield and this ignores shield drop. Crafting Table's 7 frame startup is all that occurs, so he can effectively have a 7 frame shield drop by doing Crafting Table out of shield.",**,**,**,,**,,
+Neutral B (Mine),,45 (Diamond: 56),,"Durability of tools: 28(wood)/34(stone)/38(iron)/28(gold)/38(diamond). For a list of durability loss, check Meshima's Tweet. For even more information, check @robthemechon / @Chesometer's tweet for a full overview of mining!. It takes 56 frames to craft diamond, 45 for anything else.",,,,,,--,
+Place Block,4,15,,"Block Durability
+		Dirt
+		Block, on stage: 400 frames
+		Block, on stage, standing on: 70 frames
+		Block, off stage: 120 frames
+		Block, off stage, standing on: 35 frames
+		Wood
+		Block, on stage: 600 frames
+		Block, on stage, standing on: 95 frames
+		Block, off stage: 190 frames
+		Block, off stage, standing on: 40 frames
+		Stone
+		Block, on stage: 800 frames
+		Block, on stage, standing on: 120 frames
+		Block, off stage: 240 frames
+		Block, off stage, standing on: 50 frames
+		Iron
+		Block, on stage: 1000 frames
+		Block, on stage, standing on: 145 frames
+		Block, off stage: 275 frames
+		Block, off stage, standing on: 55 frames
+		Thanks to A_Vocaloid_Nerd for this Block Durability Info.",,,,,,--,
+Side B (Minecart),18,,**,"If Steve lacks the materials, he has a 15 frame failure animation instead. Damage depends on current speed. If traveling too slow, there's no hitbox. For Bailout, the jumping out animation is 5 frames before Steve can act. On frame 6 is when the cart can grab opponents. Armor notes: the minecart has 8.4HP and Steve himself has 60 knockback armor. The part of the armor that's hitpoint based can't drop to 0 during the first 17 frames.",**,**,**,,**,18—...,
+Up B (Elytra),28 (Ground) / 23 (Air),--,**,,**,**,**,,**,28—37/38—44 (Ground) // 23—32/33—39 (Air),
+Down B (TNT),,,,**,28.0/14.0,**,**,,**,,

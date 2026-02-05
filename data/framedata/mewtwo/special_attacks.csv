@@ -1,0 +1,6 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Shadow Ball),9(+12),27,29,9 startup from charge state. 12 to enter charge state. Takes 4 frames to cancel charge with shield.,2.5—24.9,5—14,2—7,,-16 to -2,,
+"Shadow Ball, Fully Charged",16,39,,133 frames to reach full charge.,25.0,14,7,,-2,16—98,
+Side B (Confusion),10 (21/23/25/27/29/31/33/39),39/42,,"Grab is on frame 10, the following hits are when successful. 44 total frames when you miss. Reflector active 10-33.",,,,,,10—13,26
+Up B (Teleport),,44,20,Total frames is if you end on the ground. Intangible from 9-19. Grabs ledges as early as frame 16.,,,,,,--,
+Down B (Disable),16,52,,Intangible on frames 10-16,1.0,4,2,,-30,16—23,29

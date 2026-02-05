@@ -1,0 +1,6 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Luma Shot),10—91,34—115,,4 startup and 28 total frames from charge state. Takes 6 frames to enter charge state. 87 frames to reach full charge.,5.0—16.0,6—10,3—5,,-15 to -9,,
+Luma Recall,--,21/23,,Second total frames is in the air.,,,,,,,
+Side B (Star Bits),10/16/22,51,,,3.0,5,2,,-22,,
+Up B (Launch Star),--,--,30,,,,,,,,
+Down B (Gravitational Pull),--,39,,Pulls on frame 4-29,,,,,,,

@@ -1,0 +1,6 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Fire Arrow),14—47,37—70,,"On release, startup is 1 and total frames is 24.",4.0—12.0,5—9,2—4,,-16 to -10,,
+Side B (Boomerang),27,45,,,7.0—11.0 (normal) // 8.4/13.2 (smash) // 2.0 (return),5—9,2—4,,-8 to -4,27—29(30—82/83—153),
+Up B (Spin Attack),9...,70,,Can charge for up to 60 additional frames. Startup is 4 from charge.,1.0/3.0,4/10,2/4,,-17,9—47/49 (rehit: 4),21
+"Up B, Air (Spin Attack, Air)",8/12/16/19/22/26/31/39/47,--,24,,3.0/2.0/3.0,**,**,,,8—10/12—13/16—18/19—20/22—24/26—27/31—33/39—40/47—51,
+Down B (Bomb Pull),17,39,,"Fuse timer of ~4 seconds. Bomb explosion hits on frame 1/3/5/7.  After pulling, lasts 196 frames and explodes on frame 197.",,,,,,,

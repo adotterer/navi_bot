@@ -1,0 +1,14 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Flare Blade),21-260,44-283,,Startup is 10 from release. 11 frames to enter charge state.,8.0—50.0,7—21,8—...,,-15—Shieldbreak,Normal: 21—24 (or 10—14 from release) || Max: 21—25,19
+"Side B, Hit 1 (Double-Edge Dance, Hit 1)",9,39/29,,Second total frames is from the air. Can transition to next slash as early as frame 12.,2.8,5,4,,-26/-16(air),9—11,28
+"Double-Edge Dance, Hit 2 Neutral",5,38,,Can transition to next slash as early as frame 8.,2.8,5,4,,-29,5—7,31
+"Double-Edge Dance, Hit 3 Neutral",4,43,,Can transition to next slash as early as frame 7.,3.8,5,5,,-34,4—6,37
+"Double-Edge Dance, Hit 4 Neutral",7,58,,,5.2,9,6,,-45,7—9,49
+"Double-Edge Dance, Hit 2 Up",4,38,,Can transition to next slash as early as frame 8.,2.8,5,4,,-30,4—6,32
+"Double-Edge Dance, Hit 3 Up",5,43,,Can transition to next slash as early as frame 8.,3.8,5,5,,-33,5—7,36
+"Double-Edge Dance, Hit 4 Up",6,44,,,6.4,8,7,,-31,6—10,34
+"Double-Edge Dance, Hit 3 Down",5,43,,Can transition to next slash as early as frame 8,3.8,5,5,,-34,5—7,36
+"Double-Edge Dance, Hit 4 Down",7/10/13/16/19,71,,,2.0/4.2,4/8,-/5,,-47,7/10/13/16/19—21,50
+Up B (Soaring Slash),10/39/53/**,--,36,"Landing hit on frame 1, Super armor on frame 10-30. Ending just before he ascends",6.0/1.5/6.0/6.0,10/4/6/7,6/3/6/6,,-29,10—11/39—47(rehit: 7) / 54—**/1—4,
+Down B (Counter),8 (Start of Counter),67,,Invulnerable on frames 7-9. Counters on 8-29 from 8-27.,,,,,,--,
+"Counter, Attack",4,40,,Invulnerable on frame 1-5. In addition to counter freeze frames,,,,,,4—5,35

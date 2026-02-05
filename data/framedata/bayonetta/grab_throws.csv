@@ -1,0 +1,9 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Grab,7,37,,,**,,,,,7—8,29
+Dash Grab,10,45,,,**,,,,,10—11,34
+Pivot Grab,11,40,,,**,,,,,11—12,28
+Pummel,1/13,25,,Startup and Total frames includes 19 frames of hitlag,0.6/0.7,,,,,,
+Forward Throw,14/15,42,,,7.0/3.0,,,,,,
+Backward Throw,14-15,49,,,3.0/6.0,,,,,,
+Up Throw,9/10,35,,,3.0/4.5,,,,,,
+Down Throw,20/21,46,,,3.0/5.0,,,,,,

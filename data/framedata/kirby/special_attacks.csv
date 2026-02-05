@@ -1,0 +1,9 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Inhale),10,67,,Minimum total frames is 67. Endlag is 19 frames upon release. Can eat projectiles. Projectile eat animation is 51 frames long,,,,,,10—44 (longer if held),
+"Inhale, Copy/Spit",8/8,20/30,,,10.0(Swallow)/6.0(Spit),**,**,,**,,
+Side B (Hammer),11(+15),54,,Startup is 11 from charging state. Takes 15 frames to enter charging state.,19.0—28.8,14—16,17—25,,-26 to -18,26—27 (11—12 from charge),27
+"Hammer, Full Charge",11,59,,"If on the ground, invulnerable on frame 2-10 and Super armor on frame 11-17. Reaches full charge on frame 135.",35.0,30,31,,-17,11—12,47
+Hammer (Air),28/42,71,,,16.0,10/10,14/14,,**/**,28—29/42—43,28
+Up B (Final Cutter),23/(41/50...)/**/**,--,30,Landing projectile appears on frames 1-2/3-19.,5.0/2.0/(5.0/2.0)/6.0,6/4/6/**,6/3/3/**,,--/--/-21/**,23—26/(41—49/50...),
+Down B (Stone),11,--,,Emerging from stone is a 31 frame animation. Stone armor begins on frame 11. On Shield data assumes release immediately after hit.,14.0,10,13,,-35,,
+"Down B, Air (Stone, Air)",29,--,,Stone armor begins on frame 19. Active frames can be longer depending on release timing. On Shield data assumes release immediately after hit.,18.0,11,16,,-17,29—47 (**),

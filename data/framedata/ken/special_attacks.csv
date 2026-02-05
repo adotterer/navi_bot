@@ -1,0 +1,17 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Hadouken),13,57,,,Light: 4.5 // Medium: 5.0 // Heavy: 5.5,"8—8, 9—9","3—3, 3—3",,-35/-34,13—19(20—87) / 13—18(19—79) / 13—17(18—72),
+Side B (Tatsumaki Senpukyaku),8/13—38,32/62/62,,"Wind-up active 8-9, standard hitbox begins on frame 13. Hits on alternating sides of him every five frames from 13 up to 38. Leg intangibility added in 7.0.0.","3.0/3.0, 3.4/3.4","7/5, 8/5","4/4, 4/4",,-25 to -30,8—9(13—14/18—19/23—24/28—29/33—34/38—39),
+"Side B, Air (Tatsumaki Senpukyaku, Air)",8/13/18/23/28/33/38,77,,Leg intangibility on frames 13-42,"3.0/2.0, 3.4/2.3","7/4, 8/5","4/3, 4/3",,-36,8—9(13—14/18—19/23—24/28—29/33—34/38—39),38
+Up B (Shoryuken),6,--,12,Invulnerable on frame 5,13.0/7.0,14/8,12/7,,**,6—8(9—19),
+True Shoryuken,6,--,8,Invulnerable on frame 4-6. Arm intangible on frame 1-14,15.6/8.4,16/9,14/8,,**,6—8(9—19),
+Up B (Flame Shoryuken),5/6/9,--,18,Invulnerable on frame 5,2.2/8.0/6.5,10/9/9,-/8/7,,**,5/6—8/9—19,
+True Flame Shoryuken,5/6/9,--,12,Invulnerable on frame 4-6. Arm intangible on frame 1-14,2.6/9.6/7.8,10/10/10,-/9/8,,**,5/6—8/9—19,
+Down B (Focus Attack),"12 (+21), 12(+31), 12(+59)",55,,"Stage 1: Can dash from frame 26 of entering charge or immediately after a successful hit
+		Stage 2: Focus armor begins on frame 1 and lasts until the 12 frames of the kick
+		Stage 3: This stage is unblockable 
+		Damage-bsed armor notes: Armor starts at 16.8% and ends at 33.6% in Stage 3, going up 0.289% per frame held.","12.0, 10.0, 17.0","17, 19, unblockable","11, 10, unblockable",,"-32, -33, unblockable",32—33/42—43/70—71,
+"Focus Attack, Dash Cancel",--,19/19,,"First advantage is on stage 1 hit, second advantage is on stage 2 hit",,,,,-8/-9,,
+Nata Otoshi Geri (Input Command),12/15,28,,"Input: Forward, Down-Forward, Down+A.",5.0/5.0,9/9,6/6,,-7,12/15—16,12
+HELD Nata Otoshi Geri,12/20,51,,"Input: Forward, Down-Forward, Down+A (then HOLD A)",5.0/12.0,9/6,9/6,,-17,12/20—22,29
+Oosoto Mawashi Geri (Input Command),9,32,,"Input: Back, Down-back, Down, Down-forward, Forward+A. Leg intangible on frame 9-10. Holding A causes second kick. hitting on 17 instead and is 48 total frames",12.0,13,11,,-12,9—10,22
+HELD Oosoto Mawashi Geri,9/17,48,,"Input: Back, Down-back, Down, Down-forward, Forward+A (then HOLD A). Leg intangible on frame 9-10.",12.0/12.0,13/14,11/14,,-17,9—10/17—19,29

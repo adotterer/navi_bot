@@ -1,0 +1,9 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Grab,7,36,,,,,,,,7—8,28
+Dash Grab,10,44,,,,,,,,10—11,33
+Pivot Grab,11,39,,,,,,,,11—12,27
+Pummel,--,--,,,1.3,,,,,,
+Forward Throw,14/15,34,,"First hit can connect with nearby opponents, and can tipper for 10.0% damage.",5.0/2.0,,,,,,
+Backward Throw,12/13,37,,First hit can connect with nearby opponents and can tipper for 12.0% damage.,6.5/2.0,,,,,,
+Up Throw,12/13,51,,"Frames 1-4 Invincible, 5-42 Dragon intangible, 43-End Vulnerable. First hit can hit nearby opponents.",6.5/3.0,,,,,,
+Down Throw,26/27,54,,"Frame 1-4 Invincible, 5-44 Dragon intangible, 44-End Vulnerable. First hit can hit nearby opponents.",6.5/3.0,,,,,,

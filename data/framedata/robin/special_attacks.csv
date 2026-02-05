@@ -1,0 +1,8 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Thunder/Elthunder/Arcthunder),8/8/8,32/38/38,,"7 frames to enter charge state. 4 to cancel charge with shield 33 frames to reach Elthunder 73 to reach Arcthunder, 133 to reach Thoron. Empty Tome Thunder has 39 total frames.",5.5/11.0,9/13,3/4,,-12/-13,8—22 / 8—49 / 8—79,
+Arcthunder (Vortex),1...,--,,,6.0/2.4/8.0,-/-/11,-/-/3,,+0,1—16(rehit: 4)/17,
+Thoron,23/27/31/35/39/43/47,74 (109 air),,,2.6/2.6,-/7,-/2,,-20,23—92(Rehit: 4),
+Side B (Arcfire),17,63,,"Pillar hits once every eight frames, ending on frame 50.",2.0/1.3/4.0,6/4/11,2/2/2,,+13,17—76,2
+Up B (Elwind),8/28,--,25,"Hitbox animation note: The blades are relative to Robin's position when he shoots them. In-game, Robin will move after each blade is shot, so they are not relative to each other at all. Visual is default angle. Empty Tome Elwind has 51 total frames.",7.0/5.0,7/6,3/3,,,8(9—12/13—31) / 28—32(33—55),
+Down B (Nosferatu),15,49,,Invulnerable on frame 15-18. 31 frames animation for releasing victim.,**,,,,**,15—18,31
+Thrown Items,--,--,,,**,,,,,--,

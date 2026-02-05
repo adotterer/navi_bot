@@ -1,0 +1,13 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Jab 1,1,16,,Transitions to jab 2 as early as frame 5. Meter filled: 0.045 arrows.,1.5,8,3,,-12,1,15
+Jab 2,1,16,,Transitions to jab 3 as early as frame 5. Meter filled: 0.045 arrows.,1.5,5,3,,-12,1,15
+Jab 3,4,29,,Meter filled: 0.15 arrows.,5.0,12,6,,-19,4—5,24
+Rapid Jab,4/6/8...,--,,Meter filled: 0.015 arrows.,0.5,4,2,,,,
+Rapid Jab Finisher,5,34,,Meter filled: 0.09 arrows.,3.0,13,4,,-25,5,29
+Forward Tilt,4/12,37,,Meter filled: 0.12/0.24 arrows.,4.0/8.0,5/9,5/8,,-17,4—5/12—13,24
+Up Tilt,4,29,,Meter filled: 0.195 arrows.,6.5,6,7,,-18,4—10,19
+Down Tilt,3,25,,Meter filled: 0.24 arrows.,8.0,7,8,,-14,3—4,21
+Dash Attack,7,33,,Wind box on frames 1-4. Meter filled: 0.3 arrows.,10.0,8,10,,-16,7—9,24
+Forward Smash,14/14/15,43/43/43,,"Super armor on frame 8-15 (9-15 for down angled version). Charge hold is frame 4. Meter filled: 0.6/0.84(up or mid min/max), 0.72/1.008(down min/max) arrows.",20.0/20.0/24.0,15/15/16,13/13/15,,-16/-16/-13,14—15/14—15/15,28
+Up Smash,10,47,,"Super armor on frame 8-13. Charge hold is frame 6.  Meter filled: (early min/max) 0.63/0.882, (late min/max) 0.48/0.672 arrows.",21.0/15.0,17/14,14/11,,-23,10(11—14),33
+Down Smash,10/17,42,,Super armor on frame 7-10 and 15-17. Charge hold is frame 5. Meter filled: (min/max) 0.39/0.546 arrows.,13.0,9,9,,-23/-16,10—11/17—18,24

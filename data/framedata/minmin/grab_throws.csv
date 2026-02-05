@@ -1,0 +1,9 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Grab,18,56,,ARMS don't have hurtboxes on frames 18-38,,,,,,18—24,32
+Dash Grab,18,56,,ARMS don't have hurtboxes on frames 18-38,,,,,,18—24,32
+Pivot Grab,18,56,,ARMS don't have hurtboxes on frames 18-38,,,,,,18—24,32
+Pummel,1,19,**,total frames includes 14 frames of hitlag (plus one in 1v1),1.5,,,,,,
+Forward Throw,13,29,,"Hits on frame 12, throws on frame 13.",9.0,,,,,,
+Backward Throw,31,49,,"Hits on frame 27, throws on frame 31.",14.0,,,,,,
+Up Throw,11,54,,"Hits on frame 10, throws on frame 11.",10.0,,,,,,
+Down Throw,16,45,,"Hits on frame 15, throws on frame 16.",8.0,,,,,,

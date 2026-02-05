@@ -1,0 +1,17 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Jab 1 (Light),2,15,,Special Cancellable. Transitions to jab 2 as early as frame 6,1.5,9,3,,-10,2—3,12
+"Jab (Heavy, Close)",7,37,,"Head, chest and arms invincible: frames 4-10. Special Cancellable.",12.0/8.0,13,11,,-19,7(8—11),26
+"Jab (Heavy, Far)",9,32,,,10.0,12,10,,-13,9—10,22
+Jab 2,3,27,,Special Cancellable. Transitions to jab 3 as early as frame 6,1.5,9,3,,-21,3—4,23
+Jab 3,8,35,,,5.0,12,6,,-21,8—10,25
+"Forward Tilt (Light, Close)",3,29,,Special Cancellable. Can't seem to perform this unless within range,6.0,9,6,,-20,3—4,25
+"Forward Tilt (Light, Far)",8,23,,Leg intangibility on frame 6-11,6.8,10,7,,-8,8—11,12
+Forward Tilt (Heavy),15/17,36,,,3.0/6.0,7/9,-/6,,-13,15/17—18,18
+Up Tilt (Light),3,14,,Special Cancellable. Transitions to another Utilt as early as frame 8,2.0,7,3,,-8,3—6,8
+Up Tilt (Heavy),7,37,,Special Cancellable. Upper body intangibility on frame 4-10.,12.0,13,11,,-19,7(8—11),26
+Down Tilt (Light),2,14,,Special Cancellable. Transitions to another Dtilt as early as frame 8,1.6,8,3,,-9,2—3,11
+Down Tilt (Heavy),6,27,,Special Cancellable,7.0/5.5,10/9,7/6,,-15,6—7,20
+Dash Attack,7,40,,,12.0/8.0,13/11,11/8,,-22,7—9(10—15),25
+Forward Smash,15,45,,Charge hold is frame 5,16.0/17.5,16/17,11/12,,-19/-18,15—17,28
+Up Smash,9,44,,Arm intangibility on frame 9-12. Charge hold is frame 6,17.0/13.5,17/14,11/9,,-24,9(10—12),32
+Down Smash,5,41,,Special Cancellable. Charge hold is frame 2,16.0/12.0,16/13,11/8,,-25,5—6,35

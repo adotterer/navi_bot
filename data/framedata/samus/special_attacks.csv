@@ -1,0 +1,8 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Charge Shot),3(+13),44,,Startup is 3 from charge state. Takes 13 frames to enter charge state.,5.0—26.1,9—24,3—8,,-17 to +4,3—62 (from release),
+"Charge Shot, Full Charge",16,60,,Takes 125 frames to reach full charge,28.0,24,8,,-12,16—75,
+Side B (Homing Missle),18,54/59,,Projectile lasts until frame 118. Total frames is 59 in the air for either missile type.,8.0,7,3,,-26,18—137,
+Side B (Super Missle),21,57/59,30,"Projectile lasts until frame 87. Starts moving forward around frame 50, allowing for followups.",12.0,9,4,,-24,21—70,
+Up B (Screw Attack),4...,--,24,Invulnerable on frame 3-6. Rehit rate of 6 for active frames 7-24.,3.0/1.0/2.0,5/4,4/2,,,4-6/7-11/12-14/15-24/25-26,
+"Up B, Air (Screw Attack, Air)",5...,--,24,Invulnerable on frame 3-4. Rehit rate of 2 for all hits except final.,1.0,4,2,,,5-10/11-26/27-28,
+Down B (Bomb),33,47/44/48,,Bomb is generated on frame 11. Explosion occurs one frame after touching a target. Bomb explodes automatically on frame 83. Total frames is 44 if the player is holding down.  And 48 in the air with no way to reduce it.,4.0/5.0,5,2,,,33-82/1—18,

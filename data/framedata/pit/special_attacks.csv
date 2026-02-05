@@ -1,0 +1,6 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Palutena's Bow),16—76,See Notes,,"Total frames vary depending on which move is used: Forward, Grounded : 46 | Forward, Aerial : 43 | Up, Grounded : 42 | Up, Aerial : 40",3.2—8.6,5—7,2—3,,-23 to -20,16—60 (sideways) || 17—61 (up),
+Side B (Upperdash Arm),18,79/49,,Startup is 2 upon reaching a target. Super Armor begins on frame 11 and ends on the frame he begins swing.,11.0,15,10,,-37,16—35(detector),
+"Side B, Air (Upperdash Arm, Air)",21,104/51,30,Startup is 2 upon reaching a target. 55 endlag on the swing if you don't land,9.0,15,9,,-40,19—35(detector),
+Up B (Power of Flight),--,--,40,"Invulnerable on frame 9-19, 15-19 in the air. Can Sweetspot ledges starting on frame 24.",,,,,,--,
+Down B (Guardian Orbitars),7 (Start of Reflect),39—124,,Reflects/blocks as early as frame 7. 18 endlag on release.,,,,,,--,

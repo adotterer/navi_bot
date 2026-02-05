@@ -1,0 +1,7 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Toad),9 (Start of Counter),62,,Counter window 9-34 from 10-35. Also invulnerable on frame 8.,,,,,,--,
+"Toad, Attack",2/6/8/12/14/17,60,,,3.5 per spore,,,,,,
+Side B (Peach Bomber),13,62/87,,Startup is 2 upon reaching a target. 18 endlag on hit. Total frames is 62 on level ground when you miss. And 87 if you miss and go over an edge. Hit is 25 total frames.,12.0,9,11,,-13,13—36(detector),
+"Side B, Air (Peach Bomber, Air)",13,87,35,Startup is 2 upon reaching a target. 18 endlag on hit.,12.0,9,11,,-13,13—36(detector),
+Up B (Peach Parasol),7/11/16/21/26/31,--,26/40,40 landing lag from special fall. Or 26 if still holding umbrella,3.0/1.0/4.0,5/4/15,4/2/5,,,7/11/16/21/26/31,
+Down B (Turnip Pull),--,39,,"Turnip damage depends both on the type and how it is thrown. Z-Drop damage depends on distance fallen. Turnip chances are: Normal(88.7), Winking(6.89), Dot Eye(1.7), Stitchface(1.7), Bob-omb(0.4), Mr. Saturn(0.6).",8.3—27.6,7—15,3—8,,,,

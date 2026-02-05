@@ -1,0 +1,4 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Up B (Arms Jump),,25/37(held),**,Invulnerable 8—13 normally and 18—25 when held.,**,7,9,,**,,
+Up B (Arms Hook),12,54,**,Tethers to ledge on frame 5. Endlag on hit is 22-32 depending on how far the arm must restract. Endlag on block is 40-42 depending on how far the arm must restract.,9.0,7,9,,-31,12—20,34
+Down B (Arms Change),1,1,,Instantaneous.,**,**,**,,**,,

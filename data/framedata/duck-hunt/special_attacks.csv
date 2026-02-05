@@ -1,0 +1,11 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Trick Shot),1 / 16 / 1—2,41,,"Explodes next frame after making contact. Can shoot the can every 12 frames. Can generates on frame 1. After eighth shot, can will auto explode after 76 frames but can still be manipulated.",~2.0/10.0,-/8,-/4,,,1 / 16—** / 1—2,39
+Side B (Clay Shooting),17,64,,"Can only detonate when clay is immobile or rebounding after a hit. ""Missed shots"" occur on frame 4.",2.0,9,2,,,17—**,
+"Clay Shooting, Detonate",4/5/14/23,--,,,2.5/3.0,7/5,2/2,,,,
+Up B (Duck Jump),--,--,30,"Can cancel into air dodge or attacks as early as frame 51. Cancels will avoid the special fall state and landing lag (This is technically only mostly true. For more detailed information, check out the Air Dodge Landing Lag Glitch on Smash Wiki via @CourageRatVA.)",,,,,,,
+Down B (Wild Gunman),--,41,,Gunman appears on frame 6,,,,,,,
+"Wild Gunman, Leader in brown coat",55,41,,Disappears on frame 151,10.0,12,4,,,,
+"Wild Gunman, Black suit",67,41,,Disappears on frame 163,9.0,11,4,,,,
+"Wild Gunman, Sombrero guy",73,41,,Disappears on frame 170,11.0,13,4,,,,
+"Wild Gunman, Short cowboy",79,41,,Disappears on frame 175,8.0,11,3,,,,
+"Wild Gunman, Tall cowboy",91,41,,Disappears on frame 187,8.0,11,3,,,,

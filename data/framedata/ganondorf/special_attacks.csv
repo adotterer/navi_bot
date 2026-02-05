@@ -1,0 +1,11 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Warlock Punch),70/80,117/127,,Super armor on frame 11-67 (reversed version has super armor 21-75).,30.0/37.0,15/16,26/31,,-20/-14,70—73/80—83,34
+"Neutral B, Air (Warlock Punch, Air)",70/80,117/127,,Does not have Super armor.,38.0/40.0,16/16,32/34,,-14/-12,70—73/80—83,34
+Side B (Flame Choke),16,59,,Damage dealt 32 frames after a grab. 57 total frames.,,,,,,16—30,29
+"Flame Choke, Success",31,57,,Armor on frame 17-40,12.0,,,,,32,25
+"Side B, Air (Flame Choke, Air)",16,--,29/20,"29 landing lag if you don't enter special fall. 20 if you do. Opponents can mash out of air flame choke to prevent Ganoncides, with opponents who have lower damage than Ganondorf being able to break out more quickly.",,,,,,16—28,
+"Side B, Air Success (Flame Choke, Air Success)",--,--,30,Damage dealt on frame 1 of landing. Untechable knockdown.,15.0,,,,,1 (Landing),
+Up B (Dark Dive),14,,30,First startup is for the grab.,7.0,7,7,,,14—28(Grab)/34—36(Attack),
+"Dark Dive, Grab Success",4/8/12/16/17,40,,,1.9/9.0,,,,,,
+Down B (Wizard's Foot),16,60/68,,Total frames is 68 if you go over an edge.,14.0/16.0,10/10,13/14,,-29,16—35,25
+"Down B, Air (Wizard's Foot, Air)",16,57,44,Hitbox on frame 2 of landing.,15.0/14.0/8.0,10/10,14/13/8,,-34,16—18/19—29/2—3,28

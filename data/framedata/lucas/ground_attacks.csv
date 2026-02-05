@@ -1,0 +1,11 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Jab 1,2,19,,Transitions to Jab 2 as early as frame 5,2.5,8,4,,-13,2,17
+Jab 2,3,19,,Transitions to Jab 3 as early as frame 5,1.5,8,3,,-13,3,16
+Jab 3,6,29,,,3.5,11,4,,-19,6—7,22
+Forward Tilt,7,25,,,7.5/11.0,7/13,8/10,,-10/-8,7—9,16
+Up Tilt,4/7,33,,,1.5/8.0/5.0,7/11/9,-/8/6,,-18,4/7—10(11—14/15—16),17
+Down Tilt,3,15,,,5.0,6,6,,-6,3—4,11
+Dash Attack,13,37,,,9.0/13.0,11/15,9/12,,-15/-12,13—17,20
+Forward Smash,14,45,,Reflects on frame 11-19. Charge hold is frame 7,14.0/15.0,10/12,10/10,,-21,14—15,30
+Up Smash,28/30,98,,"Invincible on frame 1-7. Head intangibility on frame 15-29. Charge hold is frame 4. **Invincibility during the first 4 frames of charging (but goes away after the initial 4), upon release you gain the other 3 frames immediately.",2.0/21.0[20.0/18.0/16.0/14.0],4/16,-/14,,-54,28/30—32(33—37/38—42/43—47/48—52/53—54),44
+Down Smash,20/29/39,59,,Charge hold is frame 5. Shield damage: -10.0/-8.0/-6.0.,17.0/14.0/11.0,15/15/13,-/-/8,,-12,20—22/29—31/39—41,18

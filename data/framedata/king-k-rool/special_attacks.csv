@@ -1,0 +1,8 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Blunderbuss Kannonball),25,65,,Transitions to Vacuum on frame 50. K Rool can pass under platforms during any stage of this attack.,13.0,9,5,,-25,30—150,
+"Blunderbuss, Vacuum",7,--,,Max hold of 120 frames,,,,,,7—36,
+"Blunderbuss, Second Shot",35,55,,12.0 damage dealt to vacuumed victim,18.0/17.0,11/11,16/5,,+7/-4,,
+Side B (Crownerang),27,63,,"17 frame animation of catching the crown. Armor on frame 6-63 (12.0% / 14.4% in 1v1) . If picked up as an item, Crown pickup is 27 frames (as a Projectile, 17 frames).",9.0/7.0,7/7,4/3,,-26,27—64/65—...,
+Up B (Propellerpack),11,--,30,Rehit rate of 14 frames. K Rool does not suffer hitlag from this attack,3.0,5,4,,**,11/26/41/56/71/...108,
+Down B (Gut Check),5 (Start of Counter),62,,Invulnerable on frame 4-15. Counters or reflects on 5-28. Must be facing attacker to activate.,**,**,**,,**,,
+"Gut Check, Counterattack","3, 9",38,,**,,,,,,"3—6, 9—12",26

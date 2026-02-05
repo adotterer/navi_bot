@@ -1,0 +1,4 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Forward Smash,25,67,,10.0% Damage based Armor on frame 7-24. Charge hold on frame 5.,23.0/26.0,13/14,25/28,,-16/-13,25—26,41
+Up Smash,12,47,,Arm intangible on frame 12-17. 6.0% damage based Armor on frame 7-11. Charge hold on frame 5.,19.0/15.0,11/10,13/10,,-22,12—13(14—16),31
+Down Smash,17,46,,Arm intangible on frame 17-19. 6.0% damage basedArmor on frame 7-15. Charge hold on frame 2.,17.0/15.0/13.0/11.0,10,13,,-16,17—18(19),27

@@ -6,6 +6,7 @@ import { EmbedBuilder } from 'discord.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
+import { loadCharacterFrameData, findMove, parseCharacterAndMove } from './frameDataHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -125,16 +126,55 @@ function findCharacterInCSV(data, characterName) {
     return null;
 }
 
-// Handle !stats <stat-name> <character>
+// Handle !stats <stat-name> <character> OR !stats <character> <move> for frame data
 export async function handleStatsLookup(message, args) {
     try {
         console.log(`📊 Stats lookup request from ${message.author.tag}: args =`, args);
         
         if (args.length < 2) {
             const availableStats = Object.keys(statDisplayNames).join(', ');
-            return message.reply(`Usage: \`!stats <stat-name> <character>\`\nExample: \`!stats air-acceleration incin\`\n\n**Available stats:**\n${availableStats}`);
+            return message.reply(`Usage: \`!stats <stat-name> <character>\` or \`!stats <character> <move>\`\nExample: \`!stats air-acceleration incin\` or \`!stats mario fair\`\n\n**Available stats:**\n${availableStats}`);
         }
         
+        // Try to detect if this is a frame data query (character + move)
+        const fullInput = args.join(' ').toLowerCase();
+        const parsed = parseCharacterAndMove(fullInput, message.guild);
+        
+        if (parsed) {
+            // This looks like a frame data query
+            const frameData = loadCharacterFrameData(parsed.characterSlug);
+            
+            if (frameData) {
+                const found = findMove(frameData, parsed.move);
+                
+                if (found) {
+                    // Successfully found frame data, use that instead
+                    const embed = new EmbedBuilder()
+                        .setColor('#FF6B9D')
+                        .setTitle(`${parsed.character.name} - ${found.move['Move Name'] || 'Move'}`)
+                        .setDescription(`*${found.moveType.replace(/_/g, ' ').toUpperCase()}*`)
+                        .addFields(
+                            { name: 'Startup', value: found.move['Startup'] || '--', inline: true },
+                            { name: 'Total Frames', value: found.move['Total Frames'] || '--', inline: true },
+                            { name: 'End Lag', value: found.move['End Lag'] || '--', inline: true },
+                            { name: 'Landing Lag', value: found.move['Landing Lag'] || '--', inline: true },
+                            { name: 'Base Damage', value: found.move['Base Damage'] || '--', inline: true },
+                            { name: 'On Shield', value: found.move['On Shield'] || '--', inline: true },
+                            { name: 'Shield Lag', value: found.move['Shield Lag'] || '--', inline: true },
+                            { name: 'Shield Stun', value: found.move['Shield Stun'] || '--', inline: true },
+                            { name: 'Active Frames', value: found.move['Active Frames'] || '--', inline: true }
+                        );
+                    
+                    if (found.move['Notes'] && found.move['Notes'] !== '--') {
+                        embed.addFields({ name: 'Notes', value: found.move['Notes'] });
+                    }
+                    
+                    return message.reply({ embeds: [embed] });
+                }
+            }
+        }
+        
+        // Otherwise, treat as a regular stat lookup
         const statName = args[0].toLowerCase();
         const characterInput = args.slice(1).join(' ').toLowerCase();
         

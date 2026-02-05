@@ -1,0 +1,5 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Flamethrower),19/26/33/40,70,,Startup and total frames are the minimum. Endlag is 27 from extended use,2.0/1.0,4/4,2/2,,-24,19—22/26—29/33—36/40—43,27
+Side B (Flare Blitz),23,101,,58 endlag on hit if nothing catches your fall first. Lands on 48 on level ground and can input a wakeup move on 73. Total frames is when you don't hit anything. Explosion is frames 2—4 after connecting. Damage based armor 15% (18% in 1v1) on frames 23—51.,6.0/18.0,6/15,-/6,,-52/-66,23—51,50
+Up B (Fly),9...,--,30,Super armor on frame 4-15,5.0/2.0/4.0,6/4/5,6/3/5,,,9—10/16—26(rehit: 3)/27—28,
+Down B (Pokemon Change),--,39,,Invulnerable on frame 1-25. ~140 frame period before you can change again.,,,,,,,

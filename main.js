@@ -11,6 +11,7 @@ import { initializeScheduler } from './src/shared/scheduler.js';
 import { checkTodaysTournaments } from './src/tournaments/dailyTournamentCheck.js';
 import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaCommand.js';
 import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler.js';
+import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
 
 dotenv.config();
 
@@ -208,6 +209,20 @@ client.on("messageCreate", async (message) => {
     if (message.content.toLowerCase().startsWith("!sq ")) {
         const question = message.content.slice(4).trim();
         await handleStatsQuestion(message, question);
+        return;
+    }
+
+    // ===== FRAME DATA LOOKUP =====
+    if (message.content.toLowerCase().startsWith("!fd ")) {
+        const args = message.content.trim().split(/\s+/).slice(1);
+        await handleFrameDataLookup(message, args);
+        return;
+    }
+
+    // ===== FRAME DATA QUESTION =====
+    if (message.content.toLowerCase().startsWith("!fdq ")) {
+        const question = message.content.slice(5).trim();
+        await handleFrameDataQuestion(message, question);
         return;
     }
 

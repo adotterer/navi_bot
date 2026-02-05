@@ -1,0 +1,9 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Flare),41,65,,Explosion occurs three frames after contact. Can cancel as early as frame 20. Takes 7 frames to cancel with shield. Startup after charge release is 22.,3.0 / 10.5,*/8,*/4,,-28,(22—27/28—34/35—39/40—95)/98—101,
+Megaflare,52,73,,Must hold for 31 frames to reach this level of charge. Startup after charge release is 21.,3.5 / 3.7 / 9.0,5/*/7,2/*/4,,-22,21—48/(58—60/61—66/67—68),5
+Gigaflare,130,181,,,6.0 / 3.7 / 11.0,6/*/10,*/*/4,,-13,130—176/(183—184/185—200/201—202),
+Side B (Shadow Flare),16—42,38—64,,Startup and total frames vary with charge. Startup after charge release is 8—14 frames.,1.6—4.5 / 6.5,4—5/8,2—3/3,,-17 — -15,8-14,24
+"Up B, no charge (Blade Dash)",25,56*,27,Total frames assumes travel along the ground.,7.0,7,4,,-27 [-26],25—28,28
+"Up B, charge (Octaslash)",36,104*,56,Total frames assumes travel along the ground.,2.3 (Multihits)/(7.0/2.3 Final hit),5/15,*/7,,-63 — -61/-47 [-62 — -60/-45],36/38/40/42/44/46/48/50,54
+"Down B (Scintilla, Miss)",38,86,**,"Detection is 7—27. Counter only activates when something hits the wall, not Sephiroth's body.",1.0 / 5.0,4/6,*/3,,-25 [-25],38—52 (Rehit: 5)/53,33
+"Down B (Scintilla, Success)",7,51,**,Data is Upon the counter's activation. Sephiroth does not suffer hitlag. Damage listed is the Max. Intangibility on 1-11.,(2.0/4.0)/(6.5/18.0),**,**,,**,7—21/22,29

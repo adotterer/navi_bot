@@ -1,0 +1,9 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Grab,13,56,,,,,,,,13—27,29
+Dash Grab,16,62,,,,,,,,16—30,32
+Pivot Grab,17,59,,,,,,,,17—31,28
+Pummel,1,20,,Total frames includes 14 frames of hitlag.,1.5,,,,,,
+Forward Throw,13(14),49,,Throw hitbox on 13-14. Throws on 14.,3.0/6.0,,,,,,
+Backward Throw,24,34,,,10.0,,,,,,
+Up Throw,18(19),47,,Throw hitbox on 18-19. Throws on 19.,3.0/8.0,,,,,,
+Down Throw,15(20),29,,"Anvil active 15—22 but throws on frame 20. Without iron, the data is identical except for anvil's absense.",7.0/8.0 (anvil) // (8.0 no anvil),,,,,,

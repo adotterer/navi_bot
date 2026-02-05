@@ -1,0 +1,5 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral B (Thunderjolt),18,51,,"0.8 base recoil damage. Grounded has a life of 84 frames, aerial 100.",10.0/7.0—5.0,12/10—9,4/3—3,,-29/-30,18—47/48—77/78—101,
+Side B (Skull Bash),17,96/86,,25 on hit endlag. Second total frames is from the air. Startup is 5 from charge release. 2.1 base recoil damage.,4.0—33.0,8—18,5—28,,-20 to +3,17—52 (4—39 on charge release),44
+Up B (Agility),,53/70,24,"Total frames is for one/two dashes ending on the ground. 0.9 base recoil damage on first dash, and 1.4 on second. Can grab ledges as early as frame 14.",,,,,,(No Hitbox),
+Down B (Thunder),9,86/66,,First total frames is if the bolt misses. Invulnerable on frame 26-35 if bolt hits and incurs 4.2 base recoil damage,6.0/4.0/14.0,8/15,2/13,,-27,Bolt 1: 9-11/12-67 | Bolt 2: 16—18/19—74,12

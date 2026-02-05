@@ -1,0 +1,7 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Neutral Air,3,44,8,Auto cancels on frame 1-2 and frame 36 onward.,12.0/6.0,9/6,5/3,,-3/-5,3—5(6—31),13
+Forward Air,7,23,13,Autocancels on frame 21 onward,8.0,7,4,,-9,7—10,13
+Back Air,6,44,10,Autocancels on frame 1-2 and 33 onward,14.0/8.0,10/7,5/4,,-5/-6,6—7(8—13),31
+Up Air,5,26,7,Autocancels on frame 19 onward,11.0/7.0,9/7,5/3,,-2/-4,5—7(8—11),15
+Down Air,10,28,12,Autocancels on frame 1-5 and 24 onward,10.0/8.0,12/7,4/4,,-8/-8,10(11—14),14
+Z Air,14,52,20,"If you land before firing, it will fire on frame 6 of landing. Advantage is that shot.",5.0,6,6,,-2,14—68,

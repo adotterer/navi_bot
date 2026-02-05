@@ -1,0 +1,12 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag
+Jab 1,10,32,,Transitions to Jab 2 as early as frame 13,2.5,7,4,,-18,10—11,21
+Jab 2,11,27,,Transitions to Rapid jab as early as frame 22,2.2,7,3,,-13,11—12,15
+Rapid Jab,5/8/11...,--,,,0.5,4,3,,,34—**,
+Rapid Jab Finisher,4,49,,,3.0,10,4,,-41,,
+Forward Tilt,12/16/20/23,48,,,2.0/3.0,4/10,3/4,,-21,12—21/23,25
+Up Tilt,7,38,,Head intangible on frame 7-13.,10.0/8.0,8/7,10/8,,-21/-23,7—13,25
+Down Tilt,6,37,,Clanks with projectiles doing less than 26.8% damage.,10.0/6.0,8/6,10/6,,-21,6—7(8—11),26
+Dash Attack,26,66,,,16.0/13.0,13/9,14/12,,-26,26—27(28—41),25
+Forward Smash,40,77,,"This attack hits directly above Dedede only on frame 40. Hammer comes down on 43. Shockwave on 44. Charge hold is frame 33. Multiple hitboxes: an aerial only hitbox that does 0%, sweetspot near tip of hammer, weak hit near Dedede.",16.0/18.5/25.0/11.0,?/12/14/8,?/-/16/8,,?/-/-18/-25,40—41(42—43/44),33
+Up Smash,17,67,,Charge hold is frame 6,16.0,10,11,,-39,17—24,43
+Down Smash,14,52,,Charge hold is frame 3,13.0,9,9,,-31/-23,14—22,30
