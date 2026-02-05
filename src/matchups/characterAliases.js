@@ -23,6 +23,7 @@ export const nicknameAliases = {
     daisy: "peach | daisy",
     "dark pit": "pit | dark-pit",
     dedede: "king-dedede",
+    kingdedede: "king-dedede",
     dh: "duck-hunt",
     diddy: "diddy-kong",
     dk: "donkey-kong",
@@ -167,3 +168,5 @@ export function resolveCharacterFromText(text, aliasMap) {
     // If we only found Zelda, return null (user needs to specify opponent)
     return null;
 }
+
+

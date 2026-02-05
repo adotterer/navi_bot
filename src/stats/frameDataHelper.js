@@ -196,7 +196,7 @@ function parseCharacterAndMove(input, guild) {
 function createMoveEmbed(move, characterName, moveType) {
     const embed = new EmbedBuilder()
         .setColor('#36AAD4')
-        .setTitle(`${characterName} - ${move['Move Name'] || 'Move'}`)
+        .setTitle(`${characterName || 'Character'} - ${move['Move Name'] || 'Move'}`)
         .setDescription(`*${moveType.replace(/_/g, ' ').toUpperCase()}*`)
         .addFields(
             { name: 'Startup', value: move['Startup'] || '--', inline: true },
@@ -235,19 +235,25 @@ export async function handleFrameDataLookup(message, args) {
         
         const frameData = loadCharacterFrameData(parsed.characterSlug);
         
+        // Convert slug to display name
+        const displayName = parsed.characterSlug
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        
         if (!frameData) {
-            await message.reply(`❌ No frame data found for ${parsed.character.name}.`);
+            await message.reply(`❌ No frame data found for ${displayName}.`);
             return;
         }
         
         const found = findMove(frameData, parsed.move);
         
         if (!found) {
-            await message.reply(`❌ Move "${parsed.move}" not found for ${parsed.character.name}.`);
+            await message.reply(`❌ Move "${parsed.move}" not found for ${displayName}.`);
             return;
         }
         
-        const embed = createMoveEmbed(found.move, parsed.character.name, found.moveType);
+        const embed = createMoveEmbed(found.move, displayName, found.moveType);
         await message.reply({ embeds: [embed] });
     } catch (error) {
         console.error('Error in handleFrameDataLookup:', error);
