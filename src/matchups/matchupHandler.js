@@ -266,6 +266,9 @@ you may also use these when relevant:
 
 <:6symbolnavi:1341400385709019138> general/tips 
 <:6acnlganon:1341460148161609930> General hazard, MU specific stuff/MU knowledge you can use against them
+
+you may also use these when relevant to Zelda's moves Din's Fire (side b), Nayru's Love (neutral b), and Farore's Wind (up b):
+
 <a:6mcgoddessservingfarore:1343330440240693270> General Farore's/Up Oos tip
 <a:6mcgoddessservingnayru:1343320090984054817> General Nayru's tech/tip in the MU
 <a:6mcgoddessservingdin:1341429490177413120> Din's fire is potent in this scenario/tech
