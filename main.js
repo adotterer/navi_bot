@@ -123,9 +123,11 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!matches-today") ||
         message.content.toLowerCase().startsWith("!add-zelda") ||
         message.content.toLowerCase().startsWith("!list-zeldas") ||
-        message.content.toLowerCase().startsWith("!stats") ||
-        message.content.toLowerCase().startsWith("!sq ") ||
         message.content.toLowerCase().startsWith("!list-thread-counts");
+    
+    // Public commands (no role check needed)
+    const isPublicCommand = message.content.toLowerCase().startsWith("!stats") ||
+        message.content.toLowerCase().startsWith("!sq ");
 
     if (isCommand && !(isAskNaviChannel && isMuCommand)) {
         const hasAuthorizedRole = message.member?.roles?.cache?.some(
