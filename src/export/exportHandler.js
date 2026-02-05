@@ -67,6 +67,18 @@ export async function handleExportCharacter(message) {
         await handleExportFundies(message);
         return;
     }
+    if (lowerInput === "disadvantage") {
+        await handleExportDisadvantage(message);
+        return;
+    }
+    if (lowerInput === "advantage") {
+        await handleExportAdvantage(message);
+        return;
+    }
+    if (lowerInput === "neutral") {
+        await handleExportNeutral(message);
+        return;
+    }
 
     const aliasMap = buildCharacterAliasMap(guild);
     const match = resolveCharacterFromText(lowerInput, aliasMap);
@@ -100,7 +112,7 @@ export async function handleExportMatchups(message) {
     const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
     
     try {
-        await message.reply("⏳ Exporting all Match Ups channels, glossary, and fundies...");
+        await message.reply("⏳ Exporting all Match Ups channels, glossary, fundies, and game state channels...");
         
         let totalChannels = 0;
         let totalMessages = 0;
@@ -158,23 +170,83 @@ export async function handleExportMatchups(message) {
             console.error(`❌ Error exporting glossary:`, error.message);
         }
 
-        // Export fundies
+        // Export fundies/fundamentals
         try {
             const fundiesChannel = guild.channels.cache.find(
-                ch => ch.isTextBased() && ch.name.toLowerCase().includes("fundies")
+                ch => ch.isTextBased() && (
+                    ch.name.toLowerCase().includes("fundies") ||
+                    ch.name.toLowerCase().includes("fundamentals")
+                )
             );
             if (fundiesChannel) {
-                console.log(`📥 Exporting fundies...`);
+                console.log(`📥 Exporting fundies/fundamentals...`);
                 const messages = await fetchAllMessages(fundiesChannel);
                 const jsonData = JSON.stringify(messages, null, 2);
                 const s3Url = await uploadToS3("fundies.json", jsonData);
                 exportedFiles.push(`[fundies](${s3Url}) - ${messages.length} messages`);
                 totalMessages += messages.length;
                 totalChannels++;
-                console.log(`✅ Exported fundies: ${messages.length} messages`);
+                console.log(`✅ Exported fundies/fundamentals: ${messages.length} messages`);
             }
         } catch (error) {
-            console.error(`❌ Error exporting fundies:`, error.message);
+            console.error(`❌ Error exporting fundies/fundamentals:`, error.message);
+        }
+
+        // Export disadvantage
+        try {
+            const disadvantageChannel = guild.channels.cache.find(
+                ch => ch.isTextBased() && ch.name.toLowerCase().includes("disadvantage")
+            );
+            if (disadvantageChannel) {
+                console.log(`📥 Exporting disadvantage...`);
+                const messages = await fetchAllMessages(disadvantageChannel);
+                const jsonData = JSON.stringify(messages, null, 2);
+                const s3Url = await uploadToS3("disadvantage.json", jsonData);
+                exportedFiles.push(`[disadvantage](${s3Url}) - ${messages.length} messages`);
+                totalMessages += messages.length;
+                totalChannels++;
+                console.log(`✅ Exported disadvantage: ${messages.length} messages`);
+            }
+        } catch (error) {
+            console.error(`❌ Error exporting disadvantage:`, error.message);
+        }
+
+        // Export advantage
+        try {
+            const advantageChannel = guild.channels.cache.find(
+                ch => ch.isTextBased() && ch.name.toLowerCase().includes("advantage")
+            );
+            if (advantageChannel) {
+                console.log(`📥 Exporting advantage...`);
+                const messages = await fetchAllMessages(advantageChannel);
+                const jsonData = JSON.stringify(messages, null, 2);
+                const s3Url = await uploadToS3("advantage.json", jsonData);
+                exportedFiles.push(`[advantage](${s3Url}) - ${messages.length} messages`);
+                totalMessages += messages.length;
+                totalChannels++;
+                console.log(`✅ Exported advantage: ${messages.length} messages`);
+            }
+        } catch (error) {
+            console.error(`❌ Error exporting advantage:`, error.message);
+        }
+
+        // Export neutral
+        try {
+            const neutralChannel = guild.channels.cache.find(
+                ch => ch.isTextBased() && ch.name.toLowerCase().includes("neutral")
+            );
+            if (neutralChannel) {
+                console.log(`📥 Exporting neutral...`);
+                const messages = await fetchAllMessages(neutralChannel);
+                const jsonData = JSON.stringify(messages, null, 2);
+                const s3Url = await uploadToS3("neutral.json", jsonData);
+                exportedFiles.push(`[neutral](${s3Url}) - ${messages.length} messages`);
+                totalMessages += messages.length;
+                totalChannels++;
+                console.log(`✅ Exported neutral: ${messages.length} messages`);
+            }
+        } catch (error) {
+            console.error(`❌ Error exporting neutral:`, error.message);
         }
         
         await message.reply(
@@ -279,15 +351,18 @@ async function handleExportFundies(message) {
     }
 
     try {
-        await message.reply(`⏳ Exporting fundies...`);
+        await message.reply(`⏳ Exporting fundies/fundamentals...`);
 
-        // Find fundies channel in the guild
+        // Find fundies/fundamentals channel in the guild
         const fundiesChannel = guild.channels.cache.find(
-            ch => ch.isTextBased() && ch.name.toLowerCase().includes("fundies")
+            ch => ch.isTextBased() && (
+                ch.name.toLowerCase().includes("fundies") ||
+                ch.name.toLowerCase().includes("fundamentals")
+            )
         );
 
         if (!fundiesChannel) {
-            await message.reply(`❌ Fundies channel not found in this server.`);
+            await message.reply(`❌ Fundies/fundamentals channel not found in this server.`);
             return;
         }
 
@@ -296,10 +371,106 @@ async function handleExportFundies(message) {
         const filename = "fundies.json";
 
         const s3Url = await uploadToS3(filename, jsonData);
-        await message.reply(`✅ Exported fundies: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
-        console.log(`✅ Exported ${messages.length} messages from fundies channel`);
+        await message.reply(`✅ Exported fundies/fundamentals: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        console.log(`✅ Exported ${messages.length} messages from fundies/fundamentals channel`);
     } catch (error) {
         console.error(error);
-        await message.reply("❌ Error exporting fundies: " + error.message);
+        await message.reply("❌ Error exporting fundies/fundamentals: " + error.message);
+    }
+}
+
+async function handleExportDisadvantage(message) {
+    const guild = message.guild;
+    if (!guild) {
+        await message.reply("❌ This command must be used in a server.");
+        return;
+    }
+
+    try {
+        await message.reply(`⏳ Exporting disadvantage...`);
+
+        const disadvantageChannel = guild.channels.cache.find(
+            ch => ch.isTextBased() && ch.name.toLowerCase().includes("disadvantage")
+        );
+
+        if (!disadvantageChannel) {
+            await message.reply(`❌ Disadvantage channel not found in this server.`);
+            return;
+        }
+
+        const messages = await fetchAllMessages(disadvantageChannel);
+        const jsonData = JSON.stringify(messages, null, 2);
+        const filename = "disadvantage.json";
+
+        const s3Url = await uploadToS3(filename, jsonData);
+        await message.reply(`✅ Exported disadvantage: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        console.log(`✅ Exported ${messages.length} messages from disadvantage channel`);
+    } catch (error) {
+        console.error(error);
+        await message.reply("❌ Error exporting disadvantage: " + error.message);
+    }
+}
+
+async function handleExportAdvantage(message) {
+    const guild = message.guild;
+    if (!guild) {
+        await message.reply("❌ This command must be used in a server.");
+        return;
+    }
+
+    try {
+        await message.reply(`⏳ Exporting advantage...`);
+
+        const advantageChannel = guild.channels.cache.find(
+            ch => ch.isTextBased() && ch.name.toLowerCase().includes("advantage")
+        );
+
+        if (!advantageChannel) {
+            await message.reply(`❌ Advantage channel not found in this server.`);
+            return;
+        }
+
+        const messages = await fetchAllMessages(advantageChannel);
+        const jsonData = JSON.stringify(messages, null, 2);
+        const filename = "advantage.json";
+
+        const s3Url = await uploadToS3(filename, jsonData);
+        await message.reply(`✅ Exported advantage: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        console.log(`✅ Exported ${messages.length} messages from advantage channel`);
+    } catch (error) {
+        console.error(error);
+        await message.reply("❌ Error exporting advantage: " + error.message);
+    }
+}
+
+async function handleExportNeutral(message) {
+    const guild = message.guild;
+    if (!guild) {
+        await message.reply("❌ This command must be used in a server.");
+        return;
+    }
+
+    try {
+        await message.reply(`⏳ Exporting neutral...`);
+
+        const neutralChannel = guild.channels.cache.find(
+            ch => ch.isTextBased() && ch.name.toLowerCase().includes("neutral")
+        );
+
+        if (!neutralChannel) {
+            await message.reply(`❌ Neutral channel not found in this server.`);
+            return;
+        }
+
+        const messages = await fetchAllMessages(neutralChannel);
+        const jsonData = JSON.stringify(messages, null, 2);
+        const filename = "neutral.json";
+
+        const s3Url = await uploadToS3(filename, jsonData);
+        await message.reply(`✅ Exported neutral: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        console.log(`✅ Exported ${messages.length} messages from neutral channel`);
+    } catch (error) {
+        console.error(error);
+        await message.reply("❌ Error exporting neutral: " + error.message);
     }
 }

@@ -18,11 +18,14 @@ export async function handleQuestion(message) {
     }
 
     try {
-        await message.reply(`⏳ Looking up glossary and searching for an answer...`);
+        await message.reply(`⏳ Looking up resources and searching for an answer...`);
 
-        // Fetch glossary and fundies from S3
+        // Fetch all context sources from S3
         let glossaryContext = "";
         let fundiesContext = "";
+        let disadvantageContext = "";
+        let advantageContext = "";
+        let neutralContext = "";
 
         try {
             const glossaryJson = await fetchFromS3("glossary.json");
@@ -38,8 +41,29 @@ export async function handleQuestion(message) {
             console.warn("⚠️ Could not fetch fundies.json:", error.message);
         }
 
+        try {
+            const disadvantageJson = await fetchFromS3("disadvantage.json");
+            disadvantageContext = formatContextFromMessages(disadvantageJson, "Disadvantage State");
+        } catch (error) {
+            console.warn("⚠️ Could not fetch disadvantage.json:", error.message);
+        }
+
+        try {
+            const advantageJson = await fetchFromS3("advantage.json");
+            advantageContext = formatContextFromMessages(advantageJson, "Advantage State");
+        } catch (error) {
+            console.warn("⚠️ Could not fetch advantage.json:", error.message);
+        }
+
+        try {
+            const neutralJson = await fetchFromS3("neutral.json");
+            neutralContext = formatContextFromMessages(neutralJson, "Neutral State");
+        } catch (error) {
+            console.warn("⚠️ Could not fetch neutral.json:", error.message);
+        }
+
         // Build context string for AI
-        const contextString = [glossaryContext, fundiesContext].filter(Boolean).join("\n\n");
+        const contextString = [glossaryContext, fundiesContext, disadvantageContext, advantageContext, neutralContext].filter(Boolean).join("\n\n");
         const fullPrompt = `You are Navi Bot, a helpful assistant for Zelda matchup analysis.
 
 ${contextString ? `**Available Context:**\n${contextString}\n\n` : ""}**User Question:**

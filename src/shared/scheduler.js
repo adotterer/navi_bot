@@ -76,13 +76,16 @@ export function initializeScheduler(client) {
                 console.error(`❌ Error exporting glossary:`, error.message);
             }
 
-            // Export fundies
+            // Export fundies/fundamentals
             try {
                 const fundiesChannel = guild.channels.cache.find(
-                    ch => ch.isTextBased() && ch.name.toLowerCase().includes("fundies")
+                    ch => ch.isTextBased() && (
+                        ch.name.toLowerCase().includes("fundies") ||
+                        ch.name.toLowerCase().includes("fundamentals")
+                    )
                 );
                 if (fundiesChannel) {
-                    console.log(`📥 Exporting fundies...`);
+                    console.log(`📥 Exporting fundies/fundamentals...`);
                     const messages = await fetchAllMessages(fundiesChannel);
                     const jsonData = JSON.stringify(messages, null, 2);
                     await uploadToS3("fundies.json", jsonData);
@@ -90,10 +93,76 @@ export function initializeScheduler(client) {
                     fundiesExported = true;
                     totalMessages += messages.length;
                     totalChannels++;
-                    console.log(`✅ Exported fundies: ${messages.length} messages`);
+                    console.log(`✅ Exported fundies/fundamentals: ${messages.length} messages`);
                 }
             } catch (error) {
-                console.error(`❌ Error exporting fundies:`, error.message);
+                console.error(`❌ Error exporting fundies/fundamentals:`, error.message);
+            }
+
+            // Export disadvantage
+            let disadvantageMessages = 0;
+            let disadvantageExported = false;
+            try {
+                const disadvantageChannel = guild.channels.cache.find(
+                    ch => ch.isTextBased() && ch.name.toLowerCase().includes("disadvantage")
+                );
+                if (disadvantageChannel) {
+                    console.log(`📥 Exporting disadvantage...`);
+                    const messages = await fetchAllMessages(disadvantageChannel);
+                    const jsonData = JSON.stringify(messages, null, 2);
+                    await uploadToS3("disadvantage.json", jsonData);
+                    disadvantageMessages = messages.length;
+                    disadvantageExported = true;
+                    totalMessages += messages.length;
+                    totalChannels++;
+                    console.log(`✅ Exported disadvantage: ${messages.length} messages`);
+                }
+            } catch (error) {
+                console.error(`❌ Error exporting disadvantage:`, error.message);
+            }
+
+            // Export advantage
+            let advantageMessages = 0;
+            let advantageExported = false;
+            try {
+                const advantageChannel = guild.channels.cache.find(
+                    ch => ch.isTextBased() && ch.name.toLowerCase().includes("advantage")
+                );
+                if (advantageChannel) {
+                    console.log(`📥 Exporting advantage...`);
+                    const messages = await fetchAllMessages(advantageChannel);
+                    const jsonData = JSON.stringify(messages, null, 2);
+                    await uploadToS3("advantage.json", jsonData);
+                    advantageMessages = messages.length;
+                    advantageExported = true;
+                    totalMessages += messages.length;
+                    totalChannels++;
+                    console.log(`✅ Exported advantage: ${messages.length} messages`);
+                }
+            } catch (error) {
+                console.error(`❌ Error exporting advantage:`, error.message);
+            }
+
+            // Export neutral
+            let neutralMessages = 0;
+            let neutralExported = false;
+            try {
+                const neutralChannel = guild.channels.cache.find(
+                    ch => ch.isTextBased() && ch.name.toLowerCase().includes("neutral")
+                );
+                if (neutralChannel) {
+                    console.log(`📥 Exporting neutral...`);
+                    const messages = await fetchAllMessages(neutralChannel);
+                    const jsonData = JSON.stringify(messages, null, 2);
+                    await uploadToS3("neutral.json", jsonData);
+                    neutralMessages = messages.length;
+                    neutralExported = true;
+                    totalMessages += messages.length;
+                    totalChannels++;
+                    console.log(`✅ Exported neutral: ${messages.length} messages`);
+                }
+            } catch (error) {
+                console.error(`❌ Error exporting neutral:`, error.message);
             }
 
             const endTime = new Date();
@@ -106,7 +175,13 @@ export function initializeScheduler(client) {
                 glossaryExported,
                 glossaryMessages,
                 fundiesExported,
-                fundiesMessages
+                fundiesMessages,
+                disadvantageExported,
+                disadvantageMessages,
+                advantageExported,
+                advantageMessages,
+                neutralExported,
+                neutralMessages
             });
         } catch (error) {
             console.error('❌ Scheduled export failed:', error);
@@ -236,8 +311,17 @@ async function notifyModerators(guild, channelsExported, messagesExported, durat
         const fundiesLine = extraExports.fundiesExported
             ? `• **Fundies:** ${extraExports.fundiesMessages.toLocaleString()} messages`
             : `• **Fundies:** Not found`;
+        const disadvantageLine = extraExports.disadvantageExported
+            ? `• **Disadvantage:** ${extraExports.disadvantageMessages.toLocaleString()} messages`
+            : `• **Disadvantage:** Not found`;
+        const advantageLine = extraExports.advantageExported
+            ? `• **Advantage:** ${extraExports.advantageMessages.toLocaleString()} messages`
+            : `• **Advantage:** Not found`;
+        const neutralLine = extraExports.neutralExported
+            ? `• **Neutral:** ${extraExports.neutralMessages.toLocaleString()} messages`
+            : `• **Neutral:** Not found`;
 
-        const message = `✅ **Daily Export Complete**\n\n📊 Summary:\n• **Channels Exported:** ${channelsExported}\n• **Total Messages:** ${messagesExported.toLocaleString()}\n• **Duration:** ${duration}s\n${glossaryLine}\n${fundiesLine}\n• **Status:** All data synced to S3 for AI analysis\n\n🤖 Navi now has the latest community insights!`;
+        const message = `✅ **Daily Export Complete**\n\n📊 Summary:\n• **Channels Exported:** ${channelsExported}\n• **Total Messages:** ${messagesExported.toLocaleString()}\n• **Duration:** ${duration}s\n${glossaryLine}\n${fundiesLine}\n${disadvantageLine}\n${advantageLine}\n${neutralLine}\n• **Status:** All data synced to S3 for AI analysis\n\n🤖 Navi now has the latest community insights!`;
 
         await auditLogsChannel.send(message);
         console.log('📢 Notification sent to audit-logs');
