@@ -176,17 +176,35 @@ function parseCharacterAndMove(input, guild) {
         return null;
     }
     
+    // For frame data lookups, we want to allow Zelda (unlike matchup queries)
+    // So we do our own resolution without the Zelda filtering
+    const normalizeText = (text) => text.toLowerCase()
+        .replace(/['']s\b/g, "")
+        .replace(/['']/g, "")
+        .replace(/[|︱｜]/g, "|")
+        .replace(/[^a-z0-9|\s\-]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
     for (let i = 1; i < parts.length; i++) {
         const charPart = parts.slice(0, i).join(' ');
         const movePart = parts.slice(i).join(' ');
         
-        const match = resolveCharacterFromText(charPart, aliasMap);
-        if (match) {
-            return {
-                character: match,
-                characterSlug: match.slug,
-                move: movePart
-            };
+        const normalizedCharPart = normalizeText(charPart);
+        const aliases = Array.from(aliasMap.keys()).sort((a, b) => b.length - a.length);
+        
+        for (const alias of aliases) {
+            const pattern = new RegExp(`(^|\\s)${escapeRegex(alias)}(\\s|$)`);
+            if (pattern.test(normalizedCharPart)) {
+                const slug = aliasMap.get(alias);
+                return {
+                    character: { slug, alias },
+                    characterSlug: slug,
+                    move: movePart
+                };
+            }
         }
     }
     
