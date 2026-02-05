@@ -184,7 +184,8 @@ client.on("messageCreate", async (message) => {
     // ===== MU QUESTION =====
     if (message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!mu-q") ||
-        message.content.toLowerCase().startsWith("!muq")) {
+        message.content.toLowerCase().startsWith("!muq") ||
+        message.content.toLowerCase().startsWith("!mq ")) {
         await handleMuQuestion(message);
         return;
     }
@@ -196,7 +197,8 @@ client.on("messageCreate", async (message) => {
     }
 
     // ===== STATS LOOKUP =====
-    if (message.content.toLowerCase().startsWith("!stats")) {
+    if (message.content.toLowerCase().startsWith("!stats") ||
+        message.content.toLowerCase().startsWith("!s ")) {
         const args = message.content.trim().split(/\s+/).slice(1);
         await handleStatsLookup(message, args);
         return;
