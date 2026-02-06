@@ -25,6 +25,7 @@ const MOVE_ABBREVIATIONS = {
     'uair': 'Up Air',
     'dair': 'Down Air',
     'nair': 'Neutral Air',
+    'zair': 'Z Air',
     'neutral b': 'Neutral B',
     'neutralb': 'Neutral B',
     'side b': 'Side B',
