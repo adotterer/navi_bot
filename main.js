@@ -45,11 +45,11 @@ client.on("clientReady", () => {
     
     // Initialize weekly export scheduler
     initializeScheduler(client);
-});
 
-client.user.presence.set({
-    activities: [{ name: "⭐・ask・navi™", type: 0 }],
-    status: "online"
+    client.user.setPresence({
+        activities: [{ name: "⭐・ask・navi™", type: 0 }],
+        status: "online"
+    });
 });
 // ========== MESSAGE HANDLERS ==========
 // Handler 1: "should have" → "could have" + Arena LAN warning
