@@ -109,12 +109,42 @@ function parseCSVLine(line) {
     return result;
 }
 
-function loadCharacterFrameData(characterSlug) {
-    // Handle pipe-separated character names (e.g., "peach | daisy", "samus︱dark samus") - use the first one
+function loadCharacterFrameData(characterSlug, requestedAlias = null) {
+    // Handle pipe-separated character names (e.g., "peach | daisy", "samus︱dark samus")
+    // For frame data, we use the specific character directory that was requested
     let frameDataSlug = characterSlug;
+    
     if (characterSlug.includes('|') || characterSlug.includes('︱') || characterSlug.includes('｜')) {
         // Split on any pipe character variant
-        frameDataSlug = characterSlug.split(/[|︱｜]/)[0].trim();
+        const characters = characterSlug.split(/[|︱｜]/).map(c => c.trim());
+        
+        // If we know which alias was requested, use that to pick the right character
+        if (requestedAlias) {
+            // Find which character in the pipe-separated list matches the requested alias
+            for (const char of characters) {
+                if (char.toLowerCase() === requestedAlias.toLowerCase()) {
+                    frameDataSlug = char;
+                    break;
+                }
+            }
+            // If no exact match, use the first one
+            if (frameDataSlug === characterSlug) {
+                frameDataSlug = characters[0];
+            }
+        } else {
+            // Default to first character if no alias provided
+            frameDataSlug = characters[0];
+        }
+    }
+    
+    // Simon and Richter have separate directories - handle them specifically
+    // Simon maps to "simon-richter" in aliases but has separate "simon" and "richter" directories
+    if (frameDataSlug === 'simon-richter') {
+        if (requestedAlias && (requestedAlias.toLowerCase() === 'richter' || requestedAlias.toLowerCase() === 'richter belmont')) {
+            frameDataSlug = 'richter';
+        } else {
+            frameDataSlug = 'simon';
+        }
     }
     
     // Pokemon Trainer characters have pt- prefix in directory names
@@ -356,7 +386,7 @@ export async function handleFrameDataLookup(message, args) {
             return;
         }
         
-        const frameData = loadCharacterFrameData(parsed.characterSlug);
+        const frameData = loadCharacterFrameData(parsed.characterSlug, parsed.character.alias);
         
         // Convert slug to display name
         const displayName = parsed.characterSlug
@@ -401,7 +431,7 @@ function buildFrameDataContext(question = '', guild = null, limit = 10) {
         for (const [alias, slug] of aliasMap.entries()) {
             if (questionLower.includes(alias) && dirs.includes(slug)) {
                 // Add this character first
-                const frameData = loadCharacterFrameData(slug);
+                const frameData = loadCharacterFrameData(slug, alias);
                 if (frameData) {
                     const charName = slug.replace(/-/g, ' ').split(' ')
                         .map(w => w.charAt(0).toUpperCase() + w.slice(1))
@@ -495,7 +525,7 @@ Provide your answer:`;
         // Try to detect if a specific character + move was mentioned and show the GIF
         const parsed = detectCharacterAndMoveInText(question, message.guild);
         if (parsed) {
-            const frameData = loadCharacterFrameData(parsed.characterSlug);
+            const frameData = loadCharacterFrameData(parsed.characterSlug, parsed.character.alias);
             if (frameData) {
                 const found = findMove(frameData, parsed.move);
                 if (found && found.move['GIF URL'] && found.move['GIF URL'].trim()) {
