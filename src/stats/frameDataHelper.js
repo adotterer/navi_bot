@@ -110,11 +110,17 @@ function parseCSVLine(line) {
 }
 
 function loadCharacterFrameData(characterSlug) {
+    // Handle pipe-separated character names (e.g., "peach | daisy") - use the first one
+    let frameDataSlug = characterSlug;
+    if (characterSlug.includes('|')) {
+        frameDataSlug = characterSlug.split('|')[0].trim();
+    }
+    
     // Pokemon Trainer characters have pt- prefix in directory names
     const ptCharacters = ['squirtle', 'ivysaur', 'charizard'];
-    const frameDataSlug = ptCharacters.includes(characterSlug) 
-        ? `pt-${characterSlug}` 
-        : characterSlug;
+    if (ptCharacters.includes(frameDataSlug)) {
+        frameDataSlug = `pt-${frameDataSlug}`;
+    }
     
     if (frameDataCache[frameDataSlug]) {
         return frameDataCache[frameDataSlug];
