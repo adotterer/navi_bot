@@ -234,7 +234,7 @@ function findMove(frameData, moveName) {
 }
 
 function detectCharacterAndMoveInText(text, guild) {
-    // More flexible detection that finds character and move anywhere in the text
+    // Enhanced detection that finds character and move pairs with proximity awareness
     const aliasMap = buildCharacterAliasMap(guild);
     const normalizeText = (txt) => txt.toLowerCase()
         .replace(/['']s\b/g, "")
@@ -247,55 +247,82 @@ function detectCharacterAndMoveInText(text, guild) {
     const normalizedText = normalizeText(text);
     const words = normalizedText.split(/\s+/);
     
-    // Find character mention - prefer longest matches first
-    let foundCharacter = null;
-    let longestMatchLength = 0;
+    // Build a list of all character aliases with their positions and slugs
+    const characterMatches = [];
     const aliases = Array.from(aliasMap.keys()).sort((a, b) => b.length - a.length);
     
     for (const alias of aliases) {
-        if (normalizedText.includes(alias) && alias.length > longestMatchLength) {
-            foundCharacter = {
+        const regex = new RegExp(`\\b${alias.replace(/\s+/g, '\\s+')}\\b`);
+        const match = normalizedText.match(regex);
+        if (match) {
+            characterMatches.push({
+                alias: alias,
                 slug: aliasMap.get(alias),
-                alias: alias
-            };
-            longestMatchLength = alias.length;
+                index: match.index,
+                length: match[0].length
+            });
         }
     }
     
-    if (!foundCharacter) return null;
+    if (characterMatches.length === 0) return null;
     
-    // Find move mention (check abbreviations and common move names)
-    for (const word of words) {
-        // Check if it's an abbreviation
-        if (MOVE_ABBREVIATIONS[word]) {
-            return {
-                character: foundCharacter,
-                characterSlug: foundCharacter.slug,
-                move: word
-            };
-        }
+    // Sort by position in text to process in order of appearance
+    characterMatches.sort((a, b) => a.index - b.index);
+    
+    // For each character found, look for moves that appear near it
+    for (const charMatch of characterMatches) {
+        const charEndIndex = charMatch.index + charMatch.length;
+        const afterCharText = normalizedText.substring(charEndIndex);
+        const beforeCharText = normalizedText.substring(0, charMatch.index);
         
-        // Check common move patterns (air, tilt, smash, throw, special)
-        if (word.includes('air') || word.includes('tilt') || word.includes('smash') || 
-            word.includes('throw') || word.includes('special') || word === 'jab' || 
-            word === 'grab' || word === 'dash') {
-            return {
-                character: foundCharacter,
-                characterSlug: foundCharacter.slug,
-                move: word
-            };
-        }
-    }
-    
-    // Check two-word combinations
-    for (let i = 0; i < words.length - 1; i++) {
-        const twoWord = `${words[i]} ${words[i + 1]}`;
-        if (MOVE_ABBREVIATIONS[twoWord]) {
-            return {
-                character: foundCharacter,
-                characterSlug: foundCharacter.slug,
-                move: twoWord
-            };
+        // Check words after the character mention (within reasonable proximity)
+        const wordsAfter = afterCharText.split(/\s+/).slice(0, 5); // Check next 5 words
+        const wordsBefore = beforeCharText.split(/\s+/); // Check words before
+        
+        // Prefer moves found after the character mention
+        for (let i = 0; i < wordsAfter.length; i++) {
+            const word = wordsAfter[i];
+            
+            if (MOVE_ABBREVIATIONS[word]) {
+                return {
+                    character: { slug: charMatch.slug, alias: charMatch.alias },
+                    characterSlug: charMatch.slug,
+                    move: word
+                };
+            }
+            
+            if (word.includes('air') || word.includes('tilt') || word.includes('smash') || 
+                word.includes('throw') || word.includes('special') || word === 'jab' || 
+                word === 'grab' || word === 'dash' || word === 'attack') {
+                return {
+                    character: { slug: charMatch.slug, alias: charMatch.alias },
+                    characterSlug: charMatch.slug,
+                    move: word
+                };
+            }
+            
+            // Check two-word combinations
+            if (i < wordsAfter.length - 1) {
+                const twoWord = `${word} ${wordsAfter[i + 1]}`;
+                if (MOVE_ABBREVIATIONS[twoWord]) {
+                    return {
+                        character: { slug: charMatch.slug, alias: charMatch.alias },
+                        characterSlug: charMatch.slug,
+                        move: twoWord
+                    };
+                }
+                
+                // Check for "dash attack", "dash grab", etc.
+                if ((word === 'dash' || word === 'neutral' || word === 'side' || word === 'up' || word === 'down') &&
+                    (wordsAfter[i + 1].includes('attack') || wordsAfter[i + 1].includes('grab') || 
+                     wordsAfter[i + 1].includes('smash') || wordsAfter[i + 1] === 'b')) {
+                    return {
+                        character: { slug: charMatch.slug, alias: charMatch.alias },
+                        characterSlug: charMatch.slug,
+                        move: twoWord
+                    };
+                }
+            }
         }
     }
     
