@@ -133,7 +133,7 @@ export async function handleStatsLookup(message, args) {
         
         if (args.length < 2) {
             const availableStats = Object.keys(statDisplayNames).join(', ');
-            return message.reply(`Usage: \`!stats <stat-name> <character>\` or \`!stats <character> <move>\`\nExample: \`!stats air-acceleration incin\` or \`!stats mario fair\`\n\n**Available stats:**\n${availableStats}`);
+            return message.reply(`Usage: \`!stats <stat-name> <character>\` or \`!stats <character> <stat-name>\` or \`!stats <character> <move>\`\nExample: \`!stats air-acceleration incin\`, \`!stats peach gravity\`, or \`!stats mario fair\`\n\n**Available stats:**\n${availableStats}`);
         }
         
         // Try to detect if this is a frame data query (character + move)
@@ -181,8 +181,17 @@ export async function handleStatsLookup(message, args) {
         }
         
         // Otherwise, treat as a regular stat lookup
-        const statName = args[0].toLowerCase();
-        const characterInput = args.slice(1).join(' ').toLowerCase();
+        let statName = args[0].toLowerCase();
+        let characterInput = args.slice(1).join(' ').toLowerCase();
+
+        // Support character-first order: !stats <character> <stat-name>
+        if (!statDisplayNames[statName] && args.length >= 2) {
+            const potentialStat = args[args.length - 1].toLowerCase();
+            if (statDisplayNames[potentialStat]) {
+                statName = potentialStat;
+                characterInput = args.slice(0, -1).join(' ').toLowerCase();
+            }
+        }
         
         console.log(`📊 Stat: ${statName}, Character input: ${characterInput}`);
         
