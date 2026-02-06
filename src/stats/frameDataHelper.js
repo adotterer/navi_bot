@@ -380,15 +380,15 @@ function createMoveEmbed(move, characterName, moveType) {
         .setTitle(`${characterName || 'Character'} - ${move['Move Name'] || 'Move'}`)
         .setDescription(`*${moveType.replace(/_/g, ' ').toUpperCase()}*`)
         .addFields(
-            { name: 'Startup', value: `-# > ${move['Startup'] || '--'}`, inline: true },
-            { name: 'Total Frames', value: `-# > ${move['Total Frames'] || '--'}`, inline: true },
-            { name: 'End Lag', value: `-# > ${move['End Lag'] || '--'}`, inline: true },
-            { name: 'Landing Lag', value: `-# > ${move['Landing Lag'] || '--'}`, inline: true },
-            { name: 'Base Damage', value: `-# > ${move['Base Damage'] || '--'}`, inline: true },
-            { name: 'On Shield', value: `-# > ${move['On Shield'] || '--'}`, inline: true },
-            { name: 'Shield Lag', value: `-# > ${move['Shield Lag'] || '--'}`, inline: true },
-            { name: 'Shield Stun', value: `-# > ${move['Shield Stun'] || '--'}`, inline: true },
-            { name: 'Active Frames', value: `-# > ${move['Active Frames'] || '--'}`, inline: true }
+            { name: '-# > Startup', value: `-# > ${move['Startup'] || '--'}`, inline: true },
+            { name: '-# > Total Frames', value: `-# > ${move['Total Frames'] || '--'}`, inline: true },
+            { name: '-# > End Lag', value: `-# > ${move['End Lag'] || '--'}`, inline: true },
+            { name: '-# > Landing Lag', value: `-# > ${move['Landing Lag'] || '--'}`, inline: true },
+            { name: '-# > Base Damage', value: `-# > ${move['Base Damage'] || '--'}`, inline: true },
+            { name: '-# > On Shield', value: `-# > ${move['On Shield'] || '--'}`, inline: true },
+            { name: '-# > Shield Lag', value: `-# > ${move['Shield Lag'] || '--'}`, inline: true },
+            { name: '-# > Shield Stun', value: `-# > ${move['Shield Stun'] || '--'}`, inline: true },
+            { name: '-# > Active Frames', value: `-# > ${move['Active Frames'] || '--'}`, inline: true }
         );
     
     // Add GIF image if available
