@@ -47,7 +47,7 @@ client.on("clientReady", () => {
     initializeScheduler(client);
 
     client.user.setPresence({
-        activities: [{ name: "⭐・ask・navi™", type: 0 }],
+        activities: [{ name: "⭐ ask・navi™", type: 0 }],
         status: "online"
     });
 });
@@ -117,7 +117,7 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!mu-q") ||
-        message.content.toLowerCase().startsWith("!muq");
+        message.content.toLowerCase().startsWith("!muq") ||  message.content.toLowerCase().startsWith("!mq");
     const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
     const isExportCommand = message.content.toLowerCase().startsWith("!export");
     const isQuestionCommand = message.content.toLowerCase().startsWith("!q ");
@@ -136,25 +136,25 @@ client.on("messageCreate", async (message) => {
 
     // MU notes/questions: anyone in ask-navi; Moderators/Legend anywhere
     if (isMuCommand && !hasAuthorizedRole && !isAskNaviChannel) {
-        await message.reply("❌ This command can only be used in the ask-navi channel unless you are a Moderator or Legend.");
+        await message.reply("❌ This command can only be used in the ask-navi channel.");
         return;
     }
 
     // FDQ: anyone in ask-navi; Moderators/Legend anywhere
     if (isFdqCommand && !hasAuthorizedRole && !isAskNaviChannel) {
-        await message.reply("❌ This command can only be used in the ask-navi channel unless you are a Moderator or Legend.");
+        await message.reply("❌ This command can only be used in the ask-navi channel.");
         return;
     }
 
     // General questions: anyone in ask-navi; Moderators/Legend anywhere
     if (isQuestionCommand && !hasAuthorizedRole && !isAskNaviChannel) {
-        await message.reply("❌ This command can only be used in the ask-navi channel unless you are a Moderator or Legend.");
+        await message.reply("❌ This command can only be used in the ask-navi channel.");
         return;
     }
 
     // Stats questions (!sq): anyone in ask-navi; Moderators/Legend anywhere
     if (isSqCommand && !hasAuthorizedRole && !isAskNaviChannel) {
-        await message.reply("❌ This command can only be used in the ask-navi channel unless you are a Moderator or Legend.");
+        await message.reply("❌ This command can only be used in the ask-navi channel.");
         return;
     }
 
