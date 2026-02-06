@@ -54,12 +54,13 @@ client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
     const channelName = message.channel?.name?.toLowerCase() || '';
-    const isAskNaviChannel = channelName.includes('ask-navi');
+    const isAskNaviChannel = channelName.includes('ask') && channelName.includes('navi');
     const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!mu-q") ||
         message.content.toLowerCase().startsWith("!muq");
+    const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
 
     if (isAskNaviChannel) {
         // Always allow katyparry messages
@@ -75,8 +76,8 @@ client.on("messageCreate", async (message) => {
             }
         }
 
-        // Allow MU commands only
-        if (!isMuCommand) {
+        // Allow MU commands and FDQ only
+        if (!isMuCommand && !isFdqCommand) {
             const hasAuthorizedRole = message.member?.roles?.cache?.some(
             role => role.name === "Moderators" || role.name === "Legend"
             );
@@ -108,40 +109,50 @@ client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
     const channelName = message.channel?.name?.toLowerCase() || '';
-    const isAskNaviChannel = channelName.includes('ask-navi');
+    const isAskNaviChannel = channelName.includes('ask') && channelName.includes('navi');
     const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!mu-q") ||
         message.content.toLowerCase().startsWith("!muq");
+    const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
+    const isExportCommand = message.content.toLowerCase().startsWith("!export");
+    const isQuestionCommand = message.content.toLowerCase().startsWith("!q ");
+    const isSqCommand = message.content.toLowerCase().startsWith("!sq ");
 
-    // ===== COMMAND GATE: MODERATORS ONLY =====
-    const isCommand = message.content.toLowerCase().startsWith("!export") ||
-        message.content.toLowerCase().startsWith("!mu-notes") ||
-        message.content.toLowerCase().startsWith("!mu") ||
-        message.content.toLowerCase().startsWith("!mu-question") ||
-        message.content.toLowerCase().startsWith("!mu-q") ||
-        message.content.toLowerCase().startsWith("!muq") ||
-        message.content.toLowerCase().startsWith("!q ") ||
-        message.content.toLowerCase().startsWith("!list-categories") ||
-        message.content.toLowerCase().startsWith("!matches-today") ||
-        message.content.toLowerCase().startsWith("!add-zelda") ||
-        message.content.toLowerCase().startsWith("!list-zeldas") ||
-        message.content.toLowerCase().startsWith("!list-thread-counts");
-    
-    // Public commands (no role check needed)
-    const isPublicCommand = message.content.toLowerCase().startsWith("!stats") ||
-        message.content.toLowerCase().startsWith("!sq ");
+    const hasAuthorizedRole = message.member?.roles?.cache?.some(
+        role => role.name === "Moderators" || role.name === "Legend"
+    );
 
-    if (isCommand && !(isAskNaviChannel && isMuCommand)) {
-        const hasAuthorizedRole = message.member?.roles?.cache?.some(
-            role => role.name === "Moderators" || role.name === "Legend"
-        );
+    // ===== PERMISSION GATES =====
+    // Export commands: Moderators + Legend only, any channel
+    if (isExportCommand && !hasAuthorizedRole) {
+        await message.reply("❌ Only Moderators or Legend members can run export commands.");
+        return;
+    }
 
-        if (!hasAuthorizedRole) {
-            await message.reply("❌ Only Moderators or Legend members can run this command.");
-            return;
-        }
+    // MU notes/questions: anyone in ask-navi; Moderators/Legend anywhere
+    if (isMuCommand && !hasAuthorizedRole && !isAskNaviChannel) {
+        await message.reply("❌ This command can only be used in the ask-navi channel unless you are a Moderator or Legend.");
+        return;
+    }
+
+    // FDQ: anyone in ask-navi; Moderators/Legend anywhere
+    if (isFdqCommand && !hasAuthorizedRole && !isAskNaviChannel) {
+        await message.reply("❌ This command can only be used in the ask-navi channel unless you are a Moderator or Legend.");
+        return;
+    }
+
+    // General questions: anyone in ask-navi; Moderators/Legend anywhere
+    if (isQuestionCommand && !hasAuthorizedRole && !isAskNaviChannel) {
+        await message.reply("❌ This command can only be used in the ask-navi channel unless you are a Moderator or Legend.");
+        return;
+    }
+
+    // Stats questions (!sq): anyone in ask-navi; Moderators/Legend anywhere
+    if (isSqCommand && !hasAuthorizedRole && !isAskNaviChannel) {
+        await message.reply("❌ This command can only be used in the ask-navi channel unless you are a Moderator or Legend.");
+        return;
     }
 
     // ===== CONVERSATIONAL REFINEMENT (reply to bot's match-up notes) =====
