@@ -291,17 +291,8 @@ function detectCharacterAndMoveInText(text, guild) {
                 };
             }
             
-            if (word.includes('air') || word.includes('tilt') || word.includes('smash') || 
-                word.includes('throw') || word.includes('special') || word === 'jab' || 
-                word === 'grab' || word === 'dash' || word === 'attack') {
-                return {
-                    character: { slug: charMatch.slug, alias: charMatch.alias },
-                    characterSlug: charMatch.slug,
-                    move: word
-                };
-            }
-            
-            // Check two-word combinations
+            // Check two-word combinations FIRST (before single-word checks)
+            // This ensures "dash attack" is caught before just "dash"
             if (i < wordsAfter.length - 1) {
                 const twoWord = `${word} ${wordsAfter[i + 1]}`;
                 if (MOVE_ABBREVIATIONS[twoWord]) {
@@ -312,7 +303,7 @@ function detectCharacterAndMoveInText(text, guild) {
                     };
                 }
                 
-                // Check for "dash attack", "dash grab", etc.
+                // Check for "dash attack", "dash grab", "neutral b", etc.
                 if ((word === 'dash' || word === 'neutral' || word === 'side' || word === 'up' || word === 'down') &&
                     (wordsAfter[i + 1].includes('attack') || wordsAfter[i + 1].includes('grab') || 
                      wordsAfter[i + 1].includes('smash') || wordsAfter[i + 1] === 'b')) {
@@ -322,6 +313,17 @@ function detectCharacterAndMoveInText(text, guild) {
                         move: twoWord
                     };
                 }
+            }
+            
+            // Now check single-word move patterns (after two-word checks)
+            if (word.includes('air') || word.includes('tilt') || word.includes('smash') || 
+                word.includes('throw') || word.includes('special') || word === 'jab' || 
+                word === 'grab') {
+                return {
+                    character: { slug: charMatch.slug, alias: charMatch.alias },
+                    characterSlug: charMatch.slug,
+                    move: word
+                };
             }
         }
     }
