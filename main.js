@@ -47,8 +47,11 @@ client.on("clientReady", () => {
     initializeScheduler(client);
 });
 
+client.user.presence.set({
+    activities: [{ name: "⭐・ask・navi™", type: 0 }],
+    status: "online"
+});
 // ========== MESSAGE HANDLERS ==========
-
 // Handler 1: "should have" → "could have" + Arena LAN warning
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
