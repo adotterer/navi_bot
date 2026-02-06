@@ -96,6 +96,7 @@ export const nicknameAliases = {
     wiifit: "wii-fit-trainer",
     yink: "young-link",
     "young link": "young-link",
+    younglink: "young-link",
     zard: "charizard",
     "zero suit samus": "zero-suit-samus",
     zss: "zero-suit-samus",

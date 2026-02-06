@@ -58,6 +58,10 @@ const MOVE_ABBREVIATIONS = {
     'pivot': 'Pivot Grab',
     'dashgrab': 'Dash Grab',
     'dash grab': 'Dash Grab',
+    "dashattack": 'Dash Attack',
+    "dash attack": 'Dash Attack',
+    "DA": 'Dash Attack',
+    "da": 'Dash Attack',
 };
 
 const frameDataCache = {};
