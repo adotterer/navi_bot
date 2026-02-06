@@ -110,10 +110,11 @@ function parseCSVLine(line) {
 }
 
 function loadCharacterFrameData(characterSlug) {
-    // Handle pipe-separated character names (e.g., "peach | daisy") - use the first one
+    // Handle pipe-separated character names (e.g., "peach | daisy", "samus︱dark samus") - use the first one
     let frameDataSlug = characterSlug;
-    if (characterSlug.includes('|')) {
-        frameDataSlug = characterSlug.split('|')[0].trim();
+    if (characterSlug.includes('|') || characterSlug.includes('︱') || characterSlug.includes('｜')) {
+        // Split on any pipe character variant
+        frameDataSlug = characterSlug.split(/[|︱｜]/)[0].trim();
     }
     
     // Pokemon Trainer characters have pt- prefix in directory names
