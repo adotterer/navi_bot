@@ -388,8 +388,8 @@ export async function handleFrameDataLookup(message, args) {
         
         const frameData = loadCharacterFrameData(parsed.characterSlug, parsed.character.alias);
         
-        // Convert slug to display name
-        const displayName = parsed.characterSlug
+        // Use the actual alias the user provided for display name, not the slug
+        const displayName = parsed.character.alias
             .split('-')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
@@ -529,7 +529,7 @@ Provide your answer:`;
             if (frameData) {
                 const found = findMove(frameData, parsed.move);
                 if (found && found.move['GIF URL'] && found.move['GIF URL'].trim()) {
-                    const displayName = parsed.characterSlug
+                    const displayName = parsed.character.alias
                         .split('-')
                         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                         .join(' ');
