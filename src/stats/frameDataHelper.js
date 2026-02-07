@@ -347,7 +347,21 @@ function parseCharacterAndMove(input, guild) {
         filteredParts = parts.slice(1);
         
         // If only "arsene" was provided, we can't proceed
-        if (filteredParts.length < 2) {
+        if (filteredParts.length < 1) {
+            return null;
+        }
+        
+        // If arsene mode and only a move is provided, auto-resolve to joker
+        if (filteredParts.length === 1) {
+            const slug = aliasMap.get('joker');
+            if (slug) {
+                return {
+                    character: { slug, alias: 'joker' },
+                    characterSlug: slug,
+                    move: filteredParts[0],
+                    arseneMode: true
+                };
+            }
             return null;
         }
     }
