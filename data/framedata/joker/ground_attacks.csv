@@ -1,11 +1,11 @@
-Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
-Jab 1,4,23,,Transitions to jab 2 on frame 7,2.0(2.7),7/7,3/3,,-16,4—5(4—5),18,https://ultimateframedata.com/hitboxes/joker/JokerJab1.gif
-Jab 2,3,23,,Transitions to jab 3 on frame 11,1.5(2.2),7/7,3/3,,-17,3—4(3—4),19,https://ultimateframedata.com/hitboxes/joker/JokerJab2.gif
-Jab 3,3,34,,,4.0(7.1),9/10,5/5,,-26,3—4(3—4),30,https://ultimateframedata.com/hitboxes/joker/JokerJab3.gif
-Forward Tilt,8/13,34,,Down-angled Forward Tilt does the most knockback of the three angles.,3.0/5.0(3.0/10.0),5/6 // 5/10,4/6 // 4/10,,**/-15(**/-11),8—9/13—15(8—9/13—19),15,https://ultimateframedata.com/hitboxes/joker/JokerFTilt.gif
-Up Tilt,8/11/14/17/20,40,,Rehit rate: 3,4.0/1.0/1.0 (4.0/1.7/3.9),5/4/4 // 5/4/9,5/2/2 // 5/*/5,First/Multi/Final,-27,8/9(11—19) [Final Hit: 20—23(20—23)],,https://ultimateframedata.com/hitboxes/joker/JokerUTilt.gif
-Down Tilt,8,37,,,6.0(13.0),6/10,6/10,,-22(-19),8—9/10—11/12—14(8—9/10—11/12—14),23,https://ultimateframedata.com/hitboxes/joker/JokerDTilt.gif
-Dash Attack,6/15,45,,,2.0/6.0 (2.0/12.0),4/6 // 4/10,3/6 // 3/7,,**/-23,6—7/15—21(--/15—21),24,https://ultimateframedata.com/hitboxes/joker/JokerDashAttack.gif
-Forward Smash,16,47,,Charge hold is frame 5,14.0(22.0),10/11,10/12,,-21,16—18(16—19),28,https://ultimateframedata.com/hitboxes/joker/JokerFSmash.gif
-Up Smash,10,51,,Charge hold is frame 4,12.0(17.0),9/12,8/10,,-32(-30),10—14(10—14),37,https://ultimateframedata.com/hitboxes/joker/JokerUSmash.gif
-Down Smash,12/16,51,,Charge hold is frame 5,12.0(18.0),9/11,8/9,,-24/-20(--/-18),12—13/16—17(12—13/16—17),34,https://ultimateframedata.com/hitboxes/joker/JokerDSmash.gif
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL,ARSENE GIF
+Jab 1,4,23,,Transitions to jab 2 on frame 7,2.0(2.7),7/7,3/3,,-16,4—5(4—5),18,https://ultimateframedata.com/hitboxes/joker/JokerJab1.gif,https://ultimateframedata.com/hitboxes/joker/JokerJab1Arsene.gif
+Jab 2,3,23,,Transitions to jab 3 on frame 11,1.5(2.2),7/7,3/3,,-17,3—4(3—4),19,https://ultimateframedata.com/hitboxes/joker/JokerJab2.gif,https://ultimateframedata.com/hitboxes/joker/JokerJab2Arsene.gif
+Jab 3,3,34,,,4.0(7.1),9/10,5/5,,-26,3—4(3—4),30,https://ultimateframedata.com/hitboxes/joker/JokerJab3.gif,https://ultimateframedata.com/hitboxes/joker/JokerJab3Arsene.gif
+Forward Tilt,8/13,34,,Down-angled Forward Tilt does the most knockback of the three angles.,3.0/5.0(3.0/10.0),5/6 // 5/10,4/6 // 4/10,,**/-15(**/-11),8—9/13—15(8—9/13—19),15,https://ultimateframedata.com/hitboxes/joker/JokerFTilt.gif,https://ultimateframedata.com/hitboxes/joker/JokerFTiltArsene.gif
+Up Tilt,8/11/14/17/20,40,,Rehit rate: 3,4.0/1.0/1.0 (4.0/1.7/3.9),5/4/4 // 5/4/9,5/2/2 // 5/*/5,First/Multi/Final,-27,8/9(11—19) [Final Hit: 20—23(20—23)],,https://ultimateframedata.com/hitboxes/joker/JokerUTilt.gif,https://ultimateframedata.com/hitboxes/joker/JokerUTiltArsene.gif
+Down Tilt,8,37,,,6.0(13.0),6/10,6/10,,-22(-19),8—9/10—11/12—14(8—9/10—11/12—14),23,https://ultimateframedata.com/hitboxes/joker/JokerDTilt.gif,https://ultimateframedata.com/hitboxes/joker/JokerDTiltArsene.gif
+Dash Attack,6/15,45,,,2.0/6.0 (2.0/12.0),4/6 // 4/10,3/6 // 3/7,,**/-23,6—7/15—21(--/15—21),24,https://ultimateframedata.com/hitboxes/joker/JokerDashAttack.gif,https://ultimateframedata.com/hitboxes/joker/JokerDashAttackArsene.gif
+Forward Smash,16,47,,Charge hold is frame 5,14.0(22.0),10/11,10/12,,-21,16—18(16—19),28,https://ultimateframedata.com/hitboxes/joker/JokerFSmash.gif,https://ultimateframedata.com/hitboxes/joker/JokerFSmashArsene.gif
+Up Smash,10,51,,Charge hold is frame 4,12.0(17.0),9/12,8/10,,-32(-30),10—14(10—14),37,https://ultimateframedata.com/hitboxes/joker/JokerUSmash.gif,https://ultimateframedata.com/hitboxes/joker/JokerUSmashArsene.gif
+Down Smash,12/16,51,,Charge hold is frame 5,12.0(18.0),9/11,8/9,,-24/-20(--/-18),12—13/16—17(12—13/16—17),34,https://ultimateframedata.com/hitboxes/joker/JokerDSmash.gif,https://ultimateframedata.com/hitboxes/joker/JokerDSmashArsene.gif

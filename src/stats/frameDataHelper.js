@@ -339,6 +339,19 @@ function parseCharacterAndMove(input, guild) {
         return null;
     }
     
+    // Check for Arsene mode flag
+    let arseneMode = false;
+    let filteredParts = parts;
+    if (parts[0].toLowerCase() === 'arsene') {
+        arseneMode = true;
+        filteredParts = parts.slice(1);
+        
+        // If only "arsene" was provided, we can't proceed
+        if (filteredParts.length < 2) {
+            return null;
+        }
+    }
+    
     // For frame data lookups, we want to allow Zelda (unlike matchup queries)
     // So we do our own resolution without the Zelda filtering
     const normalizeText = (text) => text.toLowerCase()
@@ -351,9 +364,9 @@ function parseCharacterAndMove(input, guild) {
     
     const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     
-    for (let i = 1; i < parts.length; i++) {
-        const charPart = parts.slice(0, i).join(' ');
-        const movePart = parts.slice(i).join(' ');
+    for (let i = 1; i < filteredParts.length; i++) {
+        const charPart = filteredParts.slice(0, i).join(' ');
+        const movePart = filteredParts.slice(i).join(' ');
         
         const normalizedCharPart = normalizeText(charPart);
         const aliases = Array.from(aliasMap.keys()).sort((a, b) => b.length - a.length);
@@ -365,7 +378,8 @@ function parseCharacterAndMove(input, guild) {
                 return {
                     character: { slug, alias },
                     characterSlug: slug,
-                    move: movePart
+                    move: movePart,
+                    arseneMode: arseneMode
                 };
             }
         }
@@ -374,10 +388,11 @@ function parseCharacterAndMove(input, guild) {
     return null;
 }
 
-function createMoveEmbed(move, characterName, moveType) {
+function createMoveEmbed(move, characterName, moveType, arseneMode = false) {
+    const displayName = arseneMode ? `${characterName} - Arsene` : characterName;
     const embed = new EmbedBuilder()
         .setColor('#36AAD4')
-        .setTitle(`${characterName || 'Character'} - ${move['Move Name'] || 'Move'}`)
+        .setTitle(`${displayName || 'Character'} - ${move['Move Name'] || 'Move'}`)
         .setDescription(`*${moveType.replace(/_/g, ' ').toUpperCase()}*`)
         .addFields(
             { name: 'Startup', value: `-# > ${move['Startup'] || '--'}`, inline: true },
@@ -391,9 +406,16 @@ function createMoveEmbed(move, characterName, moveType) {
             { name: 'Active Frames', value: `-# > ${move['Active Frames'] || '--'}`, inline: true }
         );
     
-    // Add GIF image if available
-    if (move['GIF URL'] && move['GIF URL'].trim()) {
-        embed.setImage(move['GIF URL']);
+    // Add GIF image - prefer Arsene GIF if in Arsene mode and available
+    let gifUrl = null;
+    if (arseneMode && move['ARSENE GIF'] && move['ARSENE GIF'].trim()) {
+        gifUrl = move['ARSENE GIF'];
+    } else if (move['GIF URL'] && move['GIF URL'].trim()) {
+        gifUrl = move['GIF URL'];
+    }
+    
+    if (gifUrl) {
+        embed.setImage(gifUrl);
     }
     
     if (move['Notes'] && move['Notes'] !== '--') {
@@ -407,7 +429,7 @@ export async function handleFrameDataLookup(message, args) {
     const input = args.join(' ');
     
     if (!input) {
-        await message.reply("❌ Usage: !fd <character> <move> (e.g., `!fd mario fair` or `!fd falco dair`)");
+        await message.reply("❌ Usage: !fd <character> <move> (e.g., `!fd mario fair` or `!fd arsene fsmash`)");
         return;
     }
     
@@ -439,7 +461,7 @@ export async function handleFrameDataLookup(message, args) {
             return;
         }
         
-        const embed = createMoveEmbed(found.move, displayName, found.moveType);
+        const embed = createMoveEmbed(found.move, displayName, found.moveType, parsed.arseneMode);
         await message.reply({ embeds: [embed] });
     } catch (error) {
         console.error('Error in handleFrameDataLookup:', error);
