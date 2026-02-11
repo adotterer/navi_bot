@@ -62,7 +62,8 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!mu-q") ||
-        message.content.toLowerCase().startsWith("!muq");
+        message.content.toLowerCase().startsWith("!muq") ||
+        message.content.toLowerCase().startsWith("!mq");
     const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
 
     if (isAskNaviChannel) {
@@ -117,7 +118,8 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
         message.content.toLowerCase().startsWith("!mu-q") ||
-        message.content.toLowerCase().startsWith("!muq") ||  message.content.toLowerCase().startsWith("!mq");
+        message.content.toLowerCase().startsWith("!muq") ||
+        message.content.toLowerCase().startsWith("!mq");
     const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
     const isExportCommand = message.content.toLowerCase().startsWith("!export");
     const isQuestionCommand = message.content.toLowerCase().startsWith("!q ");
