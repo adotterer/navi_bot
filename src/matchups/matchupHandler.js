@@ -81,9 +81,9 @@ export async function handleMatchupNotes(message) {
         const related = relatedCharacters[characterSlug];
 
         if (related && related.length > 0) {
-            await message.reply(`Watch out - that's a **${displayName}**. Pulling data from: **${characterList}**. Listen…`);
+            await message.reply(`Watch out - that's **${displayName}**. Pulling data from: **${characterList}**. Listen…`);
         } else {
-            await message.reply(`Watch out - that's a **${displayName}**. Listen…`);
+            await message.reply(`Watch out - that's **${displayName}**. Listen…`);
         }
 
         if (!messages || messages.length === 0) {
@@ -118,10 +118,13 @@ Create a comprehensive matchup summary following this format. This example is ju
 ### ❌ Avoid Immediate Shield Follow-ups
 -# - <:6symbolnavi:1341400385709019138> Do not always try to punish Cloud immediately after he hits your shield, as he tends to win close-quarters boxing situations. It is often better to hold shield, roll, or retreat. Staying grounded gives you better access to tilts and rolls to reposition safely.
 
+For "### {✅ or ❌}" use emojii's to indicate whether it's a recommended strategy or something to avoid.
+You may also use emojii's that match the title such as the following examples:
+### 🏃 Movement and Spacing 
+### ⚠️ Neutral and Ledge Awareness
+### 🛡️ Reactive Counterplay
 
--# - <:6symbolnavi:1341400385709019138> is the default icon for Navi Bot's advice bullet points
-
-you may also use these when relevant for SUB-BULLET POINTS (Stick to ✅ and ❌ as in the template):
+You may also use these when relevant for SUB-BULLET POINTS:
 
 -# - <:6symbolnavi:1341400385709019138> general/tips 
 -# - <:6acnlganon:1341460148161609930> General hazard, MU specific stuff/MU knowledge you can use against them
@@ -211,9 +214,9 @@ export async function handleMuQuestion(message) {
 
         const related = relatedCharacters[characterSlug];
         if (related && related.length > 0) {
-            await message.reply(`✨ Watch out! That's a **${displayName}**. Pulling data from: **${characterList}**. Let me search for the answer...`);
+            await message.reply(`✨ Watch out! That's **${displayName}**. Pulling data from: **${characterList}**. Let me search for the answer...`);
         } else {
-            await message.reply(`✨ Watch out! That's a **${displayName}**. Let me search for the answer...`);
+            await message.reply(`✨ Watch out! That's **${displayName}**. Let me search for the answer...`);
         }
 
         if (!messages || messages.length === 0) {
@@ -262,7 +265,13 @@ For a reference, here is example to draw from for markdown format, how to organi
 
 <:6symbolnavi:1341400385709019138> is the default icon for Navi Bot's advice bullet points
 
-you may also use these when relevant for SUB-BULLET POINTS (Stick to ✅ and ❌ as in the template):
+For "### {✅ or ❌}" use emojii's to indicate whether it's a recommended strategy or something to avoid.
+You may also use emojii's that match the title such as the following examples:
+### 🏃 Movement and Spacing 
+### ⚠️ Neutral and Ledge Awareness
+### 🛡️ Reactive Counterplay
+
+you may also use these when relevant for SUB-BULLET POINTS:
 
 -# - <:6symbolnavi:1341400385709019138> general/tips 
 -# - <:6acnlganon:1341460148161609930> General hazard, MU specific stuff/MU knowledge you can use against them
@@ -320,8 +329,8 @@ export async function handleRefinement(message, repliedMessage, client) {
         let characterName = null;
 
         for (const msg of recentMessages.values()) {
-            if (msg.author.id === client.user.id && msg.content.includes("Watch out! That's a **")) {
-                const match = msg.content.match(/Watch out! That's a \*\*(.+?)\*\*/);
+            if (msg.author.id === client.user.id && msg.content.includes("Watch out! That's **")) {
+                const match = msg.content.match(/Watch out! That's \*\*(.+?)\*\*/);
                 if (match) {
                     characterName = match[1];
                     break;
