@@ -66,7 +66,8 @@ export async function handleMatchupNotes(message) {
 
     try {
         const aliasMap = buildCharacterAliasMap(message.guild);
-        const characterMatch = resolveCharacterFromText(args[1], aliasMap);
+        const characterQuery = args.slice(1).join(" ");
+        const characterMatch = resolveCharacterFromText(characterQuery, aliasMap);
 
         if (!characterMatch) {
             await message.reply("❌ I couldn't recognize that character. Please use the character name or a known alias. Example: `!mu falco`. Specific questions use the !muq <question> command.");
