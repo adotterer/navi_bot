@@ -55,18 +55,11 @@ export async function fetchAllMessages(channel) {
                 author: msg.author.username,
                 authorId: msg.author.id,
                 content: msg.content,
-                timestamp: msg.createdAt.toISOString(),
-                messageId: msg.id
+                timestamp: msg.createdAt.toISOString()
             };
             
             // Add reply context if this message is replying to another
             if (msg.reference?.messageId) {
-                msgData.replyingTo = {
-                    messageId: msg.reference.messageId,
-                    guildId: msg.reference.guildId,
-                    channelId: msg.reference.channelId
-                };
-                
                 try {
                     let repliedMessage = replyCache.get(msg.reference.messageId);
                     if (!repliedMessage) {
