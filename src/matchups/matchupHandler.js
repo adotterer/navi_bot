@@ -4,6 +4,7 @@ import { buildCharacterAliasMap, resolveCharacterFromText, relatedCharacters } f
 import { sendSplitMessage, createSplitEmbeds } from '../shared/messageSplitter.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
 import { EmbedBuilder } from 'discord.js';
+import { buildMatchupReferenceData } from '../shared/promptDataHelper.js';
 const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
     defaultModel: process.env.GEMINI_MODEL || 'gemini-3-flash-preview'
@@ -108,6 +109,12 @@ export async function handleMatchupNotes(message) {
 
         const katyparryMessages = messages.filter(msg => msg.author === 'katyparry');
         const otherMessages = messages.filter(msg => msg.author !== 'katyparry');
+        const referenceData = buildMatchupReferenceData({
+            opponentSlug: characterSlug,
+            opponentAlias: characterMatch.alias,
+            messages,
+            question: null
+        });
 
         const prompt = `You are an expert Super Smash Bros. Ultimate analyst. Below are Discord messages discussing the Zelda vs ${displayName} matchup.
 
@@ -118,6 +125,9 @@ ${katyparryMessages.map(formatMessageForPrompt).join('\n\n')}
 
 === OTHER COMMUNITY MESSAGES ===
 ${otherMessages.map(formatMessageForPrompt).join('\n\n')}
+
+=== REFERENCE DATA (FRAME DATA + STATS) ===
+${referenceData || 'None found'}
 
 === YOUR TASK ===
 Create a comprehensive matchup summary following this format. This example is just a template - adapt the content for ${displayName}.
@@ -241,6 +251,12 @@ export async function handleMuQuestion(message) {
 
         const katyparryMessages = messages.filter(msg => msg.author === 'katyparry');
         const otherMessages = messages.filter(msg => msg.author !== 'katyparry');
+        const referenceData = buildMatchupReferenceData({
+            opponentSlug: characterSlug,
+            opponentAlias: characterMatch.alias,
+            messages,
+            question: rawQuestion
+        });
 
         const prompt = `You are an expert Super Smash Bros. Ultimate analyst. The user has a specific matchup question about Zelda vs ${displayName}.
 
@@ -254,6 +270,9 @@ ${katyparryMessages.map(formatMessageForPrompt).join('\n\n')}
 
 === OTHER COMMUNITY MESSAGES ===
 ${otherMessages.map(formatMessageForPrompt).join('\n\n')}
+
+    === REFERENCE DATA (FRAME DATA + STATS) ===
+    ${referenceData || 'None found'}
 
 RULES:
 1. Answer only using information from the messages above
