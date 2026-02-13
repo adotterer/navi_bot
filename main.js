@@ -12,6 +12,7 @@ import { checkTodaysTournaments } from './src/tournaments/dailyTournamentCheck.j
 import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaCommand.js';
 import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler.js';
 import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
+import { handleCleanup } from './src/messages/cleanupHandler.js';
 
 dotenv.config();
 
@@ -57,7 +58,8 @@ client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
     const channelName = message.channel?.name?.toLowerCase() || '';
-    const isAskNaviChannel = channelName.includes('ask') && channelName.includes('navi');
+    const normalizedChannelName = channelName.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+    const isAskNaviChannel = normalizedChannelName.includes('ask') && normalizedChannelName.includes('navi');
     const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
@@ -113,7 +115,8 @@ client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
     const channelName = message.channel?.name?.toLowerCase() || '';
-    const isAskNaviChannel = channelName.includes('ask') && channelName.includes('navi');
+    const normalizedChannelName = channelName.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+    const isAskNaviChannel = normalizedChannelName.includes('ask') && normalizedChannelName.includes('navi');
     const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
@@ -122,6 +125,8 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!mq");
     const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
     const isExportCommand = message.content.toLowerCase().startsWith("!export");
+    const isCleanupCommand = message.content.toLowerCase().startsWith("!cleanupall") ||
+        message.content.toLowerCase().startsWith("!cleanup");
     const isQuestionCommand = message.content.toLowerCase().startsWith("!q ");
     const isSqCommand = message.content.toLowerCase().startsWith("!sq ");
 
@@ -133,6 +138,12 @@ client.on("messageCreate", async (message) => {
     // Export commands: Moderators + Legend only, any channel
     if (isExportCommand && !hasAuthorizedRole) {
         await message.reply("❌ Only Moderators or Legend members can run export commands.");
+        return;
+    }
+
+    // Cleanup commands: Moderators + Legend only, any channel
+    if (isCleanupCommand && !hasAuthorizedRole) {
+        await message.reply("❌ Only Moderators or Legend members can run cleanup commands.");
         return;
     }
 
@@ -195,6 +206,17 @@ client.on("messageCreate", async (message) => {
     // ===== LIST THREAD COUNTS =====
     if (message.content.toLowerCase() === "!list-thread-counts") {
         await handleListThreadCounts(message);
+        return;
+    }
+
+    // ===== CLEANUP =====
+    if (message.content.toLowerCase().startsWith("!cleanupall")) {
+        await handleCleanup(message, client, { deleteAll: true });
+        return;
+    }
+
+    if (message.content.toLowerCase().startsWith("!cleanup")) {
+        await handleCleanup(message, client, { deleteAll: false });
         return;
     }
 
