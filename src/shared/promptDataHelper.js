@@ -253,7 +253,8 @@ function formatMoveData(found) {
         'Total Frames',
         'End Lag',
         'Landing Lag',
-        'Active Frames'
+        'Active Frames',
+        'Notes'
     ];
 
     const parts = [];
