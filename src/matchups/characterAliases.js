@@ -155,9 +155,10 @@ function escapeRegex(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function resolveCharacterFromText(text, aliasMap) {
+export function resolveCharacterFromText(text, aliasMap, options = {}) {
     const normalizedText = normalizeCharacterText(text);
     const aliases = Array.from(aliasMap.keys()).sort((a, b) => b.length - a.length);
+    const { allowZelda = false } = options;
 
     let zeldaMatch = null;
     let otherMatch = null;
@@ -177,6 +178,10 @@ export function resolveCharacterFromText(text, aliasMap) {
     // If we found a non-Zelda character, use that (ignore Zelda match)
     if (otherMatch) {
         return otherMatch;
+    }
+    // Allow Zelda-only matches when explicitly requested (e.g., ditto questions)
+    if (allowZelda && zeldaMatch) {
+        return zeldaMatch;
     }
     // If we only found Zelda, return null (user needs to specify opponent)
     return null;

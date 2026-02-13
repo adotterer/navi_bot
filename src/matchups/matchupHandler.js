@@ -226,7 +226,7 @@ export async function handleMuQuestion(message) {
 
     try {
         const aliasMap = buildCharacterAliasMap(message.guild);
-        const characterMatch = resolveCharacterFromText(rawQuestion, aliasMap);
+        const characterMatch = resolveCharacterFromText(rawQuestion, aliasMap, { allowZelda: true });
 
         if (!characterMatch) {
             await message.reply("❌ I couldn't detect a character in your question. Please mention the character name (nicknames like 'palu' or 'pika' are ok). Example: `!mu-question What should Zelda do versus Mario's fireball?`");
@@ -272,7 +272,7 @@ ${katyparryMessages.map(formatMessageForPrompt).join('\n\n')}
 === OTHER COMMUNITY MESSAGES ===
 ${otherMessages.map(formatMessageForPrompt).join('\n\n')}
 
-    === REFERENCE DATA (FRAME DATA + STATS) ===
+=== REFERENCE DATA (FRAME DATA + STATS) ===
     ${referenceData || 'None found'}
 
 RULES:
