@@ -177,6 +177,7 @@ Rules:
 14. Do NOT add any blank lines between bullet pairs, between bullets and sections, or between sections. Keep compact formatting throughout with no extra empty lines.
 15. Do NOT mention any usernames or quote users. Present all advice as Navi Bot's own guidance (even if informed by those messages).
 16. Any hyperlinks should be surrounded by <> so that they do not embed in Discord. example <https://www.start.gg/...>
+17. When a move is mentioned and reference frame data exists, include only the most relevant values inline in parentheses (e.g., Startup, Active, On Shield). Keep it brief and do not dump full tables.
 
 Generate the matchup summary now:`;
 
@@ -283,6 +284,7 @@ RULES:
 6. Do NOT add any blank lines between bullet pairs, between bullets and sections, or between sections. Keep compact formatting throughout with no extra empty lines.
 7. Do NOT mention any usernames or quote users. Present all advice as Navi Bot's own guidance (even if informed by those messages).
 8. Any hyperlinks should be surrounded by <> so that they do not embed in Discord. example <https://www.start.gg/...>
+9. When a move is mentioned and reference frame data exists, include only the most relevant values inline in parentheses (e.g., Startup, Active, On Shield). Keep it brief and do not dump full tables.
 
 For a reference, here is example to draw from for markdown format, how to organize bullet points and headings, etc. The actual content is just copy paste from our styleguide:
 
