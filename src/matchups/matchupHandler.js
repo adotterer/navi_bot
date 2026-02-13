@@ -9,6 +9,20 @@ const genAI = new GoogleGenAI({
     defaultModel: process.env.GEMINI_MODEL || 'gemini-3-flash-preview'
 });
 
+function formatMessageForPrompt(msg) {
+    let output = `${msg.author}: ${msg.content}`;
+
+    if (msg.replyingToContent) {
+        const replyMeta = [];
+        if (msg.replyingToAuthor) replyMeta.push(msg.replyingToAuthor);
+        if (msg.replyingToTimestamp) replyMeta.push(msg.replyingToTimestamp);
+        const replyLabel = replyMeta.length > 0 ? replyMeta.join(" | ") : "unknown";
+        output += `\nReplying to ${replyLabel}: ${msg.replyingToContent}`;
+    }
+
+    return output;
+}
+
 /**
  * Fetches matchup data for a character and all related characters.
  * @param {string} characterSlug - The main character slug
@@ -100,10 +114,10 @@ export async function handleMatchupNotes(message) {
     IMPORTANT: Messages from user 'katyparry' are the most authoritative and should be heavily weighted in your summary. These reflect research & community messages.
 
 === PRIORITY MESSAGES (from katyparry) ===
-${katyparryMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
+${katyparryMessages.map(formatMessageForPrompt).join('\n\n')}
 
 === OTHER COMMUNITY MESSAGES ===
-${otherMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
+${otherMessages.map(formatMessageForPrompt).join('\n\n')}
 
 === YOUR TASK ===
 Create a comprehensive matchup summary following this format. This example is just a template - adapt the content for ${displayName}.
@@ -236,10 +250,10 @@ QUESTION:
 IMPORTANT: Messages from user 'katyparry' are the most authoritative and should be heavily weighted in your answer. These reflect research & community messages.
 
 === PRIORITY MESSAGES (from katyparry) ===
-${katyparryMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
+${katyparryMessages.map(formatMessageForPrompt).join('\n\n')}
 
 === OTHER COMMUNITY MESSAGES ===
-${otherMessages.map(msg => `${msg.author}: ${msg.content}`).join('\n\n')}
+${otherMessages.map(formatMessageForPrompt).join('\n\n')}
 
 RULES:
 1. Answer only using information from the messages above
