@@ -443,7 +443,7 @@ export async function handleFrameDataLookup(message, args) {
     const input = args.join(' ');
     
     if (!input) {
-        await message.reply("❌ Usage: !fd <character> <move> (e.g., `!fd mario fair` or `!fd arsene fsmash`)");
+        await message.reply(`❌ Usage: \`!fd <character> <move>\` (e.g., \`!fd mario fair\` or \`!fd arsene fsmash\`). For full docs, see https://discord.com/channels/1010002260786430052/1471283116193873983/1471283349824733391`);
         return;
     }
     
@@ -451,7 +451,7 @@ export async function handleFrameDataLookup(message, args) {
         const parsed = parseCharacterAndMove(input, message.guild);
         
         if (!parsed) {
-            await message.reply("❌ Character not recognized. Try: `!fd mario fair`");
+            await message.reply(`❌ Character not recognized. Try: \`!fd mario fair\`. For full docs, see https://discord.com/channels/1010002260786430052/1471283116193873983/1471283349824733391`);
             return;
         }
         
@@ -471,7 +471,7 @@ export async function handleFrameDataLookup(message, args) {
         const found = findMove(frameData, parsed.move);
         
         if (!found) {
-            await message.reply(`❌ Move "${parsed.move}" not found for ${displayName}.`);
+            await message.reply(`❌ Move "${parsed.move}" not found for ${displayName}. For full docs, see https://discord.com/channels/1010002260786430052/1471283116193873983/1471283349824733391`);
             return;
         }
         
@@ -553,7 +553,7 @@ function buildFrameDataContext(question = '', guild = null, limit = 10) {
 
 export async function handleFrameDataQuestion(message, question) {
     if (!question || question.trim().length === 0) {
-        await message.reply("❌ Usage: !fdq <your question about frame data>");
+        await message.reply(`❌ Usage: \`!fdq <your question about frame data>\`. For full docs, see https://discord.com/channels/1010002260786430052/1471283116193873983/1471283349824733391`);
         return;
     }
 

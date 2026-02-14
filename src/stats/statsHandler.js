@@ -133,7 +133,7 @@ export async function handleStatsLookup(message, args) {
         
         if (args.length < 2) {
             const availableStats = Object.keys(statDisplayNames).join(', ');
-            return message.reply(`Usage: \`!stats <stat-name> <character>\` or \`!stats <character> <stat-name>\` or \`!stats <character> <move>\`\nExample: \`!stats air-acceleration incin\`, \`!stats peach gravity\`, or \`!stats mario fair\`\n\n**Available stats:**\n${availableStats}`);
+            return message.reply(`❌ Usage: \`!stats <stat-name> <character>\` or \`!stats <character> <stat-name>\`\nExample: \`!stats air-acceleration falco\` or \`!stats peach gravity\`. For full docs, see https://discord.com/channels/1010002260786430052/1471283194706788362/1471283541357756590`);
         }
         
         // Try to detect if this is a frame data query (character + move)
@@ -228,7 +228,7 @@ export async function handleStatsLookup(message, args) {
         
         if (!resolvedSlug) {
             console.log(`📊 Character not found. Alias map has:`, Array.from(aliasMap.keys()).slice(0, 10));
-            return message.reply(`❌ Character "${characterInput}" not recognized. Try using a character name or nickname.`);
+            return message.reply(`❌ Character not recognized. Try using a character name or nickname. Example: \`!stats falco air-speed\`. For full docs, see https://discord.com/channels/1010002260786430052/1471283194706788362/1471283541357756590`);
         }
         
         // Read the CSV
@@ -238,7 +238,7 @@ export async function handleStatsLookup(message, args) {
         
         if (!csvData) {
             const availableStats = Object.keys(statDisplayNames).join(', ');
-            return message.reply(`❌ Stat "${statName}" not found.\n\n**Available stats:**\n${availableStats}`);
+            return message.reply(`❌ Stat not found.\n\n**Available stats:**\n${availableStats}\n\nExample: \`!stats air-acceleration falco\`. For full docs, see https://discord.com/channels/1010002260786430052/1471283194706788362/1471283541357756590`);
         }
         
         // Find the character in the data
@@ -280,7 +280,7 @@ export async function handleStatsLookup(message, args) {
 // Handle !sq <question> - AI-powered stats questions
 export async function handleStatsQuestion(message, question) {
     if (!question || question.trim().length === 0) {
-        return message.reply('Usage: `!sq <question>`\nExample: `!sq who has faster air acceleration, zelda or mii gunner?`');
+        return message.reply(`❌ Usage: \`!sq <question>\`\nExample: \`!sq who has the fastest air acceleration?\`. For full docs, see https://discord.com/channels/1010002260786430052/1471283194706788362/1471283541357756590`);
     }
     
     // Send status message to let user know we're working on it

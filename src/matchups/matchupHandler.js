@@ -85,7 +85,7 @@ export async function handleMatchupNotes(message) {
         const characterMatch = resolveCharacterFromText(characterQuery, aliasMap);
 
         if (!characterMatch) {
-            await message.reply("❌ I couldn't recognize that character. Please use the character name or a known alias. Example: !mu falco. For full docs, see https://discord.com/channels/1010002260786430052/1468015613711482974/1471297119574032486");
+            await message.reply("❌ I couldn't recognize that character. Please use the character name or a known alias. Example: \`!mu falco\`. For full docs, see https://discord.com/channels/1010002260786430052/1468015613711482974/1471297119574032486");
             return;
         }
 
@@ -229,7 +229,7 @@ export async function handleMuQuestion(message) {
         const characterMatch = resolveCharacterFromText(rawQuestion, aliasMap, { allowZelda: true });
 
         if (!characterMatch) {
-            await message.reply("❌ I couldn't detect a character in your question. Please mention the character name (nicknames like 'palu' or 'pika' are ok). Example: !mq What should Zelda do versus Mario's fireball? For full docs, see https://discord.com/channels/1010002260786430052/1468015613711482974/1471297119574032486");
+            await message.reply("❌ I couldn't detect a character in your question. Please mention the character name (nicknames like 'palu' or 'pika' are ok). Example: \`!mq What should Zelda do versus Mario's fireball?\` For full docs, see https://discord.com/channels/1010002260786430052/1468015613711482974/1471297119574032486");
             return;
         }
 
