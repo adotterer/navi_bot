@@ -1,5 +1,8 @@
 import { nicknameAliases } from '../matchups/characterAliases.js';
-import { sendSplitMessage } from '../shared/messageSplitter.js';
+import { createSplitEmbeds } from '../shared/messageSplitter.js';
+import { EmbedBuilder } from 'discord.js';
+
+const INFO_EMBED_COLOR = '#36AAD4';
 
 const DOCS_LINES = [
     '📌 **Navi Bot Docs**',
@@ -17,30 +20,53 @@ const DOCS_LINES = [
 ];
 
 const FAQ_LINES = [
-    '🧠 **How answers are generated** *(for `!mq`, `!fdq`, `!sq`)*',
+    '🧠 **Navi Bot FAQ — How answers are generated**',
     '',
-    '**`!mq` (matchup questions)**',
-    '• Uses archived matchup notes + trusted community messages',
+    '**Matchup questions** — `!mq`, `!muq`, `!mu-q`, `!mu-question`',
+    '• Uses archived matchup notes + trusted community matchup messages',
     '• Adds relevant character stats + move frame data when a move is mentioned',
-    '• If nothing in the notes answers the question, it will say so',
+    '• If the source notes do not answer your question, it will explicitly say so',
     '',
-    '**`!fdq` (frame data questions)**',
+    '**Frame data questions** — `!fdq`',
     '• Uses the frame data database',
     '• Answers are drawn only from that content',
     '',
-    '**`!sq` (stats questions)**',
+    '**Stats questions** — `!sq`',
     '• Pulls directly from the stats database',
     '• Returns the requested stats for the character',
     '',
-    'Note: The bot does not make up info—if it is not in the sources, it will not claim it.'
+    '**Source policy**',
+    '• The bot does not make up info—if it is not in the sources, it will not claim it',
+    '• When data is missing or unclear, it should respond with that limitation',
+    '',
+    '**Quick examples**',
+    '• `!mq what beats Wolf blaster?`',
+    '• `!fdq is Cloud bair safe on shield?`',
+    '• `!sq what is Sheik run speed?`',
+    '',
+    'Need command docs/threads? Use `!docs`.',
+    'Need all character aliases? Use `!aliases`.'
 ];
 
+async function sendSplitEmbedMessage(message, text) {
+    const embeds = createSplitEmbeds(EmbedBuilder, text, INFO_EMBED_COLOR);
+
+    for (let index = 0; index < embeds.length; index += 10) {
+        const batch = embeds.slice(index, index + 10);
+        if (index === 0) {
+            await message.reply({ embeds: batch });
+        } else {
+            await message.channel.send({ embeds: batch });
+        }
+    }
+}
+
 export async function handleDocs(message) {
-    await sendSplitMessage(message, DOCS_LINES.join('\n'), true);
+    await sendSplitEmbedMessage(message, DOCS_LINES.join('\n'));
 }
 
 export async function handleFaq(message) {
-    await sendSplitMessage(message, FAQ_LINES.join('\n'), true);
+    await sendSplitEmbedMessage(message, FAQ_LINES.join('\n'));
 }
 
 export async function handleAliases(message) {
@@ -58,5 +84,5 @@ export async function handleAliases(message) {
         ...aliases.map(alias => `• ${alias} → ${nicknameAliases[alias]}`)
     ];
 
-    await sendSplitMessage(message, lines.join('\n'), true);
+    await sendSplitEmbedMessage(message, lines.join('\n'));
 }
