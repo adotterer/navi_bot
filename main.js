@@ -49,7 +49,7 @@ client.on("clientReady", () => {
     initializeScheduler(client);
 
     client.user.setPresence({
-        activities: [{ name: "⭐ ask・navi™", type: 0 }],
+        activities: [{ name: "Use !docs, !faq, !aliases", type: 0 }],
         status: "online"
     });
 });
