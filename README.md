@@ -83,6 +83,16 @@ Shows message counts for each matchup channel using the S3 JSON files.
 
 ---
 
+### `!faq`
+Lists pinned documentation threads for frame data, stats, and MU commands, and points to the alias command.
+
+---
+
+### `!aliases`
+Lists all character nickname aliases in alphabetical order.
+
+---
+
 ### `!list-categories`
 Lists server categories or channels inside a category.
 

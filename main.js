@@ -13,6 +13,7 @@ import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaComma
 import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler.js';
 import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
 import { handleCleanup } from './src/messages/cleanupHandler.js';
+import { handleFaq, handleAliases } from './src/messages/faqAndAliasHandler.js';
 
 dotenv.config();
 
@@ -129,6 +130,8 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!cleanup");
     const isQuestionCommand = message.content.toLowerCase().startsWith("!q ");
     const isSqCommand = message.content.toLowerCase().startsWith("!sq ");
+    const isFaqCommand = message.content.toLowerCase() === "!faq";
+    const isAliasesCommand = message.content.toLowerCase() === "!aliases";
 
     const hasAuthorizedRole = message.member?.roles?.cache?.some(
         role => role.name === "Moderators" || role.name === "Legend"
@@ -168,6 +171,17 @@ client.on("messageCreate", async (message) => {
     // Stats questions (!sq): anyone in ask-navi; Moderators/Legend anywhere
     if (isSqCommand && !hasAuthorizedRole && !isAskNaviChannel) {
         await message.reply("❌ This command can only be used in the ask-navi channel.");
+        return;
+    }
+
+    // FAQ + alias commands are allowed for everyone in any channel
+    if (isFaqCommand) {
+        await handleFaq(message);
+        return;
+    }
+
+    if (isAliasesCommand) {
+        await handleAliases(message);
         return;
     }
 
