@@ -27,11 +27,17 @@
 ### Data QA
 - `!list-thread-counts`
   - Shows message counts for each matchup channel using S3 JSON files.
-- `!faq`
+- `!docs`
   - Lists pinned docs and helper references:
     - Frame data documentation: https://discord.com/channels/1010002260786430052/1471283116193873983/1471283349824733391
     - Stats documentation: https://discord.com/channels/1010002260786430052/1471283194706788362/1471283541357756590
     - MU commands documentation (Farore's or Nayru's subscription required): https://discord.com/channels/1010002260786430052/1468015613711482974/1471297119574032486
+- `!faq`
+  - Explains how responses are generated for:
+    - `!mq` matchup questions (archived notes + trusted messages, with stats/frame data when relevant)
+    - `!fdq` frame data questions (frame data database only)
+    - `!sq` stats questions (stats database only)
+  - Notes that the bot will not claim information not present in source data.
 - `!aliases`
   - Lists all character nickname aliases in alphabetical order.
 

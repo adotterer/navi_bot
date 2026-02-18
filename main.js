@@ -13,7 +13,7 @@ import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaComma
 import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler.js';
 import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
 import { handleCleanup } from './src/messages/cleanupHandler.js';
-import { handleFaq, handleAliases } from './src/messages/faqAndAliasHandler.js';
+import { handleDocs, handleFaq, handleAliases } from './src/messages/faqAndAliasHandler.js';
 
 dotenv.config();
 
@@ -130,6 +130,7 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!cleanup");
     const isQuestionCommand = message.content.toLowerCase().startsWith("!q ");
     const isSqCommand = message.content.toLowerCase().startsWith("!sq ");
+    const isDocsCommand = message.content.toLowerCase() === "!docs";
     const isFaqCommand = message.content.toLowerCase() === "!faq";
     const isAliasesCommand = message.content.toLowerCase() === "!aliases";
 
@@ -174,7 +175,12 @@ client.on("messageCreate", async (message) => {
         return;
     }
 
-    // FAQ + alias commands are allowed for everyone in any channel
+    // Docs/FAQ + alias commands are allowed for everyone in any channel
+    if (isDocsCommand) {
+        await handleDocs(message);
+        return;
+    }
+
     if (isFaqCommand) {
         await handleFaq(message);
         return;

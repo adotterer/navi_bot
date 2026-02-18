@@ -83,8 +83,13 @@ Shows message counts for each matchup channel using the S3 JSON files.
 
 ---
 
-### `!faq`
+### `!docs`
 Lists pinned documentation threads for frame data, stats, and MU commands, and points to the alias command.
+
+---
+
+### `!faq`
+Explains how answers are generated for `!mq`, `!fdq`, and `!sq`.
 
 ---
 

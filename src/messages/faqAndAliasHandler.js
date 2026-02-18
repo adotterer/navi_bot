@@ -1,8 +1,8 @@
 import { nicknameAliases } from '../matchups/characterAliases.js';
 import { sendSplitMessage } from '../shared/messageSplitter.js';
 
-const FAQ_LINES = [
-    '📌 **Navi Bot FAQ**',
+const DOCS_LINES = [
+    '📌 **Navi Bot Docs**',
     '',
     '• **Frame data documentation:**',
     'https://discord.com/channels/1010002260786430052/1471283116193873983/1471283349824733391',
@@ -15,6 +15,29 @@ const FAQ_LINES = [
     '',
     '• **Character aliases:** Use `!aliases` to view all aliases in alphabetical order.'
 ];
+
+const FAQ_LINES = [
+    '🧠 **How answers are generated** *(for `!mq`, `!fdq`, `!sq`)*',
+    '',
+    '**`!mq` (matchup questions)**',
+    '• Uses archived matchup notes + trusted community messages',
+    '• Adds relevant character stats + move frame data when a move is mentioned',
+    '• If nothing in the notes answers the question, it will say so',
+    '',
+    '**`!fdq` (frame data questions)**',
+    '• Uses the frame data database',
+    '• Answers are drawn only from that content',
+    '',
+    '**`!sq` (stats questions)**',
+    '• Pulls directly from the stats database',
+    '• Returns the requested stats for the character',
+    '',
+    'Note: The bot does not make up info—if it is not in the sources, it will not claim it.'
+];
+
+export async function handleDocs(message) {
+    await sendSplitMessage(message, DOCS_LINES.join('\n'), true);
+}
 
 export async function handleFaq(message) {
     await sendSplitMessage(message, FAQ_LINES.join('\n'), true);
