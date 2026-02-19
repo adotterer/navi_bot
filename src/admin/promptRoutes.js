@@ -117,14 +117,15 @@ function promptsListPage(list) {
 
 function promptEditPage(id, meta, body, opts = {}) {
     const variables = meta.variables || [];
+    const pillColors = ['rebeccapurple', 'coral', 'darkcyan', 'mediumseagreen', 'darkorange', 'mediumpurple', 'steelblue', 'indianred', 'teal', 'chocolate'];
     const varPills = variables
-        .map((v) => {
+        .map((v, i) => {
             const name = typeof v === 'string' ? v : v.name;
             const desc = typeof v === 'string' ? '' : (v.description || '');
-            return `<button type="button" class="insert-var rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-mono text-slate-700 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-800 transition-colors" data-var="${escapeHtml(name)}" title="${escapeHtml(desc)}">&#123;&#123;${escapeHtml(name)}&#125;&#125;</button>`;
+            const color = pillColors[i % pillColors.length];
+            return `<button type="button" class="insert-var rounded-lg border px-3 py-1.5 text-sm font-mono text-white transition-colors hover:opacity-90" style="background-color:${color};border-color:${color}" data-var="${escapeHtml(name)}" title="${escapeHtml(desc)}">&#123;&#123;${escapeHtml(name)}&#125;&#125;</button>`;
         })
         .join('');
-    const varNames = variables.map((v) => (typeof v === 'string' ? v : v.name));
     const varsSection =
         variables.length > 0
             ? `
@@ -159,10 +160,7 @@ function promptEditPage(id, meta, body, opts = {}) {
       <form id="prompt-form" method="post" action="/admin/prompts/${escapeHtml(id)}" class="space-y-4">
         <div>
           <label for="prompt-body" class="block text-sm font-medium text-slate-700 mb-2">Template body</label>
-          <div id="prompt-body-wrap" class="prompt-editor-wrap relative rounded-xl border border-slate-300 bg-white focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 min-h-[320px] overflow-hidden">
-            <div id="prompt-highlight" class="prompt-highlight-layer absolute inset-0 overflow-auto px-4 py-3 font-mono text-sm text-slate-900 whitespace-pre-wrap break-words pointer-events-none" aria-hidden="true"></div>
-            <textarea id="prompt-body" name="body" rows="28" class="prompt-textarea w-full font-mono text-sm px-4 py-3 resize-y min-h-[320px] bg-transparent text-transparent caret-slate-900 placeholder-slate-400 focus:outline-none absolute inset-0 overflow-auto" placeholder="Prompt text with {{variables}}...">${escapeHtml(body)}</textarea>
-          </div>
+          <textarea id="prompt-body" name="body" rows="28" class="w-full font-mono text-sm rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none resize-y min-h-[320px]" placeholder="Prompt text with {{variables}}...">${escapeHtml(body)}</textarea>
         </div>
       </form>
       <form method="post" action="/admin/prompts/${escapeHtml(id)}/reset" class="mt-6 pt-6 border-t border-slate-200">
@@ -171,66 +169,19 @@ function promptEditPage(id, meta, body, opts = {}) {
     </div>
     <style>
       #prompt-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
-      .prompt-editor-wrap .prompt-textarea { z-index: 1; }
-      .prompt-editor-wrap .prompt-highlight-layer { z-index: 0; }
-      .prompt-var-0{color:#dc2626}.prompt-var-1{color:#ea580c}.prompt-var-2{color:#ca8a04}.prompt-var-3{color:#059669}.prompt-var-4{color:#0891b2}.prompt-var-5{color:#2563eb}.prompt-var-6{color:#7c3aed}.prompt-var-7{color:#c026d3}.prompt-var-unknown{color:#64748b}
     </style>
     <script>
       (function(){
         var ta = document.getElementById('prompt-body');
         var form = document.getElementById('prompt-form');
-        var highlightEl = document.getElementById('prompt-highlight');
-        var varNames = ${JSON.stringify(varNames)};
-        var rainbowMax = 8;
-        function varColorIndex(name) {
-          var i = varNames.indexOf(name);
-          return i >= 0 ? i % rainbowMax : -1;
-        }
-        function escapeHtml(s) {
-          var d = document.createElement('div');
-          d.textContent = s;
-          return d.innerHTML;
-        }
-        function highlightText(text) {
-          if (!text) return '';
-          var re = /\{\{([^}]*)\}\}/g;
-          var parts = [];
-          var last = 0;
-          var m;
-          while ((m = re.exec(text)) !== null) {
-            parts.push({ type: 'plain', s: text.slice(last, m.index) });
-            parts.push({ type: 'var', name: m[1].trim(), raw: m[0] });
-            last = m.index + m[0].length;
-          }
-          parts.push({ type: 'plain', s: text.slice(last) });
-          var out = '';
-          for (var i = 0; i < parts.length; i++) {
-            var p = parts[i];
-            if (p.type === 'plain') out += escapeHtml(p.s);
-            else {
-              var ci = varColorIndex(p.name);
-              var cls = ci >= 0 ? 'prompt-var prompt-var-' + ci : 'prompt-var prompt-var-unknown';
-              out += '<span class="' + cls + '">' + escapeHtml(p.raw) + '</span>';
-            }
-          }
-          return out;
-        }
-        function updateHighlight() {
-          if (highlightEl) highlightEl.innerHTML = highlightText(ta ? ta.value : '');
-        }
-        function syncScroll() {
-          if (highlightEl && ta) { highlightEl.scrollTop = ta.scrollTop; highlightEl.scrollLeft = ta.scrollLeft; }
-        }
         if (!ta || !form) return;
         var unsavedReminder = document.getElementById('prompt-unsaved-reminder');
         var dirty = false;
         function markDirty() { dirty = true; if (unsavedReminder) unsavedReminder.classList.remove('hidden'); }
         function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.add('hidden'); }
         function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden'); }
-        ta.addEventListener('input', function(){ updateHighlight(); syncScroll(); markDirty(); });
+        ta.addEventListener('input', markDirty);
         ta.addEventListener('change', markDirty);
-        ta.addEventListener('scroll', syncScroll);
-        updateHighlight();
         ta.addEventListener('blur', showReminder);
         form.addEventListener('submit', function() { clearDirty(); });
         document.addEventListener('keydown', function(e) {
@@ -250,8 +201,6 @@ function promptEditPage(id, meta, body, opts = {}) {
           ta.value = ta.value.slice(0, start) + insert + ta.value.slice(end);
           ta.selectionStart = ta.selectionEnd = start + insert.length;
           ta.focus();
-          updateHighlight();
-          syncScroll();
           markDirty();
         });
       })();
