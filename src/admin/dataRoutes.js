@@ -244,17 +244,23 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
         <p class="text-slate-600 text-sm mt-1">Edit cells below; click <strong>Save to S3</strong> to upload.</p>
         ${savedBanner}
       </div>
-      <form id="csv-form" method="post" action="${saveAction}" class="flex flex-1 flex-col min-h-0 flex-shrink-0">
+      <form id="csv-form" method="post" action="${saveAction}" class="flex flex-1 flex-col min-h-0 flex-shrink-0 pb-20">
         <textarea id="csv-body" name="body" hidden aria-hidden="true"></textarea>
-        <div id="csv-unsaved-reminder" class="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-2 mb-3 flex-shrink-0">You have unsaved changes — click <strong>Save to S3</strong> when you're done.</div>
         <div id="csv-spreadsheet-wrap" class="flex-1 min-h-0 min-w-0 overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200/50">
           <table id="csv-grid" class="csv-grid border-collapse"></table>
         </div>
-        <div class="flex flex-wrap gap-3 pt-4 pb-1 flex-shrink-0">
-          <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-          <a href="${backUrl}" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
-        </div>
       </form>
+      <div id="csv-action-bar" class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+        <div class="max-w-[85rem] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div id="csv-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
+          <div id="csv-unsaved-reminder-placeholder" class="text-slate-400 text-sm"></div>
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
+            <button type="submit" form="csv-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+            <a href="${backUrl}" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
+          </div>
+        </div>
+      </div>
     </div>
     <style>
       main:has(.csv-edit-layout) { max-width: 85rem; }
@@ -274,8 +280,6 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
       .csv-grid .cell-gif .gif-filename { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
       .csv-grid .cell-move-name span { padding: 0.25rem 0; }
       .csv-grid tbody tr:first-child td span { padding: 0.625rem 0.875rem; padding-left: calc(0.875rem + 1px); }
-      #csv-unsaved-reminder { display: none; }
-      #csv-unsaved-reminder.visible { display: block; }
     </style>
     <script>
 (function(){
@@ -370,8 +374,13 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
     return last || u;
   }
   function markDirty() { dirty = true; }
-  function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.add('visible'); }
-  function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.remove('visible'); }
+  function showReminder() {
+    if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden');
+  }
+  function clearDirty() {
+    dirty = false;
+    if (unsavedReminder) unsavedReminder.classList.add('hidden');
+  }
 
   function renderGrid(rows) {
     gridEl.innerHTML = '';
@@ -481,6 +490,13 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
     clearDirty();
     textarea.value = gridToCSV();
     form.submit();
+  });
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else { clearDirty(); textarea.value = gridToCSV(); form.submit(); }
+    }
   });
 })();
     </script>
