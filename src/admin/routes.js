@@ -1,0 +1,107 @@
+/**
+ * Admin routes: login, logout, dashboard. All except login require auth.
+ */
+import express from 'express';
+import { requireAdmin, checkLogin } from './auth.js';
+import { promptRoutes } from './promptRoutes.js';
+import { dataRoutes } from './dataRoutes.js';
+import { adminHead, adminNav, adminContainer, escapeHtml } from './layout.js';
+
+const router = express.Router();
+
+// ----- Login (public) -----
+router.get('/login', (req, res) => {
+    if (req.session && req.session.admin) {
+        return res.redirect('/admin');
+    }
+    res.send(loginPage());
+});
+
+router.post('/login', express.urlencoded({ extended: true }), (req, res) => {
+    const { username, password } = req.body || {};
+    if (checkLogin(username, password)) {
+        req.session.admin = true;
+        return res.redirect('/admin');
+    }
+    res.status(401).send(loginPage({ error: 'Invalid username or password.' }));
+});
+
+router.post('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/admin/login');
+    });
+});
+
+// ----- Dashboard (protected) -----
+router.get('/', requireAdmin, (req, res) => {
+    res.send(dashboardPage());
+});
+
+// Mount sub-routers (all protected)
+router.use('/prompts', requireAdmin, promptRoutes);
+router.use('/data', requireAdmin, dataRoutes);
+
+function loginPage(opts = {}) {
+    const error = opts.error
+        ? `<div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">${escapeHtml(opts.error)}</div>`
+        : '';
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>${adminHead('Login')}</head>
+<body class="min-h-screen bg-slate-50 text-slate-900">
+  <div class="min-h-screen flex flex-col items-center justify-center px-4">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-semibold text-slate-800">Navi Admin</h1>
+        <p class="text-slate-500 text-sm mt-1">Sign in to edit prompts and data</p>
+      </div>
+      ${error}
+      <form method="post" action="/admin/login" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
+        <div>
+          <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
+          <input id="username" type="text" name="username" value="admin" autocomplete="username"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+        </div>
+        <div>
+          <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+          <input id="password" type="password" name="password" autocomplete="current-password"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+        </div>
+        <button type="submit" class="w-full rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-4 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Log in</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function dashboardPage() {
+    const content = `
+  ${adminNav('dashboard')}
+  ${adminContainer(`
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-2xl font-semibold text-slate-800">Dashboard</h1>
+      <form method="post" action="/admin/logout"><button type="submit" class="text-sm text-slate-500 hover:text-slate-700 font-medium">Log out</button></form>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <a href="/admin/prompts" class="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group">
+        <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Edit prompts</h2>
+        <p class="mt-2 text-sm text-slate-500">Gemini AI prompt templates for !mu, !mq, !q, and more.</p>
+        <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>
+      </a>
+      <a href="/admin/data" class="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group">
+        <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Edit data</h2>
+        <p class="mt-2 text-sm text-slate-500">Stats and framedata CSV files used by the bot.</p>
+        <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>
+      </a>
+    </div>
+  `)}
+`;
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>${adminHead('Dashboard')}</head>
+<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+</html>`;
+}
+
+export { router as adminRouter };

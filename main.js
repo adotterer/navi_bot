@@ -1,5 +1,4 @@
 import { Client, GatewayIntentBits } from "discord.js";
-import express from 'express';
 import dotenv from 'dotenv';
 
 // Import handlers
@@ -20,13 +19,10 @@ dotenv.config();
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN || '';
 
 // ========== EXPRESS SERVER SETUP ==========
-const app = express();
-const PORT = process.env.PORT || 8080;
+import { createApp } from './src/app.js';
 
-app.use('/exports', express.static('.'));
-app.get('/', (req, res) => {
-    res.send('Navi Bot is running! 🧚');
-});
+const app = createApp();
+const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
     console.log(`🌐 HTTP server running on port ${PORT}`);

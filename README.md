@@ -149,6 +149,15 @@ npm install
 npm run dev
 ```
 
+### Local admin testing (Express only, no Discord)
+To test the admin UI (login, edit prompts, edit data) locally **without** starting the Discord bot or using the Discord token:
+
+```bash
+npm run admin
+```
+
+This runs only the Express server (default port **8081**). Open `http://localhost:8081/admin`, log in with `ADMIN_USERNAME` / `ADMIN_PASSWORD` (and set `SESSION_SECRET` in `.env`). Prompt and CSV edits are stored in **S3** (`admin/prompts/`, `admin/data/stats/`, `admin/data/framedata/`), so ensure `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `S3_BUCKET_NAME` are set if you want to test saving. Use `npm run dev:admin` for auto-restart during admin UI development.
+
 ### Elastic Beanstalk Deployment
 ```bash
 git add .

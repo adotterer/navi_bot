@@ -1,35 +1,67 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 
+// Env names: prefer .env.example (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME)
+const AWS_REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-west-1';
+const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || process.env.BUCKET_NAME;
+const ACCESS_KEY = process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY;
+const SECRET_KEY = process.env.AWS_SECRET_ACCESS_KEY || process.env.SECRET_ACCESS_KEY || process.env.AWS_SECRET_KEY;
+
 const s3Client = new S3Client({
-    region: process.env.AWS_REGION || 'us-west-1',
+    region: AWS_REGION,
     credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+        accessKeyId: ACCESS_KEY,
+        secretAccessKey: SECRET_KEY
     }
 });
 
 export async function uploadToS3(filename, fileContent) {
     const command = new PutObjectCommand({
-        Bucket: process.env.S3_BUCKET_NAME,
+        Bucket: S3_BUCKET_NAME,
         Key: filename,
         Body: fileContent,
         ContentType: 'application/json'
     });
     
     await s3Client.send(command);
-    const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${filename}`;
+    const url = `https://${S3_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${filename}`;
     return url;
 }
 
 export async function fetchFromS3(filename) {
     const command = new GetObjectCommand({
-        Bucket: process.env.S3_BUCKET_NAME,
+        Bucket: S3_BUCKET_NAME,
         Key: filename
     });
     
     const response = await s3Client.send(command);
     const str = await response.Body.transformToString();
     return JSON.parse(str);
+}
+
+/** Fetch raw string from S3 (for prompts, CSV). Returns null if key not found. */
+export async function fetchFromS3Raw(key) {
+    try {
+        const command = new GetObjectCommand({
+            Bucket: S3_BUCKET_NAME,
+            Key: key
+        });
+        const response = await s3Client.send(command);
+        return await response.Body.transformToString();
+    } catch (error) {
+        if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') return null;
+        throw error;
+    }
+}
+
+/** Upload raw string to S3 (for admin prompts, CSV). Key is full path e.g. admin/prompts/mu_notes.txt */
+export async function putToS3(key, body, contentType = 'text/plain') {
+    const command = new PutObjectCommand({
+        Bucket: S3_BUCKET_NAME,
+        Key: key,
+        Body: body,
+        ContentType: contentType
+    });
+    await s3Client.send(command);
 }
 
 export function isModelOverloaded(error) {
