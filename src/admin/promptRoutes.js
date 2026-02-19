@@ -118,6 +118,7 @@ function promptsListPage(list) {
 function promptEditPage(id, meta, body, opts = {}) {
     const variables = meta.variables || [];
     const pillColors = ['rebeccapurple', 'coral', 'darkcyan', 'mediumseagreen', 'darkorange', 'mediumpurple', 'steelblue', 'indianred', 'teal', 'chocolate'];
+    const varNames = variables.map((v) => (typeof v === 'string' ? v : v.name));
     const varPills = variables
         .map((v, i) => {
             const name = typeof v === 'string' ? v : v.name;
@@ -160,7 +161,10 @@ function promptEditPage(id, meta, body, opts = {}) {
       <form id="prompt-form" method="post" action="/admin/prompts/${escapeHtml(id)}" class="space-y-4">
         <div>
           <label for="prompt-body" class="block text-sm font-medium text-slate-700 mb-2">Template body</label>
-          <textarea id="prompt-body" name="body" rows="28" class="w-full font-mono text-sm rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none resize-y min-h-[320px]" placeholder="Prompt text with {{variables}}...">${escapeHtml(body)}</textarea>
+          <div id="prompt-editor-wrap" class="prompt-editor-wrap rounded-xl border border-slate-300 min-h-[320px] focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
+            <div id="prompt-highlight" class="prompt-highlight" aria-hidden="true"></div>
+            <textarea id="prompt-body" name="body" rows="28" class="prompt-textarea" placeholder="Prompt text with {{variables}}...">${escapeHtml(body)}</textarea>
+          </div>
         </div>
       </form>
       <form method="post" action="/admin/prompts/${escapeHtml(id)}/reset" class="mt-6 pt-6 border-t border-slate-200">
@@ -169,12 +173,54 @@ function promptEditPage(id, meta, body, opts = {}) {
     </div>
     <style>
       #prompt-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
+      .prompt-editor-wrap { display: grid; overflow: hidden; }
+      .prompt-editor-wrap .prompt-highlight, .prompt-editor-wrap .prompt-textarea { grid-area: 1/1; min-height: 320px; font: inherit; font-family: ui-monospace, monospace; font-size: 0.875rem; line-height: 1.5; padding: 0.75rem 1rem; overflow: auto; white-space: pre-wrap; word-wrap: break-word; }
+      .prompt-editor-wrap .prompt-highlight { z-index: 0; pointer-events: none; color: #0f172a; }
+      .prompt-editor-wrap .prompt-textarea { z-index: 1; background: transparent; color: transparent; caret-color: #0f172a; resize: vertical; border: none; outline: none; }
+      .prompt-editor-wrap .prompt-textarea::placeholder { color: #94a3b8; }
     </style>
     <script>
       (function(){
         var ta = document.getElementById('prompt-body');
         var form = document.getElementById('prompt-form');
+        var highlightEl = document.getElementById('prompt-highlight');
+        var varNames = ${JSON.stringify(varNames)};
+        var pillColors = ${JSON.stringify(pillColors)};
+        function colorForVar(name) {
+          var i = varNames.indexOf(name);
+          return i >= 0 ? pillColors[i % pillColors.length] : '#64748b';
+        }
+        function escapeHtml(s) {
+          var div = document.createElement('div');
+          div.textContent = s;
+          return div.innerHTML;
+        }
+        function highlightText(text) {
+          if (!text) return '';
+          var re = /\{\{([^}]*)\}\}/g;
+          var out = '';
+          var last = 0;
+          var m;
+          while ((m = re.exec(text)) !== null) {
+            out += escapeHtml(text.slice(last, m.index));
+            var name = m[1].trim();
+            var color = colorForVar(name);
+            out += '<span style="color:' + escapeHtml(color) + '">' + escapeHtml(m[0]) + '</span>';
+            last = m.index + m[0].length;
+          }
+          out += escapeHtml(text.slice(last));
+          return out;
+        }
+        function updateHighlight() {
+          if (highlightEl && ta) highlightEl.innerHTML = highlightText(ta.value);
+        }
+        function syncScroll() {
+          if (highlightEl && ta) { highlightEl.scrollTop = ta.scrollTop; highlightEl.scrollLeft = ta.scrollLeft; }
+        }
         if (!ta || !form) return;
+        updateHighlight();
+        ta.addEventListener('input', function(){ updateHighlight(); syncScroll(); });
+        ta.addEventListener('scroll', syncScroll);
         var unsavedReminder = document.getElementById('prompt-unsaved-reminder');
         var dirty = false;
         function markDirty() { dirty = true; if (unsavedReminder) unsavedReminder.classList.remove('hidden'); }
@@ -201,6 +247,8 @@ function promptEditPage(id, meta, body, opts = {}) {
           ta.value = ta.value.slice(0, start) + insert + ta.value.slice(end);
           ta.selectionStart = ta.selectionEnd = start + insert.length;
           ta.focus();
+          updateHighlight();
+          syncScroll();
           markDirty();
         });
       })();
