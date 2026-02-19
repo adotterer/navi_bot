@@ -154,23 +154,41 @@ function promptEditPage(id, meta, body, opts = {}) {
     ${resetBanner}
     ${saveErrorBanner}
     ${varsSection}
-    <form method="post" action="/admin/prompts/${escapeHtml(id)}" class="space-y-4">
-      <div>
-        <label for="prompt-body" class="block text-sm font-medium text-slate-700 mb-2">Template body</label>
-        <textarea id="prompt-body" name="body" rows="28" class="w-full font-mono text-sm rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none resize-y min-h-[320px]" placeholder="Prompt text with {{variables}}...">${escapeHtml(body)}</textarea>
-      </div>
-      <div class="flex flex-wrap gap-3">
-        <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-        <a href="/admin/prompts" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 transition-colors inline-block">Cancel</a>
-      </div>
-    </form>
-    <form method="post" action="/admin/prompts/${escapeHtml(id)}/reset" class="mt-6 pt-6 border-t border-slate-200">
-      <button type="submit" class="text-sm text-slate-500 hover:text-amber-600 font-medium" onclick="return confirm('Restore the built-in default for this prompt?');">Reset to default</button>
-    </form>
+    <div class="pb-20">
+      <form id="prompt-form" method="post" action="/admin/prompts/${escapeHtml(id)}" class="space-y-4">
+        <div>
+          <label for="prompt-body" class="block text-sm font-medium text-slate-700 mb-2">Template body</label>
+          <textarea id="prompt-body" name="body" rows="28" class="w-full font-mono text-sm rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none resize-y min-h-[320px]" placeholder="Prompt text with {{variables}}...">${escapeHtml(body)}</textarea>
+        </div>
+      </form>
+      <form method="post" action="/admin/prompts/${escapeHtml(id)}/reset" class="mt-6 pt-6 border-t border-slate-200">
+        <button type="submit" class="text-sm text-slate-500 hover:text-amber-600 font-medium" onclick="return confirm('Restore the built-in default for this prompt?');">Reset to default</button>
+      </form>
+    </div>
+    <style>
+      #prompt-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
+    </style>
     <script>
       (function(){
         var ta = document.getElementById('prompt-body');
-        if (!ta) return;
+        var form = document.getElementById('prompt-form');
+        if (!ta || !form) return;
+        var unsavedReminder = document.getElementById('prompt-unsaved-reminder');
+        var dirty = false;
+        function markDirty() { dirty = true; if (unsavedReminder) unsavedReminder.classList.remove('hidden'); }
+        function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.add('hidden'); }
+        function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden'); }
+        ta.addEventListener('input', markDirty);
+        ta.addEventListener('change', markDirty);
+        ta.addEventListener('blur', showReminder);
+        form.addEventListener('submit', function() { clearDirty(); });
+        document.addEventListener('keydown', function(e) {
+          if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            if (typeof form.requestSubmit === 'function') form.requestSubmit();
+            else form.submit();
+          }
+        });
         document.getElementById('var-pills') && document.getElementById('var-pills').addEventListener('click', function(e) {
           var btn = e.target.closest('.insert-var');
           if (!btn) return;
@@ -181,10 +199,22 @@ function promptEditPage(id, meta, body, opts = {}) {
           ta.value = ta.value.slice(0, start) + insert + ta.value.slice(end);
           ta.selectionStart = ta.selectionEnd = start + insert.length;
           ta.focus();
+          markDirty();
         });
       })();
     </script>
   `)}
+  <div id="prompt-action-bar" class="bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div id="prompt-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
+      <div id="prompt-unsaved-placeholder" class="text-slate-400 text-sm"></div>
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
+        <button type="submit" form="prompt-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+        <a href="/admin/prompts" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
+      </div>
+    </div>
+  </div>
 `;
     return `<!DOCTYPE html>
 <html lang="en">
