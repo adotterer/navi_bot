@@ -222,18 +222,240 @@ function csvEditPage(type, body, saved, title, param1, param2) {
   ${adminContainer(`
     ${breadcrumb(breadcrumbItems)}
     <h1 class="text-2xl font-semibold text-slate-800 mb-2">${escapeHtml(title)}</h1>
-    <p class="text-slate-600 text-sm mb-6">First row is headers. Use commas; put quotes around values that contain commas.</p>
+    <p class="text-slate-600 text-sm mb-6">Edit cells below. Notes and long text wrap for readability. Click <strong>Save to S3</strong> to upload.</p>
     ${savedBanner}
-    <form method="post" action="${saveAction}" class="space-y-4">
-      <div>
-        <label for="csv-body" class="block text-sm font-medium text-slate-700 mb-2">CSV content</label>
-        <textarea id="csv-body" name="body" rows="24" class="w-full font-mono text-sm rounded-xl border border-slate-300 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none resize-y min-h-[280px]">${escapeHtml(body)}</textarea>
+    <form id="csv-form" method="post" action="${saveAction}" class="space-y-4">
+      <textarea id="csv-body" name="body" class="hidden" aria-hidden="true"></textarea>
+      <div id="csv-unsaved-reminder" class="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-2 mb-3">You have unsaved changes — click <strong>Save to S3</strong> when you're done.</div>
+      <div id="csv-spreadsheet-wrap" class="overflow-auto rounded-xl border border-slate-300 bg-white max-h-[75vh] min-h-[280px] shadow-inner">
+        <table id="csv-grid" class="csv-grid w-full border-collapse text-sm"></table>
       </div>
       <div class="flex flex-wrap gap-3">
         <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
         <a href="${backUrl}" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
       </div>
     </form>
+    <style>
+      .csv-grid td { border: 1px solid #cbd5e1; }
+      .csv-grid .cell-input, .csv-grid .cell-textarea { border: 1px solid #e2e8f0; border-radius: 4px; }
+      .csv-grid .cell-input:focus, .csv-grid .cell-textarea:focus { border-color: #10b981; box-shadow: 0 0 0 1px #10b981; outline: none; }
+      .csv-grid .cell-textarea { resize: vertical; min-height: 2.5rem; word-wrap: break-word; white-space: pre-wrap; }
+      .csv-grid td.cell-notes { min-width: 320px; max-width: 420px; }
+      .csv-grid .cell-gif { min-width: 140px; }
+      .csv-grid .cell-gif img { max-width: 100px; height: auto; display: block; border-radius: 4px; border: 1px solid #e2e8f0; }
+      .csv-grid .cell-gif .gif-url-input { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.7rem; }
+      .csv-grid .cell-gif .gif-filename { font-size: 0.7rem; color: #64748b; margin-top: 2px; }
+      .csv-grid .cell-move-name { min-width: 0; }
+      #csv-unsaved-reminder { display: none; }
+      #csv-unsaved-reminder.visible { display: block; }
+    </style>
+    <script>
+(function(){
+  var rawText = ${JSON.stringify(body).replace(/<(?=\/script)/gi, '\\u003c')};
+  var form = document.getElementById('csv-form');
+  var gridEl = document.getElementById('csv-grid');
+  var textarea = document.getElementById('csv-body');
+  var unsavedReminder = document.getElementById('csv-unsaved-reminder');
+  var dirty = false;
+
+  var headerAbbrev = {
+    'Move Name': 'Move', 'Total Frames': 'Tot Frames', 'Landing Lag': 'Land Lag', 'Base Damage': 'Damage',
+    'Shield Lag': 'Sh Lag', 'Shield Stun': 'Sh Stun', 'Active Frames': 'Active', 'Property 1': 'Prop 1',
+    'On Shield': 'On Sh', 'GIF URL': 'GIF', 'End Lag': 'End Lag'
+  };
+  function abbrevHeader(t) {
+    if (!t) return '';
+    var s = (headerAbbrev[t] != null) ? headerAbbrev[t] : t;
+    return s.length > 14 ? s.slice(0, 12) + '…' : s;
+  }
+  // Full move name (as in CSV) -> short display label. CSV value is unchanged.
+  var moveDisplayAbbrev = {
+    'Jab': 'Jab', 'Rapid Jab': 'R.Jab', 'Rapid Jab Finisher': 'R.Jab Fin.',
+    'Forward Tilt': 'FTilt', 'Up Tilt': 'UTilt', 'Down Tilt': 'DTilt',
+    'Forward Smash': 'FSmash', 'Up Smash': 'USmash', 'Down Smash': 'DSmash',
+    'Dash Attack': 'DAtk', 'Neutral Air': 'NAir', 'Forward Air': 'FAir', 'Back Air': 'BAir', 'Backward Air': 'BAir',
+    'Up Air': 'UAir', 'Down Air': 'DAir', 'Z Air': 'ZAir',
+    'Neutral B': 'N-B', 'Side B': 'Side-B', 'Up B': 'Up-B', 'Down B': 'Down-B',
+    'Grab': 'Grab', 'Dash Grab': 'D.Grab', 'Pivot Grab': 'Pivot', 'Pummel': 'Pummel',
+    'Forward Throw': 'FThrow', 'Backward Throw': 'BThrow', 'Up Throw': 'UThrow', 'Down Throw': 'DThrow'
+  };
+  function moveDisplayName(fullName) {
+    if (!fullName) return '';
+    var key = fullName.trim();
+    return moveDisplayAbbrev[key] != null ? moveDisplayAbbrev[key] : (key.length > 14 ? key.slice(0, 12) + '…' : key);
+  }
+
+  function simpleParse(text) {
+    var lines = text.split(/\\r?\\n/);
+    var rows = [];
+    for (var i = 0; i < lines.length; i++) {
+      var row = [], line = lines[i], f = '', q = false;
+      for (var j = 0; j <= line.length; j++) {
+        var c = line[j];
+        if (q) {
+          if (c === '"') { if (line[j+1] === '"') { f += '"'; j++; } else q = false; }
+          else f += c;
+          continue;
+        }
+        if (c === '"') { q = true; continue; }
+        if (c === ',' || c === undefined) { row.push(f); f = ''; continue; }
+        f += c;
+      }
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  function escapeCSV(val) {
+    if (val == null) return '';
+    var s = String(val);
+    if (/[",\\n\\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function getCellValue(td) {
+    var hidden = td.querySelector('input[type="hidden"]');
+    if (hidden) return hidden.value;
+    var inp = td.querySelector('input, textarea');
+    return inp ? inp.value : '';
+  }
+
+  function gridToCSV() {
+    var rows = [];
+    var trs = gridEl.querySelectorAll('tbody tr');
+    for (var r = 0; r < trs.length; r++) {
+      var cells = trs[r].querySelectorAll('td');
+      var row = [];
+      for (var c = 0; c < cells.length; c++) row.push(getCellValue(cells[c]));
+      rows.push(row.map(escapeCSV).join(','));
+    }
+    return rows.join('\\n');
+  }
+
+  function isUrlLike(s) {
+    return typeof s === 'string' && /^https?:\\/\\//i.test(s.trim());
+  }
+  function filenameFromUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    var u = url.trim();
+    var last = u.split('/').pop();
+    return last || u;
+  }
+  function markDirty() { dirty = true; }
+  function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.add('visible'); }
+  function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.remove('visible'); }
+
+  function renderGrid(rows) {
+    gridEl.innerHTML = '';
+    var tbody = gridEl.appendChild(document.createElement('tbody'));
+    if (!rows.length) {
+      var tr = tbody.insertRow();
+      tr.innerHTML = '<td class="p-1"><input type="text" class="cell-input w-full min-w-[80px] px-2 py-1.5 bg-transparent" placeholder="Cell"></td>';
+      return;
+    }
+    var maxCols = Math.max.apply(null, rows.map(function(r) { return r.length; }));
+    var headers = rows[0].map(function(h) { return (h || '').trim(); });
+    for (var r = 0; r < rows.length; r++) {
+      var tr = tbody.insertRow();
+      tr.className = r === 0 ? 'bg-slate-100 sticky top-0' : 'hover:bg-slate-50/50';
+      for (var c = 0; c < maxCols; c++) {
+        var td = tr.insertCell();
+        td.className = r === 0 ? 'p-1 border-slate-200 sticky top-0 bg-slate-100 z-10' : 'p-1 align-top';
+        var rawVal = rows[r][c] != null ? rows[r][c] : '';
+        var header = (headers[c] || '').toLowerCase();
+        var isNotes = header.indexOf('notes') !== -1;
+        var isGif = header.indexOf('gif') !== -1 && (header.indexOf('url') !== -1 || header === 'gif');
+        var isMoveName = header.indexOf('move') !== -1 && header.indexOf('name') !== -1;
+
+        if (r === 0) {
+          var label = document.createElement('span');
+          label.className = 'font-semibold text-slate-700 block px-2 py-1.5';
+          label.textContent = abbrevHeader(headers[c]);
+          label.title = headers[c] || '';
+          td.appendChild(label);
+          continue;
+        }
+
+        if (isGif) {
+          td.classList.add('cell-gif');
+          var gifVal = rawVal.trim();
+          if (isUrlLike(gifVal)) {
+            var img = document.createElement('img');
+            img.src = gifVal;
+            img.alt = 'GIF';
+            img.onerror = function() { this.style.display = 'none'; };
+            td.appendChild(img);
+          }
+          var fnSpan = document.createElement('div');
+          fnSpan.className = 'gif-filename';
+          fnSpan.textContent = gifVal ? filenameFromUrl(gifVal) : '';
+          fnSpan.title = gifVal || '';
+          td.appendChild(fnSpan);
+          var inp = document.createElement('input');
+          inp.type = 'text';
+          inp.value = rawVal;
+          inp.className = 'cell-input gif-url-input w-full min-w-0 px-2 py-1 mt-1';
+          inp.placeholder = 'Paste GIF URL';
+          inp.title = rawVal || 'GIF URL';
+          inp.addEventListener('input', markDirty);
+          inp.addEventListener('blur', function() { fnSpan.textContent = filenameFromUrl(inp.value); fnSpan.title = inp.value; showReminder(); });
+          td.appendChild(inp);
+          continue;
+        }
+
+        if (isNotes) {
+          td.classList.add('cell-notes');
+          var ta = document.createElement('textarea');
+          ta.value = rawVal;
+          ta.rows = 3;
+          ta.className = 'cell-textarea w-full min-w-0 px-2 py-1.5 bg-white text-slate-900';
+          ta.addEventListener('input', markDirty);
+          ta.addEventListener('blur', showReminder);
+          td.appendChild(ta);
+          continue;
+        }
+
+        if (isMoveName) {
+          td.classList.add('cell-move-name');
+          var moveHidden = document.createElement('input');
+          moveHidden.type = 'hidden';
+          moveHidden.value = rawVal;
+          td.appendChild(moveHidden);
+          var moveSpan = document.createElement('span');
+          moveSpan.className = 'block px-2 py-1.5 text-slate-700 text-sm';
+          moveSpan.textContent = moveDisplayName(rawVal);
+          moveSpan.title = rawVal || '';
+          td.appendChild(moveSpan);
+          continue;
+        }
+
+        var single = document.createElement('input');
+        single.type = 'text';
+        single.value = rawVal;
+        single.className = 'cell-input w-full min-w-[80px] px-2 py-1.5 bg-transparent';
+        single.addEventListener('input', markDirty);
+        single.addEventListener('blur', showReminder);
+        td.appendChild(single);
+      }
+    }
+  }
+
+  var rows = simpleParse(rawText);
+  renderGrid(rows);
+
+  gridEl.addEventListener('input', markDirty);
+  gridEl.addEventListener('change', markDirty);
+  gridEl.addEventListener('blur', function(e) {
+    if (e.target.matches('input, textarea') && !e.target.readOnly) showReminder();
+  }, true);
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    clearDirty();
+    textarea.value = gridToCSV();
+    form.submit();
+  });
+})();
+    </script>
   `)}
 `;
     return `<!DOCTYPE html>
