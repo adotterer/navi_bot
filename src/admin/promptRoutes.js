@@ -170,9 +170,14 @@ function promptEditPage(id, meta, body, opts = {}) {
       <form method="post" action="/admin/prompts/${escapeHtml(id)}/reset" class="mt-6 pt-6 border-t border-slate-200">
         <button type="submit" class="text-sm text-slate-500 hover:text-amber-600 font-medium" onclick="return confirm('Restore the built-in default for this prompt?');">Reset to default</button>
       </form>
+      <div class="mt-6 pt-6 border-t border-slate-200">
+        <p class="text-sm font-medium text-slate-700 mb-2">Preview (variables and Discord emojis)</p>
+        <div id="prompt-preview" class="prompt-preview rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 font-mono text-sm text-slate-900 whitespace-pre-wrap break-words min-h-[120px] max-h-[400px] overflow-auto"></div>
+      </div>
     </div>
     <style>
       #prompt-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
+      .prompt-preview .discord-emoji-preview { height: 1.2em; width: auto; vertical-align: middle; }
       .prompt-editor-wrap { display: grid; overflow: hidden; }
       .prompt-editor-wrap .prompt-highlight, .prompt-editor-wrap .prompt-textarea { grid-area: 1/1; min-height: 320px; font: inherit; font-family: ui-monospace, monospace; font-size: 0.875rem; line-height: 1.5; padding: 0.75rem 1rem; overflow: auto; white-space: pre-wrap; word-wrap: break-word; }
       .prompt-editor-wrap .prompt-highlight { z-index: 0; pointer-events: none; color: #0f172a; }
@@ -214,12 +219,42 @@ function promptEditPage(id, meta, body, opts = {}) {
         function updateHighlight() {
           if (highlightEl && ta) highlightEl.innerHTML = highlightText(ta.value);
         }
+        function textToPreviewHtml(text) {
+          if (!text) return '';
+          var re = /\{\{([^}]*)\}\}|<(a?):([^:]+):(\\d+)>/g;
+          var out = '';
+          var last = 0;
+          var m;
+          re.lastIndex = 0;
+          while ((m = re.exec(text)) !== null) {
+            out += escapeHtml(text.slice(last, m.index));
+            if (m[1] !== undefined) {
+              var name = m[1].trim();
+              var color = colorForVar(name);
+              out += '<span style="color:' + escapeHtml(color) + '">' + escapeHtml(m[0]) + '</span>';
+            } else {
+              var animated = m[2] === 'a';
+              var id = m[4];
+              var ext = animated ? 'gif' : 'png';
+              var url = 'https://cdn.discordapp.com/emojis/' + id + '.' + ext;
+              out += '<img src="' + escapeHtml(url) + '" alt="" class="discord-emoji-preview" title="' + escapeHtml(m[0]) + '">';
+            }
+            last = m.index + m[0].length;
+          }
+          out += escapeHtml(text.slice(last));
+          return out;
+        }
+        function updatePreview() {
+          var el = document.getElementById('prompt-preview');
+          if (el && ta) el.innerHTML = textToPreviewHtml(ta.value);
+        }
         function syncScroll() {
           if (highlightEl && ta) { highlightEl.scrollTop = ta.scrollTop; highlightEl.scrollLeft = ta.scrollLeft; }
         }
         if (!ta || !form) return;
         updateHighlight();
-        ta.addEventListener('input', function(){ updateHighlight(); syncScroll(); });
+        updatePreview();
+        ta.addEventListener('input', function(){ updateHighlight(); updatePreview(); syncScroll(); });
         ta.addEventListener('scroll', syncScroll);
         var unsavedReminder = document.getElementById('prompt-unsaved-reminder');
         var dirty = false;
@@ -248,6 +283,7 @@ function promptEditPage(id, meta, body, opts = {}) {
           ta.selectionStart = ta.selectionEnd = start + insert.length;
           ta.focus();
           updateHighlight();
+          updatePreview();
           syncScroll();
           markDirty();
         });
