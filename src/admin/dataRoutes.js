@@ -13,7 +13,11 @@ import {
     putFramedataCSV,
     clearFramedataCache
 } from '../shared/dataReader.js';
-import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml } from './layout.js';
+import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge } from './layout.js';
+import { headS3Key } from '../shared/s3Helper.js';
+
+const S3_STATS_PREFIX = 'admin/data/stats/';
+const S3_FRAMEDATA_PREFIX = 'admin/data/framedata/';
 
 const router = express.Router();
 
@@ -46,13 +50,15 @@ router.get('/', (req, res) => {
 });
 
 // ----- Stats -----
-router.get('/stats', (req, res) => {
+router.get('/stats', async (req, res) => {
     const files = listStatsFiles();
+    const s3Flags = await Promise.all(files.map(f => headS3Key(S3_STATS_PREFIX + f + '.csv').catch(() => false)));
     const rows = files
         .map(
-            (f) => `
+            (f, i) => `
         <tr class="border-b border-slate-200 hover:bg-slate-50/80">
           <td class="py-3 px-4"><a href="/admin/data/stats/${encodeURIComponent(f)}" class="font-medium text-emerald-600 hover:text-emerald-700">${escapeHtml(f)}</a></td>
+          <td class="py-3 px-4">${s3Flags[i] ? s3Badge() : ''}</td>
         </tr>`
         )
         .join('');
@@ -63,7 +69,7 @@ router.get('/stats', (req, res) => {
     <h1 class="text-2xl font-semibold text-slate-800 mb-6">Stats CSVs</h1>
     <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
       <table class="w-full">
-        <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">File</th></tr></thead>
+        <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">File</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 w-16"></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
@@ -79,10 +85,13 @@ router.get('/stats', (req, res) => {
 router.get('/stats/:filename', async (req, res) => {
     const filename = req.params.filename.replace(/\.csv$/i, '');
     try {
-        const raw = await getStatsCSVRaw(filename);
+        const [raw, s3InUse] = await Promise.all([
+            getStatsCSVRaw(filename),
+            headS3Key(S3_STATS_PREFIX + filename + '.csv').catch(() => false)
+        ]);
         if (raw == null) return res.status(404).send('File not found.');
         const saved = req.query.saved === '1';
-        res.send(csvEditPage('stats', raw, saved, 'Stats – ' + filename, filename, null));
+        res.send(csvEditPage('stats', raw, saved, 'Stats – ' + filename, filename, null, s3InUse));
     } catch (err) {
         console.error('Admin stats get:', err);
         res.status(500).send('Error loading file.');
@@ -133,14 +142,16 @@ router.get('/framedata', (req, res) => {
 </html>`);
 });
 
-router.get('/framedata/:character', (req, res) => {
+router.get('/framedata/:character', async (req, res) => {
     const character = req.params.character;
     const sections = listFramedataSections(character);
+    const s3Flags = await Promise.all(sections.map(s => headS3Key(S3_FRAMEDATA_PREFIX + character + '/' + s + '.csv').catch(() => false)));
     const rows = sections
         .map(
-            (s) => `
+            (s, i) => `
         <tr class="border-b border-slate-200 hover:bg-slate-50/80">
           <td class="py-3 px-4"><a href="/admin/data/framedata/${encodeURIComponent(character)}/${encodeURIComponent(s)}" class="font-medium text-emerald-600 hover:text-emerald-700">${escapeHtml(s)}</a></td>
+          <td class="py-3 px-4">${s3Flags[i] ? s3Badge() : ''}</td>
         </tr>`
         )
         .join('');
@@ -151,7 +162,7 @@ router.get('/framedata/:character', (req, res) => {
     <h1 class="text-2xl font-semibold text-slate-800 mb-6">${escapeHtml(character)}</h1>
     <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
       <table class="w-full">
-        <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Section</th></tr></thead>
+        <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Section</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 w-16"></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
@@ -168,10 +179,13 @@ router.get('/framedata/:character/:section', async (req, res) => {
     const { character, section } = req.params;
     const sectionClean = section.replace(/\.csv$/i, '');
     try {
-        const raw = await getFramedataCSVRaw(character, sectionClean);
+        const [raw, s3InUse] = await Promise.all([
+            getFramedataCSVRaw(character, sectionClean),
+            headS3Key(S3_FRAMEDATA_PREFIX + character + '/' + sectionClean + '.csv').catch(() => false)
+        ]);
         if (raw == null) return res.status(404).send('File not found.');
         const saved = req.query.saved === '1';
-        res.send(csvEditPage('framedata', raw, saved, `Framedata: ${character} / ${sectionClean}`, character, sectionClean));
+        res.send(csvEditPage('framedata', raw, saved, `Framedata: ${character} / ${sectionClean}`, character, sectionClean, s3InUse));
     } catch (err) {
         console.error('Admin framedata get:', err);
         res.status(500).send('Error loading file.');
@@ -192,7 +206,7 @@ router.post('/framedata/:character/:section', express.urlencoded({ extended: tru
     }
 });
 
-function csvEditPage(type, body, saved, title, param1, param2) {
+function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) {
     const backUrl =
         type === 'stats' ? '/admin/data/stats' : '/admin/data/framedata' + (param1 ? '/' + encodeURIComponent(param1) : '');
     const saveAction =
@@ -220,32 +234,46 @@ function csvEditPage(type, body, saved, title, param1, param2) {
     const content = `
   ${adminNav('data')}
   ${adminContainer(`
-    ${breadcrumb(breadcrumbItems)}
-    <h1 class="text-2xl font-semibold text-slate-800 mb-2">${escapeHtml(title)}</h1>
-    <p class="text-slate-600 text-sm mb-6">Edit cells below. Notes and long text wrap for readability. Click <strong>Save to S3</strong> to upload.</p>
-    ${savedBanner}
-    <form id="csv-form" method="post" action="${saveAction}" class="space-y-4">
-      <textarea id="csv-body" name="body" class="hidden" aria-hidden="true"></textarea>
-      <div id="csv-unsaved-reminder" class="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-2 mb-3">You have unsaved changes — click <strong>Save to S3</strong> when you're done.</div>
-      <div id="csv-spreadsheet-wrap" class="overflow-auto rounded-xl border border-slate-300 bg-white max-h-[75vh] min-h-[280px] shadow-inner">
-        <table id="csv-grid" class="csv-grid w-full border-collapse text-sm"></table>
+    <div class="csv-edit-layout flex flex-col min-h-[calc(100vh-11rem)]">
+      <div class="flex-shrink-0 mb-4">
+        ${breadcrumb(breadcrumbItems)}
+        <div class="flex items-center gap-2 mt-1">
+      <h1 class="text-xl font-semibold text-slate-800">${escapeHtml(title)}</h1>
+      ${s3InUse ? s3Badge() : ''}
+    </div>
+        <p class="text-slate-600 text-sm mt-1">Edit cells below; click <strong>Save to S3</strong> to upload.</p>
+        ${savedBanner}
       </div>
-      <div class="flex flex-wrap gap-3">
-        <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-        <a href="${backUrl}" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
-      </div>
-    </form>
+      <form id="csv-form" method="post" action="${saveAction}" class="flex flex-1 flex-col min-h-0 flex-shrink-0">
+        <textarea id="csv-body" name="body" hidden aria-hidden="true"></textarea>
+        <div id="csv-unsaved-reminder" class="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-2 mb-3 flex-shrink-0">You have unsaved changes — click <strong>Save to S3</strong> when you're done.</div>
+        <div id="csv-spreadsheet-wrap" class="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200/50">
+          <table id="csv-grid" class="csv-grid w-full border-collapse"></table>
+        </div>
+        <div class="flex flex-wrap gap-3 pt-4 pb-1 flex-shrink-0">
+          <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+          <a href="${backUrl}" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
+        </div>
+      </form>
+    </div>
     <style>
-      .csv-grid td { border: 1px solid #cbd5e1; }
-      .csv-grid .cell-input, .csv-grid .cell-textarea { border: 1px solid #e2e8f0; border-radius: 4px; }
+      main:has(.csv-edit-layout) { max-width: 85rem; }
+      .csv-edit-layout { padding: 0 0.5rem; }
+      #csv-body { display: none !important; }
+      #csv-spreadsheet-wrap { min-height: 12rem; }
+      .csv-grid { font-size: 0.9375rem; }
+      .csv-grid td { border: 1px solid #cbd5e1; padding: 0.75rem 1rem; }
+      .csv-grid .cell-input, .csv-grid .cell-textarea { border: 1px solid #e2e8f0; border-radius: 4px; padding: 0.625rem 0.875rem; }
       .csv-grid .cell-input:focus, .csv-grid .cell-textarea:focus { border-color: #10b981; box-shadow: 0 0 0 1px #10b981; outline: none; }
-      .csv-grid .cell-textarea { resize: vertical; min-height: 2.5rem; word-wrap: break-word; white-space: pre-wrap; }
-      .csv-grid td.cell-notes { min-width: 320px; max-width: 420px; }
+      .csv-grid .cell-textarea { resize: vertical; min-height: 2.75rem; word-wrap: break-word; white-space: pre-wrap; }
+      .csv-grid td .cell-input, .csv-grid td .cell-textarea { min-height: 2.25rem; }
+      .csv-grid td.cell-notes { min-width: 320px; max-width: 480px; }
       .csv-grid .cell-gif { min-width: 140px; }
       .csv-grid .cell-gif img { max-width: 100px; height: auto; display: block; border-radius: 4px; border: 1px solid #e2e8f0; }
-      .csv-grid .cell-gif .gif-url-input { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.7rem; }
-      .csv-grid .cell-gif .gif-filename { font-size: 0.7rem; color: #64748b; margin-top: 2px; }
-      .csv-grid .cell-move-name { min-width: 0; }
+      .csv-grid .cell-gif .gif-url-input { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; padding: 0.375rem 0.5rem; }
+      .csv-grid .cell-gif .gif-filename { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
+      .csv-grid .cell-move-name span { padding: 0.25rem 0; }
+      .csv-grid tbody tr:first-child td span { padding: 0.625rem 0.875rem; padding-left: calc(0.875rem + 1px); }
       #csv-unsaved-reminder { display: none; }
       #csv-unsaved-reminder.visible { display: block; }
     </style>
@@ -350,7 +378,7 @@ function csvEditPage(type, body, saved, title, param1, param2) {
     var tbody = gridEl.appendChild(document.createElement('tbody'));
     if (!rows.length) {
       var tr = tbody.insertRow();
-      tr.innerHTML = '<td class="p-1"><input type="text" class="cell-input w-full min-w-[80px] px-2 py-1.5 bg-transparent" placeholder="Cell"></td>';
+      tr.innerHTML = '<td><input type="text" class="cell-input w-full min-w-[80px] bg-transparent" placeholder="Cell"></td>';
       return;
     }
     var maxCols = Math.max.apply(null, rows.map(function(r) { return r.length; }));
@@ -360,7 +388,7 @@ function csvEditPage(type, body, saved, title, param1, param2) {
       tr.className = r === 0 ? 'bg-slate-100 sticky top-0' : 'hover:bg-slate-50/50';
       for (var c = 0; c < maxCols; c++) {
         var td = tr.insertCell();
-        td.className = r === 0 ? 'p-1 border-slate-200 sticky top-0 bg-slate-100 z-10' : 'p-1 align-top';
+        td.className = r === 0 ? 'border-slate-200 sticky top-0 bg-slate-100 z-10' : 'align-top';
         var rawVal = rows[r][c] != null ? rows[r][c] : '';
         var header = (headers[c] || '').toLowerCase();
         var isNotes = header.indexOf('notes') !== -1;
@@ -369,7 +397,7 @@ function csvEditPage(type, body, saved, title, param1, param2) {
 
         if (r === 0) {
           var label = document.createElement('span');
-          label.className = 'font-semibold text-slate-700 block px-2 py-1.5';
+          label.className = 'font-semibold text-slate-700 block';
           label.textContent = abbrevHeader(headers[c]);
           label.title = headers[c] || '';
           td.appendChild(label);
@@ -394,7 +422,7 @@ function csvEditPage(type, body, saved, title, param1, param2) {
           var inp = document.createElement('input');
           inp.type = 'text';
           inp.value = rawVal;
-          inp.className = 'cell-input gif-url-input w-full min-w-0 px-2 py-1 mt-1';
+          inp.className = 'cell-input gif-url-input w-full min-w-0 mt-1';
           inp.placeholder = 'Paste GIF URL';
           inp.title = rawVal || 'GIF URL';
           inp.addEventListener('input', markDirty);
@@ -408,7 +436,7 @@ function csvEditPage(type, body, saved, title, param1, param2) {
           var ta = document.createElement('textarea');
           ta.value = rawVal;
           ta.rows = 3;
-          ta.className = 'cell-textarea w-full min-w-0 px-2 py-1.5 bg-white text-slate-900';
+          ta.className = 'cell-textarea w-full min-w-0 bg-white text-slate-900';
           ta.addEventListener('input', markDirty);
           ta.addEventListener('blur', showReminder);
           td.appendChild(ta);
@@ -422,7 +450,7 @@ function csvEditPage(type, body, saved, title, param1, param2) {
           moveHidden.value = rawVal;
           td.appendChild(moveHidden);
           var moveSpan = document.createElement('span');
-          moveSpan.className = 'block px-2 py-1.5 text-slate-700 text-sm';
+          moveSpan.className = 'block text-slate-700';
           moveSpan.textContent = moveDisplayName(rawVal);
           moveSpan.title = rawVal || '';
           td.appendChild(moveSpan);
@@ -432,7 +460,7 @@ function csvEditPage(type, body, saved, title, param1, param2) {
         var single = document.createElement('input');
         single.type = 'text';
         single.value = rawVal;
-        single.className = 'cell-input w-full min-w-[80px] px-2 py-1.5 bg-transparent';
+        single.className = 'cell-input w-full min-w-[80px] bg-transparent';
         single.addEventListener('input', markDirty);
         single.addEventListener('blur', showReminder);
         td.appendChild(single);

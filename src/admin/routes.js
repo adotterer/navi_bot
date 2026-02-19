@@ -5,7 +5,9 @@ import express from 'express';
 import { requireAdmin, checkLogin } from './auth.js';
 import { promptRoutes } from './promptRoutes.js';
 import { dataRoutes } from './dataRoutes.js';
-import { adminHead, adminNav, adminContainer, escapeHtml } from './layout.js';
+import { aliasRoutes } from './aliasRoutes.js';
+import { adminHead, adminNav, adminContainer, escapeHtml, s3Badge } from './layout.js';
+import { headS3Key, hasS3KeysWithPrefix } from '../shared/s3Helper.js';
 
 const router = express.Router();
 
@@ -33,13 +35,25 @@ router.post('/logout', (req, res) => {
 });
 
 // ----- Dashboard (protected) -----
-router.get('/', requireAdmin, (req, res) => {
-    res.send(dashboardPage());
+router.get('/', requireAdmin, async (req, res) => {
+    let s3 = { prompts: false, data: false, aliases: false };
+    try {
+        const [prompts, data, aliases] = await Promise.all([
+            hasS3KeysWithPrefix('admin/prompts/'),
+            hasS3KeysWithPrefix('admin/data/'),
+            headS3Key('admin/character-aliases.json')
+        ]);
+        s3 = { prompts, data, aliases };
+    } catch (_) {
+        // S3 not configured or error: show no badges
+    }
+    res.send(dashboardPage(s3));
 });
 
 // Mount sub-routers (all protected)
 router.use('/prompts', requireAdmin, promptRoutes);
 router.use('/data', requireAdmin, dataRoutes);
+router.use('/aliases', requireAdmin, aliasRoutes);
 
 function loginPage(opts = {}) {
     const error = opts.error
@@ -59,7 +73,7 @@ function loginPage(opts = {}) {
       <form method="post" action="/admin/login" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
         <div>
           <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
-          <input id="username" type="text" name="username" value="admin" autocomplete="username"
+          <input id="username" type="text" name="username" value="" autocomplete="username"
             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
         </div>
         <div>
@@ -75,7 +89,8 @@ function loginPage(opts = {}) {
 </html>`;
 }
 
-function dashboardPage() {
+function dashboardPage(s3 = {}) {
+    const badge = (on) => (on ? s3Badge() : '');
     const content = `
   ${adminNav('dashboard')}
   ${adminContainer(`
@@ -85,13 +100,27 @@ function dashboardPage() {
     </div>
     <div class="grid gap-4 sm:grid-cols-2">
       <a href="/admin/prompts" class="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group">
-        <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Edit prompts</h2>
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Edit prompts</h2>
+          ${badge(s3.prompts)}
+        </div>
         <p class="mt-2 text-sm text-slate-500">Gemini AI prompt templates for !mu, !mq, !q, and more.</p>
         <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>
       </a>
       <a href="/admin/data" class="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group">
-        <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Edit data</h2>
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Edit data</h2>
+          ${badge(s3.data)}
+        </div>
         <p class="mt-2 text-sm text-slate-500">Stats and framedata CSV files used by the bot.</p>
+        <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>
+      </a>
+      <a href="/admin/aliases" class="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group">
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Aliases</h2>
+          ${badge(s3.aliases)}
+        </div>
+        <p class="mt-2 text-sm text-slate-500">Character nickname → canonical slug mapping for !mu, !fd, !aliases.</p>
         <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>
       </a>
     </div>

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
 // Env names: prefer .env.example (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME)
 const AWS_REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-west-1';
@@ -50,6 +50,32 @@ export async function fetchFromS3Raw(key) {
     } catch (error) {
         if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') return null;
         throw error;
+    }
+}
+
+/** Returns true if the key exists in S3, false if not found or on error (e.g. no creds). */
+export async function headS3Key(key) {
+    try {
+        await s3Client.send(new HeadObjectCommand({ Bucket: S3_BUCKET_NAME, Key: key }));
+        return true;
+    } catch (err) {
+        if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) return false;
+        if (err.name === 'NoSuchKey' || err.Code === 'NoSuchKey') return false;
+        throw err;
+    }
+}
+
+/** Returns true if at least one key with the given prefix exists (MaxKeys 1). */
+export async function hasS3KeysWithPrefix(prefix) {
+    try {
+        const res = await s3Client.send(new ListObjectsV2Command({
+            Bucket: S3_BUCKET_NAME,
+            Prefix: prefix,
+            MaxKeys: 1
+        }));
+        return (res.KeyCount ?? 0) > 0;
+    } catch (_) {
+        return false;
     }
 }
 

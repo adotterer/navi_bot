@@ -15,6 +15,7 @@ function adminNav(active = 'dashboard') {
         { href: '/admin', label: 'Dashboard', key: 'dashboard' },
         { href: '/admin/prompts', label: 'Prompts', key: 'prompts' },
         { href: '/admin/data', label: 'Data', key: 'data' },
+        { href: '/admin/aliases', label: 'Aliases', key: 'aliases' },
     ];
     const items = links
         .map(
@@ -60,4 +61,9 @@ function escapeHtml(s) {
         .replace(/"/g, '&quot;');
 }
 
-export { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml };
+/** Green checkmark badge indicating this resource is in S3 (bot uses uploaded version, not default). */
+function s3Badge() {
+    return '<span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-2 py-0.5" title="In S3 – bot is using uploaded version">✓ S3</span>';
+}
+
+export { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge };

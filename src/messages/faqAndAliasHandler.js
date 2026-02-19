@@ -1,4 +1,4 @@
-import { nicknameAliases } from '../matchups/characterAliases.js';
+import { getNicknameAliases } from '../matchups/characterAliases.js';
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { EmbedBuilder } from 'discord.js';
 
@@ -70,6 +70,7 @@ export async function handleFaq(message) {
 }
 
 export async function handleAliases(message) {
+    const nicknameAliases = getNicknameAliases();
     const aliases = Object.keys(nicknameAliases)
         .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
 

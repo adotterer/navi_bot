@@ -3,16 +3,20 @@
  */
 import express from 'express';
 import { getPromptTemplate, savePromptTemplate, getPromptMeta, listPromptIds, resetPromptToDefault } from '../shared/promptLoader.js';
-import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml } from './layout.js';
+import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge } from './layout.js';
+import { headS3Key } from '../shared/s3Helper.js';
+
+const S3_PROMPTS_PREFIX = 'admin/prompts/';
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
         const ids = listPromptIds();
-        const list = ids.map(id => {
+        const s3Flags = await Promise.all(ids.map(id => headS3Key(S3_PROMPTS_PREFIX + id + '.txt').catch(() => false)));
+        const list = ids.map((id, i) => {
             const meta = getPromptMeta(id);
-            return { id, ...meta };
+            return { id, ...meta, s3InUse: s3Flags[i] };
         });
         res.send(promptsListPage(list));
     } catch (err) {
@@ -28,10 +32,13 @@ router.get('/:id', async (req, res) => {
         return res.status(404).send('Unknown prompt ID.');
     }
     try {
-        const body = await getPromptTemplate(id);
+        const [body, s3InUse] = await Promise.all([
+            getPromptTemplate(id),
+            headS3Key(S3_PROMPTS_PREFIX + id + '.txt').catch(() => false)
+        ]);
         const saved = req.query.saved === '1';
         const reset = req.query.reset === '1';
-        res.send(promptEditPage(id, meta, body, { saved, reset }));
+        res.send(promptEditPage(id, meta, body, { saved, reset, s3InUse }));
     } catch (err) {
         console.error('Admin prompt get:', err);
         res.status(500).send('Error loading prompt.');
@@ -79,10 +86,11 @@ router.post('/:id/reset', express.urlencoded({ extended: true }), async (req, re
 function promptsListPage(list) {
     const rows = list
         .map(
-            ({ id, description }) => `
+            ({ id, description, s3InUse }) => `
         <tr class="border-b border-slate-200 hover:bg-slate-50/80">
-          <td class="py-3 pr-4"><a href="/admin/prompts/${escapeHtml(id)}" class="font-medium text-emerald-600 hover:text-emerald-700">${escapeHtml(id)}</a></td>
-          <td class="py-3 text-slate-600 text-sm">${escapeHtml(description)}</td>
+          <td class="py-3 px-4"><a href="/admin/prompts/${escapeHtml(id)}" class="font-medium text-emerald-600 hover:text-emerald-700">${escapeHtml(id)}</a></td>
+          <td class="py-3 text-slate-600 text-sm px-4">${escapeHtml(description)}</td>
+          <td class="py-3 px-4">${s3InUse ? s3Badge() : ''}</td>
         </tr>`
         )
         .join('');
@@ -94,7 +102,7 @@ function promptsListPage(list) {
     <p class="text-slate-600 text-sm mb-6">Variables use <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">&#123;&#123;name&#125;&#125;</code>. Don't remove or rename variables.</p>
     <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
       <table class="w-full">
-        <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Prompt ID</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Description</th></tr></thead>
+        <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Prompt ID</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Description</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 w-16"></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
@@ -137,7 +145,10 @@ function promptEditPage(id, meta, body, opts = {}) {
   ${adminNav('prompts')}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/prompts', label: 'Prompts' }, { label: id }])}
-    <h1 class="text-2xl font-semibold text-slate-800 mb-1">${escapeHtml(id)}</h1>
+    <div class="flex items-center gap-2 mb-1">
+      <h1 class="text-2xl font-semibold text-slate-800">${escapeHtml(id)}</h1>
+      ${opts.s3InUse ? s3Badge() : ''}
+    </div>
     <p class="text-slate-600 text-sm mb-6">${escapeHtml(meta.description)}</p>
     ${savedBanner}
     ${resetBanner}

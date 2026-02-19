@@ -24,6 +24,15 @@ import { createApp } from './src/app.js';
 const app = createApp();
 const PORT = process.env.PORT || 8080;
 
+(async () => {
+    try {
+        const { syncAliasesFromS3 } = await import('./src/shared/aliasSync.js');
+        await syncAliasesFromS3();
+    } catch (_) {
+        // S3 optional at startup (e.g. no creds or key not yet created)
+    }
+})();
+
 app.listen(PORT, () => {
     console.log(`🌐 HTTP server running on port ${PORT}`);
 });

@@ -1,3 +1,11 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ALIASES_PATH = path.join(__dirname, '../../data/character-aliases.json');
+
 // Related characters that should be fetched together
 export const relatedCharacters = {
     "pokemon-trainer": ["squirtle", "ivysaur", "charizard"],
@@ -5,7 +13,7 @@ export const relatedCharacters = {
     "mythra": ["pyra"]
 };
 
-export const nicknameAliases = {
+const DEFAULT_NICKNAME_ALIASES = {
     bayo: "bayonetta",
     banjo: "banjo-and-kazooie",
     "banjo & kazooie": "banjo-and-kazooie",
@@ -105,6 +113,23 @@ export const nicknameAliases = {
     zss: "zero-suit-samus",
 };
 
+/** Returns the current nickname aliases (alias -> canonical). Loaded from data/character-aliases.json when present. */
+export function getNicknameAliases() {
+    try {
+        const raw = fs.readFileSync(ALIASES_PATH, 'utf8');
+        const data = JSON.parse(raw);
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+            return data;
+        }
+    } catch (_) {
+        // File missing or invalid: use defaults
+    }
+    return { ...DEFAULT_NICKNAME_ALIASES };
+}
+
+/** @deprecated Use getNicknameAliases() for fresh data. Kept for backward compatibility. */
+export const nicknameAliases = DEFAULT_NICKNAME_ALIASES;
+
 export function normalizeCharacterText(text) {
     return text
         .toLowerCase()
@@ -141,7 +166,7 @@ export function buildCharacterAliasMap(guild) {
         }
     }
 
-    for (const [alias, canonical] of Object.entries(nicknameAliases)) {
+    for (const [alias, canonical] of Object.entries(getNicknameAliases())) {
         const normalizedAlias = normalizeCharacterText(alias);
         const normalizedCanonical = normalizeCharacterText(canonical);
         const canonicalSlug = aliasMap.get(normalizedCanonical) || canonical.toLowerCase();
