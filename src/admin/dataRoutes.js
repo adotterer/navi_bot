@@ -250,17 +250,6 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
           <table id="csv-grid" class="csv-grid border-collapse"></table>
         </div>
       </form>
-      <div id="csv-action-bar" class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
-        <div class="max-w-[85rem] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div id="csv-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
-          <div id="csv-unsaved-reminder-placeholder" class="text-slate-400 text-sm"></div>
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
-            <button type="submit" form="csv-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-            <a href="${backUrl}" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
-          </div>
-        </div>
-      </div>
     </div>
     <style>
       main:has(.csv-edit-layout) { max-width: 85rem; }
@@ -280,6 +269,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
       .csv-grid .cell-gif .gif-filename { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
       .csv-grid .cell-move-name span { padding: 0.25rem 0; }
       .csv-grid tbody tr:first-child td span { padding: 0.625rem 0.875rem; padding-left: calc(0.875rem + 1px); }
+      #csv-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
     </style>
     <script>
 (function(){
@@ -501,6 +491,17 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
 })();
     </script>
   `)}
+  <div id="csv-action-bar" class="bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
+    <div class="max-w-[85rem] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div id="csv-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
+      <div id="csv-unsaved-reminder-placeholder" class="text-slate-400 text-sm"></div>
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
+        <button type="submit" form="csv-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+        <a href="${backUrl}" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
+      </div>
+    </div>
+  </div>
 `;
     return `<!DOCTYPE html>
 <html lang="en">
