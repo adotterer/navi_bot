@@ -247,8 +247,8 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
       <form id="csv-form" method="post" action="${saveAction}" class="flex flex-1 flex-col min-h-0 flex-shrink-0">
         <textarea id="csv-body" name="body" hidden aria-hidden="true"></textarea>
         <div id="csv-unsaved-reminder" class="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-2 mb-3 flex-shrink-0">You have unsaved changes — click <strong>Save to S3</strong> when you're done.</div>
-        <div id="csv-spreadsheet-wrap" class="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200/50">
-          <table id="csv-grid" class="csv-grid w-full border-collapse"></table>
+        <div id="csv-spreadsheet-wrap" class="flex-1 min-h-0 min-w-0 overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200/50">
+          <table id="csv-grid" class="csv-grid border-collapse"></table>
         </div>
         <div class="flex flex-wrap gap-3 pt-4 pb-1 flex-shrink-0">
           <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
@@ -260,8 +260,8 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
       main:has(.csv-edit-layout) { max-width: 85rem; }
       .csv-edit-layout { padding: 0 0.5rem; }
       #csv-body { display: none !important; }
-      #csv-spreadsheet-wrap { min-height: 12rem; }
-      .csv-grid { font-size: 0.9375rem; }
+      #csv-spreadsheet-wrap { min-height: 12rem; overflow-x: auto; overflow-y: auto; }
+      .csv-grid { font-size: 0.9375rem; width: max-content; min-width: 100%; }
       .csv-grid td { border: 1px solid #cbd5e1; padding: 0.75rem 1rem; }
       .csv-grid .cell-input, .csv-grid .cell-textarea { border: 1px solid #e2e8f0; border-radius: 4px; padding: 0.625rem 0.875rem; }
       .csv-grid .cell-input:focus, .csv-grid .cell-textarea:focus { border-color: #10b981; box-shadow: 0 0 0 1px #10b981; outline: none; }
