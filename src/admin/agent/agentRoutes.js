@@ -20,28 +20,90 @@ router.get('/', (req, res) => {
       <h1 class="text-2xl font-semibold text-slate-800">Agent PR</h1>
     </div>
     <p class="text-slate-600 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
-    <form id="agent-form" class="space-y-6 mb-8">
-      <div>
-        <label for="prompt" class="block text-sm font-medium text-slate-700 mb-2">Mission prompt</label>
-        <textarea id="prompt" name="prompt" rows="4" placeholder="e.g. Add a health check endpoint at GET /health that returns { status: 'ok' }"
-          class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none font-mono text-sm"></textarea>
+    <div class="agent-split flex gap-4 min-h-[420px] mb-8">
+      <div class="agent-prompt-column flex flex-col min-w-0 flex-1 rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <div class="border-b border-slate-200 px-4 py-2.5 bg-slate-50 text-sm font-medium text-slate-700">Mission prompt</div>
+        <form id="agent-form" class="flex flex-col flex-1 min-h-0 p-4">
+          <textarea id="prompt" name="prompt" rows="10" placeholder="e.g. Add a health check endpoint at GET /health that returns { status: 'ok' }"
+            class="w-full flex-1 min-h-[200px] rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none font-mono text-sm resize-y"></textarea>
+          <div class="flex flex-wrap gap-6 items-center mt-4 flex-shrink-0">
+            <div>
+              <label for="maxPlanners" class="block text-sm font-medium text-slate-700 mb-1">Max parallel planners</label>
+              <input type="number" id="maxPlanners" name="maxPlanners" min="1" max="5" value="2"
+                class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+            </div>
+            <div>
+              <label for="maxCoders" class="block text-sm font-medium text-slate-700 mb-1">Max parallel coders</label>
+              <input type="number" id="maxCoders" name="maxCoders" min="1" max="10" value="3"
+                class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+            </div>
+            <div class="pt-6">
+              <button type="submit" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Start run</button>
+            </div>
+          </div>
+        </form>
       </div>
-      <div class="flex flex-wrap gap-6 items-center">
-        <div>
-          <label for="maxPlanners" class="block text-sm font-medium text-slate-700 mb-1">Max parallel planners</label>
-          <input type="number" id="maxPlanners" name="maxPlanners" min="1" max="5" value="2"
-            class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+      <div class="agent-progress-column flex flex-col min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden min-h-[320px]">
+        <div id="run-placeholder" class="flex-1 flex items-center justify-center p-8 text-slate-500 text-sm text-center">
+          Start a run to see progress and audit log here.
         </div>
-        <div>
-          <label for="maxCoders" class="block text-sm font-medium text-slate-700 mb-1">Max parallel coders</label>
-          <input type="number" id="maxCoders" name="maxCoders" min="1" max="10" value="3"
-            class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
-        </div>
-        <div class="pt-6">
-          <button type="submit" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Start run</button>
+        <div id="run-area" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0 overflow-auto p-4">
+            <div class="space-y-4 min-w-0">
+              <section class="rounded-lg border border-slate-200 bg-white overflow-hidden flex-shrink-0">
+                <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Mission</div>
+                <div id="run-mission" class="p-4 text-sm text-slate-700 whitespace-pre-wrap break-words bg-white min-h-[4rem]"></div>
+              </section>
+              <section class="rounded-lg border border-slate-200 bg-white p-4 space-y-3 flex-shrink-0">
+                <div class="flex items-center gap-3 flex-wrap">
+                  <span id="run-status" class="text-sm font-medium text-slate-700">Running…</span>
+                  <span id="run-stage" class="text-sm text-slate-500"></span>
+                  <button type="button" id="stop-btn" class="hidden rounded-lg bg-red-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">Stop run</button>
+                </div>
+                <div id="pipeline-area" class="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+                  <div class="flex flex-wrap items-center gap-3 text-sm">
+                    <span id="phase-researcher" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Researcher</span>
+                    <span class="text-slate-300">\u2192</span>
+                    <span id="phase-planner" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Planner</span>
+                    <span class="text-slate-300">\u2192</span>
+                    <span id="phase-coder" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Coder</span>
+                    <span class="text-slate-300">\u2192</span>
+                    <span id="phase-pr" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Create PR</span>
+                  </div>
+                </div>
+                <div id="result-area" class="rounded-lg border border-slate-200 bg-emerald-50/50 p-4 hidden">
+                  <a id="pr-link" href="#" target="_blank" rel="noopener" class="text-emerald-700 hover:text-emerald-800 font-medium underline">Open PR</a>
+                  <p id="error-msg" class="text-red-600 text-sm mt-2 hidden"></p>
+                  <p id="result-note" class="text-slate-500 text-xs mt-2 hidden"></p>
+                </div>
+              </section>
+            </div>
+            <div class="space-y-4 min-w-0 flex flex-col min-h-0">
+              <section class="rounded-lg border border-slate-200 bg-white overflow-hidden flex flex-col flex-1 min-h-0">
+                <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700 flex-shrink-0">Audit log</div>
+                <div id="log-container" class="bg-slate-900 text-slate-100 p-4 font-mono text-sm flex-1 min-h-0 overflow-y-auto whitespace-pre-wrap break-words rounded-b max-h-[280px]"></div>
+              </section>
+              <section id="step-results-area" class="rounded-lg border border-slate-200 bg-white overflow-hidden hidden flex-shrink-0">
+                <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Step results</div>
+                <ul id="step-results-list" class="p-4 list-disc list-inside text-sm text-slate-600 space-y-1"></ul>
+              </section>
+            </div>
+          </div>
+          <div id="files-area" class="mt-4 hidden border border-slate-200 rounded-lg bg-white overflow-hidden flex-shrink-0">
+            <div class="border-b border-slate-200 px-3 py-2 bg-slate-50 text-sm font-medium text-slate-700">Proposed changes</div>
+            <div class="flex min-h-[320px]">
+              <div id="files-sidebar" class="w-56 border-r border-slate-200 bg-slate-50 overflow-y-auto flex-shrink-0">
+                <ul id="files-list" class="py-2 text-sm"></ul>
+              </div>
+              <div id="files-content-wrap" class="flex-1 min-w-0 flex flex-col bg-slate-900">
+                <div id="files-content-header" class="px-3 py-1.5 bg-slate-800 text-slate-300 text-sm font-mono truncate border-b border-slate-700"></div>
+                <div id="files-content" class="flex-1 overflow-auto p-4 font-mono text-sm text-slate-100 whitespace-pre-wrap break-words"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </form>
+    </div>
     <div class="border border-slate-200 rounded-lg bg-white overflow-hidden mb-8">
       <div class="border-b border-slate-200 px-3 py-2 bg-slate-50 flex items-center gap-3">
         <span class="text-sm font-medium text-slate-700">Repository</span>
@@ -54,61 +116,6 @@ router.get('/', (req, res) => {
         <div id="repo-content-wrap" class="flex-1 min-w-0 flex flex-col bg-slate-900">
           <div id="repo-content-header" class="px-3 py-1.5 bg-slate-800 text-slate-300 text-sm font-mono truncate border-b border-slate-700"></div>
           <div id="repo-content" class="flex-1 overflow-auto p-4 font-mono text-sm text-slate-100 whitespace-pre-wrap break-words"></div>
-        </div>
-      </div>
-    </div>
-    <div id="run-area" class="hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="space-y-4">
-          <section class="rounded-lg border border-slate-200 bg-white overflow-hidden">
-            <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Mission</div>
-            <div id="run-mission" class="p-4 text-sm text-slate-700 whitespace-pre-wrap break-words bg-white min-h-[4rem]"></div>
-          </section>
-          <section class="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
-            <div class="flex items-center gap-3 flex-wrap">
-              <span id="run-status" class="text-sm font-medium text-slate-700">Running…</span>
-              <span id="run-stage" class="text-sm text-slate-500"></span>
-              <button type="button" id="stop-btn" class="hidden rounded-lg bg-red-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">Stop run</button>
-            </div>
-            <div id="pipeline-area" class="rounded border border-slate-200 bg-slate-50 px-3 py-2">
-              <div class="flex flex-wrap items-center gap-3 text-sm">
-                <span id="phase-researcher" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Researcher</span>
-                <span class="text-slate-300">\u2192</span>
-                <span id="phase-planner" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Planner</span>
-                <span class="text-slate-300">\u2192</span>
-                <span id="phase-coder" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Coder</span>
-                <span class="text-slate-300">\u2192</span>
-                <span id="phase-pr" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Create PR</span>
-              </div>
-            </div>
-            <div id="result-area" class="rounded-lg border border-slate-200 bg-emerald-50/50 p-4 hidden">
-              <a id="pr-link" href="#" target="_blank" rel="noopener" class="text-emerald-700 hover:text-emerald-800 font-medium underline">Open PR</a>
-              <p id="error-msg" class="text-red-600 text-sm mt-2 hidden"></p>
-              <p id="result-note" class="text-slate-500 text-xs mt-2 hidden"></p>
-            </div>
-          </section>
-        </div>
-        <div class="space-y-4">
-          <section class="rounded-lg border border-slate-200 bg-white overflow-hidden">
-            <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Audit log</div>
-            <div id="log-container" class="bg-slate-900 text-slate-100 p-4 font-mono text-sm max-h-96 overflow-y-auto whitespace-pre-wrap break-words"></div>
-          </section>
-          <section id="step-results-area" class="rounded-lg border border-slate-200 bg-white overflow-hidden hidden">
-            <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Step results</div>
-            <ul id="step-results-list" class="p-4 list-disc list-inside text-sm text-slate-600 space-y-1"></ul>
-          </section>
-        </div>
-      </div>
-      <div id="files-area" class="mt-6 hidden border border-slate-200 rounded-lg bg-white overflow-hidden">
-        <div class="border-b border-slate-200 px-3 py-2 bg-slate-50 text-sm font-medium text-slate-700">Proposed changes</div>
-        <div class="flex min-h-[320px]">
-          <div id="files-sidebar" class="w-56 border-r border-slate-200 bg-slate-50 overflow-y-auto flex-shrink-0">
-            <ul id="files-list" class="py-2 text-sm"></ul>
-          </div>
-          <div id="files-content-wrap" class="flex-1 min-w-0 flex flex-col bg-slate-900">
-            <div id="files-content-header" class="px-3 py-1.5 bg-slate-800 text-slate-300 text-sm font-mono truncate border-b border-slate-700"></div>
-            <div id="files-content" class="flex-1 overflow-auto p-4 font-mono text-sm text-slate-100 whitespace-pre-wrap break-words"></div>
-          </div>
         </div>
       </div>
     </div>
@@ -388,6 +395,8 @@ router.get('/', (req, res) => {
     var maxCoders = document.getElementById('maxCoders').value || '3';
     startBtn.disabled = true;
     runArea.classList.remove('hidden');
+    var runPlaceholder = document.getElementById('run-placeholder');
+    if (runPlaceholder) runPlaceholder.classList.add('hidden');
     var missionEl = document.getElementById('run-mission');
     if (missionEl) missionEl.textContent = promptEl.value.trim() || '(No mission text)';
     logContainer.textContent = '';
@@ -427,7 +436,8 @@ router.get('/', (req, res) => {
           var entry = JSON.parse(ev.data);
           if (entry.type === 'log') {
             var prefix = '[' + (entry.role || 'system') + '] ';
-            logContainer.textContent += prefix + (entry.message || '').replace(/\\n/g, '\\x0A');
+            var msg = (entry.message || '').replace(/\\n/g, '\n');
+            logContainer.textContent += prefix + msg + '\n';
             logContainer.scrollTop = logContainer.scrollHeight;
           } else if (entry.type === 'status') {
             runStage.textContent = entry.status || '';

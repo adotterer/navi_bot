@@ -81,8 +81,12 @@ The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase 
 function extractJsonArrayCandidates(text) {
     const trimmed = text.trim();
     const candidates = [];
-    const codeBlock = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (codeBlock) candidates.push(codeBlock[1].trim());
+    const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)```/g;
+    let match;
+    while ((match = codeBlockRegex.exec(trimmed)) !== null) {
+        const inner = match[1].trim();
+        if (inner.length > 2 && !candidates.includes(inner)) candidates.push(inner);
+    }
     const lastClose = trimmed.lastIndexOf(']');
     const lastOpen = trimmed.lastIndexOf('[');
     if (lastOpen !== -1 && lastClose !== -1 && lastOpen < lastClose) {
@@ -226,12 +230,16 @@ function parsePlannerSteps(text) {
         const arr = tryParseJsonArray(raw);
         if (!arr || !arr.length) continue;
         const mapped = arr.map((s, i) => {
-            const what = String(s.what ?? s.description ?? s.name ?? s.step ?? s.task ?? s.title ?? '').trim();
+            let what = String(s.what ?? s.description ?? s.name ?? s.step ?? s.task ?? s.title ?? '').trim();
             const files = Array.isArray(s.files) ? s.files.map(String) : [];
+            const changeDesc = s.changeDescription != null ? String(s.changeDescription).trim() : '';
+            if (!what || /^step\s*\d+$/i.test(what) || what.length < 4) {
+                what = changeDesc ? changeDesc.slice(0, 80) + (changeDesc.length > 80 ? '…' : '') : (files[0] ? `Edit ${files[0]}` : `Step ${i + 1}`);
+            }
             return {
-                what: what || (files[0] ? `Edit ${files[0]}` : `Step ${i + 1}`),
+                what,
                 files,
-                changeDescription: s.changeDescription != null ? String(s.changeDescription) : undefined,
+                changeDescription: changeDesc || undefined,
             };
         });
         if (mapped.length) return mapped;
@@ -303,8 +311,8 @@ function parseCoderEdits(text) {
         const arr = tryParseJsonArrayWithNewlineFix(raw);
         if (!arr || !Array.isArray(arr)) continue;
         const edits = arr
-            .filter((e) => e && (e.path || e.file) && (e.content != null))
-            .map((e) => ({ path: String(e.path || e.file), content: String(e.content) }));
+            .filter((e) => e && (e.path || e.file) && (e.content != null || e.text != null))
+            .map((e) => ({ path: String(e.path || e.file), content: String(e.content ?? e.text ?? '') }));
         if (edits.length) return edits;
     }
     return [];
