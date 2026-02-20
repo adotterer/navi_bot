@@ -103,7 +103,7 @@ export async function createPr(runId, opts = {}) {
             return { ok: false, error: 'Could not determine GitHub owner/repo (set GITHUB_REPO or use origin remote)' };
         }
 
-        const octokit = new Octokit({ auth: token });
+        const octokit = new Octokit({ auth: token, log: { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} } });
         const { data: pr } = await octokit.rest.pulls.create({
             owner: repo.owner,
             repo: repo.repo,
@@ -143,7 +143,7 @@ async function createPrViaApi(runId, opts) {
     }
 
     try {
-        const octokit = new Octokit({ auth: token });
+        const octokit = new Octokit({ auth: token, log: { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} } });
 
         const { data: repoData } = await octokit.repos.get({ owner: repo.owner, repo: repo.repo });
         const defaultBranch = repoData.default_branch || 'main';

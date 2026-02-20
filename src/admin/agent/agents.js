@@ -83,18 +83,20 @@ Example:
                     config: { maxOutputTokens: 4096, responseMimeType: 'application/json', abortSignal: signal },
                 });
                 let fullText = '';
+                let lastChunkUsage = null;
                 for await (const chunk of response) {
                     if (signal?.aborted) break;
                     const text = chunk.text ?? '';
                     fullText += text;
                     if (onChunk && text) onChunk(text);
+                    if (chunk.usageMetadata) lastChunkUsage = chunk.usageMetadata;
                 }
                 const flightPlan = parseFlightPlan(fullText);
                 if (!flightPlan.length) {
                     const snippet = fullText.trim().slice(0, 400).replace(/\n/g, ' ');
                     throw new Error('Could not parse flight plan from response. Reply was not valid JSON array (or tasks/flightPlan wrapper). First 400 chars: ' + (snippet || '(empty)'));
                 }
-                const usage = response.usageMetadata;
+                const usage = lastChunkUsage ?? response.usageMetadata;
                 return { ok: true, flightPlan, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0 };
             })(),
             GEMINI_TIMEOUT_MS,
@@ -350,18 +352,20 @@ Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (
                     config: { maxOutputTokens: 8192, responseMimeType: 'application/json', abortSignal: signal },
                 });
                 let fullText = '';
+                let lastChunkUsage = null;
                 for await (const chunk of response) {
                     if (signal?.aborted) break;
                     const text = chunk.text ?? '';
                     fullText += text;
                     if (onChunk && text) onChunk(text);
+                    if (chunk.usageMetadata) lastChunkUsage = chunk.usageMetadata;
                 }
                 const steps = parsePlannerSteps(fullText);
                 if (!steps.length) {
                     console.error('[Planner] Parse failed. Raw response (first 400):', fullText.slice(0, 400));
                     throw new Error('Could not parse implementation steps');
                 }
-                const usage = response.usageMetadata;
+                const usage = lastChunkUsage ?? response.usageMetadata;
                 return { ok: true, steps, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0 };
             })(),
             GEMINI_TIMEOUT_MS,
@@ -558,11 +562,13 @@ Example (imports change + function change in one file, two separate patches):
                     config: { maxOutputTokens: 16384, responseMimeType: 'application/json', abortSignal: signal },
                 });
                 let fullText = '';
+                let lastChunkUsage = null;
                 for await (const chunk of response) {
                     if (signal?.aborted) break;
                     const text = chunk.text ?? '';
                     fullText += text;
                     if (onChunk && text) onChunk(text);
+                    if (chunk.usageMetadata) lastChunkUsage = chunk.usageMetadata;
                 }
                 const edits = parseCoderEdits(fullText);
                 if (!edits.length) {
@@ -570,7 +576,7 @@ Example (imports change + function change in one file, two separate patches):
                     console.error('[Coder] Raw response (last 200):', fullText.slice(-200));
                     throw new Error('Could not parse edits from response');
                 }
-                const usage = response.usageMetadata;
+                const usage = lastChunkUsage ?? response.usageMetadata;
                 return { ok: true, edits, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0 };
             })(),
             GEMINI_TIMEOUT_MS,
