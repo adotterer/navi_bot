@@ -4,6 +4,7 @@
  */
 import pLimit from 'p-limit';
 import { appendLog, getRun, updateRun, isRunCancelled } from './runStore.js';
+import { persistRunToS3 } from './agentRunPersistence.js';
 import { runResearcher, runPlanner, runCoder, validateCoderStep, runReviewer } from './agents.js';
 import { callTool } from './toolRegistry.js';
 
@@ -172,73 +173,102 @@ async function buildFileContextForTask(task, grepPaths, maxChars = 52000) {
 }
 
 export async function runPipeline(runId, opts = {}) {
-    const { prompt = '', maxParallelPlanners = 2, maxParallelCoders = 3 } = opts;
+    const { maxParallelPlanners = 2, maxParallelCoders = 3 } = opts;
+    const run = getRun(runId);
+    const resume = !!opts.resume;
+    const prompt = (opts.prompt ?? run?.prompt ?? '').trim();
     const log = (role, stage, message) => appendLog(runId, { role, stage, message });
+
+    let flightPlan = run?.flightPlan;
+    let allSteps = run?.steps;
+    const existingStepResults = run?.stepResults || [];
 
     try {
         if (checkCancelled(runId, log)) return;
-        updateRun(runId, { status: 'research' });
-        log('system', 'research', 'Running Researcher…\n');
 
-        const researchResult = await runResearcher(prompt, {});
-        if (!researchResult.ok) {
-            updateRun(runId, { status: 'error', error: researchResult.error });
-            log('system', 'error', 'Researcher failed: ' + researchResult.error + '\n');
-            return;
+        const shouldRunResearch = !resume || !flightPlan?.length;
+        if (shouldRunResearch) {
+            updateRun(runId, { status: 'research' });
+            log('system', 'research', resume ? 'Resuming: re-running Researcher…\n' : 'Running Researcher…\n');
+
+            const researchResult = await runResearcher(prompt, { docs: getRun(runId)?.docs });
+            if (!researchResult.ok) {
+                updateRun(runId, { status: 'error', error: researchResult.error });
+                log('system', 'error', 'Researcher failed: ' + researchResult.error + '\n');
+                return;
+            }
+
+            flightPlan = researchResult.flightPlan;
+            updateRun(runId, { flightPlan });
+            log('system', 'research', `Flight plan: ${flightPlan.length} task(s).\n`);
+            await persistRunToS3(runId);
         }
-
-        const flightPlan = researchResult.flightPlan;
-        updateRun(runId, { flightPlan });
-        log('system', 'research', `Flight plan: ${flightPlan.length} task(s).\n`);
 
         if (checkCancelled(runId, log)) return;
 
         const { grepText: grepContext, grepPaths } = await buildGrepContext(prompt);
         const allowedPaths = buildAllowedPaths(flightPlan, grepPaths);
 
-        const allEdits = []; // { path, content }[]
+        const allEdits = [];
         const limitPlanners = pLimit(Math.max(1, Math.min(5, maxParallelPlanners)));
         const limitCoders = pLimit(Math.max(1, Math.min(10, maxParallelCoders)));
 
-        if (checkCancelled(runId, log)) return;
-        updateRun(runId, { status: 'planning' });
-        const planResults = await Promise.all(
-            flightPlan.map((task, i) =>
-                limitPlanners(async () => {
-                    log('system', 'planning', `Planner: ${task.title}\n`);
-                    const fileContext = await buildFileContextForTask(task, grepPaths);
-                    const planResult = await runPlanner(task, { fileContext, grepContext });
-                    if (planResult.ok) {
-                        const n = (planResult.steps && planResult.steps.length) || 0;
-                        log('system', 'planning', `Planner: ${task.title} — ${n} step(s)\n`);
-                    }
-                    return { task, planResult, taskIndex: i };
-                })
-            )
-        );
+        const shouldRunPlanning = !resume || !allSteps?.length;
+        if (shouldRunPlanning) {
+            if (checkCancelled(runId, log)) return;
+            updateRun(runId, { status: 'planning' });
+            log('system', 'planning', resume ? 'Resuming: re-running Planners…\n' : 'Running Planners…\n');
 
-        for (const { task, planResult } of planResults) {
-            if (!planResult.ok) {
-                log('system', 'planning', `Planner: ${task.title} — failed: ${planResult.error}\n`);
+            const planResults = await Promise.all(
+                flightPlan.map((task, i) =>
+                    limitPlanners(async () => {
+                        log('system', 'planning', `Planner: ${task.title}\n`);
+                        const fileContext = await buildFileContextForTask(task, grepPaths);
+                        const planResult = await runPlanner(task, { fileContext, grepContext, docs: getRun(runId)?.docs, flightPlan, steps: getRun(runId)?.steps });
+                        if (planResult.ok) {
+                            const n = (planResult.steps && planResult.steps.length) || 0;
+                            log('system', 'planning', `Planner: ${task.title} — ${n} step(s)\n`);
+                        }
+                        return { task, planResult, taskIndex: i };
+                    })
+                )
+            );
+
+            for (const { task, planResult } of planResults) {
+                if (!planResult.ok) {
+                    log('system', 'planning', `Planner: ${task.title} — failed: ${planResult.error}\n`);
+                }
             }
-        }
 
-        const allSteps = planResults.flatMap(({ task, planResult }) =>
-            planResult.ok && planResult.steps && planResult.steps.length
-                ? planResult.steps.map((step) => ({ step, task }))
-                : []
-        );
-        if (allSteps.length === 0) {
-            updateRun(runId, { status: 'error', error: 'No implementation steps could be parsed from any Planner.' });
-            log('system', 'error', 'No implementation steps could be parsed from any Planner.\n');
-            return;
+            allSteps = planResults.flatMap(({ task, planResult }) =>
+                planResult.ok && planResult.steps && planResult.steps.length
+                    ? planResult.steps.map((step) => ({ step, task }))
+                    : []
+            );
+            if (allSteps.length === 0) {
+                updateRun(runId, { status: 'error', error: 'No implementation steps could be parsed from any Planner.' });
+                log('system', 'error', 'No implementation steps could be parsed from any Planner.\n');
+                return;
+            }
+
+            updateRun(runId, { steps: allSteps });
+            await persistRunToS3(runId);
         }
 
         if (checkCancelled(runId, log)) return;
         updateRun(runId, { status: 'coding' });
+
+        const stepsToRunIndices = allSteps.map((_, j) => j).filter((j) => {
+            const existing = existingStepResults[j];
+            return !existing || existing.status !== 'done';
+        });
+
         const coderResults = await Promise.all(
             allSteps.map(({ step, task }, j) =>
                 limitCoders(async () => {
+                    if (!stepsToRunIndices.includes(j)) {
+                        return { step, task, coderResult: null, stepIndex: j, useExisting: true, existing: existingStepResults[j] };
+                    }
                     log('system', 'coding', `Coder: ${step.what}\n`);
                     const fileContext = {};
                     for (const p of step.files || []) {
@@ -252,16 +282,28 @@ export async function runPipeline(runId, opts = {}) {
                         }
                     }
                     const coderResult = await runCoder(step, fileContext, {});
-                    return { step, task, coderResult, stepIndex: j };
+                    return { step, task, coderResult, stepIndex: j, useExisting: false };
                 })
             )
         );
 
         const stepResults = [];
-        for (const { step, coderResult } of coderResults) {
-            if (!coderResult.ok) {
-                stepResults.push({ step, status: 'failed', reason: coderResult.error });
-                log('system', 'coding', `Coder: ${step.what} — failed: ${coderResult.error}\n`);
+        for (const entry of coderResults) {
+            const { step, stepIndex: j, useExisting, existing } = entry;
+            const coderResult = entry.coderResult;
+
+            if (useExisting) {
+                stepResults.push(existing || { step, status: 'failed', reason: 'No existing result' });
+                if (existing?.status === 'done' && existing.edits?.length) {
+                    const allowed = existing.edits.filter((e) => e.path && allowedPaths.has(e.path));
+                    allEdits.push(...allowed);
+                }
+                continue;
+            }
+
+            if (!coderResult?.ok) {
+                stepResults.push({ step, status: 'failed', reason: coderResult?.error || 'No result' });
+                log('system', 'coding', `Coder: ${step.what} — failed: ${coderResult?.error || 'No result'}\n`);
                 continue;
             }
             const validation = await validateCoderStep(step, prompt, coderResult.edits || [], { allowedPaths });
@@ -281,8 +323,8 @@ export async function runPipeline(runId, opts = {}) {
             }
         }
 
-        const run = getRun(runId);
-        if (run) run.stepResults = stepResults;
+        const runRef = getRun(runId);
+        if (runRef) runRef.stepResults = stepResults;
 
         // Aggregate edits by path.
         // Patch edits ({path, search, replace}) accumulate as a list.
@@ -327,11 +369,14 @@ export async function runPipeline(runId, opts = {}) {
             ...resolvedPatches,
         ];
 
-        if (run) run.edits = aggregatedEdits;
+        if (runRef) runRef.edits = aggregatedEdits;
+        updateRun(runId, { stepResults, edits: aggregatedEdits });
+        await persistRunToS3(runId);
 
         if (aggregatedEdits.length === 0) {
             updateRun(runId, { status: 'done' });
             log('system', 'done', 'Run complete (no edits approved).\n');
+            await persistRunToS3(runId);
             return;
         }
 
@@ -389,6 +434,8 @@ export async function runPipeline(runId, opts = {}) {
             reviewRound++;
         }
 
+        await persistRunToS3(runId);
+
         if (checkCancelled(runId, log)) return;
         updateRun(runId, { status: 'creating_pr' });
         log('system', 'creating_pr', `Collected ${editsToReview.length} file edit(s). Creating PR…\n`);
@@ -404,9 +451,11 @@ export async function runPipeline(runId, opts = {}) {
             updateRun(runId, { status: 'done' });
             log('system', 'done', 'Run complete (PR not configured or dry run).\n');
         }
+        await persistRunToS3(runId);
     } catch (err) {
         updateRun(runId, { status: 'error', error: err.message || String(err) });
         appendLog(runId, { role: 'system', stage: 'error', message: (err.message || String(err)) + '\n' });
+        await persistRunToS3(runId);
     }
 }
 

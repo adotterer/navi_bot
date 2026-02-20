@@ -3,9 +3,10 @@
  */
 import express from 'express';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml } from '../layout.js';
-import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled } from './runStore.js';
+import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled, hydrateRun, DEFAULT_DOCS } from './runStore.js';
 import { runPipeline } from './orchestrator.js';
 import { listBranches, getTree, getFileContent } from './repoBrowser.js';
+import { loadRunFromS3, persistRunToS3 } from './agentRunPersistence.js';
 
 const router = express.Router();
 const SSE_HEARTBEAT_MS = 15000;
@@ -20,8 +21,8 @@ router.get('/', (req, res) => {
       <h1 class="text-2xl font-semibold text-slate-800">Agent PR</h1>
     </div>
     <p class="text-slate-600 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
-    <div class="agent-split flex gap-4 mb-8">
-      <div class="agent-prompt-column flex flex-col min-w-0 w-[340px] flex-shrink-0 rounded-xl border border-slate-200 bg-white overflow-hidden">
+    <div class="flex flex-col gap-6 mb-8">
+      <section class="rounded-xl border border-slate-200 bg-white overflow-hidden w-full">
         <div class="border-b border-slate-200 px-4 py-2.5 bg-slate-50 text-sm font-medium text-slate-700">Mission prompt</div>
         <form id="agent-form" class="flex flex-col p-4 gap-4">
           <textarea id="prompt" name="prompt" rows="4" placeholder="e.g. Add a health check endpoint at GET /health that returns { status: 'ok' }"
@@ -42,21 +43,24 @@ router.get('/', (req, res) => {
             </div>
           </div>
         </form>
-      </div>
-      <div class="agent-progress-column flex flex-col min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden min-h-[420px]">
+      </section>
+      <div class="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden min-h-[420px] flex flex-col">
         <div id="run-area" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
           <div class="flex flex-col flex-1 min-h-0 p-4 gap-4 overflow-auto">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-shrink-0">
-              <section class="rounded-lg border border-slate-200 bg-white overflow-hidden">
-                <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Mission</div>
-                <div id="run-mission" class="p-4 text-sm text-slate-700 whitespace-pre-wrap break-words bg-white min-h-[4rem]"></div>
+              <section class="rounded-lg border border-slate-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[200px]">
+                <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700 flex-shrink-0">Audit log</div>
+                <div id="log-container" class="bg-slate-900 text-slate-100 p-4 font-mono text-sm flex-1 overflow-y-auto whitespace-pre-wrap break-words rounded-b"></div>
               </section>
               <section class="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
                 <div class="flex items-center gap-3 flex-wrap">
                   <span id="run-status" class="text-sm font-medium text-slate-700">Running…</span>
                   <span id="run-stage" class="text-sm text-slate-500"></span>
-                  <button type="button" id="stop-btn" class="hidden rounded-lg bg-red-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">Stop run</button>
+                  <button type="button" id="stop-btn" class="rounded-lg bg-red-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed" title="Stop the current run">Stop run</button>
+                  <button type="button" id="resume-btn" class="hidden rounded-lg bg-amber-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-amber-700 focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors">Resume</button>
                 </div>
+                <div class="text-xs text-slate-500 mb-1">Mission</div>
+                <div id="run-mission" class="p-2 text-sm text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded min-h-[2rem] mb-3"></div>
                 <div id="pipeline-area" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
                   <div class="flex flex-wrap items-center gap-2 text-sm">
                     <span id="phase-researcher" class="phase px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 font-medium transition-all">Researcher</span>
@@ -70,16 +74,31 @@ router.get('/', (req, res) => {
                     <span id="phase-pr" class="phase px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 font-medium transition-all">Create PR</span>
                   </div>
                 </div>
-                <div id="result-area" class="rounded-lg border border-slate-200 bg-emerald-50/50 p-4 hidden">
+                <div id="result-area" class="rounded-lg border border-slate-200 bg-emerald-50/50 p-4 hidden mt-2">
                   <a id="pr-link" href="#" target="_blank" rel="noopener" class="text-emerald-700 hover:text-emerald-800 font-medium underline">Open PR</a>
                   <p id="error-msg" class="text-red-600 text-sm mt-2 hidden"></p>
                   <p id="result-note" class="text-slate-500 text-xs mt-2 hidden"></p>
                 </div>
               </section>
             </div>
-            <section class="rounded-lg border border-slate-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[200px]">
-              <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700 flex-shrink-0">Audit log</div>
-              <div id="log-container" class="bg-slate-900 text-slate-100 p-4 font-mono text-sm flex-1 overflow-y-auto whitespace-pre-wrap break-words rounded-b"></div>
+            <section id="docs-panel" class="rounded-lg border border-slate-200 bg-white overflow-hidden flex-shrink-0 hidden">
+              <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Docs</div>
+              <div class="p-4 space-y-4 max-h-[320px] overflow-y-auto">
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">Mission</label>
+                  <div id="docs-mission" class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 bg-slate-50 whitespace-pre-wrap min-h-[3rem]"></div>
+                </div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Overview</label><textarea id="docs-overview" data-section="overview" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Requirements</label><textarea id="docs-requirements" data-section="requirements" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Architecture</label><textarea id="docs-architecture" data-section="architecture" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Decisions</label><textarea id="docs-decisions" data-section="decisions" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Notes</label><textarea id="docs-notes" data-section="notes" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 mb-1">Implementation plan</label>
+                  <div id="docs-implementation" class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 bg-slate-50 whitespace-pre-wrap min-h-[2rem]"></div>
+                </div>
+                <button type="button" id="docs-save-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-emerald-700">Save docs</button>
+              </div>
             </section>
             <section id="step-results-area" class="rounded-lg border border-slate-200 bg-white overflow-hidden hidden flex-shrink-0">
               <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Step results</div>
@@ -136,12 +155,63 @@ router.get('/', (req, res) => {
   var filesContentHeader = document.getElementById('files-content-header');
   var filesContent = document.getElementById('files-content');
 
+  var docsPanel = document.getElementById('docs-panel');
+  var docsSaveBtn = document.getElementById('docs-save-btn');
+  var resumeBtn = document.getElementById('resume-btn');
+
   var repoBranch = document.getElementById('repo-branch');
   var repoTree = document.getElementById('repo-tree');
   var repoContentHeader = document.getElementById('repo-content-header');
   var repoContent = document.getElementById('repo-content');
   var repoExpanded = {};
   var repoTreeCache = {};
+
+  function populateDocsPanel(data) {
+    if (!data) return;
+    var missionEl = document.getElementById('docs-mission');
+    if (missionEl) missionEl.textContent = (data.prompt || '').trim() || '(No mission)';
+    var docs = data.docs || {};
+    ['overview', 'requirements', 'architecture', 'decisions', 'notes'].forEach(function(section) {
+      var el = document.getElementById('docs-' + section);
+      if (el && el.tagName === 'TEXTAREA') el.value = docs[section] || '';
+    });
+    var implEl = document.getElementById('docs-implementation');
+    if (implEl) {
+      var parts = [];
+      if (data.flightPlan && data.flightPlan.length) {
+        data.flightPlan.forEach(function(t, i) {
+          parts.push((i + 1) + '. ' + (t.title || 'Task'));
+        });
+      }
+      if (data.steps && data.steps.length) {
+        data.steps.forEach(function(s, i) {
+          var what = s.step && s.step.what ? s.step.what : 'Step ' + (i + 1);
+          parts.push('  - ' + what);
+        });
+      }
+      implEl.textContent = parts.length ? parts.join('\n') : '(No plan yet)';
+    }
+    if (docsPanel) docsPanel.classList.remove('hidden');
+  }
+
+  function saveDocSection(section, content) {
+    if (!currentRunId || !section) return;
+    fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/docs', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ section: section, content: content || '' })
+    }).catch(function() {});
+  }
+
+  function updateResumeButton(status) {
+    if (!resumeBtn) return;
+    if (status === 'cancelled' || status === 'error') {
+      resumeBtn.classList.remove('hidden');
+    } else {
+      resumeBtn.classList.add('hidden');
+    }
+  }
 
   function updatePipeline(status, runData) {
     runData = runData || {};
@@ -360,7 +430,10 @@ router.get('/', (req, res) => {
       fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
         .then(function(r) { return r.json(); })
         .then(function(data) {
+          if (data.error) return;
           updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults });
+          updateResumeButton(data.status);
+          populateDocsPanel(data);
           if (data.edits && data.edits.length) showFileBrowser(data.edits);
           if (data.stepResults && data.stepResults.length) {
             var area = document.getElementById('step-results-area');
@@ -380,6 +453,18 @@ router.get('/', (req, res) => {
     }
   }
 
+  var docsPopulated = false;
+  function maybePopulateDocs() {
+    if (docsPopulated || !currentRunId) return;
+    docsPopulated = true;
+    fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.error && (data.prompt || (data.docs && Object.keys(data.docs).some(function(k) { return data.docs[k]; })))) populateDocsPanel(data);
+      })
+      .catch(function() {});
+  }
+
   function closeStream() {
     if (eventSource) {
       eventSource.close();
@@ -391,8 +476,13 @@ router.get('/', (req, res) => {
     var promptEl = document.getElementById('prompt');
     var maxPlanners = document.getElementById('maxPlanners').value || '2';
     var maxCoders = document.getElementById('maxCoders').value || '3';
+    docsPopulated = false;
     startBtn.disabled = true;
     runArea.classList.remove('hidden');
+    stopBtn.classList.remove('hidden');
+    stopBtn.disabled = true;
+    stopBtn.textContent = 'Stop run';
+    if (resumeBtn) resumeBtn.classList.add('hidden');
     var runPlaceholder = document.getElementById('run-placeholder');
     if (runPlaceholder) runPlaceholder.classList.add('hidden');
     var missionEl = document.getElementById('run-mission');
@@ -424,7 +514,6 @@ router.get('/', (req, res) => {
       if (!data.runId) throw new Error(data.error || 'No runId');
       currentRunId = data.runId;
       runStatus.textContent = 'Running…';
-      stopBtn.classList.remove('hidden');
       stopBtn.disabled = false;
       stopBtn.textContent = 'Stop run';
       closeStream();
@@ -441,6 +530,7 @@ router.get('/', (req, res) => {
           } else if (entry.type === 'status') {
             runStage.textContent = entry.status || '';
             updatePipeline(entry.status || '');
+            maybePopulateDocs();
           } else if (entry.type === 'done') {
             runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done';
             runStage.textContent = '';
@@ -491,6 +581,85 @@ router.get('/', (req, res) => {
       credentials: 'same-origin'
     }).catch(function() {});
   });
+
+  if (docsSaveBtn) {
+    docsSaveBtn.addEventListener('click', function() {
+      ['overview', 'requirements', 'architecture', 'decisions', 'notes'].forEach(function(section) {
+        var el = document.getElementById('docs-' + section);
+        if (el && el.tagName === 'TEXTAREA') saveDocSection(section, el.value);
+      });
+    });
+  }
+  document.querySelectorAll('.docs-textarea').forEach(function(ta) {
+    ta.addEventListener('blur', function() {
+      var section = ta.getAttribute('data-section');
+      if (section) saveDocSection(section, ta.value);
+    });
+  });
+
+  if (resumeBtn) {
+    resumeBtn.addEventListener('click', function() {
+      if (!currentRunId || resumeBtn.disabled) return;
+      resumeBtn.disabled = true;
+      resumeBtn.classList.add('hidden');
+      runStatus.textContent = 'Resuming…';
+      stopBtn.classList.remove('hidden');
+      stopBtn.disabled = false;
+      stopBtn.textContent = 'Stop run';
+      closeStream();
+      fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/resume', { method: 'POST', credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data.ok) {
+            runStatus.textContent = 'Error';
+            if (resumeBtn) { resumeBtn.classList.remove('hidden'); resumeBtn.disabled = false; }
+            return;
+          }
+          eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(currentRunId));
+          eventSource.onmessage = function(ev) {
+            try {
+              var entry = JSON.parse(ev.data);
+              if (entry.type === 'log') {
+                var prefix = '[' + (entry.role || 'system') + '] ';
+                logContainer.textContent += prefix + (entry.message || '').trim() + '\n';
+                logContainer.scrollTop = logContainer.scrollHeight;
+                if (entry.stage) updatePipeline(entry.stage);
+              } else if (entry.type === 'status') {
+                runStage.textContent = entry.status || '';
+                updatePipeline(entry.status || '');
+                maybePopulateDocs();
+              } else if (entry.type === 'done') {
+                runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done';
+                runStage.textContent = '';
+                closeStream();
+                startBtn.disabled = false;
+                stopBtn.classList.add('hidden');
+                showResult(entry.prUrl, entry.error);
+              } else if (entry.type === 'error') {
+                runStatus.textContent = 'Error';
+                closeStream();
+                startBtn.disabled = false;
+                stopBtn.classList.add('hidden');
+                showResult(null, entry.message || 'Run failed');
+              }
+            } catch (_) {}
+          };
+          eventSource.onerror = function() {
+            if (currentRunId) {
+              runStatus.textContent = 'Stream closed (run may still be in progress)';
+              startBtn.disabled = false;
+              stopBtn.classList.add('hidden');
+            }
+            closeStream();
+          };
+          if (resumeBtn) resumeBtn.disabled = false;
+        })
+        .catch(function() {
+          runStatus.textContent = 'Error';
+          if (resumeBtn) { resumeBtn.classList.remove('hidden'); resumeBtn.disabled = false; }
+        });
+    });
+  }
 })();
     </script>
   `)}
@@ -545,20 +714,51 @@ router.get('/runs', (req, res) => {
 
 // ----- POST /admin/agent/run/:runId/cancel – request run to stop (no more token use after next check) -----
 router.post('/run/:runId/cancel', (req, res) => {
-    const run = getRun(req.params.runId);
+    const runId = req.params.runId;
+    const run = getRun(runId);
     if (!run) return res.status(404).json({ ok: false, error: 'Run not found' });
     const terminal = ['done', 'error', 'cancelled'].includes(run.status);
     if (terminal) return res.status(400).json({ ok: false, error: 'Run already finished' });
-    setRunCancelled(req.params.runId);
+    setRunCancelled(runId);
+    persistRunToS3(runId).catch(() => {});
     res.json({ ok: true });
 });
 
-// ----- GET /admin/agent/run/:runId – run summary (for re-open / refresh, includes edits for file browser) -----
+// ----- GET /admin/agent/run/:runId – run summary (includes steps, docs, edits) -----
 router.get('/run/:runId', (req, res) => {
     const run = getRun(req.params.runId);
     if (!run) return res.status(404).json({ error: 'Run not found' });
-    const { runId, status, logs, flightPlan, stepResults, prUrl, error, createdAt, prompt, edits } = run;
-    res.json({ runId, status, logs, flightPlan, stepResults: stepResults || [], prUrl, error, createdAt, prompt, edits: edits || [] });
+    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, edits } = run;
+    res.json({
+        runId,
+        status,
+        logs,
+        flightPlan,
+        steps: steps || [],
+        docs: docs || { ...DEFAULT_DOCS },
+        stepResults: stepResults || [],
+        prUrl,
+        error,
+        createdAt,
+        prompt,
+        edits: edits || [],
+    });
+});
+
+const DOC_SECTIONS = ['overview', 'requirements', 'architecture', 'decisions', 'notes'];
+
+// ----- PATCH /admin/agent/run/:runId/docs – update one doc section -----
+router.patch('/run/:runId/docs', express.json(), (req, res) => {
+    const runId = req.params.runId;
+    const run = getRun(runId);
+    if (!run) return res.status(404).json({ ok: false, error: 'Run not found' });
+    const { section, content } = req.body || {};
+    if (!section || typeof section !== 'string' || !DOC_SECTIONS.includes(section)) {
+        return res.status(400).json({ ok: false, error: 'Invalid or missing section; use one of: ' + DOC_SECTIONS.join(', ') });
+    }
+    updateRun(runId, { docs: { [section]: content != null ? String(content) : '' } });
+    persistRunToS3(runId).catch(() => {});
+    res.json({ ok: true });
 });
 
 // ----- POST /admin/agent/run – start run (returns runId, runs orchestrator in background) -----
@@ -570,6 +770,23 @@ router.post('/run', express.json(), (req, res) => {
     setImmediate(() => {
         runPipeline(runId, { prompt, maxParallelPlanners, maxParallelCoders });
     });
+});
+
+// ----- POST /admin/agent/run/:runId/resume – resume a run (load from S3 if not in memory) -----
+router.post('/run/:runId/resume', async (req, res) => {
+    const runId = req.params.runId;
+    let run = getRun(runId);
+    if (!run) {
+        const snapshot = await loadRunFromS3(runId);
+        if (!snapshot) return res.status(404).json({ ok: false, error: 'Run not found' });
+        hydrateRun(runId, snapshot);
+        run = getRun(runId);
+    }
+    const terminal = ['done', 'error', 'cancelled'].includes(run.status);
+    if (terminal) return res.status(400).json({ ok: false, error: 'Run already finished; cannot resume' });
+
+    res.json({ ok: true });
+    setImmediate(() => runPipeline(runId, { prompt: run.prompt, maxParallelPlanners: 2, maxParallelCoders: 3, resume: true }));
 });
 
 // ----- GET /admin/agent/stream/:runId – SSE -----

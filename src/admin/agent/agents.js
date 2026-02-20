@@ -5,10 +5,18 @@
 import { GoogleGenAI } from '@google/genai';
 import { getFileTree } from './codebaseTools.js';
 
-const genAI = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
-    defaultModel: process.env.GEMINI_MODEL || process.env.AGENT_MODEL || 'gemini-2.0-flash-exp',
-});
+let _genAI = null;
+function getGenAI() {
+    if (!_genAI) {
+        const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+        if (!apiKey) throw new Error('GEMINI_API_KEY must be set for Agent PR.');
+        _genAI = new GoogleGenAI({
+            apiKey,
+            defaultModel: process.env.GEMINI_MODEL || process.env.AGENT_MODEL || 'gemini-2.0-flash-exp',
+        });
+    }
+    return _genAI;
+}
 
 const MODEL = process.env.AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
 const GEMINI_TIMEOUT_MS = Number(process.env.AGENT_GEMINI_TIMEOUT_MS) || 120000;
@@ -28,7 +36,7 @@ function withTimeout(promise, ms, message = 'Request timed out') {
  * @returns {Promise<{ ok: true, flightPlan: Array<{ id: string, title: string, description: string, hints?: string }> } | { ok: false, error: string }>}
  */
 export async function runResearcher(missionPrompt, opts = {}) {
-    const { onChunk } = opts;
+    const { onChunk, docs } = opts;
     let treeInfo = '';
     try {
         const treeResult = await getFileTree('', 3);
@@ -54,12 +62,22 @@ Never suggest generic filenames like index.js or main.js unless they actually ex
 Example:
 [{"id":"add-route","title":"Add health route","description":"Add GET /health that returns { status: 'ok' }.","hints":"src/app.js"}]`;
 
-    const userContent = `Mission:\n${missionPrompt}${treeInfo}\n\nProduce the flight plan as a single JSON array.`;
+    let docsBlock = '';
+    if (docs && typeof docs === 'object') {
+        const parts = [];
+        if (docs.overview) parts.push('Overview: ' + docs.overview);
+        if (docs.requirements) parts.push('Requirements: ' + docs.requirements);
+        if (docs.architecture) parts.push('Architecture: ' + docs.architecture);
+        if (docs.decisions) parts.push('Decisions: ' + docs.decisions);
+        if (docs.notes) parts.push('Notes: ' + docs.notes);
+        if (parts.length) docsBlock = '\n\nExisting project docs (for context):\n' + parts.join('\n\n');
+    }
+    const userContent = `Mission:\n${missionPrompt}${treeInfo}${docsBlock}\n\nProduce the flight plan as a single JSON array.`;
 
     try {
         const result = await withTimeout(
             (async () => {
-                const response = await genAI.models.generateContentStream({
+                const response = await getGenAI().models.generateContentStream({
                     model: MODEL,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
                     config: { maxOutputTokens: 2048, responseMimeType: 'application/json' },
@@ -200,7 +218,7 @@ function parseFlightPlan(text) {
  * @returns {Promise<{ ok: true, steps: Array<{ what: string, files: string[], changeDescription?: string }> } | { ok: false, error: string }>}
  */
 export async function runPlanner(task, opts = {}) {
-    const { onChunk, fileContext = '', grepContext = '' } = opts;
+    const { onChunk, fileContext = '', grepContext = '', docs, flightPlan, steps } = opts;
     const systemPrompt = `You are a Planner. Technical project planner: read shared context findings, then decompose goals into a small number of substantial coding tasks. Prefer fewer larger tasks over many small ones — each Coder agent can handle significant multi-file changes. Define dependencies between tasks. Write descriptions specific enough that a coder can implement without guessing intent.
 
 Given a single task from a flight plan, output an implementation plan: an ordered list of steps. Each step should specify what to do, which file(s) to touch, and optionally a short change description. Each step should be an actionable implementation step (code or config change), not a pure analysis step. Prefer steps that produce file edits.
@@ -217,6 +235,17 @@ Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (
 [{"what":"Add GET /health handler","files":["src/app.js"],"changeDescription":"Add app.get('/health', ...) returning { status: 'ok' }"}]`;
 
     let userContent = `Task: ${task.title}\n${task.description}${task.hints ? '\nHints: ' + task.hints : ''}`;
+    if (docs && typeof docs === 'object') {
+        const parts = [];
+        if (docs.overview) parts.push('Overview: ' + docs.overview);
+        if (docs.requirements) parts.push('Requirements: ' + docs.requirements);
+        if (docs.architecture) parts.push('Architecture: ' + docs.architecture);
+        if (docs.decisions) parts.push('Decisions: ' + docs.decisions);
+        if (docs.notes) parts.push('Notes: ' + docs.notes);
+        if (parts.length) userContent += '\n\nExisting project docs (read-only context):\n' + parts.join('\n\n');
+    }
+    if (flightPlan && flightPlan.length) userContent += '\n\nFlight plan (other tasks): ' + flightPlan.map((t) => t.title).join('; ');
+    if (steps && steps.length) userContent += '\n\nExisting implementation steps (other steps): ' + steps.map((s) => (s.step && s.step.what) || s.what).join('; ');
     if (grepContext) userContent += `\n\nFiles that match the mission (from codebase search):\n${grepContext}`;
     if (fileContext) userContent += `\n\nRelevant file contents (for context only):\n${fileContext}`;
     userContent += '\n\nProduce the implementation steps as a single JSON array.';
@@ -224,7 +253,7 @@ Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (
     try {
         const result = await withTimeout(
             (async () => {
-                const response = await genAI.models.generateContentStream({
+                const response = await getGenAI().models.generateContentStream({
                     model: MODEL,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
                     config: { maxOutputTokens: 4096, responseMimeType: 'application/json' },
@@ -400,7 +429,7 @@ Example (imports change + function change in one file, two separate patches):
     try {
         const result = await withTimeout(
             (async () => {
-                const response = await genAI.models.generateContentStream({
+                const response = await getGenAI().models.generateContentStream({
                     model: MODEL,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
                     config: { maxOutputTokens: 8192 },
@@ -559,7 +588,7 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
     const editSummary = (edits || []).map((e) => e.path + (e.content ? ` (${e.content.length} chars)` : '')).join(', ') || 'none';
     const prompt = `Step: ${step.what}\n${step.changeDescription || ''}\nMission context: ${(missionSummary || '').slice(0, 500)}\n\nCoder produced edits for: ${editSummary}.\n\nDo these edits satisfy the step and mission? Reply with exactly one word: done or failed. Optionally add a short reason after a colon (e.g. "failed: edits change wrong file").`;
     try {
-        const response = await genAI.models.generateContent({
+        const response = await getGenAI().models.generateContent({
             model: MODEL,
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             config: { maxOutputTokens: 128 },
@@ -610,7 +639,7 @@ Output nothing else.`;
     try {
         const response = await withTimeout(
             (async () => {
-                const res = await genAI.models.generateContent({
+                const res = await getGenAI().models.generateContent({
                     model: MODEL,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
                     config: { maxOutputTokens: 256 },
