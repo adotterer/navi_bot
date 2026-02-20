@@ -21,12 +21,12 @@ router.get('/', (req, res) => {
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Missions' }])}
     <div class="flex items-center justify-between mb-8">
-      <h1 class="text-2xl font-semibold text-slate-800">Missions</h1>
+      <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Missions</h1>
       <a href="/admin/agent/prompts" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Edit agent prompts</a>
     </div>
-    <p class="text-slate-600 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
-    <section class="rounded-xl border border-slate-200 bg-white overflow-hidden w-full mb-4">
-      <button type="button" id="past-runs-toggle" class="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-50 text-sm font-medium text-slate-700 text-left hover:bg-slate-100 transition-colors">
+    <p class="text-slate-600 dark:text-slate-400 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
+    <section class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden w-full mb-4">
+      <button type="button" id="past-runs-toggle" class="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
         <span>Recent runs</span>
         <span id="past-runs-count" class="text-xs text-slate-400 font-normal"></span>
         <span id="past-runs-chevron" class="ml-auto text-slate-400 text-xs">▾</span>
@@ -954,7 +954,7 @@ router.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Missions')}${prismHead}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
@@ -1091,7 +1091,7 @@ router.get('/prompts', async (req, res) => {
         res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Agent prompts')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
     } catch (err) {
         console.error('Agent prompts page:', err);
