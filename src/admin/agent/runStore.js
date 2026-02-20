@@ -6,7 +6,7 @@
 const RUN_STATUSES = ['pending', 'research', 'planning', 'coding', 'reviewing', 'creating_pr', 'done', 'error', 'cancelled'];
 const MAX_RUNS_RETAINED = 50;
 
-/** @type {Map<string, { runId: string, status: string, logs: Array<{ role: string, stage: string, message: string, timestamp: string }>, flightPlan?: any, prUrl?: string, error?: string, createdAt: number }>} */
+/** @type {Map<string, { runId: string, status: string, logs: Array<{ role: string, stage: string, message: string, timestamp: string }>, flightPlan?: any, prUrl?: string, error?: string, createdAt: number, aborted?: boolean }>} */
 const runs = new Map();
 /** @type {string[]} */
 const runOrder = [];
@@ -34,6 +34,7 @@ function createRun(opts = {}) {
         runId,
         status: 'pending',
         cancelled: false,
+        aborted: false,
         logs: [],
         flightPlan: undefined,
         stepResults: [],
@@ -41,6 +42,7 @@ function createRun(opts = {}) {
         error: undefined,
         createdAt: Date.now(),
         prompt: opts.prompt || '',
+        usage: { inputTokens: 0, outputTokens: 0, totalCost: 0 },
     };
     runs.set(runId, run);
     runOrder.push(runId);
@@ -103,10 +105,30 @@ function updateRun(runId, updates) {
         run.status = updates.status;
     }
     if (updates.cancelled != null) run.cancelled = updates.cancelled;
+    if (updates.aborted != null) run.aborted = updates.aborted;
     if (updates.prUrl != null) run.prUrl = updates.prUrl;
     if (updates.error != null) run.error = updates.error;
     if (updates.flightPlan != null) run.flightPlan = updates.flightPlan;
     if (updates.stepResults != null) run.stepResults = updates.stepResults;
+}
+
+/**
+ * Update token usage for a run (accumulates).
+ * @param {string} runId
+ * @param {object} usageUpdates
+ * @param {number} [usageUpdates.inputTokens]
+ * @param {number} [usageUpdates.outputTokens]
+ * @param {number} [usageUpdates.totalCost]
+ */
+function updateUsage(runId, usageUpdates) {
+    const run = runs.get(runId);
+    if (!run) return;
+    if (!run.usage) {
+        run.usage = { inputTokens: 0, outputTokens: 0, totalCost: 0 };
+    }
+    if (usageUpdates.inputTokens != null) run.usage.inputTokens += usageUpdates.inputTokens;
+    if (usageUpdates.outputTokens != null) run.usage.outputTokens += usageUpdates.outputTokens;
+    if (usageUpdates.totalCost != null) run.usage.totalCost += usageUpdates.totalCost;
 }
 
 function setRunCancelled(runId) {
@@ -118,6 +140,17 @@ function setRunCancelled(runId) {
 function isRunCancelled(runId) {
     const run = runs.get(runId);
     return run ? !!run.cancelled : false;
+}
+
+function abortRun(runId) {
+    const run = runs.get(runId);
+    if (!run) return;
+    run.aborted = true;
+}
+
+function isRunAborted(runId) {
+    const run = runs.get(runId);
+    return run ? !!run.aborted : false;
 }
 
 /**
@@ -149,4 +182,4 @@ function listRuns(limit = 20) {
     }).filter(Boolean);
 }
 
-export { createRun, appendLog, getRun, updateRun, subscribe, listRuns, setRunCancelled, isRunCancelled, RUN_STATUSES };
+export { createRun, appendLog, getRun, updateRun, subscribe, listRuns, setRunCancelled, isRunCancelled, abortRun, isRunAborted, RUN_STATUSES };
