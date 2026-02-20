@@ -435,8 +435,8 @@ router.get('/', (req, res) => {
           var entry = JSON.parse(ev.data);
           if (entry.type === 'log') {
             var prefix = '[' + (entry.role || 'system') + '] ';
-            var msg = (entry.message || '').replace(/\\n/g, '\n');
-            logContainer.textContent += prefix + msg + '\n';
+            var msg = (entry.message || '').replace(/\\n/g, '\\n');
+            logContainer.textContent += prefix + msg + '\\n';
             logContainer.scrollTop = logContainer.scrollHeight;
           } else if (entry.type === 'status') {
             runStage.textContent = entry.status || '';
@@ -492,7 +492,7 @@ router.get('/', (req, res) => {
     }).catch(function() {});
   });
 })();
-    </script>
+    <\\/script>
   `)}
   `;
     const prismHead = `
