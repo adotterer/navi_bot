@@ -10,6 +10,7 @@ import { emojiRoutes } from './emojiRoutes.js';
 import { agentRoutes } from './agent/agentRoutes.js';
 import { adminHead, adminNav, adminContainer, escapeHtml, s3Badge } from './layout.js';
 import { headS3Key, hasS3KeysWithPrefix } from '../shared/s3Helper.js';
+import { runStore } from '../agent/runStore.js';
 
 const router = express.Router();
 
@@ -58,6 +59,10 @@ router.use('/prompts', requireAdmin, promptRoutes);
 router.use('/data', requireAdmin, dataRoutes);
 router.use('/aliases', requireAdmin, aliasRoutes);
 router.use('/emojis', requireAdmin, emojiRoutes);
+router.post('/agent/:runId/abort', requireAdmin, async (req, res) => {
+    await runStore.abortRun(req.params.runId);
+    res.json({ success: true });
+});
 router.use('/agent', requireAdmin, agentRoutes);
 
 function loginPage(opts = {}) {
