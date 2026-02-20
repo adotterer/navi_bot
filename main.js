@@ -27,7 +27,9 @@ const PORT = process.env.PORT || 8080;
 (async () => {
     try {
         const { syncAliasesFromS3 } = await import('./src/shared/aliasSync.js');
+        const { syncEmojisFromS3 } = await import('./src/shared/emojiSync.js');
         await syncAliasesFromS3();
+        await syncEmojisFromS3();
     } catch (_) {
         // S3 optional at startup (e.g. no creds or key not yet created)
     }

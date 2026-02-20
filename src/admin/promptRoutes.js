@@ -3,6 +3,7 @@
  */
 import express from 'express';
 import { getPromptTemplate, savePromptTemplate, getPromptMeta, listPromptIds, resetPromptToDefault } from '../shared/promptLoader.js';
+import { getEmojiLibrary } from '../shared/emojiSync.js';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge } from './layout.js';
 import { headS3Key } from '../shared/s3Helper.js';
 
@@ -38,7 +39,8 @@ router.get('/:id', async (req, res) => {
         ]);
         const saved = req.query.saved === '1';
         const reset = req.query.reset === '1';
-        res.send(promptEditPage(id, meta, body, { saved, reset, s3InUse }));
+        const emojiLibrary = getEmojiLibrary();
+        res.send(promptEditPage(id, meta, body, { saved, reset, s3InUse, emojiLibrary }));
     } catch (err) {
         console.error('Admin prompt get:', err);
         res.status(500).send('Error loading prompt.');
@@ -62,7 +64,8 @@ router.post('/:id', express.urlencoded({ extended: true }), async (req, res) => 
             ? 'S3 credentials are missing or invalid. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env and restart the admin server.'
             : 'Could not save to S3. Check your .env (AWS_*, S3_BUCKET_NAME) and try again.';
         try {
-            res.status(200).send(promptEditPage(id, meta, body, { saveError }));
+            const emojiLibrary = getEmojiLibrary();
+            res.status(200).send(promptEditPage(id, meta, body, { saveError, emojiLibrary }));
         } catch (e) {
             res.status(500).send('Error saving prompt.');
         }
@@ -117,7 +120,7 @@ function promptsListPage(list) {
 
 function promptEditPage(id, meta, body, opts = {}) {
     const variables = meta.variables || [];
-    const pillColors = ['rebeccapurple', 'coral', 'darkcyan', 'mediumseagreen', 'darkorange', 'mediumpurple', 'steelblue', 'indianred', 'teal', 'chocolate'];
+    const pillColors = ['#8b5cf6', 'coral', 'darkcyan', 'mediumseagreen', 'darkorange', 'mediumpurple', 'steelblue', 'indianred', 'teal', 'chocolate'];
     const varNames = variables.map((v) => (typeof v === 'string' ? v : v.name));
     const varPills = variables
         .map((v, i) => {
@@ -133,6 +136,27 @@ function promptEditPage(id, meta, body, opts = {}) {
     <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
       <p class="text-sm font-medium text-slate-700 mb-2">Insert variable at cursor</p>
       <div class="flex flex-wrap gap-2" id="var-pills">${varPills}</div>
+    </div>`
+            : '';
+    const emojiLibrary = opts.emojiLibrary || [];
+    const emojiCodeToUrl = (code) => {
+        const m = code && code.match(/<(a?):([^:]+):(\d+)>/);
+        return m ? `https://cdn.discordapp.com/emojis/${m[3]}.${m[1] === 'a' ? 'gif' : 'png'}` : null;
+    };
+    const emojiPills = emojiLibrary
+        .map(({ label, code }) => {
+            const url = emojiCodeToUrl(code);
+            const img = url ? `<img src="${url}" alt="" class="insert-emoji-pill-img" loading="lazy">` : '';
+            return `<button type="button" class="insert-emoji rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-colors inline-flex items-center gap-2" data-code="${escapeHtml(code)}" title="${escapeHtml(code)}">${img}<span>${escapeHtml(label)}</span></button>`;
+        })
+        .join('');
+    const emojiSection =
+        emojiLibrary.length > 0
+            ? `
+    <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+      <p class="text-sm font-medium text-slate-700 mb-2">Insert emoji at cursor</p>
+      <div class="flex flex-wrap gap-2" id="emoji-pills">${emojiPills}</div>
+      <p class="text-xs text-slate-500 mt-2">Emojis appear as images in the editor; the underlying code is saved. Manage library in <a href="/admin/emojis" class="text-emerald-600 hover:text-emerald-700">Emojis</a>.</p>
     </div>`
             : '';
     const savedBanner = opts.saved
@@ -157,27 +181,66 @@ function promptEditPage(id, meta, body, opts = {}) {
     ${resetBanner}
     ${saveErrorBanner}
     ${varsSection}
+    ${emojiSection}
     <div class="pb-20">
-      <form id="prompt-form" method="post" action="/admin/prompts/${escapeHtml(id)}" class="space-y-4">
-        <div>
-          <label for="prompt-body" class="block text-sm font-medium text-slate-700 mb-2">Template body</label>
-          <div id="prompt-editor-wrap" class="prompt-editor-wrap rounded-xl border border-slate-300 min-h-[320px] focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
-            <div id="prompt-highlight" class="prompt-highlight" aria-hidden="true"></div>
-            <textarea id="prompt-body" name="body" rows="28" class="prompt-textarea" placeholder="Prompt text with {{variables}}...">${escapeHtml(body)}</textarea>
-          </div>
+      <div id="prompt-split" class="prompt-split flex gap-0 min-h-[380px]">
+        <div id="prompt-editor-column" class="prompt-editor-column flex flex-col min-w-0 flex-1 bg-white rounded-l-xl">
+          <form id="prompt-form" method="post" action="/admin/prompts/${escapeHtml(id)}" class="flex flex-col flex-1 min-h-0 px-3">
+            <div class="prompt-editor-header flex items-center justify-between gap-2 px-3 py-2.5">
+              <label for="prompt-body" class="text-sm font-medium text-slate-700">Template body</label>
+              <button type="button" id="prompt-show-preview-btn" class="prompt-header-btn hidden text-slate-600 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700" title="Show preview panel">Show preview</button>
+            </div>
+            <div id="prompt-editor-wrap" class="prompt-editor-wrap rounded-xl border border-slate-300 flex-1 min-h-[320px] focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
+              <div id="prompt-highlight" class="prompt-highlight" aria-hidden="true"></div>
+              <textarea id="prompt-body" name="body" rows="28" class="prompt-textarea" placeholder="Prompt text with {{variables}}...">${escapeHtml(body)}</textarea>
+            </div>
+          </form>
         </div>
-      </form>
+        <div id="prompt-split-handle" class="prompt-split-handle flex-shrink-0 w-2 cursor-col-resize bg-slate-200 hover:bg-emerald-300 transition-colors rounded" title="Drag to resize"></div>
+        <div id="prompt-preview-column" class="prompt-preview-column flex flex-col min-w-[200px] flex-1 min-h-0 rounded-r-xl overflow-hidden border border-l-0 border-slate-700">
+          <div class="prompt-preview-header flex items-center justify-between gap-2 px-3 py-2.5 bg-slate-800 border-b border-slate-600">
+            <span class="text-sm font-semibold text-white">Preview (Discord)</span>
+            <button type="button" id="prompt-minimize-preview-btn" class="prompt-header-btn text-slate-700 hover:bg-slate-50" title="Hide preview panel">Minimize</button>
+          </div>
+          <div id="prompt-preview" class="prompt-preview-panel flex-1 px-4 py-3 text-[15px] leading-[1.375] min-h-0 overflow-auto" style="background:#323339;"></div>
+        </div>
+      </div>
       <form method="post" action="/admin/prompts/${escapeHtml(id)}/reset" class="mt-6 pt-6 border-t border-slate-200">
         <button type="submit" class="text-sm text-slate-500 hover:text-amber-600 font-medium" onclick="return confirm('Restore the built-in default for this prompt?');">Reset to default</button>
       </form>
-      <div class="mt-6 pt-6 border-t border-slate-200">
-        <p class="text-sm font-medium text-slate-700 mb-2">Preview (variables and Discord emojis)</p>
-        <div id="prompt-preview" class="prompt-preview rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 font-mono text-sm text-slate-900 whitespace-pre-wrap break-words min-h-[120px] max-h-[400px] overflow-auto"></div>
-      </div>
     </div>
     <style>
       #prompt-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
-      .prompt-preview .discord-emoji-preview { height: 1.2em; width: auto; vertical-align: middle; }
+      .prompt-editor-header,
+      .prompt-preview-header { height: 67px; min-height: 67px; max-height: 67px; flex-shrink: 0; box-sizing: border-box; }
+      .prompt-header-btn { display: inline-flex; align-items: center; justify-content: center; height: 2rem; padding: 0 1rem; font-size: 0.875rem; font-weight: 500; line-height: 1.25rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; background: #fff; transition: color 0.15s, background-color 0.15s, border-color 0.15s; }
+      .prompt-split { --editor-width: 50%; }
+      .prompt-editor-column { flex: 0 0 var(--editor-width); transition: flex 0.25s ease; }
+      .prompt-preview-column { flex: 1 1 0; min-width: 0; transition: flex 0.25s ease, opacity 0.25s ease; }
+      .prompt-split-handle { transition: width 0.25s ease, opacity 0.25s ease, min-width 0.25s ease; }
+      .prompt-split:not(.preview-minimized) #prompt-show-preview-btn { display: none !important; }
+      .prompt-split.preview-minimized .prompt-editor-column { flex: 1 1 100%; }
+      .prompt-split.preview-minimized .prompt-split-handle { width: 0; min-width: 0; opacity: 0; pointer-events: none; overflow: hidden; }
+      .prompt-split.preview-minimized .prompt-preview-column { flex: 0 0 0; min-width: 0; overflow: hidden; opacity: 0; pointer-events: none; }
+      .prompt-split.preview-minimized #prompt-show-preview-btn { display: inline-flex !important; }
+      .prompt-split.preview-minimized #prompt-minimize-preview-btn { display: none; }
+      .insert-emoji-pill-img { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; display: block; }
+      .prompt-preview-panel { white-space: pre-wrap; word-wrap: break-word; background: #2C2D32 !important; color: #ffffff !important; border-radius: 0.5rem; margin-top: 0; margin-bottom: 0.5rem; }
+      .prompt-preview-panel .preview-emoji-img { display: inline; vertical-align: middle; height: 22px; width: auto; max-width: 22px; object-fit: contain; }
+      .prompt-preview-panel strong { font-weight: 600; color: #ffffff !important; }
+      .prompt-preview-panel em { font-style: italic; color: #ffffff !important; }
+      .prompt-preview-panel u { text-decoration: underline; color: #ffffff !important; }
+      .prompt-preview-panel s { text-decoration: line-through; color: #ffffff !important; }
+      .prompt-preview-panel code { background: #111; color: #ffffff !important; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.9em; border: 1px solid #333; }
+      .prompt-preview-panel pre { background: #111; color: #ffffff !important; padding: 8px 12px; border-radius: 4px; overflow-x: auto; margin: 4px 0; font-size: 0.85em; white-space: pre-wrap; border: 1px solid #333; }
+      .prompt-preview-panel .preview-h1, .prompt-preview-panel .preview-h2, .prompt-preview-panel .preview-h3 { color: #ffffff !important; }
+      .prompt-preview-panel .preview-h1 { font-size: 1.25em; font-weight: 700; margin: 0.5em 0 0.25em; }
+      .prompt-preview-panel .preview-h2 { font-size: 1.1em; font-weight: 600; margin: 0.5em 0 0.2em; }
+      .prompt-preview-panel .preview-h3 { font-size: 1em; font-weight: 600; margin: 0.4em 0 0.15em; }
+      .prompt-preview-panel .preview-bullet { margin: 0.2em 0; padding-left: 0.5em; border-left: 2px solid #444; color: #ffffff !important; }
+      .prompt-preview-panel .preview-blockquote { margin: 0.25em 0; padding-left: 0.75em; border-left: 4px solid #6b7280; color: #ffffff !important; }
+      .prompt-preview-panel .preview-blockquote-inline { display: inline-block; padding-left: 0.5em; border-left: 3px solid #6b7280; color: inherit; }
+      .prompt-preview-panel .preview-line { margin: 0.15em 0; color: #ffffff !important; }
       .prompt-editor-wrap { display: grid; overflow: hidden; }
       .prompt-editor-wrap .prompt-highlight, .prompt-editor-wrap .prompt-textarea { grid-area: 1/1; min-height: 320px; font: inherit; font-family: ui-monospace, monospace; font-size: 0.875rem; line-height: 1.5; padding: 0.75rem 1rem; overflow: auto; white-space: pre-wrap; word-wrap: break-word; }
       .prompt-editor-wrap .prompt-highlight { z-index: 0; pointer-events: none; color: #0f172a; }
@@ -216,37 +279,78 @@ function promptEditPage(id, meta, body, opts = {}) {
           out += escapeHtml(text.slice(last));
           return out;
         }
+        function inlinePreviewInline(str) {
+          if (!str) return '';
+          var out = '';
+          var pos = 0;
+          var t = String.fromCharCode(96);
+          var re = new RegExp('(' + t + t + t + '[\\\\s\\\\S]*?' + t + t + t + ')|(\\\\*\\\\*[^*]+\\\\*\\\\*)|(\\\\*[^*]+\\\\*)|(__[^_]+__)|(~~[^~]+~~)|(' + t + '[^' + t + ']+' + t + ')|(<(a?):([^:]+):(\\\\d+)>)|(\\\\{\\\\{([^}]+)\\\\}\\\\})', 'g');
+          var m;
+          while ((m = re.exec(str)) !== null) {
+            out += escapeHtml(str.slice(pos, m.index));
+            if (m[1]) {
+              var code = m[1].slice(3, -3).trim();
+              out += '<pre>' + escapeHtml(code) + '</pre>';
+            } else if (m[2]) {
+              out += '<strong>' + escapeHtml(m[2].slice(2, -2)) + '</strong>';
+            } else if (m[3]) {
+              out += '<em>' + escapeHtml(m[3].slice(1, -1)) + '</em>';
+            } else if (m[4]) {
+              out += '<u>' + escapeHtml(m[4].slice(2, -2)) + '</u>';
+            } else if (m[5]) {
+              out += '<s>' + escapeHtml(m[5].slice(2, -2)) + '</s>';
+            } else if (m[6]) {
+              out += '<code>' + escapeHtml(m[6].slice(1, -1)) + '</code>';
+            } else if (m[7]) {
+              var animated = m[8] === 'a';
+              var id = m[10];
+              var ext = animated ? 'gif' : 'png';
+              var url = 'https://cdn.discordapp.com/emojis/' + id + '.' + ext;
+              out += '<img src="' + escapeHtml(url) + '" alt="" class="preview-emoji-img" title="' + escapeHtml(m[7]) + '">';
+            } else if (m[11]) {
+              var name = m[12].trim();
+              var color = colorForVar(name);
+              out += '<span style="color:' + escapeHtml(color) + '">' + escapeHtml(m[11]) + '</span>';
+            }
+            pos = m.index + m[0].length;
+          }
+          out += escapeHtml(str.slice(pos));
+          return out;
+        }
+        function wrapLineContent(content) {
+          if (content.slice(0, 2) === '> ') {
+            return '<span class="preview-blockquote-inline">' + inlinePreviewInline(content.slice(2)) + '</span>';
+          }
+          return inlinePreviewInline(content);
+        }
+        function previewHtml(text) {
+          if (!text) return '';
+          var lines = text.split('\\n');
+          var parts = [];
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            if (line.slice(0, 4) === '### ') {
+              parts.push('<h3 class="preview-h3">' + wrapLineContent(line.slice(4)) + '</h3>');
+            } else if (line.slice(0, 3) === '## ') {
+              parts.push('<h2 class="preview-h2">' + wrapLineContent(line.slice(3)) + '</h2>');
+            } else if (line.slice(0, 2) === '# ') {
+              parts.push('<h1 class="preview-h1">' + wrapLineContent(line.slice(2)) + '</h1>');
+            } else if (line.slice(0, 3) === '-# ') {
+              parts.push('<div class="preview-bullet">' + inlinePreviewInline(line.slice(3)) + '</div>');
+            } else if (line.slice(0, 2) === '> ') {
+              parts.push('<div class="preview-blockquote">' + inlinePreviewInline(line.slice(2)) + '</div>');
+            } else {
+              parts.push('<div class="preview-line">' + inlinePreviewInline(line) + '</div>');
+            }
+          }
+          return parts.join('');
+        }
         function updateHighlight() {
           if (highlightEl && ta) highlightEl.innerHTML = highlightText(ta.value);
         }
-        function textToPreviewHtml(text) {
-          if (!text) return '';
-          var re = /\{\{([^}]*)\}\}|<(a?):([^:]+):(\\d+)>/g;
-          var out = '';
-          var last = 0;
-          var m;
-          re.lastIndex = 0;
-          while ((m = re.exec(text)) !== null) {
-            out += escapeHtml(text.slice(last, m.index));
-            if (m[1] !== undefined) {
-              var name = m[1].trim();
-              var color = colorForVar(name);
-              out += '<span style="color:' + escapeHtml(color) + '">' + escapeHtml(m[0]) + '</span>';
-            } else {
-              var animated = m[2] === 'a';
-              var id = m[4];
-              var ext = animated ? 'gif' : 'png';
-              var url = 'https://cdn.discordapp.com/emojis/' + id + '.' + ext;
-              out += '<img src="' + escapeHtml(url) + '" alt="" class="discord-emoji-preview" title="' + escapeHtml(m[0]) + '">';
-            }
-            last = m.index + m[0].length;
-          }
-          out += escapeHtml(text.slice(last));
-          return out;
-        }
         function updatePreview() {
           var el = document.getElementById('prompt-preview');
-          if (el && ta) el.innerHTML = textToPreviewHtml(ta.value);
+          if (el && ta) el.innerHTML = previewHtml(ta.value);
         }
         function syncScroll() {
           if (highlightEl && ta) { highlightEl.scrollTop = ta.scrollTop; highlightEl.scrollLeft = ta.scrollLeft; }
@@ -255,6 +359,7 @@ function promptEditPage(id, meta, body, opts = {}) {
         updateHighlight();
         updatePreview();
         ta.addEventListener('input', function(){ updateHighlight(); updatePreview(); syncScroll(); });
+        ta.addEventListener('blur', updatePreview);
         ta.addEventListener('scroll', syncScroll);
         var unsavedReminder = document.getElementById('prompt-unsaved-reminder');
         var dirty = false;
@@ -287,6 +392,51 @@ function promptEditPage(id, meta, body, opts = {}) {
           syncScroll();
           markDirty();
         });
+        document.getElementById('emoji-pills') && document.getElementById('emoji-pills').addEventListener('click', function(e) {
+          var btn = e.target.closest('.insert-emoji');
+          if (!btn) return;
+          var code = btn.getAttribute('data-code');
+          if (!code) return;
+          var start = ta.selectionStart, end = ta.selectionEnd;
+          ta.value = ta.value.slice(0, start) + code + ta.value.slice(end);
+          ta.selectionStart = ta.selectionEnd = start + code.length;
+          ta.focus();
+          updateHighlight();
+          updatePreview();
+          syncScroll();
+          markDirty();
+        });
+        var split = document.getElementById('prompt-split');
+        var editorCol = document.getElementById('prompt-editor-column');
+        var handle = document.getElementById('prompt-split-handle');
+        var minimizeBtn = document.getElementById('prompt-minimize-preview-btn');
+        var showPreviewBtn = document.getElementById('prompt-show-preview-btn');
+        if (minimizeBtn && split) minimizeBtn.addEventListener('click', function() { split.classList.add('preview-minimized'); });
+        if (showPreviewBtn && split) showPreviewBtn.addEventListener('click', function() { split.classList.remove('preview-minimized'); });
+        if (handle && split && editorCol) {
+          handle.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            var startX = e.clientX;
+            var startWidth = split.offsetWidth;
+            var startPct = (editorCol.offsetWidth / startWidth) * 100;
+            function onMove(e2) {
+              var dx = e2.clientX - startX;
+              var pct = startPct + (dx / startWidth) * 100;
+              pct = Math.max(20, Math.min(80, pct));
+              split.style.setProperty('--editor-width', pct + '%');
+            }
+            function onUp() {
+              document.removeEventListener('mousemove', onMove);
+              document.removeEventListener('mouseup', onUp);
+              document.body.style.cursor = '';
+              document.body.style.userSelect = '';
+            }
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+          });
+        }
       })();
     </script>
   `)}
