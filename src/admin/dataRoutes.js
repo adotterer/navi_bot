@@ -277,7 +277,6 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
   var form = document.getElementById('csv-form');
   var gridEl = document.getElementById('csv-grid');
   var textarea = document.getElementById('csv-body');
-  var unsavedReminder = document.getElementById('csv-unsaved-reminder');
   var dirty = false;
 
   var headerAbbrev = {
@@ -364,12 +363,8 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
     return last || u;
   }
   function markDirty() { dirty = true; }
-  function showReminder() {
-    if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden');
-  }
   function clearDirty() {
     dirty = false;
-    if (unsavedReminder) unsavedReminder.classList.add('hidden');
   }
 
   function renderGrid(rows) {
@@ -425,7 +420,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
           inp.placeholder = 'Paste GIF URL';
           inp.title = rawVal || 'GIF URL';
           inp.addEventListener('input', markDirty);
-          inp.addEventListener('blur', function() { fnSpan.textContent = filenameFromUrl(inp.value); fnSpan.title = inp.value; showReminder(); });
+          inp.addEventListener('blur', function() { fnSpan.textContent = filenameFromUrl(inp.value); fnSpan.title = inp.value; });
           td.appendChild(inp);
           continue;
         }
@@ -437,7 +432,6 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
           ta.rows = 3;
           ta.className = 'cell-textarea w-full min-w-0 bg-white text-slate-900';
           ta.addEventListener('input', markDirty);
-          ta.addEventListener('blur', showReminder);
           td.appendChild(ta);
           continue;
         }
@@ -461,7 +455,6 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
         single.value = rawVal;
         single.className = 'cell-input w-full min-w-[52px] bg-transparent';
         single.addEventListener('input', markDirty);
-        single.addEventListener('blur', showReminder);
         td.appendChild(single);
       }
     }
@@ -472,9 +465,6 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
 
   gridEl.addEventListener('input', markDirty);
   gridEl.addEventListener('change', markDirty);
-  gridEl.addEventListener('blur', function(e) {
-    if (e.target.matches('input, textarea') && !e.target.readOnly) showReminder();
-  }, true);
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     clearDirty();
@@ -494,7 +484,6 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
   <div id="csv-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="csv">
     <div class="save-bar-inner max-w-[85rem] mx-auto px-4 py-3">
       <div class="save-bar-content">
-        <div id="csv-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
         <div id="csv-unsaved-reminder-placeholder" class="text-slate-400 text-sm"></div>
         <div class="flex flex-wrap items-center gap-3">
           <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>

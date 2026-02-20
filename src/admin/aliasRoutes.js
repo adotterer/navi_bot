@@ -83,7 +83,6 @@ router.get('/', async (req, res) => {
     <div id="aliases-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="aliases">
       <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
         <div class="save-bar-content">
-          <div id="aliases-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
           <div class="text-slate-400 text-sm"></div>
           <div class="flex flex-wrap items-center gap-3">
             <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
@@ -104,11 +103,9 @@ router.get('/', async (req, res) => {
   var newCanonical = document.getElementById('new-canonical');
   var addBtn = document.getElementById('add-row-btn');
   var jsonFallback = document.getElementById('aliases-json-fallback');
-  var unsavedReminder = document.getElementById('aliases-unsaved-reminder');
   var dirty = false;
   function markDirty() { dirty = true; }
-  function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden'); }
-  function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.add('hidden'); }
+  function clearDirty() { dirty = false; }
 
   function addRow(alias, canonical) {
     var tr = document.createElement('tr');
@@ -116,7 +113,7 @@ router.get('/', async (req, res) => {
     var esc = function(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
     tr.innerHTML = '<td class="py-2 px-3"><input type="text" class="alias-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(alias) + '" placeholder="e.g. palu" /></td><td class="py-2 px-3"><input type="text" class="canonical-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(canonical) + '" placeholder="e.g. palutena" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>';
     tbody.appendChild(tr);
-    tr.querySelector('.delete-row').addEventListener('click', function() { tr.remove(); markDirty(); showReminder(); });
+    tr.querySelector('.delete-row').addEventListener('click', function() { tr.remove(); markDirty(); });
   }
   addBtn.addEventListener('click', function() {
     var a = (newAlias.value || '').trim();
@@ -124,16 +121,18 @@ router.get('/', async (req, res) => {
     if (!a || !c) return;
     addRow(a, c);
     markDirty();
-    showReminder();
     newAlias.value = '';
     newCanonical.value = '';
     newAlias.focus();
   });
   tbody.addEventListener('click', function(e) {
-    if (e.target.classList.contains('delete-row')) e.target.closest('tr').remove();
+    if (e.target.classList.contains('delete-row')) {
+      e.target.closest('tr').remove();
+      markDirty();
+    }
   });
-  tbody.addEventListener('input', function(e) { if (e.target.matches('.alias-input, .canonical-input')) { markDirty(); showReminder(); } });
-  tbody.addEventListener('blur', function(e) { if (e.target.matches('.alias-input, .canonical-input')) showReminder(); }, true);
+  tbody.addEventListener('input', function(e) { if (e.target.matches('.alias-input, .canonical-input')) markDirty(); });
+  tbody.addEventListener('change', function(e) { if (e.target.matches('.alias-input, .canonical-input')) markDirty(); });
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     clearDirty();
@@ -171,7 +170,6 @@ router.get('/', async (req, res) => {
         tbody.innerHTML = '';
         Object.entries(data).sort(function(a,b) { return a[0].localeCompare(b[0]); }).forEach(function(pair) { addRow(pair[0], pair[1]); });
         markDirty();
-        showReminder();
       }
     } catch (_) {}
   });
@@ -284,8 +282,7 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
     <div id="aliases-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="aliases">
       <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
         <div class="save-bar-content">
-          <div id="aliases-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
-          <div class="text-slate-400 text-sm"></div>
+                     <div class="text-slate-400 text-sm"></div>
           <div class="flex flex-wrap items-center gap-3">
             <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
             <button type="submit" form="aliases-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
@@ -305,18 +302,16 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
   var newCanonical = document.getElementById('new-canonical');
   var addBtn = document.getElementById('add-row-btn');
   var jsonFallback = document.getElementById('aliases-json-fallback');
-  var unsavedReminder = document.getElementById('aliases-unsaved-reminder');
   var dirty = false;
   function markDirty() { dirty = true; }
-  function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden'); }
-  function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.add('hidden'); }
+  function clearDirty() { dirty = false; }
   function addRow(alias, canonical) {
     var tr = document.createElement('tr');
     tr.className = 'alias-row border-b border-slate-200 hover:bg-slate-50/50';
     var esc = function(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
     tr.innerHTML = '<td class="py-2 px-3"><input type="text" class="alias-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(alias) + '" placeholder="e.g. palu" /></td><td class="py-2 px-3"><input type="text" class="canonical-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(canonical) + '" placeholder="e.g. palutena" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>';
     tbody.appendChild(tr);
-    tr.querySelector('.delete-row').addEventListener('click', function() { tr.remove(); markDirty(); showReminder(); });
+    tr.querySelector('.delete-row').addEventListener('click', function() { tr.remove(); markDirty(); });
   }
   addBtn.addEventListener('click', function() {
     var a = (newAlias.value || '').trim();
@@ -324,16 +319,18 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
     if (!a || !c) return;
     addRow(a, c);
     markDirty();
-    showReminder();
     newAlias.value = '';
     newCanonical.value = '';
     newAlias.focus();
   });
   tbody.addEventListener('click', function(e) {
-    if (e.target.classList.contains('delete-row')) e.target.closest('tr').remove();
+    if (e.target.classList.contains('delete-row')) {
+      e.target.closest('tr').remove();
+      markDirty();
+    }
   });
-  tbody.addEventListener('input', function(e) { if (e.target.matches('.alias-input, .canonical-input')) { markDirty(); showReminder(); } });
-  tbody.addEventListener('blur', function(e) { if (e.target.matches('.alias-input, .canonical-input')) showReminder(); }, true);
+  tbody.addEventListener('input', function(e) { if (e.target.matches('.alias-input, .canonical-input')) markDirty(); });
+  tbody.addEventListener('change', function(e) { if (e.target.matches('.alias-input, .canonical-input')) markDirty(); });
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     clearDirty();
@@ -371,7 +368,6 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
         tbody.innerHTML = '';
         Object.entries(data).sort(function(a,b) { return a[0].localeCompare(b[0]); }).forEach(function(pair) { addRow(pair[0], pair[1]); });
         markDirty();
-        showReminder();
       }
     } catch (_) {}
   });

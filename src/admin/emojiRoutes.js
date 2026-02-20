@@ -89,7 +89,6 @@ router.get('/', async (req, res) => {
     <div id="emojis-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="emojis">
       <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
         <div class="save-bar-content">
-          <div id="emojis-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
           <div class="text-slate-400 text-sm"></div>
           <div class="flex flex-wrap items-center gap-3">
             <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
@@ -109,11 +108,9 @@ router.get('/', async (req, res) => {
   var newLabel = document.getElementById('new-label');
   var newCode = document.getElementById('new-code');
   var addBtn = document.getElementById('add-emoji-row-btn');
-  var unsavedReminder = document.getElementById('emojis-unsaved-reminder');
   var dirty = false;
   function markDirty() { dirty = true; }
-  function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden'); }
-  function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.add('hidden'); }
+  function clearDirty() { dirty = false; }
   function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function codeToUrl(code) {
     var m = (code || '').match(/<(a?):([^:]+):(\\d+)>/);
@@ -126,7 +123,7 @@ router.get('/', async (req, res) => {
     tr.className = 'emoji-row border-b border-slate-200 hover:bg-slate-50/50';
     tr.innerHTML = '<td class="py-2 px-3 w-10 align-middle">' + img + '</td><td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(label) + '" placeholder="e.g. Navi bullet" /></td><td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" value="' + esc(code) + '" placeholder="<:name:id>" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-emoji-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>';
     tbody.appendChild(tr);
-    tr.querySelector('.delete-emoji-row').addEventListener('click', function() { tr.remove(); markDirty(); showReminder(); });
+    tr.querySelector('.delete-emoji-row').addEventListener('click', function() { tr.remove(); markDirty(); });
   }
   addBtn.addEventListener('click', function() {
     var label = (newLabel.value || '').trim();
@@ -134,7 +131,6 @@ router.get('/', async (req, res) => {
     if (!label || !code) return;
     addRow(label, code);
     markDirty();
-    showReminder();
     newLabel.value = '';
     newCode.value = '';
     newLabel.focus();
@@ -142,8 +138,8 @@ router.get('/', async (req, res) => {
   tbody.addEventListener('click', function(e) {
     if (e.target.classList.contains('delete-emoji-row')) e.target.closest('tr').remove();
   });
-  tbody.addEventListener('input', function(e) { if (e.target.matches('.label-input, .code-input')) { markDirty(); showReminder(); } });
-  tbody.addEventListener('blur', function(e) { if (e.target.matches('.label-input, .code-input')) showReminder(); }, true);
+  tbody.addEventListener('input', function(e) { if (e.target.matches('.label-input, .code-input')) markDirty(); });
+  tbody.addEventListener('change', function(e) { if (e.target.matches('.label-input, .code-input')) markDirty(); });
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     clearDirty();
@@ -246,7 +242,6 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
     <div id="emojis-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="emojis">
       <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
         <div class="save-bar-content">
-          <div id="emojis-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
           <div class="text-slate-400 text-sm"></div>
           <div class="flex flex-wrap items-center gap-3">
             <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
@@ -266,11 +261,9 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
   var newLabel = document.getElementById('new-label');
   var newCode = document.getElementById('new-code');
   var addBtn = document.getElementById('add-emoji-row-btn');
-  var unsavedReminder = document.getElementById('emojis-unsaved-reminder');
   var dirty = false;
   function markDirty() { dirty = true; }
-  function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden'); }
-  function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.add('hidden'); }
+  function clearDirty() { dirty = false; }
   function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function codeToUrl(code) {
     var m = (code || '').match(/<(a?):([^:]+):(\\d+)>/);
@@ -283,7 +276,7 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
     tr.className = 'emoji-row border-b border-slate-200 hover:bg-slate-50/50';
     tr.innerHTML = '<td class="py-2 px-3 w-10 align-middle">' + img + '</td><td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(label) + '" placeholder="e.g. Navi bullet" /></td><td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" value="' + esc(code) + '" placeholder="<:name:id>" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-emoji-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>';
     tbody.appendChild(tr);
-    tr.querySelector('.delete-emoji-row').addEventListener('click', function() { tr.remove(); markDirty(); showReminder(); });
+    tr.querySelector('.delete-emoji-row').addEventListener('click', function() { tr.remove(); markDirty(); });
   }
   addBtn.addEventListener('click', function() {
     var label = (newLabel.value || '').trim();
@@ -291,7 +284,6 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
     if (!label || !code) return;
     addRow(label, code);
     markDirty();
-    showReminder();
     newLabel.value = '';
     newCode.value = '';
     newLabel.focus();
@@ -299,8 +291,8 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
   tbody.addEventListener('click', function(e) {
     if (e.target.classList.contains('delete-emoji-row')) e.target.closest('tr').remove();
   });
-  tbody.addEventListener('input', function(e) { if (e.target.matches('.label-input, .code-input')) { markDirty(); showReminder(); } });
-  tbody.addEventListener('blur', function(e) { if (e.target.matches('.label-input, .code-input')) showReminder(); }, true);
+  tbody.addEventListener('input', function(e) { if (e.target.matches('.label-input, .code-input')) markDirty(); });
+  tbody.addEventListener('change', function(e) { if (e.target.matches('.label-input, .code-input')) markDirty(); });
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     clearDirty();

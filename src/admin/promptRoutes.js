@@ -361,14 +361,11 @@ function promptEditPage(id, meta, body, opts = {}) {
         ta.addEventListener('input', function(){ updateHighlight(); updatePreview(); syncScroll(); });
         ta.addEventListener('blur', updatePreview);
         ta.addEventListener('scroll', syncScroll);
-        var unsavedReminder = document.getElementById('prompt-unsaved-reminder');
         var dirty = false;
-        function markDirty() { dirty = true; if (unsavedReminder) unsavedReminder.classList.remove('hidden'); }
-        function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.add('hidden'); }
-        function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden'); }
+        function markDirty() { dirty = true; }
+        function clearDirty() { dirty = false; }
         ta.addEventListener('input', markDirty);
         ta.addEventListener('change', markDirty);
-        ta.addEventListener('blur', showReminder);
         form.addEventListener('submit', function() { clearDirty(); });
         document.addEventListener('keydown', function(e) {
           if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -443,7 +440,6 @@ function promptEditPage(id, meta, body, opts = {}) {
   <div id="prompt-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="prompts">
     <div class="save-bar-inner max-w-4xl mx-auto px-4 py-3">
       <div class="save-bar-content">
-        <div id="prompt-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
         <div id="prompt-unsaved-placeholder" class="text-slate-400 text-sm"></div>
         <div class="flex flex-wrap items-center gap-3">
           <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
