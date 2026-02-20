@@ -140,9 +140,9 @@ function promptsListPage(list) {
     const rows = list
         .map(
             ({ id, description, s3InUse }) => `
-        <tr class="border-b border-slate-200 hover:bg-slate-50/80">
+        <tr class="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
           <td class="py-3 px-4"><a href="/admin/prompts/${escapeHtml(id)}" class="font-medium text-emerald-600 hover:text-emerald-700">${escapeHtml(id)}</a></td>
-          <td class="py-3 text-slate-600 text-sm px-4">${escapeHtml(description)}</td>
+          <td class="py-3 text-slate-600 dark:text-slate-400 text-sm px-4">${escapeHtml(description)}</td>
           <td class="py-3 px-4">${s3InUse ? s3Badge() : ''}</td>
         </tr>`
         )
@@ -164,7 +164,7 @@ function promptsListPage(list) {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Prompts')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`;
 }
 
@@ -601,7 +601,7 @@ function promptEditPage(id, meta, body, opts = {}) {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Edit ' + id)}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`;
 }
 
