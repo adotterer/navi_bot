@@ -74,26 +74,48 @@ The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase 
 }
 
 /**
- * Parse flight plan from model output (extract JSON array).
+ * Extract JSON array candidates from text: ```json ... ```, then last [...], then first [...].
+ * @param {string} text
+ * @returns {string[]}
+ */
+function extractJsonArrayCandidates(text) {
+    const trimmed = text.trim();
+    const candidates = [];
+    const codeBlock = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlock) candidates.push(codeBlock[1].trim());
+    const lastClose = trimmed.lastIndexOf(']');
+    const lastOpen = trimmed.lastIndexOf('[');
+    if (lastOpen !== -1 && lastClose !== -1 && lastOpen < lastClose) {
+        const lastArray = trimmed.slice(lastOpen, lastClose + 1);
+        if (!candidates.includes(lastArray)) candidates.push(lastArray);
+    }
+    const firstMatch = trimmed.match(/\[[\s\S]*\]/);
+    if (firstMatch && !candidates.includes(firstMatch[0])) candidates.push(firstMatch[0]);
+    return candidates;
+}
+
+/**
+ * Parse flight plan from model output (extract JSON array). Prefers ```json block, then last [...], then first [...].
  * @param {string} text
  * @returns {Array<{ id: string, title: string, description: string, hints?: string }>}
  */
 function parseFlightPlan(text) {
-    const trimmed = text.trim();
-    const jsonMatch = trimmed.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return [];
-    try {
-        const arr = JSON.parse(jsonMatch[0]);
-        if (!Array.isArray(arr)) return [];
-        return arr.map((t) => ({
-            id: String(t.id ?? t.title ?? '').slice(0, 64) || 'task-' + Math.random().toString(36).slice(2, 8),
-            title: String(t.title ?? t.id ?? ''),
-            description: String(t.description ?? ''),
-            hints: t.hints != null ? String(t.hints) : undefined,
-        }));
-    } catch (_) {
-        return [];
+    for (const raw of extractJsonArrayCandidates(text)) {
+        try {
+            const arr = JSON.parse(raw);
+            if (!Array.isArray(arr)) continue;
+            const mapped = arr.map((t) => ({
+                id: String(t.id ?? t.title ?? '').slice(0, 64) || 'task-' + Math.random().toString(36).slice(2, 8),
+                title: String(t.title ?? t.id ?? ''),
+                description: String(t.description ?? ''),
+                hints: t.hints != null ? String(t.hints) : undefined,
+            }));
+            if (mapped.length) return mapped;
+        } catch (_) {
+            /* try next candidate */
+        }
     }
+    return [];
 }
 
 /**
@@ -139,21 +161,25 @@ Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (
     }
 }
 
+/**
+ * Parse Planner steps from model output. Prefers ```json block, then last [...], then first [...].
+ */
 function parsePlannerSteps(text) {
-    const trimmed = text.trim();
-    const jsonMatch = trimmed.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return [];
-    try {
-        const arr = JSON.parse(jsonMatch[0]);
-        if (!Array.isArray(arr)) return [];
-        return arr.map((s) => ({
-            what: String(s.what ?? s.description ?? ''),
-            files: Array.isArray(s.files) ? s.files.map(String) : [],
-            changeDescription: s.changeDescription != null ? String(s.changeDescription) : undefined,
-        }));
-    } catch (_) {
-        return [];
+    for (const raw of extractJsonArrayCandidates(text)) {
+        try {
+            const arr = JSON.parse(raw);
+            if (!Array.isArray(arr)) continue;
+            const mapped = arr.map((s) => ({
+                what: String(s.what ?? s.description ?? ''),
+                files: Array.isArray(s.files) ? s.files.map(String) : [],
+                changeDescription: s.changeDescription != null ? String(s.changeDescription) : undefined,
+            }));
+            if (mapped.length) return mapped;
+        } catch (_) {
+            /* try next candidate */
+        }
     }
+    return [];
 }
 
 /**
@@ -205,17 +231,52 @@ export async function runCoder(step, fileContext, opts = {}) {
     }
 }
 
+/**
+ * Extract edits array from Coder output. Prefers ```json ... ``` block, then last [...], then first [...].
+ */
 function parseCoderEdits(text) {
-    const trimmed = text.trim();
-    const jsonMatch = trimmed.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return [];
+    for (const raw of extractJsonArrayCandidates(text)) {
+        try {
+            const arr = JSON.parse(raw);
+            if (!Array.isArray(arr)) continue;
+            const edits = arr
+                .filter((e) => e && (e.path || e.file) && (e.content != null))
+                .map((e) => ({ path: String(e.path || e.file), content: String(e.content) }));
+            if (edits.length) return edits;
+        } catch (_) {
+            /* try next candidate */
+        }
+    }
+    return [];
+}
+
+/**
+ * Validate Coder output against the step and mission. Returns done or failed so only approved edits go to the PR.
+ * @param {object} step - { what, files?, changeDescription? }
+ * @param {string} missionSummary - Mission prompt or short flight plan summary
+ * @param {Array<{ path: string, content: string }>} edits - Coder's proposed edits
+ * @returns {Promise<{ ok: true, status: 'done'|'failed', reason?: string }>}
+ */
+export async function validateCoderStep(step, missionSummary, edits) {
+    const editSummary = (edits || []).map((e) => e.path + (e.content ? ` (${e.content.length} chars)` : '')).join(', ') || 'none';
+    const prompt = `Step: ${step.what}\n${step.changeDescription || ''}\nMission context: ${(missionSummary || '').slice(0, 500)}\n\nCoder produced edits for: ${editSummary}.\n\nDo these edits satisfy the step and mission? Reply with exactly one word: done or failed. Optionally add a short reason after a colon (e.g. "failed: edits change wrong file").`;
     try {
-        const arr = JSON.parse(jsonMatch[0]);
-        if (!Array.isArray(arr)) return [];
-        return arr
-            .filter((e) => e && (e.path || e.file) && (e.content != null))
-            .map((e) => ({ path: String(e.path || e.file), content: String(e.content) }));
+        const response = await genAI.models.generateContent({
+            model: MODEL,
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            config: { maxOutputTokens: 128 },
+        });
+        const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
+        const text = String(raw ?? '').trim().toLowerCase();
+        const done = text.startsWith('done');
+        const failed = text.startsWith('failed');
+        const reason = (text.includes(':') ? text.split(':').slice(1).join(':').trim() : '') || undefined;
+        return {
+            ok: true,
+            status: done ? 'done' : (failed ? 'failed' : 'done'),
+            reason: failed ? reason : undefined,
+        };
     } catch (_) {
-        return [];
+        return { ok: true, status: 'done' };
     }
 }

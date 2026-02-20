@@ -3,7 +3,7 @@
  * Tracks status, logs, flight plan, PR URL, and error per run.
  */
 
-const RUN_STATUSES = ['pending', 'research', 'planning', 'coding', 'creating_pr', 'done', 'error'];
+const RUN_STATUSES = ['pending', 'research', 'planning', 'coding', 'creating_pr', 'done', 'error', 'cancelled'];
 const MAX_RUNS_RETAINED = 50;
 
 /** @type {Map<string, { runId: string, status: string, logs: Array<{ role: string, stage: string, message: string, timestamp: string }>, flightPlan?: any, prUrl?: string, error?: string, createdAt: number }>} */
@@ -33,8 +33,10 @@ function createRun(opts = {}) {
     const run = {
         runId,
         status: 'pending',
+        cancelled: false,
         logs: [],
         flightPlan: undefined,
+        stepResults: [],
         prUrl: undefined,
         error: undefined,
         createdAt: Date.now(),
@@ -100,9 +102,22 @@ function updateRun(runId, updates) {
     if (updates.status != null && RUN_STATUSES.includes(updates.status)) {
         run.status = updates.status;
     }
+    if (updates.cancelled != null) run.cancelled = updates.cancelled;
     if (updates.prUrl != null) run.prUrl = updates.prUrl;
     if (updates.error != null) run.error = updates.error;
     if (updates.flightPlan != null) run.flightPlan = updates.flightPlan;
+    if (updates.stepResults != null) run.stepResults = updates.stepResults;
+}
+
+function setRunCancelled(runId) {
+    const run = runs.get(runId);
+    if (!run) return;
+    run.cancelled = true;
+}
+
+function isRunCancelled(runId) {
+    const run = runs.get(runId);
+    return run ? !!run.cancelled : false;
 }
 
 /**
@@ -134,4 +149,4 @@ function listRuns(limit = 20) {
     }).filter(Boolean);
 }
 
-export { createRun, appendLog, getRun, updateRun, subscribe, listRuns, RUN_STATUSES };
+export { createRun, appendLog, getRun, updateRun, subscribe, listRuns, setRunCancelled, isRunCancelled, RUN_STATUSES };

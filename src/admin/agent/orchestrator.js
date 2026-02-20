@@ -2,8 +2,8 @@
  * Orchestrator: runs Researcher -> Planners -> Coders, aggregates edits, then PR (when implemented).
  */
 import pLimit from 'p-limit';
-import { appendLog, getRun, updateRun } from './runStore.js';
-import { runResearcher, runPlanner, runCoder } from './agents.js';
+import { appendLog, getRun, updateRun, isRunCancelled } from './runStore.js';
+import { runResearcher, runPlanner, runCoder, validateCoderStep } from './agents.js';
 import { readFile } from './codebaseTools.js';
 
 /**
@@ -14,11 +14,21 @@ import { readFile } from './codebaseTools.js';
  * @param {number} [opts.maxParallelPlanners]
  * @param {number} [opts.maxParallelCoders]
  */
+function checkCancelled(runId, log) {
+    if (isRunCancelled(runId)) {
+        updateRun(runId, { status: 'cancelled' });
+        log('system', 'cancelled', 'Run stopped by user.\n');
+        return true;
+    }
+    return false;
+}
+
 export async function runPipeline(runId, opts = {}) {
     const { prompt = '', maxParallelPlanners = 2, maxParallelCoders = 3 } = opts;
     const log = (role, stage, message) => appendLog(runId, { role, stage, message });
 
     try {
+        if (checkCancelled(runId, log)) return;
         updateRun(runId, { status: 'research' });
         log('system', 'research', 'Running Researcher…\n');
 
@@ -35,10 +45,13 @@ export async function runPipeline(runId, opts = {}) {
         updateRun(runId, { flightPlan });
         log('system', 'research', `Flight plan: ${flightPlan.length} task(s).\n`);
 
+        if (checkCancelled(runId, log)) return;
+
         const allEdits = []; // { path, content }[]
         const limitPlanners = pLimit(Math.max(1, Math.min(5, maxParallelPlanners)));
         const limitCoders = pLimit(Math.max(1, Math.min(10, maxParallelCoders)));
 
+        if (checkCancelled(runId, log)) return;
         updateRun(runId, { status: 'planning' });
         const planResults = await Promise.all(
             flightPlan.map((task, i) =>
@@ -62,6 +75,7 @@ export async function runPipeline(runId, opts = {}) {
 
         const allSteps = planResults.flatMap(({ planResult }) => planResult.steps);
 
+        if (checkCancelled(runId, log)) return;
         updateRun(runId, { status: 'coding' });
         const coderResults = await Promise.all(
             allSteps.map((step, j) =>
@@ -72,22 +86,37 @@ export async function runPipeline(runId, opts = {}) {
                         const r = await readFile(p);
                         if (r.ok) fileContext[p] = r.content;
                     }
-                    const coderResult = await runCoder(step, fileContext, {
-                        onChunk: (chunk) => log('coder', 'coding', chunk),
-                    });
+                    const coderResult = await runCoder(step, fileContext, {});
                     return { step, coderResult, stepIndex: j };
                 })
             )
         );
 
-        for (const { coderResult } of coderResults) {
+        const stepResults = [];
+        for (const { step, coderResult } of coderResults) {
             if (!coderResult.ok) {
                 updateRun(runId, { status: 'error', error: coderResult.error });
-                log('system', 'error', 'Coder failed: ' + coderResult.error + '\n');
+                log('system', 'error', `Coder: ${step.what} — failed: ${coderResult.error}\n`);
                 return;
             }
-            allEdits.push(...coderResult.edits);
+            const validation = await validateCoderStep(step, prompt, coderResult.edits || []);
+            stepResults.push({
+                step,
+                status: validation.status,
+                edits: validation.status === 'done' ? coderResult.edits : undefined,
+                reason: validation.reason,
+            });
+            if (validation.status === 'done') {
+                const n = (coderResult.edits || []).length;
+                log('system', 'coding', `Coder: ${step.what} — done (${n} edit(s))\n`);
+                allEdits.push(...(coderResult.edits || []));
+            } else {
+                log('system', 'coding', `Coder: ${step.what} — failed${validation.reason ? ': ' + validation.reason : ''}\n`);
+            }
         }
+
+        const run = getRun(runId);
+        if (run) run.stepResults = stepResults;
 
         // Aggregate by path (last write wins)
         const byPath = new Map();
@@ -96,13 +125,18 @@ export async function runPipeline(runId, opts = {}) {
         }
         const aggregatedEdits = Array.from(byPath.entries()).map(([path, content]) => ({ path, content }));
 
-        const run = getRun(runId);
         if (run) run.edits = aggregatedEdits;
 
+        if (aggregatedEdits.length === 0) {
+            updateRun(runId, { status: 'done' });
+            log('system', 'done', 'Run complete (no edits approved).\n');
+            return;
+        }
+
+        if (checkCancelled(runId, log)) return;
         updateRun(runId, { status: 'creating_pr' });
         log('system', 'creating_pr', `Collected ${aggregatedEdits.length} file edit(s). Creating PR…\n`);
 
-        // PR creation will be wired in step 6; for now just mark done or call a stub
         const prResult = await createPrIfConfigured(runId, { prompt, edits: aggregatedEdits });
         if (prResult.ok && prResult.prUrl) {
             updateRun(runId, { status: 'done', prUrl: prResult.prUrl });

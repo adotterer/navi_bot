@@ -3,7 +3,7 @@
  */
 import express from 'express';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml } from '../layout.js';
-import { createRun, getRun, updateRun, subscribe, listRuns } from './runStore.js';
+import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled } from './runStore.js';
 import { runPipeline } from './orchestrator.js';
 import { listBranches, getTree, getFileContent } from './repoBrowser.js';
 
@@ -37,8 +37,9 @@ router.get('/', (req, res) => {
           <input type="number" id="maxCoders" name="maxCoders" min="1" max="10" value="3"
             class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
         </div>
-        <div class="pt-6">
+        <div class="pt-6 flex items-center gap-3">
           <button type="submit" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Start run</button>
+          <button type="button" id="stop-btn" class="hidden rounded-lg bg-red-600 text-white font-medium py-2.5 px-5 hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">Stop run</button>
         </div>
       </div>
     </form>
@@ -63,6 +64,10 @@ router.get('/', (req, res) => {
         <span id="run-stage" class="text-sm text-slate-500"></span>
       </div>
       <div id="log-container" class="rounded-lg border border-slate-200 bg-slate-900 text-slate-100 p-4 font-mono text-sm max-h-96 overflow-y-auto whitespace-pre-wrap break-words"></div>
+      <div id="step-results-area" class="mt-4 hidden">
+        <div class="text-sm font-medium text-slate-700 mb-2">Step results</div>
+        <ul id="step-results-list" class="list-disc list-inside text-sm text-slate-600 space-y-1"></ul>
+      </div>
       <div id="result-area" class="mt-4 hidden">
         <a id="pr-link" href="#" target="_blank" rel="noopener" class="text-emerald-600 hover:text-emerald-700 font-medium">Open PR</a>
         <p id="error-msg" class="text-red-600 text-sm mt-2 hidden"></p>
@@ -88,6 +93,7 @@ router.get('/', (req, res) => {
   var runStatus = document.getElementById('run-status');
   var runStage = document.getElementById('run-stage');
   var logContainer = document.getElementById('log-container');
+  var stopBtn = document.getElementById('stop-btn');
   var resultArea = document.getElementById('result-area');
   var prLink = document.getElementById('pr-link');
   var errorMsg = document.getElementById('error-msg');
@@ -274,6 +280,19 @@ router.get('/', (req, res) => {
         .then(function(r) { return r.json(); })
         .then(function(data) {
           if (data.edits && data.edits.length) showFileBrowser(data.edits);
+          if (data.stepResults && data.stepResults.length) {
+            var area = document.getElementById('step-results-area');
+            var list = document.getElementById('step-results-list');
+            list.innerHTML = data.stepResults.map(function(sr) {
+              var what = sr.step && sr.step.what ? sr.step.what : 'Step';
+              var status = sr.status === 'done' ? 'done' : 'failed';
+              var reason = sr.reason ? ': ' + escapeHtml(sr.reason) : '';
+              return '<li class="' + (status === 'done' ? 'text-emerald-600' : 'text-red-600') + '">' + escapeHtml(what) + ' — ' + status + reason + '</li>';
+            }).join('');
+            area.classList.remove('hidden');
+          } else {
+            document.getElementById('step-results-area').classList.add('hidden');
+          }
         })
         .catch(function() {});
     }
@@ -294,6 +313,8 @@ router.get('/', (req, res) => {
     startBtn.disabled = true;
     runArea.classList.remove('hidden');
     logContainer.textContent = '';
+    document.getElementById('step-results-area').classList.add('hidden');
+    document.getElementById('step-results-list').innerHTML = '';
     resultArea.classList.add('hidden');
     filesArea.classList.add('hidden');
     prLink.classList.add('hidden');
@@ -316,6 +337,9 @@ router.get('/', (req, res) => {
       if (!data.runId) throw new Error(data.error || 'No runId');
       currentRunId = data.runId;
       runStatus.textContent = 'Running…';
+      stopBtn.classList.remove('hidden');
+      stopBtn.disabled = false;
+      stopBtn.textContent = 'Stop run';
       closeStream();
       eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(data.runId));
       eventSource.onmessage = function(ev) {
@@ -323,20 +347,22 @@ router.get('/', (req, res) => {
           var entry = JSON.parse(ev.data);
           if (entry.type === 'log') {
             var prefix = '[' + (entry.role || 'system') + '] ';
-            logContainer.textContent += prefix + (entry.message || '').replace(/\\n/g, '\\n');
+            logContainer.textContent += prefix + (entry.message || '').replace(/\\n/g, '\n');
             logContainer.scrollTop = logContainer.scrollHeight;
           } else if (entry.type === 'status') {
             runStage.textContent = entry.status || '';
           } else if (entry.type === 'done') {
-            runStatus.textContent = 'Done';
+            runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done';
             runStage.textContent = '';
             closeStream();
             startBtn.disabled = false;
+            stopBtn.classList.add('hidden');
             showResult(entry.prUrl, entry.error);
           } else if (entry.type === 'error') {
             runStatus.textContent = 'Error';
             closeStream();
             startBtn.disabled = false;
+            stopBtn.classList.add('hidden');
             showResult(null, entry.message || 'Run failed');
           }
         } catch (_) {}
@@ -345,6 +371,7 @@ router.get('/', (req, res) => {
         if (currentRunId) {
           runStatus.textContent = 'Stream closed (run may still be in progress)';
           startBtn.disabled = false;
+          stopBtn.classList.add('hidden');
         }
         closeStream();
       };
@@ -352,8 +379,19 @@ router.get('/', (req, res) => {
     .catch(function(err) {
       runStatus.textContent = 'Error';
       startBtn.disabled = false;
+      stopBtn.classList.add('hidden');
       showResult(null, err.message || 'Failed to start run');
     });
+  });
+
+  stopBtn.addEventListener('click', function() {
+    if (!currentRunId || stopBtn.disabled) return;
+    stopBtn.disabled = true;
+    stopBtn.textContent = 'Stopping…';
+    fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/cancel', {
+      method: 'POST',
+      credentials: 'same-origin'
+    }).catch(function() {});
   });
 })();
     </script>
@@ -407,12 +445,22 @@ router.get('/runs', (req, res) => {
     res.json({ runs: listRuns(limit) });
 });
 
+// ----- POST /admin/agent/run/:runId/cancel – request run to stop (no more token use after next check) -----
+router.post('/run/:runId/cancel', (req, res) => {
+    const run = getRun(req.params.runId);
+    if (!run) return res.status(404).json({ ok: false, error: 'Run not found' });
+    const terminal = ['done', 'error', 'cancelled'].includes(run.status);
+    if (terminal) return res.status(400).json({ ok: false, error: 'Run already finished' });
+    setRunCancelled(req.params.runId);
+    res.json({ ok: true });
+});
+
 // ----- GET /admin/agent/run/:runId – run summary (for re-open / refresh, includes edits for file browser) -----
 router.get('/run/:runId', (req, res) => {
     const run = getRun(req.params.runId);
     if (!run) return res.status(404).json({ error: 'Run not found' });
-    const { runId, status, logs, flightPlan, prUrl, error, createdAt, prompt, edits } = run;
-    res.json({ runId, status, logs, flightPlan, prUrl, error, createdAt, prompt, edits: edits || [] });
+    const { runId, status, logs, flightPlan, stepResults, prUrl, error, createdAt, prompt, edits } = run;
+    res.json({ runId, status, logs, flightPlan, stepResults: stepResults || [], prUrl, error, createdAt, prompt, edits: edits || [] });
 });
 
 // ----- POST /admin/agent/run – start run (returns runId, runs orchestrator in background) -----
@@ -448,11 +496,12 @@ router.get('/stream/:runId', (req, res) => {
     });
     res.write('data: ' + JSON.stringify({ type: 'status', status: run.status }) + '\n\n');
 
-    if (run.status === 'done' || run.status === 'error') {
+    if (run.status === 'done' || run.status === 'error' || run.status === 'cancelled') {
         res.write('data: ' + JSON.stringify({
             type: 'done',
             prUrl: run.prUrl,
-            error: run.error,
+            error: run.status === 'cancelled' ? 'Run stopped by user.' : run.error,
+            cancelled: run.status === 'cancelled',
         }) + '\n\n');
         res.end();
         return;
@@ -470,14 +519,15 @@ router.get('/stream/:runId', (req, res) => {
 
     const checkDone = setInterval(() => {
         const r = getRun(runId);
-        if (r && (r.status === 'done' || r.status === 'error')) {
+        if (r && (r.status === 'done' || r.status === 'error' || r.status === 'cancelled')) {
             clearInterval(checkDone);
             clearInterval(heartbeat);
             unsub();
             res.write('data: ' + JSON.stringify({
                 type: 'done',
                 prUrl: r.prUrl,
-                error: r.error,
+                error: r.status === 'cancelled' ? 'Run stopped by user.' : r.error,
+                cancelled: r.status === 'cancelled',
             }) + '\n\n');
             res.end();
         }
