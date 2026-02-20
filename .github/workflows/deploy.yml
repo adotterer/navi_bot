@@ -24,3 +24,20 @@ jobs:
           region: us-west-1
           version_label: v-${{ github.sha }}
           deployment_package: navi_bot.zip
+
+      - name: Notify Discord audit-logs
+        env:
+          GITHUB_WEBHOOK_SECRET: ${{ secrets.GITHUB_WEBHOOK_SECRET }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg ref "refs/heads/main" \
+            --arg sha "${{ github.sha }}" \
+            --arg msg "${{ github.event.head_commit.message }}" \
+            --arg author "${{ github.event.head_commit.author.name }}" \
+            '{ref: $ref, head_commit: {id: $sha, message: $msg, author: {name: $author}}}')
+          SIG="sha256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$GITHUB_WEBHOOK_SECRET" | awk '{print $2}')"
+          curl -s -o /dev/null -w "%{http_code}" \
+            -X POST https://navi-bot-env-1.us-west-1.elasticbeanstalk.com/github/webhook \
+            -H "Content-Type: application/json" \
+            -H "X-Hub-Signature-256: $SIG" \
+            -d "$PAYLOAD"

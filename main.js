@@ -13,6 +13,7 @@ import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler
 import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
 import { handleCleanup } from './src/messages/cleanupHandler.js';
 import { handleDocs, handleFaq, handleAliases } from './src/messages/faqAndAliasHandler.js';
+import { setClient } from './src/shared/discordClient.js';
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ client.on("clientReady", () => {
     
     // Initialize weekly export scheduler
     initializeScheduler(client);
+    setClient(client);
 
     client.user.setPresence({
         activities: [{ name: "Use !docs, !faq, !aliases", type: 0 }],
