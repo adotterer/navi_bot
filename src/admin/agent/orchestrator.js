@@ -242,12 +242,48 @@ export async function runPipeline(runId, opts = {}) {
         const run = getRun(runId);
         if (run) run.stepResults = stepResults;
 
-        // Aggregate by path (last write wins)
-        const byPath = new Map();
+        // Aggregate edits by path.
+        // Patch edits ({path, search, replace}) accumulate as a list.
+        // Full-content edits ({path, content}) override everything for that path.
+        const byPathPatches = new Map(); // path -> [{search, replace}]
+        const byPathContent = new Map(); // path -> string (full content, takes precedence)
         for (const e of allEdits) {
-            if (e.path) byPath.set(e.path, e.content);
+            if (!e.path) continue;
+            if (e.search !== undefined) {
+                if (!byPathPatches.has(e.path)) byPathPatches.set(e.path, []);
+                byPathPatches.get(e.path).push({ search: e.search, replace: e.replace ?? '' });
+            } else {
+                byPathContent.set(e.path, e.content ?? '');
+            }
         }
-        const aggregatedEdits = Array.from(byPath.entries()).map(([path, content]) => ({ path, content }));
+
+        // Resolve patch edits: read current file, apply search/replace, produce full content.
+        const resolvedPatches = [];
+        for (const [filePath, patches] of byPathPatches.entries()) {
+            if (byPathContent.has(filePath)) continue; // full-content edit takes precedence
+            const readResult = await callTool('read_file', { path: filePath });
+            if (!readResult.ok) {
+                log('system', 'coding', `[patch] Could not read ${filePath} for patching: ${readResult.error}\n`);
+                continue;
+            }
+            let content = readResult.result;
+            for (const { search, replace } of patches) {
+                if (search === '') {
+                    // New file or full replace
+                    content = replace;
+                } else if (content.includes(search)) {
+                    content = content.replace(search, replace);
+                } else {
+                    log('system', 'coding', `[patch] Search text not found in ${filePath} — patch skipped\n`);
+                }
+            }
+            resolvedPatches.push({ path: filePath, content });
+        }
+
+        const aggregatedEdits = [
+            ...Array.from(byPathContent.entries()).map(([path, content]) => ({ path, content })),
+            ...resolvedPatches,
+        ];
 
         if (run) run.edits = aggregatedEdits;
 

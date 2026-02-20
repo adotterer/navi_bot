@@ -50,7 +50,7 @@ The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase 
                 const response = await genAI.models.generateContentStream({
                     model: MODEL,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 2048 },
+                    config: { maxOutputTokens: 2048, responseMimeType: 'application/json' },
                 });
                 let fullText = '';
                 for await (const chunk of response) {
@@ -124,6 +124,14 @@ function extractAllJsonArrayCandidatesForEdits(text) {
         candidates.push(codeBlocks[codeBlocks.length - 1]);
         if (codeBlocks.length > 1) candidates.push(codeBlocks[0]);
         for (let i = 1; i < codeBlocks.length - 1; i++) candidates.push(codeBlocks[i]);
+    } else {
+        // Fallback: unclosed opening fence (response truncated before closing ```)
+        const openFenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*)/);
+        if (openFenceMatch) {
+            const inner = openFenceMatch[1].trim();
+            const a = add(inner);
+            if (a) candidates.push(a);
+        }
     }
     const lastClose = trimmed.lastIndexOf(']');
     const lastOpen = trimmed.lastIndexOf('[');
@@ -201,7 +209,7 @@ Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (
                 const response = await genAI.models.generateContentStream({
                     model: MODEL,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 2048 },
+                    config: { maxOutputTokens: 4096, responseMimeType: 'application/json' },
                 });
                 let fullText = '';
                 for await (const chunk of response) {
@@ -210,7 +218,10 @@ Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (
                     if (onChunk && text) onChunk(text);
                 }
                 const steps = parsePlannerSteps(fullText);
-                if (!steps.length) throw new Error('Could not parse implementation steps');
+                if (!steps.length) {
+                    console.error('[Planner] Parse failed. Raw response (first 400):', fullText.slice(0, 400));
+                    throw new Error('Could not parse implementation steps');
+                }
                 return { ok: true, steps };
             })(),
             GEMINI_TIMEOUT_MS,
@@ -287,12 +298,14 @@ function tryParseJsonArrayWithNewlineFix(str) {
 
 /**
  * Parse Planner steps from model output. Prefers ```json block, then last [...], then first [...].
+ * Uses relaxed parse (trailing commas, literal newlines in strings) like flight plan / Coder.
  */
 function parsePlannerSteps(text) {
-    for (const raw of extractJsonArrayCandidates(text)) {
-        const arr = tryParseJsonArray(raw);
-        if (!arr || !arr.length) continue;
-        const mapped = arr.map((s, i) => {
+    const tryCandidates = (raw) => {
+        let arr = tryParseJsonArray(raw);
+        if (!arr) arr = tryParseJsonArrayWithNewlineFix(raw);
+        if (!arr || !arr.length) return [];
+        return arr.map((s, i) => {
             let what = String(s.what ?? s.description ?? s.name ?? s.step ?? s.task ?? s.title ?? '').trim();
             const files = Array.isArray(s.files) ? s.files.map(String) : [];
             const changeDesc = s.changeDescription != null ? String(s.changeDescription).trim() : '';
@@ -305,6 +318,16 @@ function parsePlannerSteps(text) {
                 changeDescription: changeDesc || undefined,
             };
         });
+    };
+    for (const raw of extractJsonArrayCandidates(text)) {
+        const mapped = tryCandidates(raw);
+        if (mapped.length) return mapped;
+    }
+    const trimmed = text.trim();
+    const firstBracket = trimmed.indexOf('[');
+    const lastBracket = trimmed.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket > firstBracket) {
+        const mapped = tryCandidates(trimmed.slice(firstBracket, lastBracket + 1));
         if (mapped.length) return mapped;
     }
     return [];
@@ -321,26 +344,31 @@ function parsePlannerSteps(text) {
 export async function runCoder(step, fileContext, opts = {}) {
     const { onChunk, reviewFeedback } = opts;
     const fileSection = Object.entries(fileContext).length
-        ? '\n\nCurrent file contents (use these to produce the full new content):\n' +
+        ? '\n\nCurrent file contents (copy "search" text EXACTLY from here):\n' +
           Object.entries(fileContext)
               .map(([p, c]) => `--- ${p} ---\n${c}\n`)
               .join('')
         : '';
 
-    const systemPrompt = `You are a Coder. Senior software engineer: read existing code before changing it; match existing patterns, naming, and structure; write focused minimal diffs — only what the task requires; verify changes compile and work before committing.
+    const systemPrompt = `You are a Coder. Senior software engineer: make focused, minimal changes — only what the step requires.
 
-Given one implementation step, output the exact file change(s). You MUST output a single JSON array of edits only. Each edit: "path" (file path relative to repo root), "content" (the COMPLETE new file content for that file).
+Given one implementation step, output a JSON array of patch edits. Each edit has:
+- "path": file path relative to repo root
+- "search": the EXACT existing lines to replace (copy verbatim from "Current file contents" — whitespace must match exactly)
+- "replace": the new lines to substitute in place of "search"
 
-CRITICAL parsing rules:
-- Output ONLY the JSON array. Do not wrap it in a markdown code block (no \`\`\`json). Start your response with [ and end with ].
-- Inside "content" strings use escaped newlines: \\n (not literal line breaks), or the response cannot be parsed.
+RULES:
+- Output ONLY the JSON array. Do not use markdown code fences. Start with [ and end with ].
+- "search" must be unique within the file and copy the existing text character-for-character.
+- "replace" may be empty string "" to delete lines.
+- For a NEW file (not in "Current file contents"), use "search": "" and "replace": "<full new file content>".
+- Only edit files listed in "Files to consider" or shown in "Current file contents". Do not touch index.js or unlisted files.
+- Use escaped newlines (\\n) inside all string values — never literal line breaks.
 
-When "Current file contents" are provided above, you MUST base your edit on that content: preserve unchanged parts and only modify what the step asks; do not replace entire files with unrelated code. Do not invent content that does not match this codebase. For NEW files (no current contents), create minimal content that fulfills the step and matches the repo's style. Only output edits for files that were listed in "Files to consider" or whose contents were provided in "Current file contents". Do not create or edit index.js or other files not in that list.
+Example (imports change + function change in one file, two separate patches):
+[{"path":"src/app.js","search":"const old = require('old');","replace":"const newMod = require('new');"},{"path":"src/app.js","search":"function foo() { return 1; }","replace":"function foo() { return 2; }"}]`;
 
-Preserve existing code where no change is needed; only include files that change. Example (output exactly this format, no other text):
-[{"path":"src/app.js","content":"// full file content here\\n"}]`;
-
-    let userContent = `Step: ${step.what}\n${step.changeDescription || ''}\nFiles to consider: ${(step.files || []).join(', ')}${fileSection}\n\nProduce the edits array (full file content for each changed file).`;
+    let userContent = `Step: ${step.what}\n${step.changeDescription || ''}\nFiles to consider: ${(step.files || []).join(', ')}${fileSection}\n\nProduce the patch edits array.`;
     if (reviewFeedback && reviewFeedback.trim()) {
         userContent += `\n\nReviewer feedback (you must address this): ${reviewFeedback.trim()}`;
     }
@@ -360,7 +388,11 @@ Preserve existing code where no change is needed; only include files that change
                     if (onChunk && text) onChunk(text);
                 }
                 const edits = parseCoderEdits(fullText);
-                if (!edits.length) throw new Error('Could not parse edits from response');
+                if (!edits.length) {
+                    console.error('[Coder] Parse failed. Raw response (first 400):', fullText.slice(0, 400));
+                    console.error('[Coder] Raw response (last 200):', fullText.slice(-200));
+                    throw new Error('Could not parse edits from response');
+                }
                 return { ok: true, edits };
             })(),
             GEMINI_TIMEOUT_MS,
@@ -373,7 +405,8 @@ Preserve existing code where no change is needed; only include files that change
 }
 
 /**
- * Extract edits array from Coder output. Tries object wrappers, every code block, last/first array, and single-edit object.
+ * Extract edits array from Coder output. Accepts both full-content format {path, content}
+ * and patch format {path, search, replace}. Tries object wrappers, code blocks, last/first array.
  * Uses relaxed parse (trailing commas + literal newlines in strings).
  */
 function parseCoderEdits(text) {
@@ -381,7 +414,15 @@ function parseCoderEdits(text) {
         if (!Array.isArray(arr)) return [];
         return arr
             .filter((e) => e && typeof e === 'object' && (e.path || e.file))
-            .map((e) => ({ path: String(e.path || e.file), content: String(e.content ?? e.text ?? '') }));
+            .map((e) => {
+                const path = String(e.path || e.file);
+                if (e.search !== undefined || e.replace !== undefined) {
+                    // Patch format: {path, search, replace}
+                    return { path, search: String(e.search ?? ''), replace: String(e.replace ?? '') };
+                }
+                // Full-content format: {path, content}
+                return { path, content: String(e.content ?? e.text ?? '') };
+            });
     };
 
     const tryParseObject = (raw) => {
@@ -406,7 +447,7 @@ function parseCoderEdits(text) {
             const edits = normalizeEdits(arr);
             if (edits.length) return edits;
         }
-        if ((parsed.path || parsed.file) && (parsed.content != null || parsed.text != null)) {
+        if ((parsed.path || parsed.file) && (parsed.content != null || parsed.text != null || parsed.search !== undefined)) {
             const edits = normalizeEdits([parsed]);
             if (edits.length) return edits;
         }
@@ -441,11 +482,32 @@ function parseCoderEdits(text) {
     const lastBrace2 = trimmed.lastIndexOf('}');
     if (firstBrace2 !== -1 && lastBrace2 > firstBrace2) {
         const single = tryParseObject(trimmed.slice(firstBrace2, lastBrace2 + 1));
-        if (single && (single.path || single.file) && (single.content != null || single.text != null)) {
+        if (single && (single.path || single.file) && (single.content != null || single.text != null || single.search !== undefined)) {
             const edits = normalizeEdits([single]);
             if (edits.length) return edits;
         }
     }
+
+    // Truncation recovery: JSON array was cut off mid-stream. Extract every complete {...} object
+    // and salvage the ones that look like valid patch edits.
+    const recovered = [];
+    const escapedForRecovery = escapeNewlinesInJsonStrings(trimmed);
+    // Match balanced single-depth objects (handles nested quotes via escape-newline pass above)
+    const objRe = /\{[^{}]*\}/g;
+    let objMatch;
+    while ((objMatch = objRe.exec(escapedForRecovery)) !== null) {
+        try {
+            const obj = JSON.parse(objMatch[0].replace(/,\s*}/g, '}'));
+            if (obj && (obj.path || obj.file) && (obj.content != null || obj.text != null || obj.search !== undefined)) {
+                recovered.push(obj);
+            }
+        } catch (_) { /* skip unparseable objects */ }
+    }
+    if (recovered.length) {
+        const edits = normalizeEdits(recovered);
+        if (edits.length) return edits;
+    }
+
     return [];
 }
 
