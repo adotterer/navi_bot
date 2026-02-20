@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { isCommandAllowed, getCommandMetadata } from '../shared/promptLoader.js';
 import { sendSplitMessage, createSplitEmbeds } from "../shared/messageSplitter.js";
 import { fetchFromS3 } from "../shared/s3Helper.js";
 import { SUMMARY_DISCLAIMER } from "../shared/responseNotices.js";
@@ -10,11 +11,14 @@ const genAI = new GoogleGenAI({
 });
 
 export async function handleQuestion(message) {
+    if (!isCommandAllowed('general_question', message)) return;
+
     const content = message.content.trim();
     const question = content.replace(/^!q\s*/i, "").trim();
 
     if (!question) {
-        await message.reply("❌ Usage: !q <your question>");
+        const meta = getCommandMetadata('general_question');
+        await message.reply(`❌ Usage: ${meta?.description || "!q <your question>"}`);
         return;
     }
 
