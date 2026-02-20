@@ -17,6 +17,7 @@ export function createApp() {
     app.use(webhookRouter);
 
     app.use(express.urlencoded({ extended: true }));
+    app.use(express.json());
     app.use(session(getSessionConfig()));
     app.use('/admin', adminRouter);
 

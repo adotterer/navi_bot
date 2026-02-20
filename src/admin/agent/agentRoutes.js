@@ -8,6 +8,7 @@ import { runPipeline } from './orchestrator.js';
 import { listBranches, getTree, getFileContent } from './repoBrowser.js';
 import { loadRunFromS3, loadRunMetadataFromS3, persistRunToS3 } from './agentRunPersistence.js';
 import { listS3KeysWithPrefix, deleteFromS3 } from '../../shared/s3Helper.js';
+import { getAgentPrompt, saveAgentPrompt, resetAgentPromptToDefault, listAgentPromptIds } from './agentPromptLoader.js';
 
 const router = express.Router();
 const SSE_HEARTBEAT_MS = 15000;
@@ -20,6 +21,7 @@ router.get('/', (req, res) => {
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Missions' }])}
     <div class="flex items-center justify-between mb-8">
       <h1 class="text-2xl font-semibold text-slate-800">Missions</h1>
+      <a href="/admin/agent/prompts" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Edit agent prompts</a>
     </div>
     <p class="text-slate-600 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
     <section class="rounded-xl border border-slate-200 bg-white overflow-hidden w-full mb-4">
@@ -913,6 +915,111 @@ router.get('/', (req, res) => {
 <head>${adminHead('Missions')}${prismHead}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
 </html>`);
+});
+
+// ----- GET /admin/agent/prompts – edit Researcher, Planner, Coder, Reviewer system prompts -----
+const AGENT_PROMPT_LABELS = { researcher: 'Researcher', planner: 'Planner', coder: 'Coder', reviewer: 'Reviewer' };
+router.get('/prompts', async (req, res) => {
+    try {
+        const ids = listAgentPromptIds();
+        const prompts = await Promise.all(ids.map(async (id) => ({ id, body: await getAgentPrompt(id), label: AGENT_PROMPT_LABELS[id] || id })));
+        const sections = prompts.map(({ id, body, label }) => `
+    <section class="rounded-xl border border-slate-200 bg-white overflow-hidden mb-6">
+      <div class="border-b border-slate-200 px-4 py-2.5 bg-slate-50 flex items-center justify-between">
+        <span class="text-sm font-medium text-slate-700">${escapeHtml(label)}</span>
+        <div class="flex items-center gap-2">
+          <button type="button" class="agent-prompt-save rounded-lg bg-emerald-600 text-white text-sm font-medium py-1.5 px-3 hover:bg-emerald-700" data-id="${escapeHtml(id)}">Save</button>
+          <button type="button" class="agent-prompt-reset rounded-lg border border-slate-300 text-slate-600 text-sm font-medium py-1.5 px-3 hover:bg-slate-50" data-id="${escapeHtml(id)}">Reset to default</button>
+        </div>
+      </div>
+      <textarea class="agent-prompt-body w-full min-h-[200px] rounded-none border-0 px-4 py-3 font-mono text-sm text-slate-800 resize-y focus:ring-2 focus:ring-emerald-500 focus:ring-inset" data-id="${escapeHtml(id)}" spellcheck="false">${escapeHtml(body || '')}</textarea>
+      <div class="agent-prompt-status border-t border-slate-100 px-4 py-1.5 text-xs text-slate-400 hidden" data-id="${escapeHtml(id)}"></div>
+    </section>`).join('');
+        const content = `
+  ${adminNav('agent')}
+  ${adminContainer(`
+    ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/agent', label: 'Missions' }, { label: 'Agent prompts' }])}
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-semibold text-slate-800">Agent prompts</h1>
+      <a href="/admin/agent" class="text-sm font-medium text-slate-500 hover:text-slate-700">← Missions</a>
+    </div>
+    <p class="text-slate-600 mb-6">Edit the system prompts used by the Researcher, Planner, Coder, and Reviewer. Changes are saved to S3 and used on the next mission run.</p>
+    ${sections}
+    <script>
+      document.querySelectorAll('.agent-prompt-save').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = btn.dataset.id;
+          var textarea = document.querySelector('.agent-prompt-body[data-id="' + id + '"]');
+          var status = document.querySelector('.agent-prompt-status[data-id="' + id + '"]');
+          if (!textarea || !status) return;
+          status.classList.remove('hidden');
+          status.textContent = 'Saving…';
+          status.className = 'agent-prompt-status border-t border-slate-100 px-4 py-1.5 text-xs text-slate-400';
+          fetch('/admin/agent/prompts/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, body: textarea.value }) })
+            .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+            .then(function(o) {
+              status.textContent = o.ok ? 'Saved.' : (o.data && o.data.error ? o.data.error : 'Save failed');
+              if (!o.ok) status.classList.add('text-red-600');
+            })
+            .catch(function() { status.textContent = 'Save failed'; status.classList.add('text-red-600'); });
+        });
+      });
+      document.querySelectorAll('.agent-prompt-reset').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = btn.dataset.id;
+          var status = document.querySelector('.agent-prompt-status[data-id="' + id + '"]');
+          if (!status) return;
+          if (!confirm('Reset ' + id + ' to the built-in default? This will overwrite your saved version.')) return;
+          status.classList.remove('hidden');
+          status.textContent = 'Resetting…';
+          status.className = 'agent-prompt-status border-t border-slate-100 px-4 py-1.5 text-xs text-slate-400';
+          fetch('/admin/agent/prompts/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id }) })
+            .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+            .then(function(o) {
+              if (o.ok) { window.location.reload(); return; }
+              status.textContent = o.data && o.data.error ? o.data.error : 'Reset failed';
+              status.classList.add('text-red-600');
+            })
+            .catch(function() { status.textContent = 'Reset failed'; status.classList.add('text-red-600'); });
+        });
+      });
+    <\/script>
+  `)}
+`;
+        res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>${adminHead('Agent prompts')}</head>
+<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+</html>`);
+    } catch (err) {
+        console.error('Agent prompts page:', err);
+        res.status(500).send('Error loading agent prompts.');
+    }
+});
+
+router.post('/prompts/save', express.json(), async (req, res) => {
+    const { id, body } = req.body || {};
+    if (!id || !listAgentPromptIds().includes(id)) return res.status(400).json({ error: 'Invalid or missing id.' });
+    if (typeof body !== 'string') return res.status(400).json({ error: 'Missing body.' });
+    try {
+        await saveAgentPrompt(id, body);
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('Agent prompt save:', err);
+        res.status(500).json({ error: err.message || 'Save failed.' });
+    }
+});
+
+router.post('/prompts/reset', express.json(), async (req, res) => {
+    const { id } = req.body || {};
+    if (!id || !listAgentPromptIds().includes(id)) return res.status(400).json({ error: 'Invalid or missing id.' });
+    try {
+        await resetAgentPromptToDefault(id);
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('Agent prompt reset:', err);
+        res.status(500).json({ error: err.message || 'Reset failed.' });
+    }
 });
 
 // ----- Repo browser API -----
