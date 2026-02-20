@@ -142,24 +142,32 @@ function extractAllJsonArrayCandidatesForEdits(text) {
 
 /**
  * Parse flight plan from model output (extract JSON array). Prefers ```json block, then last [...], then first [...].
+ * Uses relaxed parse (trailing commas, literal newlines in strings) like Coder/Planner.
  * @param {string} text
  * @returns {Array<{ id: string, title: string, description: string, hints?: string }>}
  */
 function parseFlightPlan(text) {
+    const tryCandidates = (raw) => {
+        let arr = tryParseJsonArray(raw);
+        if (!arr) arr = tryParseJsonArrayWithNewlineFix(raw);
+        if (!arr || !Array.isArray(arr)) return [];
+        return arr.map((t) => ({
+            id: String(t.id ?? t.title ?? '').slice(0, 64) || 'task-' + Math.random().toString(36).slice(2, 8),
+            title: String(t.title ?? t.id ?? ''),
+            description: String(t.description ?? ''),
+            hints: t.hints != null ? String(t.hints) : undefined,
+        }));
+    };
     for (const raw of extractJsonArrayCandidates(text)) {
-        try {
-            const arr = JSON.parse(raw);
-            if (!Array.isArray(arr)) continue;
-            const mapped = arr.map((t) => ({
-                id: String(t.id ?? t.title ?? '').slice(0, 64) || 'task-' + Math.random().toString(36).slice(2, 8),
-                title: String(t.title ?? t.id ?? ''),
-                description: String(t.description ?? ''),
-                hints: t.hints != null ? String(t.hints) : undefined,
-            }));
-            if (mapped.length) return mapped;
-        } catch (_) {
-            /* try next candidate */
-        }
+        const mapped = tryCandidates(raw);
+        if (mapped.length) return mapped;
+    }
+    const trimmed = text.trim();
+    const firstBracket = trimmed.indexOf('[');
+    const lastBracket = trimmed.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket > firstBracket) {
+        const mapped = tryCandidates(trimmed.slice(firstBracket, lastBracket + 1));
+        if (mapped.length) return mapped;
     }
     return [];
 }
