@@ -19,7 +19,7 @@ function getGenAI() {
 }
 
 const MODEL = process.env.AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
-const GEMINI_TIMEOUT_MS = Number(process.env.AGENT_GEMINI_TIMEOUT_MS) || 120000;
+const GEMINI_TIMEOUT_MS = Number(process.env.AGENT_GEMINI_TIMEOUT_MS) || 180000;
 
 function withTimeout(promise, ms, message = 'Request timed out') {
     return Promise.race([
@@ -36,7 +36,7 @@ function withTimeout(promise, ms, message = 'Request timed out') {
  * @returns {Promise<{ ok: true, flightPlan: Array<{ id: string, title: string, description: string, hints?: string }> } | { ok: false, error: string }>}
  */
 export async function runResearcher(missionPrompt, opts = {}) {
-    const { onChunk, docs } = opts;
+    const { onChunk, docs, signal } = opts;
     let treeInfo = '';
     try {
         const treeResult = await getFileTree('', 3);
@@ -80,19 +80,22 @@ Example:
                 const response = await getGenAI().models.generateContentStream({
                     model: MODEL,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 2048, responseMimeType: 'application/json' },
+                    config: { maxOutputTokens: 4096, responseMimeType: 'application/json', abortSignal: signal },
                 });
                 let fullText = '';
                 for await (const chunk of response) {
+                    if (signal?.aborted) break;
                     const text = chunk.text ?? '';
                     fullText += text;
                     if (onChunk && text) onChunk(text);
                 }
+                const usage = response.usageMetadata;
                 const flightPlan = parseFlightPlan(fullText);
                 if (!flightPlan.length) {
-                    throw new Error('Could not parse flight plan from response');
+                    const snippet = fullText.trim().slice(0, 400).replace(/\n/g, ' ');
+                    throw new Error('Could not parse flight plan from response. Reply was not valid JSON array (or tasks/flightPlan wrapper). First 400 chars: ' + (snippet || '(empty)'));
                 }
-                return { ok: true, flightPlan };
+                return { ok: true, flightPlan, inputTokens: usage?.promptTokenCount, outputTokens: usage?.candidatesTokenCount };
             })(),
             GEMINI_TIMEOUT_MS,
             'Researcher timed out'
@@ -104,7 +107,47 @@ Example:
 }
 
 /**
- * Extract JSON array candidates from text: ```json ... ```, then last [...], then first [...].
+ * Find the index of the matching closing ']' for the first '[' in str, respecting double-quoted strings.
+ * Returns -1 if not found (e.g. truncated response).
+ */
+function findMatchingArrayClose(str) {
+    const start = str.indexOf('[');
+    if (start === -1) return -1;
+    let depth = 1;
+    let inString = false;
+    let escape = false;
+    let i = start + 1;
+    while (i < str.length) {
+        const c = str[i];
+        if (escape) {
+            escape = false;
+            i++;
+            continue;
+        }
+        if (c === '\\' && inString) {
+            escape = true;
+            i++;
+            continue;
+        }
+        if (c === '"') {
+            inString = !inString;
+            i++;
+            continue;
+        }
+        if (!inString) {
+            if (c === '[') depth++;
+            else if (c === ']') {
+                depth--;
+                if (depth === 0) return i;
+            }
+        }
+        i++;
+    }
+    return -1;
+}
+
+/**
+ * Extract JSON array candidates from text: ```json ... ```, bracket-matched [...], last [...], first [...], and truncated [...].
  * @param {string} text
  * @returns {string[]}
  */
@@ -120,14 +163,26 @@ function extractJsonArrayCandidates(text) {
         if (inner.length > 2) codeBlocks.push(inner);
     }
     if (codeBlocks.length) candidates.push(codeBlocks[codeBlocks.length - 1]);
-    // 2. Last top-level array (from last '[' to last ']') — favors actual output after reasoning
+    // 2. Bracket-matched array from first '[' (handles ']' inside string values and truncated)
+    const firstOpen = trimmed.indexOf('[');
+    if (firstOpen !== -1) {
+        const close = findMatchingArrayClose(trimmed);
+        if (close !== -1) {
+            const bracketMatched = trimmed.slice(firstOpen, close + 1);
+            if (bracketMatched.length > 2 && !candidates.includes(bracketMatched)) candidates.push(bracketMatched);
+        } else {
+            const truncated = trimmed.slice(firstOpen);
+            if (truncated.length > 2 && !candidates.includes(truncated)) candidates.push(truncated);
+        }
+    }
+    // 3. Last top-level array (from last '[' to last ']') — favors actual output after reasoning
     const lastClose = trimmed.lastIndexOf(']');
     const lastOpen = trimmed.lastIndexOf('[');
     if (lastOpen !== -1 && lastClose !== -1 && lastOpen < lastClose) {
         const lastArray = trimmed.slice(lastOpen, lastClose + 1);
         if (!candidates.includes(lastArray)) candidates.push(lastArray);
     }
-    // 3. First top-level array as fallback
+    // 4. First top-level array as fallback (greedy regex)
     const firstMatch = trimmed.match(/\[[\s\S]*\]/);
     if (firstMatch && firstMatch[0].length > 2 && !candidates.includes(firstMatch[0])) candidates.push(firstMatch[0]);
     return candidates;
@@ -180,7 +235,7 @@ function extractAllJsonArrayCandidatesForEdits(text) {
 
 /**
  * Parse flight plan from model output (extract JSON array). Prefers ```json block, then last [...], then first [...].
- * Uses relaxed parse (trailing commas, literal newlines in strings) like Coder/Planner.
+ * Also tries wrapper objects like { "tasks": [...] } or { "flightPlan": [...] }.
  * @param {string} text
  * @returns {Array<{ id: string, title: string, description: string, hints?: string }>}
  */
@@ -188,13 +243,27 @@ function parseFlightPlan(text) {
     const tryCandidates = (raw) => {
         let arr = tryParseJsonArray(raw);
         if (!arr) arr = tryParseJsonArrayWithNewlineFix(raw);
-        if (!arr || !Array.isArray(arr)) return [];
-        return arr.map((t) => ({
-            id: String(t.id ?? t.title ?? '').slice(0, 64) || 'task-' + Math.random().toString(36).slice(2, 8),
-            title: String(t.title ?? t.id ?? ''),
-            description: String(t.description ?? ''),
-            hints: t.hints != null ? String(t.hints) : undefined,
-        }));
+        if (arr && Array.isArray(arr)) {
+            return arr.map((t) => ({
+                id: String(t.id ?? t.title ?? '').slice(0, 64) || 'task-' + Math.random().toString(36).slice(2, 8),
+                title: String(t.title ?? t.id ?? ''),
+                description: String(t.description ?? ''),
+                hints: t.hints != null ? String(t.hints) : undefined,
+            }));
+        }
+        const obj = tryParseJsonObject(raw);
+        if (obj && typeof obj === 'object') {
+            const nested = obj.tasks ?? obj.flightPlan ?? obj.flight_plan ?? obj.items ?? obj.steps;
+            if (Array.isArray(nested) && nested.length) {
+                return nested.map((t) => ({
+                    id: String(t.id ?? t.title ?? '').slice(0, 64) || 'task-' + Math.random().toString(36).slice(2, 8),
+                    title: String(t.title ?? t.id ?? ''),
+                    description: String(t.description ?? ''),
+                    hints: t.hints != null ? String(t.hints) : undefined,
+                }));
+            }
+        }
+        return [];
     };
     for (const raw of extractJsonArrayCandidates(text)) {
         const mapped = tryCandidates(raw);
@@ -207,7 +276,29 @@ function parseFlightPlan(text) {
         const mapped = tryCandidates(trimmed.slice(firstBracket, lastBracket + 1));
         if (mapped.length) return mapped;
     }
+    const firstBrace = trimmed.indexOf('{');
+    const lastBrace = trimmed.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+        const mapped = tryCandidates(trimmed.slice(firstBrace, lastBrace + 1));
+        if (mapped.length) return mapped;
+    }
     return [];
+}
+
+/** Try to parse a JSON object (for wrapper shapes like { "tasks": [...] }). */
+function tryParseJsonObject(str) {
+    try {
+        const o = JSON.parse(str);
+        return typeof o === 'object' && o !== null ? o : null;
+    } catch (_) {
+        const fixed = str.replace(/,\s*]/g, ']').replace(/,\s*}/g, '}');
+        try {
+            const o = JSON.parse(fixed);
+            return typeof o === 'object' && o !== null ? o : null;
+        } catch (_) {
+            return null;
+        }
+    }
 }
 
 /**
@@ -218,7 +309,7 @@ function parseFlightPlan(text) {
  * @returns {Promise<{ ok: true, steps: Array<{ what: string, files: string[], changeDescription?: string }> } | { ok: false, error: string }>}
  */
 export async function runPlanner(task, opts = {}) {
-    const { onChunk, fileContext = '', grepContext = '', docs, flightPlan, steps } = opts;
+    const { onChunk, fileContext = '', grepContext = '', docs, flightPlan, steps, signal } = opts;
     const systemPrompt = `You are a Planner. Technical project planner: read shared context findings, then decompose goals into a small number of substantial coding tasks. Prefer fewer larger tasks over many small ones — each Coder agent can handle significant multi-file changes. Define dependencies between tasks. Write descriptions specific enough that a coder can implement without guessing intent.
 
 Given a single task from a flight plan, output an implementation plan: an ordered list of steps. Each step should specify what to do, which file(s) to touch, and optionally a short change description. Each step should be an actionable implementation step (code or config change), not a pure analysis step. Prefer steps that produce file edits.
@@ -231,7 +322,7 @@ CRITICAL RULES — violating any of these causes broken code:
 3. WIRING: If a step introduces a new flag or function (e.g. setAborted()), include a step that wires it into the running process that should check it (e.g. the orchestrator loop). A flag that is set but never read is dead code.
 4. EXPORTS: If a step adds a new function that other files will call, include updating the export statement of that file in the same step's changeDescription.
 
-Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (array of file paths, e.g. ["src/app.js"]), "changeDescription" (optional). Example:
+Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (array of file paths, e.g. ["src/app.js"]), "changeDescription" (optional, ONE sentence max — do not write multi-line prose). Example:
 [{"what":"Add GET /health handler","files":["src/app.js"],"changeDescription":"Add app.get('/health', ...) returning { status: 'ok' }"}]`;
 
     let userContent = `Task: ${task.title}\n${task.description}${task.hints ? '\nHints: ' + task.hints : ''}`;
@@ -256,20 +347,22 @@ Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (
                 const response = await getGenAI().models.generateContentStream({
                     model: MODEL,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 4096, responseMimeType: 'application/json' },
+                    config: { maxOutputTokens: 8192, responseMimeType: 'application/json', abortSignal: signal },
                 });
                 let fullText = '';
                 for await (const chunk of response) {
+                    if (signal?.aborted) break;
                     const text = chunk.text ?? '';
                     fullText += text;
                     if (onChunk && text) onChunk(text);
                 }
+                const usage = response.usageMetadata;
                 const steps = parsePlannerSteps(fullText);
                 if (!steps.length) {
                     console.error('[Planner] Parse failed. Raw response (first 400):', fullText.slice(0, 400));
                     throw new Error('Could not parse implementation steps');
                 }
-                return { ok: true, steps };
+                return { ok: true, steps, inputTokens: usage?.promptTokenCount, outputTokens: usage?.candidatesTokenCount };
             })(),
             GEMINI_TIMEOUT_MS,
             'Planner timed out'
@@ -280,17 +373,43 @@ Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (
     }
 }
 
-/** Try JSON.parse; if it fails, try again after removing trailing commas before ] or }. */
+/** Try JSON.parse; if it fails, try trailing-comma fix, truncation recovery, and last-complete-object recovery. */
 function tryParseJsonArray(str) {
+    const fixCommas = (s) => s.replace(/,\s*]/g, ']').replace(/,\s*}/g, '}');
     try {
         const arr = JSON.parse(str);
         return Array.isArray(arr) ? arr : null;
     } catch (_) {
-        const fixed = str.replace(/,\s*]/g, ']').replace(/,\s*}/g, '}');
         try {
-            const arr = JSON.parse(fixed);
+            const arr = JSON.parse(fixCommas(str));
             return Array.isArray(arr) ? arr : null;
         } catch (_) {
+            const trimmed = str.trimEnd();
+            if (!trimmed.startsWith('[')) return null;
+
+            // Case 1: array not closed — try appending ']'
+            if (!trimmed.endsWith(']')) {
+                for (const attempt of [trimmed.replace(/,\s*$/, '') + ']', trimmed + ']']) {
+                    try {
+                        const arr = JSON.parse(fixCommas(attempt));
+                        if (Array.isArray(arr)) return arr;
+                    } catch (_) {}
+                }
+            }
+
+            // Case 2: truncated mid-string — find last complete object by scanning backwards for '}'
+            let pos = trimmed.length;
+            let tries = 0;
+            while (tries < 8) {
+                pos = trimmed.lastIndexOf('}', pos - 1);
+                if (pos < 0) break;
+                const slice = trimmed.slice(0, pos + 1).replace(/,\s*$/, '') + ']';
+                try {
+                    const arr = JSON.parse(fixCommas(slice));
+                    if (Array.isArray(arr) && arr.length) return arr;
+                } catch (_) {}
+                tries++;
+            }
             return null;
         }
     }
@@ -389,7 +508,7 @@ function parsePlannerSteps(text) {
  * @returns {Promise<{ ok: true, edits: Array<{ path: string, content: string }> } | { ok: false, error: string }>}
  */
 export async function runCoder(step, fileContext, opts = {}) {
-    const { onChunk, reviewFeedback } = opts;
+    const { onChunk, reviewFeedback, signal } = opts;
     const fileSection = Object.entries(fileContext).length
         ? '\n\nCurrent file contents (copy "search" text EXACTLY from here):\n' +
           Object.entries(fileContext)
@@ -411,6 +530,8 @@ RULES:
 - For a NEW file (not in "Current file contents"), use "search": "" and "replace": "<full new file content>".
 - Only edit files listed in "Files to consider" or shown in "Current file contents". Do not touch index.js or unlisted files.
 - Use escaped newlines (\\n) inside all string values — never literal line breaks.
+- KEEP SEARCH STRINGS SHORT: "search" must be 2–6 lines maximum — just enough to uniquely identify the insertion/replacement point. Never copy large blocks of existing code into "search". Find the smallest unique anchor near your change.
+- KEEP REPLACE STRINGS FOCUSED: only include lines that are changing plus minimal context. Do not re-emit large unchanged sections of the file.
 
 IMPORT PATH RULES — incorrect imports will break the app:
 - Import paths must be relative to the file you are editing. To compute the correct path: find the file being edited in "Current file contents", note its directory, then write the path relative to that directory. Example: editing "src/admin/routes.js" (directory: src/admin/) and importing from "src/admin/agent/runStore.js" → use "./agent/runStore.js". Editing "src/admin/agent/orchestrator.js" (directory: src/admin/agent/) and importing from "src/admin/agent/runStore.js" → use "./runStore.js".
@@ -432,21 +553,23 @@ Example (imports change + function change in one file, two separate patches):
                 const response = await getGenAI().models.generateContentStream({
                     model: MODEL,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 8192 },
+                    config: { maxOutputTokens: 16384, responseMimeType: 'application/json', abortSignal: signal },
                 });
                 let fullText = '';
                 for await (const chunk of response) {
+                    if (signal?.aborted) break;
                     const text = chunk.text ?? '';
                     fullText += text;
                     if (onChunk && text) onChunk(text);
                 }
+                const usage = response.usageMetadata;
                 const edits = parseCoderEdits(fullText);
                 if (!edits.length) {
                     console.error('[Coder] Parse failed. Raw response (first 400):', fullText.slice(0, 400));
                     console.error('[Coder] Raw response (last 200):', fullText.slice(-200));
                     throw new Error('Could not parse edits from response');
                 }
-                return { ok: true, edits };
+                return { ok: true, edits, inputTokens: usage?.promptTokenCount, outputTokens: usage?.candidatesTokenCount };
             })(),
             GEMINI_TIMEOUT_MS,
             'Coder timed out'
@@ -573,7 +696,7 @@ function parseCoderEdits(text) {
  * @returns {Promise<{ ok: true, status: 'done'|'failed', reason?: string }>}
  */
 export async function validateCoderStep(step, missionSummary, edits, opts = {}) {
-    const { allowedPaths } = opts;
+    const { allowedPaths, signal } = opts;
     if (allowedPaths && allowedPaths.size > 0) {
         for (const e of edits || []) {
             if (e.path && !allowedPaths.has(e.path)) {
@@ -591,8 +714,9 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
         const response = await getGenAI().models.generateContent({
             model: MODEL,
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            config: { maxOutputTokens: 128 },
+            config: { maxOutputTokens: 128, abortSignal: signal },
         });
+        const usage = response.usageMetadata;
         const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
         const text = String(raw ?? '').trim().toLowerCase();
         const done = text.startsWith('done');
@@ -602,6 +726,8 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
             ok: true,
             status: done ? 'done' : (failed ? 'failed' : 'done'),
             reason: failed ? reason : undefined,
+            inputTokens: usage?.promptTokenCount,
+            outputTokens: usage?.candidatesTokenCount,
         };
     } catch (_) {
         return { ok: true, status: 'done' };
@@ -617,7 +743,7 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
  * @returns {Promise<{ ok: true, feedback: string|null } | { ok: false, error: string }>}
  */
 export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
-    const { importWarnings = [] } = opts;
+    const { importWarnings = [], signal } = opts;
     const editSummary = (aggregatedEdits || [])
         .map((e) => `--- ${e.path} ---\n${(e.content || '').slice(0, 8000)}${(e.content || '').length > 8000 ? '\n... (truncated)' : ''}`)
         .join('\n\n');
@@ -642,21 +768,22 @@ Output nothing else.`;
                 const res = await getGenAI().models.generateContent({
                     model: MODEL,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 256 },
+                    config: { maxOutputTokens: 256, abortSignal: signal },
                 });
                 return res;
             })(),
             GEMINI_TIMEOUT_MS,
             'Reviewer timed out'
         );
+        const usage = response.usageMetadata;
         const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
         const text = String(raw ?? '').trim();
         const fixPrefix = /^fix\s*:\s*/i;
         if (fixPrefix.test(text)) {
             const feedback = text.replace(fixPrefix, '').trim();
-            return { ok: true, feedback: feedback || null };
+            return { ok: true, feedback: feedback || null, inputTokens: usage?.promptTokenCount, outputTokens: usage?.candidatesTokenCount };
         }
-        return { ok: true, feedback: null };
+        return { ok: true, feedback: null, inputTokens: usage?.promptTokenCount, outputTokens: usage?.candidatesTokenCount };
     } catch (err) {
         return { ok: false, error: err.message || String(err) };
     }

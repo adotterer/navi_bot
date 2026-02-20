@@ -3,10 +3,11 @@
  */
 import express from 'express';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml } from '../layout.js';
-import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled, hydrateRun, DEFAULT_DOCS } from './runStore.js';
+import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled, hydrateRun, deleteRun, DEFAULT_DOCS } from './runStore.js';
 import { runPipeline } from './orchestrator.js';
 import { listBranches, getTree, getFileContent } from './repoBrowser.js';
-import { loadRunFromS3, persistRunToS3 } from './agentRunPersistence.js';
+import { loadRunFromS3, loadRunMetadataFromS3, persistRunToS3 } from './agentRunPersistence.js';
+import { listS3KeysWithPrefix, deleteFromS3 } from '../../shared/s3Helper.js';
 
 const router = express.Router();
 const SSE_HEARTBEAT_MS = 15000;
@@ -21,6 +22,16 @@ router.get('/', (req, res) => {
       <h1 class="text-2xl font-semibold text-slate-800">Agent PR</h1>
     </div>
     <p class="text-slate-600 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
+    <section class="rounded-xl border border-slate-200 bg-white overflow-hidden w-full mb-4">
+      <button type="button" id="past-runs-toggle" class="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-50 text-sm font-medium text-slate-700 text-left hover:bg-slate-100 transition-colors">
+        <span>Recent runs</span>
+        <span id="past-runs-count" class="text-xs text-slate-400 font-normal"></span>
+        <span id="past-runs-chevron" class="ml-auto text-slate-400 text-xs">▾</span>
+      </button>
+      <div id="past-runs-list" class="divide-y divide-slate-100 max-h-60 overflow-y-auto hidden">
+        <p id="past-runs-empty" class="px-4 py-3 text-sm text-slate-400">No past runs found.</p>
+      </div>
+    </section>
     <div class="flex flex-col gap-6 mb-8">
       <section class="rounded-xl border border-slate-200 bg-white overflow-hidden w-full">
         <div class="border-b border-slate-200 px-4 py-2.5 bg-slate-50 text-sm font-medium text-slate-700">Mission prompt</div>
@@ -38,8 +49,10 @@ router.get('/', (req, res) => {
               <input type="number" id="maxCoders" name="maxCoders" min="1" max="10" value="3"
                 class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
             </div>
-            <div>
-              <button type="button" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Start run</button>
+            <div class="flex items-center gap-2">
+              <button type="button" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:enabled:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed">Start run</button>
+              <button type="button" id="stop-btn" disabled class="rounded-lg bg-red-600 text-white font-medium py-2.5 px-5 hover:enabled:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed" title="Stop the current run — work so far is saved to S3">Stop run</button>
+              <button type="button" id="resume-btn" class="hidden rounded-lg bg-amber-500 text-white font-medium py-2.5 px-5 hover:bg-amber-600 focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 transition-colors">Resume</button>
             </div>
           </div>
         </form>
@@ -51,13 +64,15 @@ router.get('/', (req, res) => {
               <section class="rounded-lg border border-slate-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[200px]">
                 <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700 flex-shrink-0">Audit log</div>
                 <div id="log-container" class="bg-slate-900 text-slate-100 p-4 font-mono text-sm flex-1 overflow-y-auto whitespace-pre-wrap break-words rounded-b"></div>
+                <div class="px-4 py-2 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-[10px] font-mono text-slate-500">
+                  <div id="run-tokens">Tokens: 0 in / 0 out</div>
+                  <div id="run-cost">Cost: $0.000</div>
+                </div>
               </section>
               <section class="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
                 <div class="flex items-center gap-3 flex-wrap">
                   <span id="run-status" class="text-sm font-medium text-slate-700">Running…</span>
                   <span id="run-stage" class="text-sm text-slate-500"></span>
-                  <button type="button" id="stop-btn" class="rounded-lg bg-red-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed" title="Stop the current run">Stop run</button>
-                  <button type="button" id="resume-btn" class="hidden rounded-lg bg-amber-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-amber-700 focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors">Resume</button>
                 </div>
                 <div class="text-xs text-slate-500 mb-1">Mission</div>
                 <div id="run-mission" class="p-2 text-sm text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded min-h-[2rem] mb-3"></div>
@@ -149,6 +164,8 @@ router.get('/', (req, res) => {
   var errorMsg = document.getElementById('error-msg');
   var currentRunId = null;
   var eventSource = null;
+  var totalInputTokens = 0;
+  var totalOutputTokens = 0;
 
   var filesArea = document.getElementById('files-area');
   var filesList = document.getElementById('files-list');
@@ -165,6 +182,15 @@ router.get('/', (req, res) => {
   var repoContent = document.getElementById('repo-content');
   var repoExpanded = {};
   var repoTreeCache = {};
+
+  function updateDocsPanelOnly(docs) {
+    if (!docs || typeof docs !== 'object') return;
+    ['overview', 'requirements', 'architecture', 'decisions', 'notes'].forEach(function(section) {
+      var el = document.getElementById('docs-' + section);
+      if (el && el.tagName === 'TEXTAREA') el.value = docs[section] || '';
+    });
+    if (docsPanel) docsPanel.classList.remove('hidden');
+  }
 
   function populateDocsPanel(data) {
     if (!data) return;
@@ -210,6 +236,890 @@ router.get('/', (req, res) => {
       resumeBtn.classList.remove('hidden');
     } else {
       resumeBtn.classList.add('hidden');
+    }
+  }
+
+  function updateTokenDisplay(inT, outT) {
+    totalInputTokens = inT || 0;
+    totalOutputTokens = outT || 0;
+    var tokensEl = document.getElementById('run-tokens');
+    var costEl = document.getElementById('run-cost');
+    if (tokensEl) tokensEl.textContent = 'Tokens: ' + totalInputTokens.toLocaleString() + ' in / ' + totalOutputTokens.toLocaleString() + ' out';
+    if (costEl) {
+      var cost = (totalInputTokens * 0.075 / 1000000) + (totalOutputTokens * 0.30 / 1000000);
+      costEl.textContent = 'Estimated cost: 
+
+  function updatePipeline(status, runData) {
+    runData = runData || {};
+    var statusToPhase = { research: 'researcher', planning: 'planning', coding: 'coding', reviewing: 'reviewing', creating_pr: 'creating_pr', done: 'creating_pr', error: 'creating_pr', cancelled: 'creating_pr' };
+    var current = statusToPhase[status] || status;
+    var labels = {
+      researcher: 'Researcher',
+      planning: runData.flightPlan && runData.flightPlan.length ? 'Planner (' + runData.flightPlan.length + ' tasks)' : 'Planner',
+      coding: runData.stepResults && runData.stepResults.length ? 'Coder (' + runData.stepResults.length + ' steps)' : 'Coder',
+      reviewing: 'Review',
+      creating_pr: 'Create PR'
+    };
+    var order = ['researcher', 'planning', 'coding', 'reviewing', 'creating_pr'];
+    order.forEach(function(phase, i) {
+      var phaseId = phase === 'planning' ? 'planner' : phase === 'creating_pr' ? 'pr' : phase === 'reviewing' ? 'review' : phase === 'coding' ? 'coder' : phase;
+      var el = document.getElementById('phase-' + phaseId);
+      if (!el) return;
+      el.textContent = labels[phase] || el.textContent;
+      el.className = 'phase px-3 py-1.5 rounded-full border text-sm font-medium transition-all ';
+      var idx = order.indexOf(phase);
+      var currentIdx = order.indexOf(current);
+      if (status === 'done' || status === 'cancelled') {
+        el.className += 'border-slate-200 text-emerald-600 bg-emerald-50';
+      } else if (status === 'error' && idx < order.length - 1) {
+        el.className += 'border-slate-200 text-emerald-600 bg-emerald-50';
+      } else if (status === 'error' && idx === order.length - 1) {
+        el.className += 'border-red-200 text-red-700 bg-red-50';
+      } else if (idx < currentIdx) {
+        el.className += 'border-emerald-200 text-emerald-700 bg-emerald-50';
+      } else if (idx === currentIdx) {
+        el.className += 'border-amber-300 text-amber-800 bg-amber-50 animate-pulse';
+      } else {
+        el.className += 'border-slate-200 text-slate-500';
+      }
+    });
+  }
+
+  function repoCacheKey(branch, path) { return branch + ':' + (path || ''); }
+  function fetchTree(branch, path, cb) {
+    var key = repoCacheKey(branch, path);
+    if (repoTreeCache[key]) return cb(null, repoTreeCache[key]);
+    fetch('/admin/agent/repo/tree?branch=' + encodeURIComponent(branch) + '&path=' + encodeURIComponent(path || ''), { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) { repoTreeCache[key] = data.entries; cb(null, data.entries); }
+        else cb(data.error);
+      })
+      .catch(function(e) { cb(e.message); });
+  }
+  function fetchFile(branch, path, cb) {
+    fetch('/admin/agent/repo/file?branch=' + encodeURIComponent(branch) + '&path=' + encodeURIComponent(path), { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) cb(null, data.content);
+        else cb(data.error);
+      })
+      .catch(function(e) { cb(e.message); });
+  }
+  function renderRepoTree(branch, path, parentEl) {
+    parentEl.innerHTML = '<li class="px-3 py-1 text-slate-500 text-xs">Loading…</li>';
+    fetchTree(branch, path, function(err, entries) {
+      parentEl.innerHTML = '';
+      if (err) { parentEl.innerHTML = '<li class="px-3 py-1 text-red-600 text-xs">' + escapeHtml(err) + '</li>'; return; }
+      if (!entries || !entries.length) return;
+      entries.forEach(function(e) {
+        var li = document.createElement('li');
+        var entryPath = e.path;
+        var entryName = e.name;
+        var entryType = e.type;
+        li.dataset.path = entryPath;
+        li.dataset.type = entryType;
+        li.dataset.name = entryName;
+        if (entryType === 'dir') {
+          li.className = 'repo-dir cursor-pointer px-3 py-1 hover:bg-slate-200 flex items-center gap-1';
+          li.innerHTML = '<span class="repo-dir-icon text-slate-500">\u25B6</span><span class="truncate">' + escapeHtml(entryName) + '</span>';
+          li.addEventListener('click', function(ev) {
+            ev.stopPropagation();
+            var key = repoCacheKey(branch, entryPath);
+            var isExpanded = repoExpanded[key];
+            if (isExpanded) {
+              var child = li.querySelector('ul');
+              if (child) child.remove();
+              li.querySelector('.repo-dir-icon').textContent = '\u25B6';
+              repoExpanded[key] = false;
+            } else {
+              var ul = document.createElement('ul');
+              ul.className = 'pl-4 border-l border-slate-200 ml-2 text-sm';
+              li.appendChild(ul);
+              renderRepoTree(branch, entryPath, ul);
+              li.querySelector('.repo-dir-icon').textContent = '\u25BC';
+              repoExpanded[key] = true;
+            }
+          });
+        } else {
+          li.className = 'repo-file cursor-pointer px-3 py-1 hover:bg-slate-200 flex items-center gap-1 pl-6';
+          li.innerHTML = '<span class="truncate text-slate-700">' + escapeHtml(entryName) + '</span>';
+          li.addEventListener('click', function(ev) {
+            ev.stopPropagation();
+            repoContentHeader.textContent = entryPath;
+            repoContent.textContent = 'Loading…';
+            fetchFile(branch, entryPath, function(err, content) {
+              if (err) repoContent.textContent = err;
+              else renderCodeBlock(repoContent, content, entryPath);
+            });
+          });
+        }
+        parentEl.appendChild(li);
+      });
+    });
+  }
+  function loadRepoBranch(branch) {
+    repoTreeCache = {};
+    repoExpanded = {};
+    renderRepoTree(branch, '', repoTree);
+    repoContentHeader.textContent = '';
+    repoContent.textContent = 'Select a file';
+  }
+  fetch('/admin/agent/repo/branches', { credentials: 'same-origin' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) return;
+      repoBranch.innerHTML = data.branches.map(function(b) {
+        return '<option value="' + escapeHtml(b) + '"' + (b === data.current ? ' selected' : '') + '>' + escapeHtml(b) + '</option>';
+      }).join('');
+      if (data.repoUnavailable) {
+        repoTree.innerHTML = '<li class="px-3 py-2 text-slate-500 text-sm">Repo browser is only available when running from a git clone (e.g. locally).</li>';
+        repoBranch.disabled = true;
+      } else {
+        loadRepoBranch(data.current || repoBranch.value);
+        repoBranch.addEventListener('change', function() { loadRepoBranch(repoBranch.value); });
+      }
+    })
+    .catch(function() {});
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function relativeTime(ts) {
+    var diff = Date.now() - (ts || 0);
+    var mins = Math.floor(diff / 60000);
+    if (mins < 2) return 'just now';
+    if (mins < 60) return mins + ' min ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + ' hr ago';
+    var days = Math.floor(hrs / 24);
+    return days + ' day' + (days === 1 ? '' : 's') + ' ago';
+  }
+
+  function loadPastRunsList() {
+    var listEl = document.getElementById('past-runs-list');
+    var emptyEl = document.getElementById('past-runs-empty');
+    var countEl = document.getElementById('past-runs-count');
+    if (!listEl) return;
+    Promise.all([
+      fetch('/admin/agent/runs', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; }),
+      fetch('/admin/agent/runs/history', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; })
+    ]).then(function(results) {
+      var memory = results[0].runs || [];
+      var history = results[1].runs || [];
+      var seen = new Set();
+      var all = [];
+      memory.concat(history).forEach(function(r) {
+        if (!seen.has(r.runId)) { seen.add(r.runId); all.push(r); }
+      });
+      all.sort(function(a, b) { return (b.createdAt || b.lastModified || 0) - (a.createdAt || a.lastModified || 0); });
+      all = all.slice(0, 20);
+      if (countEl) countEl.textContent = all.length ? '(' + all.length + ')' : '';
+      listEl.querySelectorAll('.past-run-row').forEach(function(el) { el.remove(); });
+      if (!all.length) {
+        if (emptyEl) emptyEl.classList.remove('hidden');
+        return;
+      }
+      if (emptyEl) emptyEl.classList.add('hidden');
+      all.forEach(function(r) {
+        var row = document.createElement('div');
+        row.className = 'past-run-row flex items-center gap-3 px-4 py-2 hover:bg-slate-50 group';
+        var ts = r.createdAt || r.lastModified || 0;
+        var mission = (r.title || r.prompt || '').trim().slice(0, 90) || '(No mission)';
+        var statusBadge = r.status ? '<span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 flex-shrink-0">' + escapeHtml(r.status) + '</span>' : '';
+        row.innerHTML = '<span class="text-xs text-slate-400 flex-shrink-0 w-20">' + escapeHtml(relativeTime(ts)) + '</span>'
+          + '<span class="text-sm text-slate-700 truncate flex-1">' + escapeHtml(mission) + '</span>'
+          + statusBadge
+          + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="load-run-btn text-xs font-medium text-emerald-600 hover:text-emerald-800 px-2 py-1 rounded hover:bg-emerald-50 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">Load</button>'
+          + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="delete-run-btn text-xs font-medium text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete run">✕</button>';
+        listEl.appendChild(row);
+      });
+      listEl.querySelectorAll('.load-run-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { loadPastRun(btn.getAttribute('data-run-id')); });
+      });
+      listEl.querySelectorAll('.delete-run-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var runId = btn.getAttribute('data-run-id');
+          if (!confirm('Delete this run? This cannot be undone.')) return;
+          fetch('/admin/agent/run/' + encodeURIComponent(runId), { method: 'DELETE', credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (!data.ok) { alert('Delete failed: ' + (data.error || 'unknown error')); return; }
+              if (currentRunId === runId) {
+                currentRunId = null;
+                runArea.classList.add('hidden');
+              }
+              loadPastRunsList();
+            })
+            .catch(function() { alert('Delete request failed'); });
+        });
+      });
+    });
+  }
+
+  function loadPastRun(runId) {
+    fetch('/admin/agent/run/' + encodeURIComponent(runId), { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.error) { alert('Could not load run: ' + data.error); return; }
+        var promptEl = document.getElementById('prompt');
+        if (promptEl && data.prompt) promptEl.value = data.prompt;
+        currentRunId = runId;
+        docsPopulated = true;
+        runArea.classList.remove('hidden');
+        var missionEl = document.getElementById('run-mission');
+        if (missionEl) missionEl.textContent = data.prompt || '(No mission)';
+        runStatus.textContent = data.status || 'loaded';
+        runStage.textContent = '';
+        var isActive = data.status && !['done', 'error', 'cancelled'].includes(data.status);
+        stopBtn.disabled = !isActive;
+        stopBtn.textContent = 'Stop run';
+        startBtn.disabled = isActive;
+        updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults });
+        updateResumeButton(data.status);
+        populateDocsPanel(data);
+        if (data.edits && data.edits.length) showFileBrowser(data.edits);
+        else filesArea.classList.add('hidden');
+        if (data.prUrl || data.error) {
+          showResult(data.prUrl, data.error);
+        } else {
+          resultArea.classList.add('hidden');
+        }
+        var stepArea = document.getElementById('step-results-area');
+        var stepList = document.getElementById('step-results-list');
+        if (data.stepResults && data.stepResults.length) {
+          stepList.innerHTML = data.stepResults.map(function(sr) {
+            var what = sr.step && sr.step.what ? sr.step.what : 'Step';
+            var ok = sr.status === 'done';
+            var reason = sr.reason ? ': ' + escapeHtml(sr.reason) : '';
+            return '<li class="' + (ok ? 'text-emerald-600' : 'text-red-600') + '">' + escapeHtml(what) + ' — ' + sr.status + reason + '</li>';
+          }).join('');
+          stepArea.classList.remove('hidden');
+        } else {
+          stepArea.classList.add('hidden');
+        }
+        logContainer.textContent = '';
+        totalInputTokens = 0; totalOutputTokens = 0;
+        var sEl = document.getElementById('token-stats');
+        if (sEl) sEl.classList.add('hidden');
+        if (data.logs && data.logs.length) {
+          data.logs.forEach(function(entry) {
+            logContainer.textContent += '[' + (entry.role || 'system') + '] ' + (entry.message || '').trim() + String.fromCharCode(10);
+            if (entry.usage) updateTokenStats(entry.usage);
+          });
+          logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        document.getElementById('agent-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })
+      .catch(function() { alert('Failed to load run'); });
+  }
+
+  var pastRunsToggle = document.getElementById('past-runs-toggle');
+  var pastRunsListEl = document.getElementById('past-runs-list');
+  var pastRunsChevron = document.getElementById('past-runs-chevron');
+  var pastRunsOpen = false;
+  if (pastRunsToggle) {
+    pastRunsToggle.addEventListener('click', function() {
+      pastRunsOpen = !pastRunsOpen;
+      if (pastRunsOpen) {
+        pastRunsListEl.classList.remove('hidden');
+        if (pastRunsChevron) pastRunsChevron.textContent = '▴';
+      } else {
+        pastRunsListEl.classList.add('hidden');
+        if (pastRunsChevron) pastRunsChevron.textContent = '▾';
+      }
+    });
+  }
+
+  loadPastRunsList();
+  function languageFromPath(path) {
+    var ext = (path || '').split('.').pop().toLowerCase();
+    var map = { js: 'javascript', mjs: 'javascript', cjs: 'javascript', json: 'json', md: 'markdown', html: 'markup', htm: 'markup', css: 'css', scss: 'css', yml: 'yaml', yaml: 'yaml', ts: 'typescript', tsx: 'typescript', jsx: 'javascript', sh: 'bash', bash: 'bash' };
+    return map[ext] || 'plaintext';
+  }
+  function renderCodeBlock(containerEl, content, path) {
+    var lang = languageFromPath(path);
+    var code = escapeHtml(content || '');
+    containerEl.innerHTML = '<pre class="line-numbers" style="margin:0;padding:1rem;background:transparent"><code class="language-' + escapeHtml(lang) + '">' + code + '</code></pre>';
+    if (window.Prism) {
+      var codeEl = containerEl.querySelector('code');
+      if (codeEl) window.Prism.highlightElement(codeEl);
+    }
+  }
+
+  function showFileBrowser(edits) {
+    if (!edits || !edits.length) return;
+    filesArea.classList.remove('hidden');
+    filesList.innerHTML = '';
+    edits.forEach(function(e, i) {
+      var li = document.createElement('li');
+      var a = document.createElement('a');
+      a.href = '#';
+      a.className = 'block px-3 py-1.5 hover:bg-slate-200 text-slate-700 truncate cursor-pointer';
+      a.textContent = e.path;
+      a.dataset.index = String(i);
+      a.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        showFileContent(edits, parseInt(a.dataset.index, 10));
+        filesList.querySelectorAll('a').forEach(function(x) { x.classList.remove('bg-slate-200', 'font-medium'); });
+        a.classList.add('bg-slate-200', 'font-medium');
+      });
+      li.appendChild(a);
+      filesList.appendChild(li);
+    });
+    showFileContent(edits, 0);
+    filesList.querySelectorAll('a')[0].classList.add('bg-slate-200', 'font-medium');
+  }
+
+  function showFileContent(edits, index) {
+    var e = edits[index];
+    if (!e) return;
+    filesContentHeader.textContent = e.path;
+    renderCodeBlock(filesContent, e.content, e.path);
+  }
+
+  function showResult(prUrl, err) {
+    resultArea.classList.remove('hidden');
+    var resultNote = document.getElementById('result-note');
+    if (prUrl) {
+      prLink.href = prUrl;
+      prLink.textContent = 'Open PR';
+      prLink.classList.remove('hidden');
+      runStatus.textContent = 'Done — PR created';
+      if (err) {
+        errorMsg.classList.add('hidden');
+        if (resultNote) {
+          resultNote.textContent = 'Some steps failed. You can still review the PR.';
+          resultNote.classList.remove('hidden');
+        }
+      } else {
+        errorMsg.classList.add('hidden');
+        if (resultNote) {
+          resultNote.textContent = 'Run complete. Use the link above to review the PR.';
+          resultNote.classList.remove('hidden');
+        }
+      }
+      resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else if (err) {
+      prLink.classList.add('hidden');
+      errorMsg.textContent = err;
+      errorMsg.classList.remove('hidden');
+      if (resultNote) resultNote.classList.add('hidden');
+    } else {
+      if (resultNote) resultNote.classList.add('hidden');
+    }
+    if (currentRunId) {
+      fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) return;
+          updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults });
+          updateResumeButton(data.status);
+          populateDocsPanel(data);
+          if (data.edits && data.edits.length) showFileBrowser(data.edits);
+          if (data.stepResults && data.stepResults.length) {
+            var area = document.getElementById('step-results-area');
+            var list = document.getElementById('step-results-list');
+            list.innerHTML = data.stepResults.map(function(sr) {
+              var what = sr.step && sr.step.what ? sr.step.what : 'Step';
+              var status = sr.status === 'done' ? 'done' : 'failed';
+              var reason = sr.reason ? ': ' + escapeHtml(sr.reason) : '';
+              return '<li class="' + (status === 'done' ? 'text-emerald-600' : 'text-red-600') + '">' + escapeHtml(what) + ' — ' + status + reason + '</li>';
+            }).join('');
+            area.classList.remove('hidden');
+          } else {
+            document.getElementById('step-results-area').classList.add('hidden');
+          }
+        })
+        .catch(function() {});
+    }
+  }
+
+  var docsPopulated = false;
+  function maybePopulateDocs() {
+    if (docsPopulated || !currentRunId) return;
+    docsPopulated = true;
+    fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.error && (data.prompt || (data.docs && Object.keys(data.docs).some(function(k) { return data.docs[k]; })))) populateDocsPanel(data);
+      })
+      .catch(function() {});
+  }
+
+  function closeStream() {
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+  }
+
+  function startRun() {
+    var promptEl = document.getElementById('prompt');
+    var maxPlanners = document.getElementById('maxPlanners').value || '2';
+    var maxCoders = document.getElementById('maxCoders').value || '3';
+    docsPopulated = false;
+    startBtn.disabled = true;
+    runArea.classList.remove('hidden');
+    stopBtn.disabled = true;
+    stopBtn.textContent = 'Stop run';
+    if (resumeBtn) resumeBtn.classList.add('hidden');
+    var runPlaceholder = document.getElementById('run-placeholder');
+    if (runPlaceholder) runPlaceholder.classList.add('hidden');
+    var missionEl = document.getElementById('run-mission');
+    if (missionEl) missionEl.textContent = promptEl.value.trim() || '(No mission text)';
+    logContainer.textContent = '';
+    totalInputTokens = 0; totalOutputTokens = 0;
+    var sEl = document.getElementById('token-stats');
+    if (sEl) sEl.classList.add('hidden');
+    document.getElementById('step-results-area').classList.add('hidden');
+    document.getElementById('step-results-list').innerHTML = '';
+    resultArea.classList.add('hidden');
+    filesArea.classList.add('hidden');
+    prLink.classList.add('hidden');
+    errorMsg.classList.add('hidden');
+    document.getElementById('result-note').classList.add('hidden');
+    runStatus.textContent = 'Starting…';
+    runStage.textContent = '';
+    updatePipeline('research');
+
+    var seedDocs = {};
+    ['overview', 'requirements', 'architecture', 'decisions', 'notes'].forEach(function(section) {
+      var el = document.getElementById('docs-' + section);
+      if (el) seedDocs[section] = el.value || '';
+    });
+    fetch('/admin/agent/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        prompt: promptEl.value.trim(),
+        maxParallelPlanners: parseInt(maxPlanners, 10) || 2,
+        maxParallelCoders: parseInt(maxCoders, 10) || 3,
+        seedDocs: seedDocs
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.runId) throw new Error(data.error || 'No runId');
+      currentRunId = data.runId;
+      runStatus.textContent = 'Running…';
+      stopBtn.disabled = false;
+      stopBtn.textContent = 'Stop run';
+      closeStream();
+      eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(data.runId));
+      function handleStreamError() {
+        if (!currentRunId) { closeStream(); return; }
+        closeStream();
+        runStatus.textContent = 'Checking run status…';
+        var pollCount = 0;
+        var maxPolls = 5;
+        var poll = function() {
+          pollCount++;
+          fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (data.error) {
+                runStatus.textContent = 'Stream closed';
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                resumeBtn && resumeBtn.classList.add('hidden');
+                return;
+              }
+              if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
+                runStatus.textContent = data.status === 'done' ? 'Done — PR created' : (data.status === 'cancelled' ? 'Cancelled' : 'Error');
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                resumeBtn && resumeBtn.classList.add('hidden');
+                showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error);
+                return;
+              }
+              // Run is still active — keep stop button enabled and try to reconnect
+              stopBtn.disabled = false;
+              if (pollCount < maxPolls) {
+                setTimeout(poll, 2000);
+              } else {
+                runStatus.textContent = 'Reconnecting…';
+                setTimeout(function() {
+                  if (!currentRunId) return;
+                  eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(currentRunId));
+                  eventSource.onmessage = onStreamMessage;
+                  eventSource.onerror = function() { handleStreamError(); };
+                }, 1500);
+              }
+            })
+            .catch(function() {
+              runStatus.textContent = 'Stream closed';
+              startBtn.disabled = false;
+              stopBtn.disabled = true;
+            });
+        };
+        poll();
+      }
+      function onStreamMessage(ev) {
+        try {
+          var entry = JSON.parse(ev.data);
+          if (entry.type === 'log') {
+            var prefix = '[' + (entry.role || 'system') + '] ';
+            var msg = (entry.message || '').trim();
+            logContainer.textContent += prefix + msg + String.fromCharCode(10);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            if (entry.stage) updatePipeline(entry.stage);
+            if (entry.usage) updateTokenStats(entry.usage);
+          } else if (entry.type === 'status') {
+            runStage.textContent = entry.status || '';
+            updatePipeline(entry.status || '');
+            maybePopulateDocs();
+          } else if (entry.type === 'docs') {
+            updateDocsPanelOnly(entry.docs);
+          } else if (entry.type === 'done') {
+            runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created';
+            runStage.textContent = '';
+            closeStream();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            resumeBtn && resumeBtn.classList.add('hidden');
+            showResult(entry.prUrl, entry.error);
+          } else if (entry.type === 'error') {
+            runStatus.textContent = 'Error';
+            closeStream();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            resumeBtn && resumeBtn.classList.add('hidden');
+            showResult(null, entry.message || 'Run failed');
+          }
+        } catch (_) {}
+      }
+      eventSource.onmessage = onStreamMessage;
+      eventSource.onerror = function() { handleStreamError(); };
+    })
+    .catch(function(err) {
+      runStatus.textContent = 'Error';
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      showResult(null, err.message || 'Failed to start run');
+    });
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    startRun();
+  });
+  startBtn.addEventListener('click', function() {
+    startRun();
+  });
+
+  stopBtn.addEventListener('click', function() {
+    if (!currentRunId || stopBtn.disabled) return;
+    stopBtn.disabled = true;
+    stopBtn.textContent = 'Stopping…';
+    fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/cancel', {
+      method: 'POST',
+      credentials: 'same-origin'
+    }).catch(function() {});
+  });
+
+  if (docsSaveBtn) {
+    docsSaveBtn.addEventListener('click', function() {
+      ['overview', 'requirements', 'architecture', 'decisions', 'notes'].forEach(function(section) {
+        var el = document.getElementById('docs-' + section);
+        if (el && el.tagName === 'TEXTAREA') saveDocSection(section, el.value);
+      });
+    });
+  }
+  document.querySelectorAll('.docs-textarea').forEach(function(ta) {
+    ta.addEventListener('blur', function() {
+      var section = ta.getAttribute('data-section');
+      if (section) saveDocSection(section, ta.value);
+    });
+  });
+
+  if (resumeBtn) {
+    resumeBtn.addEventListener('click', function() {
+      if (!currentRunId || resumeBtn.disabled) return;
+      resumeBtn.disabled = true;
+      resumeBtn.classList.add('hidden');
+      runStatus.textContent = 'Resuming…';
+      stopBtn.disabled = false;
+      stopBtn.textContent = 'Stop run';
+      closeStream();
+      fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/resume', { method: 'POST', credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data.ok) {
+            runStatus.textContent = 'Error';
+            if (resumeBtn) { resumeBtn.classList.remove('hidden'); resumeBtn.disabled = false; }
+            return;
+          }
+          eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(currentRunId));
+          eventSource.onmessage = onStreamMessage;
+          eventSource.onerror = function() { handleStreamError(); };
+          if (resumeBtn) resumeBtn.disabled = false;
+        })
+        .catch(function() {
+          runStatus.textContent = 'Error';
+          if (resumeBtn) { resumeBtn.classList.remove('hidden'); resumeBtn.disabled = false; }
+        });
+    });
+  }
+})();
+    </script>
+  `)}
+  `;
+    const prismHead = `
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/line-numbers/prism-line-numbers.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markdown.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"><\/script>
+`;
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>${adminHead('Agent PR')}${prismHead}</head>
+<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+</html>`);
+});
+
+// ----- Repo browser API -----
+router.get('/repo/branches', async (req, res) => {
+    const result = await listBranches();
+    if (!result.ok) return res.status(500).json({ ok: false, error: result.error });
+    res.json({ ok: true, current: result.current, branches: result.branches, repoUnavailable: result.repoUnavailable });
+});
+router.get('/repo/tree', async (req, res) => {
+    const branch = req.query.branch || 'main';
+    const path = req.query.path || '';
+    const result = await getTree(branch, path);
+    if (!result.ok) return res.status(400).json({ ok: false, error: result.error });
+    res.json({ ok: true, entries: result.entries });
+});
+router.get('/repo/file', async (req, res) => {
+    const branch = req.query.branch || 'main';
+    const path = req.query.path;
+    if (!path) return res.status(400).json({ ok: false, error: 'path required' });
+    const result = await getFileContent(branch, path);
+    if (!result.ok) return res.status(400).json({ ok: false, error: result.error });
+    res.json({ ok: true, content: result.content });
+});
+
+// ----- GET /admin/agent/runs – list recent in-memory runs -----
+router.get('/runs', (req, res) => {
+    const limit = Math.min(50, parseInt(req.query.limit, 10) || 20);
+    res.json({ runs: listRuns(limit) });
+});
+
+// ----- GET /admin/agent/runs/history – list runs persisted to S3 (survives server restart) -----
+router.get('/runs/history', async (req, res) => {
+    try {
+        const keys = await listS3KeysWithPrefix('admin/agent-runs/', 50);
+        const sorted = keys
+            .sort((a, b) => new Date(b.LastModified || 0) - new Date(a.LastModified || 0))
+            .slice(0, 20);
+        const runs = await Promise.all(sorted.map(async (k) => {
+            const runId = k.Key.replace('admin/agent-runs/', '').replace('.json', '');
+            const fallbackTs = k.LastModified ? new Date(k.LastModified).getTime() : 0;
+            const meta = await loadRunMetadataFromS3(runId);
+            return {
+                runId,
+                title: meta?.title || '',
+                prompt: meta?.prompt || '',
+                status: meta?.status || '',
+                createdAt: meta?.createdAt || fallbackTs,
+                lastModified: fallbackTs,
+            };
+        }));
+        res.json({ runs });
+    } catch (_) {
+        res.json({ runs: [] });
+    }
+});
+
+// ----- DELETE /admin/agent/run/:runId – delete run from memory and S3 -----
+router.delete('/run/:runId', async (req, res) => {
+    const { runId } = req.params;
+    const run = getRun(runId);
+    if (run) {
+        const active = !['done', 'error', 'cancelled'].includes(run.status);
+        if (active) return res.status(400).json({ ok: false, error: 'Cannot delete an active run; stop it first.' });
+    }
+    deleteRun(runId);
+    try {
+        await deleteFromS3('admin/agent-runs/' + runId + '.json');
+    } catch (_) {}
+    res.json({ ok: true });
+});
+
+// ----- POST /admin/agent/run/:runId/cancel – request run to stop (no more token use after next check) -----
+router.post('/run/:runId/cancel', (req, res) => {
+    const runId = req.params.runId;
+    const run = getRun(runId);
+    if (!run) return res.status(404).json({ ok: false, error: 'Run not found' });
+    const terminal = ['done', 'error', 'cancelled'].includes(run.status);
+    if (terminal) return res.status(400).json({ ok: false, error: 'Run already finished' });
+    setRunCancelled(runId);
+    persistRunToS3(runId).catch(() => {});
+    res.json({ ok: true });
+});
+
+// ----- GET /admin/agent/run/:runId – run summary; falls back to S3 if not in memory -----
+router.get('/run/:runId', async (req, res) => {
+    let run = getRun(req.params.runId);
+    if (!run) {
+        const snapshot = await loadRunFromS3(req.params.runId);
+        if (!snapshot) return res.status(404).json({ error: 'Run not found' });
+        hydrateRun(req.params.runId, snapshot);
+        run = getRun(req.params.runId);
+    }
+    if (!run) return res.status(404).json({ error: 'Run not found' });
+    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits } = run;
+    res.json({
+        runId,
+        status,
+        logs,
+        flightPlan,
+        steps: steps || [],
+        docs: docs || { ...DEFAULT_DOCS },
+        stepResults: stepResults || [],
+        prUrl,
+        error,
+        createdAt,
+        prompt,
+        title: title || '',
+        edits: edits || [],
+    });
+});
+
+const DOC_SECTIONS = ['overview', 'requirements', 'architecture', 'decisions', 'notes'];
+
+// ----- PATCH /admin/agent/run/:runId/docs – update one doc section -----
+router.patch('/run/:runId/docs', express.json(), (req, res) => {
+    const runId = req.params.runId;
+    const run = getRun(runId);
+    if (!run) return res.status(404).json({ ok: false, error: 'Run not found' });
+    const { section, content } = req.body || {};
+    if (!section || typeof section !== 'string' || !DOC_SECTIONS.includes(section)) {
+        return res.status(400).json({ ok: false, error: 'Invalid or missing section; use one of: ' + DOC_SECTIONS.join(', ') });
+    }
+    updateRun(runId, { docs: { [section]: content != null ? String(content) : '' } });
+    persistRunToS3(runId).catch(() => {});
+    res.json({ ok: true });
+});
+
+// ----- POST /admin/agent/run – start run (returns runId, runs orchestrator in background) -----
+router.post('/run', express.json(), (req, res) => {
+    const { prompt = '', maxParallelPlanners = 2, maxParallelCoders = 3, seedDocs } = req.body || {};
+    const runId = createRun({ prompt });
+    if (seedDocs && typeof seedDocs === 'object') {
+        updateRun(runId, { docs: seedDocs });
+    }
+    res.json({ runId });
+
+    setImmediate(() => {
+        runPipeline(runId, { prompt, maxParallelPlanners, maxParallelCoders });
+    });
+});
+
+// ----- POST /admin/agent/run/:runId/resume – resume a run (load from S3 if not in memory) -----
+router.post('/run/:runId/resume', async (req, res) => {
+    const runId = req.params.runId;
+    let run = getRun(runId);
+    if (!run) {
+        const snapshot = await loadRunFromS3(runId);
+        if (!snapshot) return res.status(404).json({ ok: false, error: 'Run not found' });
+        hydrateRun(runId, snapshot);
+        run = getRun(runId);
+    }
+    const terminal = ['done', 'error', 'cancelled'].includes(run.status);
+    if (terminal) return res.status(400).json({ ok: false, error: 'Run already finished; cannot resume' });
+
+    res.json({ ok: true });
+    setImmediate(() => runPipeline(runId, { prompt: run.prompt, maxParallelPlanners: 2, maxParallelCoders: 3, resume: true }));
+});
+
+// ----- GET /admin/agent/stream/:runId – SSE -----
+router.get('/stream/:runId', (req, res) => {
+    const { runId } = req.params;
+    const run = getRun(runId);
+    if (!run) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-store');
+        res.write('data: ' + JSON.stringify({ type: 'error', message: 'Run not found' }) + '\n\n');
+        res.end();
+        return;
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-store');
+    res.flushHeaders?.();
+
+    // Send all existing logs
+    run.logs.forEach((entry) => {
+        res.write('data: ' + JSON.stringify({ type: 'log', ...entry }) + '\n\n');
+    });
+    res.write('data: ' + JSON.stringify({ type: 'status', status: run.status }) + '\n\n');
+
+    if (run.status === 'done' || run.status === 'error' || run.status === 'cancelled') {
+        res.write('data: ' + JSON.stringify({
+            type: 'done',
+            prUrl: run.prUrl,
+            error: run.status === 'cancelled' ? 'Run stopped by user.' : run.error,
+            cancelled: run.status === 'cancelled',
+        }) + '\n\n');
+        res.end();
+        return;
+    }
+
+    const unsub = subscribe((id, entry) => {
+        if (id !== runId) return;
+        if (entry.type === 'docs') {
+            res.write('data: ' + JSON.stringify({ type: 'docs', docs: entry.docs }) + '\n\n');
+        } else {
+            res.write('data: ' + JSON.stringify({ type: 'log', ...entry }) + '\n\n');
+        }
+        res.write('data: ' + JSON.stringify({ type: 'status', status: getRun(runId)?.status }) + '\n\n');
+    });
+
+    const heartbeat = setInterval(() => {
+        res.write(': heartbeat\n\n');
+    }, SSE_HEARTBEAT_MS);
+
+    const checkDone = setInterval(() => {
+        const r = getRun(runId);
+        if (r && (r.status === 'done' || r.status === 'error' || r.status === 'cancelled')) {
+            clearInterval(checkDone);
+            clearInterval(heartbeat);
+            unsub();
+            res.write('data: ' + JSON.stringify({
+                type: 'done',
+                prUrl: r.prUrl,
+                error: r.status === 'cancelled' ? 'Run stopped by user.' : r.error,
+                cancelled: r.status === 'cancelled',
+            }) + '\n\n');
+            res.end();
+        }
+    }, 500);
+
+    req.on('close', () => {
+        clearInterval(checkDone);
+        clearInterval(heartbeat);
+        unsub();
+    });
+});
+
+export { router as agentRoutes };
+ + cost.toFixed(3);
     }
   }
 
@@ -354,6 +1264,150 @@ router.get('/', (req, res) => {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
   }
+
+  function relativeTime(ts) {
+    var diff = Date.now() - (ts || 0);
+    var mins = Math.floor(diff / 60000);
+    if (mins < 2) return 'just now';
+    if (mins < 60) return mins + ' min ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + ' hr ago';
+    var days = Math.floor(hrs / 24);
+    return days + ' day' + (days === 1 ? '' : 's') + ' ago';
+  }
+
+  function loadPastRunsList() {
+    var listEl = document.getElementById('past-runs-list');
+    var emptyEl = document.getElementById('past-runs-empty');
+    var countEl = document.getElementById('past-runs-count');
+    if (!listEl) return;
+    Promise.all([
+      fetch('/admin/agent/runs', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; }),
+      fetch('/admin/agent/runs/history', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; })
+    ]).then(function(results) {
+      var memory = results[0].runs || [];
+      var history = results[1].runs || [];
+      var seen = new Set();
+      var all = [];
+      memory.concat(history).forEach(function(r) {
+        if (!seen.has(r.runId)) { seen.add(r.runId); all.push(r); }
+      });
+      all.sort(function(a, b) { return (b.createdAt || b.lastModified || 0) - (a.createdAt || a.lastModified || 0); });
+      all = all.slice(0, 20);
+      if (countEl) countEl.textContent = all.length ? '(' + all.length + ')' : '';
+      listEl.querySelectorAll('.past-run-row').forEach(function(el) { el.remove(); });
+      if (!all.length) {
+        if (emptyEl) emptyEl.classList.remove('hidden');
+        return;
+      }
+      if (emptyEl) emptyEl.classList.add('hidden');
+      all.forEach(function(r) {
+        var row = document.createElement('div');
+        row.className = 'past-run-row flex items-center gap-3 px-4 py-2 hover:bg-slate-50 group';
+        var ts = r.createdAt || r.lastModified || 0;
+        var mission = (r.title || r.prompt || '').trim().slice(0, 90) || '(No mission)';
+        var statusBadge = r.status ? '<span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 flex-shrink-0">' + escapeHtml(r.status) + '</span>' : '';
+        row.innerHTML = '<span class="text-xs text-slate-400 flex-shrink-0 w-20">' + escapeHtml(relativeTime(ts)) + '</span>'
+          + '<span class="text-sm text-slate-700 truncate flex-1">' + escapeHtml(mission) + '</span>'
+          + statusBadge
+          + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="load-run-btn text-xs font-medium text-emerald-600 hover:text-emerald-800 px-2 py-1 rounded hover:bg-emerald-50 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">Load</button>'
+          + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="delete-run-btn text-xs font-medium text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete run">✕</button>';
+        listEl.appendChild(row);
+      });
+      listEl.querySelectorAll('.load-run-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { loadPastRun(btn.getAttribute('data-run-id')); });
+      });
+      listEl.querySelectorAll('.delete-run-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var runId = btn.getAttribute('data-run-id');
+          if (!confirm('Delete this run? This cannot be undone.')) return;
+          fetch('/admin/agent/run/' + encodeURIComponent(runId), { method: 'DELETE', credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (!data.ok) { alert('Delete failed: ' + (data.error || 'unknown error')); return; }
+              if (currentRunId === runId) {
+                currentRunId = null;
+                runArea.classList.add('hidden');
+              }
+              loadPastRunsList();
+            })
+            .catch(function() { alert('Delete request failed'); });
+        });
+      });
+    });
+  }
+
+  function loadPastRun(runId) {
+    fetch('/admin/agent/run/' + encodeURIComponent(runId), { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.error) { alert('Could not load run: ' + data.error); return; }
+        var promptEl = document.getElementById('prompt');
+        if (promptEl && data.prompt) promptEl.value = data.prompt;
+        currentRunId = runId;
+        docsPopulated = true;
+        runArea.classList.remove('hidden');
+        var missionEl = document.getElementById('run-mission');
+        if (missionEl) missionEl.textContent = data.prompt || '(No mission)';
+        runStatus.textContent = data.status || 'loaded';
+        runStage.textContent = '';
+        var isActive = data.status && !['done', 'error', 'cancelled'].includes(data.status);
+        stopBtn.disabled = !isActive;
+        stopBtn.textContent = 'Stop run';
+        startBtn.disabled = isActive;
+        updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults });
+        updateResumeButton(data.status);
+        populateDocsPanel(data);
+        if (data.edits && data.edits.length) showFileBrowser(data.edits);
+        else filesArea.classList.add('hidden');
+        if (data.prUrl || data.error) {
+          showResult(data.prUrl, data.error);
+        } else {
+          resultArea.classList.add('hidden');
+        }
+        var stepArea = document.getElementById('step-results-area');
+        var stepList = document.getElementById('step-results-list');
+        if (data.stepResults && data.stepResults.length) {
+          stepList.innerHTML = data.stepResults.map(function(sr) {
+            var what = sr.step && sr.step.what ? sr.step.what : 'Step';
+            var ok = sr.status === 'done';
+            var reason = sr.reason ? ': ' + escapeHtml(sr.reason) : '';
+            return '<li class="' + (ok ? 'text-emerald-600' : 'text-red-600') + '">' + escapeHtml(what) + ' — ' + sr.status + reason + '</li>';
+          }).join('');
+          stepArea.classList.remove('hidden');
+        } else {
+          stepArea.classList.add('hidden');
+        }
+        logContainer.textContent = '';
+        if (data.logs && data.logs.length) {
+          data.logs.forEach(function(entry) {
+            logContainer.textContent += '[' + (entry.role || 'system') + '] ' + (entry.message || '').trim() + String.fromCharCode(10);
+          });
+          logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        document.getElementById('agent-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })
+      .catch(function() { alert('Failed to load run'); });
+  }
+
+  var pastRunsToggle = document.getElementById('past-runs-toggle');
+  var pastRunsListEl = document.getElementById('past-runs-list');
+  var pastRunsChevron = document.getElementById('past-runs-chevron');
+  var pastRunsOpen = false;
+  if (pastRunsToggle) {
+    pastRunsToggle.addEventListener('click', function() {
+      pastRunsOpen = !pastRunsOpen;
+      if (pastRunsOpen) {
+        pastRunsListEl.classList.remove('hidden');
+        if (pastRunsChevron) pastRunsChevron.textContent = '▴';
+      } else {
+        pastRunsListEl.classList.add('hidden');
+        if (pastRunsChevron) pastRunsChevron.textContent = '▾';
+      }
+    });
+  }
+
+  loadPastRunsList();
   function languageFromPath(path) {
     var ext = (path || '').split('.').pop().toLowerCase();
     var map = { js: 'javascript', mjs: 'javascript', cjs: 'javascript', json: 'json', md: 'markdown', html: 'markup', htm: 'markup', css: 'css', scss: 'css', yml: 'yaml', yaml: 'yaml', ts: 'typescript', tsx: 'typescript', jsx: 'javascript', sh: 'bash', bash: 'bash' };
@@ -407,6 +1461,7 @@ router.get('/', (req, res) => {
       prLink.href = prUrl;
       prLink.textContent = 'Open PR';
       prLink.classList.remove('hidden');
+      runStatus.textContent = 'Done — PR created';
       if (err) {
         errorMsg.classList.add('hidden');
         if (resultNote) {
@@ -415,7 +1470,10 @@ router.get('/', (req, res) => {
         }
       } else {
         errorMsg.classList.add('hidden');
-        if (resultNote) resultNote.classList.add('hidden');
+        if (resultNote) {
+          resultNote.textContent = 'Run complete. Use the link above to review the PR.';
+          resultNote.classList.remove('hidden');
+        }
       }
       resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } else if (err) {
@@ -479,7 +1537,6 @@ router.get('/', (req, res) => {
     docsPopulated = false;
     startBtn.disabled = true;
     runArea.classList.remove('hidden');
-    stopBtn.classList.remove('hidden');
     stopBtn.disabled = true;
     stopBtn.textContent = 'Stop run';
     if (resumeBtn) resumeBtn.classList.add('hidden');
@@ -499,6 +1556,11 @@ router.get('/', (req, res) => {
     runStage.textContent = '';
     updatePipeline('research');
 
+    var seedDocs = {};
+    ['overview', 'requirements', 'architecture', 'decisions', 'notes'].forEach(function(section) {
+      var el = document.getElementById('docs-' + section);
+      if (el) seedDocs[section] = el.value || '';
+    });
     fetch('/admin/agent/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -506,7 +1568,8 @@ router.get('/', (req, res) => {
       body: JSON.stringify({
         prompt: promptEl.value.trim(),
         maxParallelPlanners: parseInt(maxPlanners, 10) || 2,
-        maxParallelCoders: parseInt(maxCoders, 10) || 3
+        maxParallelCoders: parseInt(maxCoders, 10) || 3,
+        seedDocs: seedDocs
       })
     })
     .then(function(r) { return r.json(); })
@@ -518,7 +1581,55 @@ router.get('/', (req, res) => {
       stopBtn.textContent = 'Stop run';
       closeStream();
       eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(data.runId));
-      eventSource.onmessage = function(ev) {
+      function handleStreamError() {
+        if (!currentRunId) { closeStream(); return; }
+        closeStream();
+        runStatus.textContent = 'Checking run status…';
+        var pollCount = 0;
+        var maxPolls = 5;
+        var poll = function() {
+          pollCount++;
+          fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (data.error) {
+                runStatus.textContent = 'Stream closed';
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                resumeBtn && resumeBtn.classList.add('hidden');
+                return;
+              }
+              if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
+                runStatus.textContent = data.status === 'done' ? 'Done — PR created' : (data.status === 'cancelled' ? 'Cancelled' : 'Error');
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                resumeBtn && resumeBtn.classList.add('hidden');
+                showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error);
+                return;
+              }
+              // Run is still active — keep stop button enabled and try to reconnect
+              stopBtn.disabled = false;
+              if (pollCount < maxPolls) {
+                setTimeout(poll, 2000);
+              } else {
+                runStatus.textContent = 'Reconnecting…';
+                setTimeout(function() {
+                  if (!currentRunId) return;
+                  eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(currentRunId));
+                  eventSource.onmessage = onStreamMessage;
+                  eventSource.onerror = function() { handleStreamError(); };
+                }, 1500);
+              }
+            })
+            .catch(function() {
+              runStatus.textContent = 'Stream closed';
+              startBtn.disabled = false;
+              stopBtn.disabled = true;
+            });
+        };
+        poll();
+      }
+      function onStreamMessage(ev) {
         try {
           var entry = JSON.parse(ev.data);
           if (entry.type === 'log') {
@@ -531,35 +1642,33 @@ router.get('/', (req, res) => {
             runStage.textContent = entry.status || '';
             updatePipeline(entry.status || '');
             maybePopulateDocs();
+          } else if (entry.type === 'docs') {
+            updateDocsPanelOnly(entry.docs);
           } else if (entry.type === 'done') {
-            runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done';
+            runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created';
             runStage.textContent = '';
             closeStream();
             startBtn.disabled = false;
-            stopBtn.classList.add('hidden');
+            stopBtn.disabled = true;
+            resumeBtn && resumeBtn.classList.add('hidden');
             showResult(entry.prUrl, entry.error);
           } else if (entry.type === 'error') {
             runStatus.textContent = 'Error';
             closeStream();
             startBtn.disabled = false;
-            stopBtn.classList.add('hidden');
+            stopBtn.disabled = true;
+            resumeBtn && resumeBtn.classList.add('hidden');
             showResult(null, entry.message || 'Run failed');
           }
         } catch (_) {}
-      };
-      eventSource.onerror = function() {
-        if (currentRunId) {
-          runStatus.textContent = 'Stream closed (run may still be in progress)';
-          startBtn.disabled = false;
-          stopBtn.classList.add('hidden');
-        }
-        closeStream();
-      };
+      }
+      eventSource.onmessage = onStreamMessage;
+      eventSource.onerror = function() { handleStreamError(); };
     })
     .catch(function(err) {
       runStatus.textContent = 'Error';
       startBtn.disabled = false;
-      stopBtn.classList.add('hidden');
+      stopBtn.disabled = true;
       showResult(null, err.message || 'Failed to start run');
     });
   }
@@ -603,7 +1712,6 @@ router.get('/', (req, res) => {
       resumeBtn.disabled = true;
       resumeBtn.classList.add('hidden');
       runStatus.textContent = 'Resuming…';
-      stopBtn.classList.remove('hidden');
       stopBtn.disabled = false;
       stopBtn.textContent = 'Stop run';
       closeStream();
@@ -616,42 +1724,8 @@ router.get('/', (req, res) => {
             return;
           }
           eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(currentRunId));
-          eventSource.onmessage = function(ev) {
-            try {
-              var entry = JSON.parse(ev.data);
-              if (entry.type === 'log') {
-                var prefix = '[' + (entry.role || 'system') + '] ';
-                logContainer.textContent += prefix + (entry.message || '').trim() + String.fromCharCode(10);
-                logContainer.scrollTop = logContainer.scrollHeight;
-                if (entry.stage) updatePipeline(entry.stage);
-              } else if (entry.type === 'status') {
-                runStage.textContent = entry.status || '';
-                updatePipeline(entry.status || '');
-                maybePopulateDocs();
-              } else if (entry.type === 'done') {
-                runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done';
-                runStage.textContent = '';
-                closeStream();
-                startBtn.disabled = false;
-                stopBtn.classList.add('hidden');
-                showResult(entry.prUrl, entry.error);
-              } else if (entry.type === 'error') {
-                runStatus.textContent = 'Error';
-                closeStream();
-                startBtn.disabled = false;
-                stopBtn.classList.add('hidden');
-                showResult(null, entry.message || 'Run failed');
-              }
-            } catch (_) {}
-          };
-          eventSource.onerror = function() {
-            if (currentRunId) {
-              runStatus.textContent = 'Stream closed (run may still be in progress)';
-              startBtn.disabled = false;
-              stopBtn.classList.add('hidden');
-            }
-            closeStream();
-          };
+          eventSource.onmessage = onStreamMessage;
+          eventSource.onerror = function() { handleStreamError(); };
           if (resumeBtn) resumeBtn.disabled = false;
         })
         .catch(function() {
@@ -706,10 +1780,51 @@ router.get('/repo/file', async (req, res) => {
     res.json({ ok: true, content: result.content });
 });
 
-// ----- GET /admin/agent/runs – list recent runs -----
+// ----- GET /admin/agent/runs – list recent in-memory runs -----
 router.get('/runs', (req, res) => {
     const limit = Math.min(50, parseInt(req.query.limit, 10) || 20);
     res.json({ runs: listRuns(limit) });
+});
+
+// ----- GET /admin/agent/runs/history – list runs persisted to S3 (survives server restart) -----
+router.get('/runs/history', async (req, res) => {
+    try {
+        const keys = await listS3KeysWithPrefix('admin/agent-runs/', 50);
+        const sorted = keys
+            .sort((a, b) => new Date(b.LastModified || 0) - new Date(a.LastModified || 0))
+            .slice(0, 20);
+        const runs = await Promise.all(sorted.map(async (k) => {
+            const runId = k.Key.replace('admin/agent-runs/', '').replace('.json', '');
+            const fallbackTs = k.LastModified ? new Date(k.LastModified).getTime() : 0;
+            const meta = await loadRunMetadataFromS3(runId);
+            return {
+                runId,
+                title: meta?.title || '',
+                prompt: meta?.prompt || '',
+                status: meta?.status || '',
+                createdAt: meta?.createdAt || fallbackTs,
+                lastModified: fallbackTs,
+            };
+        }));
+        res.json({ runs });
+    } catch (_) {
+        res.json({ runs: [] });
+    }
+});
+
+// ----- DELETE /admin/agent/run/:runId – delete run from memory and S3 -----
+router.delete('/run/:runId', async (req, res) => {
+    const { runId } = req.params;
+    const run = getRun(runId);
+    if (run) {
+        const active = !['done', 'error', 'cancelled'].includes(run.status);
+        if (active) return res.status(400).json({ ok: false, error: 'Cannot delete an active run; stop it first.' });
+    }
+    deleteRun(runId);
+    try {
+        await deleteFromS3('admin/agent-runs/' + runId + '.json');
+    } catch (_) {}
+    res.json({ ok: true });
 });
 
 // ----- POST /admin/agent/run/:runId/cancel – request run to stop (no more token use after next check) -----
@@ -724,11 +1839,17 @@ router.post('/run/:runId/cancel', (req, res) => {
     res.json({ ok: true });
 });
 
-// ----- GET /admin/agent/run/:runId – run summary (includes steps, docs, edits) -----
-router.get('/run/:runId', (req, res) => {
-    const run = getRun(req.params.runId);
+// ----- GET /admin/agent/run/:runId – run summary; falls back to S3 if not in memory -----
+router.get('/run/:runId', async (req, res) => {
+    let run = getRun(req.params.runId);
+    if (!run) {
+        const snapshot = await loadRunFromS3(req.params.runId);
+        if (!snapshot) return res.status(404).json({ error: 'Run not found' });
+        hydrateRun(req.params.runId, snapshot);
+        run = getRun(req.params.runId);
+    }
     if (!run) return res.status(404).json({ error: 'Run not found' });
-    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, edits } = run;
+    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits } = run;
     res.json({
         runId,
         status,
@@ -741,6 +1862,7 @@ router.get('/run/:runId', (req, res) => {
         error,
         createdAt,
         prompt,
+        title: title || '',
         edits: edits || [],
     });
 });
@@ -763,8 +1885,11 @@ router.patch('/run/:runId/docs', express.json(), (req, res) => {
 
 // ----- POST /admin/agent/run – start run (returns runId, runs orchestrator in background) -----
 router.post('/run', express.json(), (req, res) => {
-    const { prompt = '', maxParallelPlanners = 2, maxParallelCoders = 3 } = req.body || {};
+    const { prompt = '', maxParallelPlanners = 2, maxParallelCoders = 3, seedDocs } = req.body || {};
     const runId = createRun({ prompt });
+    if (seedDocs && typeof seedDocs === 'object') {
+        updateRun(runId, { docs: seedDocs });
+    }
     res.json({ runId });
 
     setImmediate(() => {
@@ -824,7 +1949,11 @@ router.get('/stream/:runId', (req, res) => {
 
     const unsub = subscribe((id, entry) => {
         if (id !== runId) return;
-        res.write('data: ' + JSON.stringify({ type: 'log', ...entry }) + '\n\n');
+        if (entry.type === 'docs') {
+            res.write('data: ' + JSON.stringify({ type: 'docs', docs: entry.docs }) + '\n\n');
+        } else {
+            res.write('data: ' + JSON.stringify({ type: 'log', ...entry }) + '\n\n');
+        }
         res.write('data: ' + JSON.stringify({ type: 'status', status: getRun(runId)?.status }) + '\n\n');
     });
 

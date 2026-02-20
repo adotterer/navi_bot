@@ -3,7 +3,7 @@
  * Uses tool registry for read_file and grep_search; passes fileContext and grepContext to Planner.
  */
 import pLimit from 'p-limit';
-import { appendLog, getRun, updateRun, isRunCancelled } from './runStore.js';
+import { appendLog, getRun, updateRun, isRunCancelled, notifyDocsUpdate, registerAbortController, unregisterAbortController } from './runStore.js';
 import { persistRunToS3 } from './agentRunPersistence.js';
 import { runResearcher, runPlanner, runCoder, validateCoderStep, runReviewer } from './agents.js';
 import { callTool } from './toolRegistry.js';
@@ -42,6 +42,23 @@ function missionKeywords(prompt, maxKeywords = 5) {
         }
     }
     return out;
+}
+
+/**
+ * Derive a short one-line title from the flightPlan for display in the run list and PR.
+ * @param {Array<{ title?: string, id?: string }>} flightPlan
+ * @returns {string}
+ */
+function deriveRunTitle(flightPlan) {
+    if (!flightPlan || !flightPlan.length) return '';
+    if (flightPlan.length === 1) return flightPlan[0].title || flightPlan[0].id || '';
+    const first = flightPlan[0].title || flightPlan[0].id || '';
+    const second = flightPlan[1].title || flightPlan[1].id || '';
+    const rest = flightPlan.length - 2;
+    const combined = rest > 0
+        ? `${first}, ${second} (+${rest} more)`
+        : `${first} and ${second}`;
+    return combined.length > 90 ? combined.slice(0, 87) + '…' : combined;
 }
 
 /** Patterns we always grep when mission mentions embed/Discord/branding (so Planner sees the real pattern). */
@@ -175,9 +192,16 @@ async function buildFileContextForTask(task, grepPaths, maxChars = 52000) {
 export async function runPipeline(runId, opts = {}) {
     const { maxParallelPlanners = 2, maxParallelCoders = 3 } = opts;
     const run = getRun(runId);
+    let inputTokens = run?.inputTokens || 0;
+    let outputTokens = run?.outputTokens || 0;
     const resume = !!opts.resume;
     const prompt = (opts.prompt ?? run?.prompt ?? '').trim();
     const log = (role, stage, message) => appendLog(runId, { role, stage, message });
+
+    const abortCtrl = new AbortController();
+    abortCtrl.signal.setMaxListeners(50);
+    const signal = abortCtrl.signal;
+    registerAbortController(runId, abortCtrl);
 
     let flightPlan = run?.flightPlan;
     let allSteps = run?.steps;
@@ -191,15 +215,23 @@ export async function runPipeline(runId, opts = {}) {
             updateRun(runId, { status: 'research' });
             log('system', 'research', resume ? 'Resuming: re-running Researcher…\n' : 'Running Researcher…\n');
 
-            const researchResult = await runResearcher(prompt, { docs: getRun(runId)?.docs });
+            const researchResult = await runResearcher(prompt, { docs: getRun(runId)?.docs, signal });
+            inputTokens += researchResult.inputTokens || 0;
+            outputTokens += researchResult.outputTokens || 0;
             if (!researchResult.ok) {
                 updateRun(runId, { status: 'error', error: researchResult.error });
                 log('system', 'error', 'Researcher failed: ' + researchResult.error + '\n');
                 return;
             }
 
+
+
             flightPlan = researchResult.flightPlan;
-            updateRun(runId, { flightPlan });
+            const overview = [prompt.trim()].concat(flightPlan.map((t) => `- ${t.title || t.id}`)).join('\n\nTasks:\n');
+            const requirements = flightPlan.map((t) => (t.title ? `**${t.title}**: ` : '') + (t.description || '')).join('\n\n');
+            const title = deriveRunTitle(flightPlan);
+            updateRun(runId, { flightPlan, title, docs: { overview, requirements }, inputTokens, outputTokens });
+            notifyDocsUpdate(runId);
             log('system', 'research', `Flight plan: ${flightPlan.length} task(s).\n`);
             await persistRunToS3(runId);
         }
@@ -224,7 +256,10 @@ export async function runPipeline(runId, opts = {}) {
                     limitPlanners(async () => {
                         log('system', 'planning', `Planner: ${task.title}\n`);
                         const fileContext = await buildFileContextForTask(task, grepPaths);
-                        const planResult = await runPlanner(task, { fileContext, grepContext, docs: getRun(runId)?.docs, flightPlan, steps: getRun(runId)?.steps });
+                        const planResult = await runPlanner(task, { fileContext, grepContext, docs: getRun(runId)?.docs, flightPlan, steps: getRun(runId)?.steps, signal });
+                        inputTokens += planResult.inputTokens || 0;
+                        outputTokens += planResult.outputTokens || 0;
+                        updateRun(runId, { inputTokens, outputTokens });
                         if (planResult.ok) {
                             const n = (planResult.steps && planResult.steps.length) || 0;
                             log('system', 'planning', `Planner: ${task.title} — ${n} step(s)\n`);
@@ -251,7 +286,15 @@ export async function runPipeline(runId, opts = {}) {
                 return;
             }
 
-            updateRun(runId, { steps: allSteps });
+            updateRun(runId, { steps: allSteps, inputTokens, outputTokens });
+            const runAfterPlan = getRun(runId);
+            const existingReqs = runAfterPlan?.docs?.requirements || '';
+            const implSteps = allSteps.map(({ step }, i) => `${i + 1}. ${step.what || 'Step'}`).join('\n');
+            const requirementsWithImpl = existingReqs + (implSteps ? '\n\nImplementation steps:\n' + implSteps : '');
+            if (requirementsWithImpl !== existingReqs) {
+                updateRun(runId, { docs: { requirements: requirementsWithImpl } });
+                notifyDocsUpdate(runId);
+            }
             await persistRunToS3(runId);
         }
 
@@ -281,7 +324,10 @@ export async function runPipeline(runId, opts = {}) {
                             if (r.ok && typeof r.result === 'string') fileContext[p] = r.result;
                         }
                     }
-                    const coderResult = await runCoder(step, fileContext, {});
+                    const coderResult = await runCoder(step, fileContext, { signal });
+                    inputTokens += coderResult.inputTokens || 0;
+                    outputTokens += coderResult.outputTokens || 0;
+                    updateRun(runId, { inputTokens, outputTokens });
                     return { step, task, coderResult, stepIndex: j, useExisting: false };
                 })
             )
@@ -306,7 +352,10 @@ export async function runPipeline(runId, opts = {}) {
                 log('system', 'coding', `Coder: ${step.what} — failed: ${coderResult?.error || 'No result'}\n`);
                 continue;
             }
-            const validation = await validateCoderStep(step, prompt, coderResult.edits || [], { allowedPaths });
+            const validation = await validateCoderStep(step, prompt, coderResult.edits || [], { allowedPaths, signal });
+            inputTokens += validation.inputTokens || 0;
+            outputTokens += validation.outputTokens || 0;
+            updateRun(runId, { inputTokens, outputTokens });
             stepResults.push({
                 step,
                 status: validation.status,
@@ -346,17 +395,22 @@ export async function runPipeline(runId, opts = {}) {
         for (const [filePath, patches] of byPathPatches.entries()) {
             if (byPathContent.has(filePath)) continue; // full-content edit takes precedence
             const readResult = await callTool('read_file', { path: filePath });
-            if (!readResult.ok) {
-                log('system', 'coding', `[patch] Could not read ${filePath} for patching: ${readResult.error}\n`);
-                continue;
+            let content = '';
+            if (readResult.ok) {
+                content = readResult.result;
+            } else {
+                // File doesn't exist yet — only valid if at least one patch creates it from scratch (search === '')
+                const hasNewFileMarker = patches.some((p) => p.search === '');
+                if (!hasNewFileMarker) {
+                    log('system', 'coding', `[patch] Could not read ${filePath} for patching: ${readResult.error}\n`);
+                    continue;
+                }
             }
-            let content = readResult.result;
             for (const { search, replace } of patches) {
                 if (search === '') {
-                    // New file or full replace
-                    content = replace;
+                    content = replace ?? '';
                 } else if (content.includes(search)) {
-                    content = content.replace(search, replace);
+                    content = content.replace(search, replace ?? '');
                 } else {
                     log('system', 'coding', `[patch] Search text not found in ${filePath} — patch skipped\n`);
                 }
@@ -370,7 +424,7 @@ export async function runPipeline(runId, opts = {}) {
         ];
 
         if (runRef) runRef.edits = aggregatedEdits;
-        updateRun(runId, { stepResults, edits: aggregatedEdits });
+        updateRun(runId, { stepResults, edits: aggregatedEdits, inputTokens, outputTokens });
         await persistRunToS3(runId);
 
         if (aggregatedEdits.length === 0) {
@@ -399,7 +453,11 @@ export async function runPipeline(runId, opts = {}) {
 
             const reviewResult = await runReviewer(editsToReview, prompt, {
                 importWarnings: reviewRound === 0 ? importWarnings : [],
+                signal,
             });
+            inputTokens += reviewResult.inputTokens || 0;
+            outputTokens += reviewResult.outputTokens || 0;
+            updateRun(runId, { inputTokens, outputTokens });
             if (!reviewResult.ok) {
                 log('system', 'reviewing', `Reviewer failed: ${reviewResult.error}\n`);
                 break;
@@ -419,16 +477,32 @@ export async function runPipeline(runId, opts = {}) {
             for (const e of editsToReview) {
                 if (e.path && e.content != null) fileContext[e.path] = e.content;
             }
-            const fixResult = await runCoder(syntheticStep, fileContext, { reviewFeedback: reviewResult.feedback });
+            const fixResult = await runCoder(syntheticStep, fileContext, { reviewFeedback: reviewResult.feedback, signal });
+            inputTokens += fixResult.inputTokens || 0;
+            outputTokens += fixResult.outputTokens || 0;
+            updateRun(runId, { inputTokens, outputTokens });
             if (!fixResult.ok || !fixResult.edits?.length) {
                 log('system', 'reviewing', `Coder fix pass failed or produced no edits: ${fixResult.error || 'no edits'}\n`);
                 break;
             }
-            const byPath = new Map(editsToReview.map((e) => [e.path, e.content]));
+            const byPath = new Map(editsToReview.map((e) => [e.path, e.content ?? '']));
             for (const e of fixResult.edits) {
-                if (e.path && allowedPaths.has(e.path)) byPath.set(e.path, e.content);
+                if (!e.path || !allowedPaths.has(e.path)) continue;
+                if (e.search !== undefined) {
+                    // Patch edit: apply search/replace to current content
+                    const current = byPath.get(e.path) ?? '';
+                    if (e.search === '') {
+                        byPath.set(e.path, e.replace ?? '');
+                    } else if (current.includes(e.search)) {
+                        byPath.set(e.path, current.replace(e.search, e.replace ?? ''));
+                    }
+                } else if (e.content != null) {
+                    byPath.set(e.path, e.content);
+                }
             }
-            editsToReview = Array.from(byPath.entries()).map(([path, content]) => ({ path, content }));
+            editsToReview = Array.from(byPath.entries())
+                .filter(([, content]) => content != null)
+                .map(([path, content]) => ({ path, content }));
             const runAfterReview = getRun(runId);
             if (runAfterReview) runAfterReview.edits = editsToReview;
             reviewRound++;
@@ -440,7 +514,7 @@ export async function runPipeline(runId, opts = {}) {
         updateRun(runId, { status: 'creating_pr' });
         log('system', 'creating_pr', `Collected ${editsToReview.length} file edit(s). Creating PR…\n`);
 
-        const prResult = await createPrIfConfigured(runId, { prompt, edits: editsToReview });
+        const prResult = await createPrIfConfigured(runId, { prompt, edits: editsToReview, title: getRun(runId)?.title || '' });
         if (prResult.ok && prResult.prUrl) {
             updateRun(runId, { status: 'done', prUrl: prResult.prUrl });
             log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
@@ -453,9 +527,17 @@ export async function runPipeline(runId, opts = {}) {
         }
         await persistRunToS3(runId);
     } catch (err) {
-        updateRun(runId, { status: 'error', error: err.message || String(err) });
-        appendLog(runId, { role: 'system', stage: 'error', message: (err.message || String(err)) + '\n' });
-        await persistRunToS3(runId);
+        const isAbort = err?.name === 'AbortError' || isRunCancelled(runId);
+        if (isAbort) {
+            updateRun(runId, { status: 'cancelled' });
+            appendLog(runId, { role: 'system', stage: 'cancelled', message: 'Run stopped by user.\n' });
+        } else {
+            updateRun(runId, { status: 'error', error: err.message || String(err) });
+            appendLog(runId, { role: 'system', stage: 'error', message: (err.message || String(err)) + '\n' });
+        }
+    } finally {
+        unregisterAbortController(runId);
+        await persistRunToS3(runId).catch(() => {});
     }
 }
 
