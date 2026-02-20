@@ -4,6 +4,9 @@
  */
 import pLimit from 'p-limit';
 import { setMaxListeners } from 'node:events';
+import { EmbedBuilder } from 'discord.js';
+import { getClient } from '../../shared/discordClient.js';
+import { INFO_EMBED_COLOR } from '../../messages/faqAndAliasHandler.js';
 import { appendLog, getRun, updateRun, isRunCancelled, notifyDocsUpdate, registerAbortController, unregisterAbortController } from './runStore.js';
 import { persistRunToS3 } from './agentRunPersistence.js';
 import { runResearcher, runPlanner, runCoder, validateCoderStep, runReviewer } from './agents.js';
@@ -530,6 +533,7 @@ export async function runPipeline(runId, opts = {}) {
         if (prResult.ok && prResult.prUrl) {
             updateRun(runId, { status: 'done', prUrl: prResult.prUrl });
             log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
+            await notifyAuditLog(getRun(runId)?.title, prompt, prResult.prUrl, editsToReview.map((e) => e.path));
         } else if (prResult.error) {
             updateRun(runId, { status: 'error', error: prResult.error });
             log('system', 'error', 'PR failed: ' + prResult.error + '\n');
@@ -550,6 +554,35 @@ export async function runPipeline(runId, opts = {}) {
     } finally {
         unregisterAbortController(runId);
         await persistRunToS3(runId).catch(() => {});
+    }
+}
+
+/** Post a Mission PR notification to Discord #audit-logs. Uses getClient() and same channel pattern as webhookRoutes. */
+async function notifyAuditLog(title, prompt, prUrl, files) {
+    try {
+        const client = getClient();
+        if (!client?.isReady()) return;
+        const guild = client.guilds.cache.first();
+        if (!guild) return;
+        const channel = guild.channels.cache.find((ch) => ch.isTextBased() && ch.name === 'audit-logs');
+        if (!channel) return;
+        const fileList = Array.isArray(files) ? files : [];
+        const filesValue = fileList.length
+            ? fileList.slice(0, 15).join('\n') + (fileList.length > 15 ? `\n... (+${fileList.length - 15} more)` : '')
+            : 'None';
+        const embed = new EmbedBuilder()
+            .setColor(INFO_EMBED_COLOR)
+            .setTitle('Mission PR Created: ' + (title || 'Untitled'))
+            .setURL(prUrl)
+            .setDescription((prompt || '').slice(0, 3000))
+            .addFields(
+                { name: 'PR URL', value: prUrl },
+                { name: 'Changed Files', value: filesValue.slice(0, 1024) }
+            )
+            .setTimestamp();
+        await channel.send({ embeds: [embed] });
+    } catch (e) {
+        console.error('Audit log notification failed', e);
     }
 }
 
