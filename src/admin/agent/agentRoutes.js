@@ -189,9 +189,9 @@ router.get('/', (req, res) => {
           parts.push('  - ' + what);
         });
       }
-      implEl.textContent = parts.length ? parts.join("\n") : "(No plan yet)";
+      implEl.textContent = parts.length ? parts.join(String.fromCharCode(10)) : "(No plan yet)";
     }
-    if (docsPanel) docsPanel.classList.remove('hidden');
+    if (docsPanel) docsPanel.classList.remove("hidden");
   }
 
   function saveDocSection(section, content) {
@@ -621,7 +621,7 @@ router.get('/', (req, res) => {
               var entry = JSON.parse(ev.data);
               if (entry.type === 'log') {
                 var prefix = '[' + (entry.role || 'system') + '] ';
-                logContainer.textContent += prefix + (entry.message || '').trim() + '\n';
+                logContainer.textContent += prefix + (entry.message || '').trim() + String.fromCharCode(10);
                 logContainer.scrollTop = logContainer.scrollHeight;
                 if (entry.stage) updatePipeline(entry.stage);
               } else if (entry.type === 'status') {
