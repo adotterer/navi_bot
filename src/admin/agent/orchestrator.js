@@ -90,6 +90,21 @@ async function buildGrepContext(prompt) {
     return { grepText, grepPaths: pathSet };
 }
 
+/** Parse file paths from task hints (comma/space separated); return paths that look like source files. */
+function parseHintPaths(task) {
+    const hints = task.hints ? String(task.hints).split(/[\s,]+/).map((s) => s.trim()).filter(Boolean) : [];
+    return hints.filter((h) => /\.(js|ts|json|md|mjs|cjs|tsx|jsx|yml|yaml|html|css)$/i.test(h) || (h.includes('/') && h.length > 2));
+}
+
+/** Build run-wide allowed path set: grep paths + all task hints from flight plan. */
+function buildAllowedPaths(flightPlan, grepPaths) {
+    const pathSet = new Set(grepPaths || []);
+    for (const task of flightPlan || []) {
+        for (const p of parseHintPaths(task)) pathSet.add(p);
+    }
+    return pathSet;
+}
+
 /** Build file context for a task: hint paths + grep-matched paths (so key files like exportHandler are included). */
 async function buildFileContextForTask(task, grepPaths, maxChars = 52000) {
     const hints = task.hints ? String(task.hints).split(/[\s,]+/).map((s) => s.trim()).filter(Boolean) : [];
@@ -137,6 +152,7 @@ export async function runPipeline(runId, opts = {}) {
         if (checkCancelled(runId, log)) return;
 
         const { grepText: grepContext, grepPaths } = await buildGrepContext(prompt);
+        const allowedPaths = buildAllowedPaths(flightPlan, grepPaths);
 
         const allEdits = []; // { path, content }[]
         const limitPlanners = pLimit(Math.max(1, Math.min(5, maxParallelPlanners)));
@@ -166,7 +182,9 @@ export async function runPipeline(runId, opts = {}) {
         }
 
         const allSteps = planResults.flatMap(({ task, planResult }) =>
-            planResult.ok && planResult.steps && planResult.steps.length ? planResult.steps : []
+            planResult.ok && planResult.steps && planResult.steps.length
+                ? planResult.steps.map((step) => ({ step, task }))
+                : []
         );
         if (allSteps.length === 0) {
             updateRun(runId, { status: 'error', error: 'No implementation steps could be parsed from any Planner.' });
@@ -177,7 +195,7 @@ export async function runPipeline(runId, opts = {}) {
         if (checkCancelled(runId, log)) return;
         updateRun(runId, { status: 'coding' });
         const coderResults = await Promise.all(
-            allSteps.map((step, j) =>
+            allSteps.map(({ step, task }, j) =>
                 limitCoders(async () => {
                     log('system', 'coding', `Coder: ${step.what}\n`);
                     const fileContext = {};
@@ -185,8 +203,14 @@ export async function runPipeline(runId, opts = {}) {
                         const r = await callTool('read_file', { path: p });
                         if (r.ok && typeof r.result === 'string') fileContext[p] = r.result;
                     }
+                    if (Object.keys(fileContext).length === 0) {
+                        for (const p of parseHintPaths(task)) {
+                            const r = await callTool('read_file', { path: p });
+                            if (r.ok && typeof r.result === 'string') fileContext[p] = r.result;
+                        }
+                    }
                     const coderResult = await runCoder(step, fileContext, {});
-                    return { step, coderResult, stepIndex: j };
+                    return { step, task, coderResult, stepIndex: j };
                 })
             )
         );
@@ -198,7 +222,7 @@ export async function runPipeline(runId, opts = {}) {
                 log('system', 'coding', `Coder: ${step.what} — failed: ${coderResult.error}\n`);
                 continue;
             }
-            const validation = await validateCoderStep(step, prompt, coderResult.edits || []);
+            const validation = await validateCoderStep(step, prompt, coderResult.edits || [], { allowedPaths });
             stepResults.push({
                 step,
                 status: validation.status,
@@ -206,9 +230,10 @@ export async function runPipeline(runId, opts = {}) {
                 reason: validation.reason,
             });
             if (validation.status === 'done') {
-                const n = (coderResult.edits || []).length;
+                const allowed = (coderResult.edits || []).filter((e) => e.path && allowedPaths.has(e.path));
+                const n = allowed.length;
                 log('system', 'coding', `Coder: ${step.what} — done (${n} edit(s))\n`);
-                allEdits.push(...(coderResult.edits || []));
+                allEdits.push(...allowed);
             } else {
                 log('system', 'coding', `Coder: ${step.what} — failed${validation.reason ? ': ' + validation.reason : ''}\n`);
             }
@@ -268,7 +293,7 @@ export async function runPipeline(runId, opts = {}) {
             }
             const byPath = new Map(editsToReview.map((e) => [e.path, e.content]));
             for (const e of fixResult.edits) {
-                if (e.path) byPath.set(e.path, e.content);
+                if (e.path && allowedPaths.has(e.path)) byPath.set(e.path, e.content);
             }
             editsToReview = Array.from(byPath.entries()).map(([path, content]) => ({ path, content }));
             const runAfterReview = getRun(runId);

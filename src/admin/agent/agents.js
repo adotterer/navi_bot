@@ -39,7 +39,7 @@ export async function runResearcher(missionPrompt, opts = {}) {
 
     const systemPrompt = `You are a Researcher for a codebase. Your job is to take a high-level mission and produce a "flight plan": a short list of concrete, ordered tasks that together achieve the mission.
 
-The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase structure below to inform your task list. Output ONLY a valid JSON array of tasks, no other text. Each task must have: "id" (short slug), "title" (one line), "description" (one or two sentences), and "hints" (comma-separated exact file paths when possible, e.g. "src/export/exportHandler.js, src/matchups/matchupHandler.js"). For missions about Discord commands (!mu, !mq, !export) or embed/branding, always include the relevant handler paths in hints (e.g. src/export/exportHandler.js, src/matchups/matchupHandler.js, src/messages/questionHandler.js, src/shared/messageSplitter.js). Example:
+The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase structure below to inform your task list. Output ONLY a valid JSON array of tasks, no other text. Each task must have: "id" (short slug), "title" (one line), "description" (one or two sentences), and "hints" (comma-separated exact file paths when possible, e.g. "src/export/exportHandler.js, src/matchups/matchupHandler.js"). For missions about Discord commands (!mu, !mq, !export) or embed/branding, always include the relevant handler paths in hints (e.g. src/export/exportHandler.js, src/matchups/matchupHandler.js, src/messages/questionHandler.js, src/shared/messageSplitter.js). Never suggest generic filenames like index.js or main.js unless they actually exist in the repo structure. Example:
 [{"id":"add-route","title":"Add health route","description":"Add GET /health that returns { status: 'ok' }.","hints":"src/app.js"}]`;
 
     const userContent = `Mission:\n${missionPrompt}${treeInfo}\n\nProduce the flight plan as a single JSON array.`;
@@ -177,7 +177,7 @@ export async function runPlanner(task, opts = {}) {
 
 Given a single task from a flight plan, output an implementation plan: an ordered list of steps. Each step should specify what to do, which file(s) to touch, and optionally a short change description. Each step should be an actionable implementation step (code or config change), not a pure analysis step. Prefer steps that produce file edits.
 
-Prefer steps that EDIT existing files shown in "Relevant file contents" or "Files that match the mission" above; only add steps that create NEW files when the mission explicitly requires a new module. When the mission asks to match existing behavior (e.g. use the same embed style as !mu/!mq), the "files" array must include the existing handler file(s) to modify and you should reference the same imports and patterns (e.g. createSplitEmbeds, EmbedBuilder, SUMMARY_DISCLAIMER, color "#36AAD4") that already appear in the codebase.
+Prefer steps that EDIT existing files shown in "Relevant file contents" or "Files that match the mission" above; only add steps that create NEW files when the mission explicitly requires a new module. When the mission asks to match existing behavior (e.g. use the same embed style as !mu/!mq), the "files" array must include the existing handler file(s) to modify and you should reference the same imports and patterns (e.g. createSplitEmbeds, EmbedBuilder, SUMMARY_DISCLAIMER, color "#36AAD4") that already appear in the codebase. The "files" array must only contain paths that appear in the "Relevant file contents" or "Files that match the mission" above. Do not use index.js, main.js, or paths not listed.
 
 Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (array of file paths, e.g. ["src/app.js"]), "changeDescription" (optional). Example:
 [{"what":"Add GET /health handler","files":["src/app.js"],"changeDescription":"Add app.get('/health', ...) returning { status: 'ok' }"}]`;
@@ -327,7 +327,7 @@ CRITICAL parsing rules:
 - Output ONLY the JSON array. Do not wrap it in a markdown code block (no \`\`\`json). Start your response with [ and end with ].
 - Inside "content" strings use escaped newlines: \\n (not literal line breaks), or the response cannot be parsed.
 
-When "Current file contents" are provided above, you MUST base your edit on that content: preserve unchanged parts and only modify what the step asks; do not replace entire files with unrelated code. Do not invent content that does not match this codebase. For NEW files (no current contents), create minimal content that fulfills the step and matches the repo's style.
+When "Current file contents" are provided above, you MUST base your edit on that content: preserve unchanged parts and only modify what the step asks; do not replace entire files with unrelated code. Do not invent content that does not match this codebase. For NEW files (no current contents), create minimal content that fulfills the step and matches the repo's style. Only output edits for files that were listed in "Files to consider" or whose contents were provided in "Current file contents". Do not create or edit index.js or other files not in that list.
 
 Preserve existing code where no change is needed; only include files that change. Example (output exactly this format, no other text):
 [{"path":"src/app.js","content":"// full file content here\\n"}]`;
@@ -446,9 +446,22 @@ function parseCoderEdits(text) {
  * @param {object} step - { what, files?, changeDescription? }
  * @param {string} missionSummary - Mission prompt or short flight plan summary
  * @param {Array<{ path: string, content: string }>} edits - Coder's proposed edits
+ * @param {object} [opts] - Optional: { allowedPaths: Set<string> } to enforce path allowlist
  * @returns {Promise<{ ok: true, status: 'done'|'failed', reason?: string }>}
  */
-export async function validateCoderStep(step, missionSummary, edits) {
+export async function validateCoderStep(step, missionSummary, edits, opts = {}) {
+    const { allowedPaths } = opts;
+    if (allowedPaths && allowedPaths.size > 0) {
+        for (const e of edits || []) {
+            if (e.path && !allowedPaths.has(e.path)) {
+                return {
+                    ok: true,
+                    status: 'failed',
+                    reason: `edit targets path not in allowed list: ${e.path}`,
+                };
+            }
+        }
+    }
     const editSummary = (edits || []).map((e) => e.path + (e.content ? ` (${e.content.length} chars)` : '')).join(', ') || 'none';
     const prompt = `Step: ${step.what}\n${step.changeDescription || ''}\nMission context: ${(missionSummary || '').slice(0, 500)}\n\nCoder produced edits for: ${editSummary}.\n\nDo these edits satisfy the step and mission? Reply with exactly one word: done or failed. Optionally add a short reason after a colon (e.g. "failed: edits change wrong file").`;
     try {
