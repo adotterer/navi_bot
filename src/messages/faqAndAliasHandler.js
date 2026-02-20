@@ -2,6 +2,7 @@ import { getNicknameAliases } from '../matchups/characterAliases.js';
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { EmbedBuilder } from 'discord.js';
 
+// Standard bot branding: Use INFO_EMBED_COLOR (#36AAD4) and the SUMMARY_DISCLAIMER footer with createSplitEmbeds for information embeds.
 export const INFO_EMBED_COLOR = '#36AAD4';
 
 const DOCS_LINES = [

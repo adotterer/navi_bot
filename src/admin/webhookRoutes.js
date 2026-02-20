@@ -10,7 +10,9 @@
  */
 import { createHmac, timingSafeEqual } from 'crypto';
 import express from 'express';
+import { EmbedBuilder } from 'discord.js';
 import { getClient } from '../shared/discordClient.js';
+import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 
 export const webhookRouter = express.Router();
 
@@ -71,15 +73,18 @@ webhookRouter.post('/github/webhook', async (req, res) => {
         hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
     });
 
-    const message =
-        `🚀 **Deployed to Elastic Beanstalk**\n` +
-        `• **Commit:** \`${sha}\` — ${commitMsg}\n` +
-        `• **Author:** ${author}\n` +
-        `• **Branch:** main\n` +
-        `• **Time:** ${now}`;
+    const embed = new EmbedBuilder()
+        .setColor(INFO_EMBED_COLOR)
+        .setDescription(
+            `🚀 **Deployed to Elastic Beanstalk**\n` +
+            `• **Commit:** \`${sha}\` — ${commitMsg}\n` +
+            `• **Author:** ${author}\n` +
+            `• **Branch:** main\n` +
+            `• **Time:** ${now}`
+        );
 
     try {
-        await auditLogsChannel.send(message);
+        await auditLogsChannel.send({ embeds: [embed] });
         console.log('[webhook] Deploy notification sent to #audit-logs');
         return res.status(200).json({ ok: true });
     } catch (err) {
