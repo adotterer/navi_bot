@@ -492,7 +492,7 @@ router.get('/', (req, res) => {
     }).catch(function() {});
   });
 })();
-    <\\/script>
+    </script>
   `)}
   `;
     const prismHead = `
