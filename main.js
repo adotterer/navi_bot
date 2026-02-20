@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import { handleExportCharacter, handleExportMatchups, handleListThreadCounts } from './src/export/exportHandler.js';
 import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/matchups/matchupHandler.js';
 import { handleQuestion } from './src/messages/questionHandler.js';
-import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
+import { handleShouldHave, handleArenaIsUp, handleLatest } from './src/messages/messageHandlers.js';
 import { initializeScheduler } from './src/shared/scheduler.js';
 import { checkTodaysTournaments } from './src/tournaments/dailyTournamentCheck.js';
 import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaCommand.js';
@@ -114,10 +114,10 @@ client.on("messageCreate", async (message) => {
     console.log(`📨 Message received from ${message.author.tag} in #${message.channel.name}: ${message.content}`);
 
     // Check for "should have" trigger
-    if (await handleShouldHave(message, followupResponses)) return;
+    if (await handleShouldHave(message)) return;
 
     // Check for arena is up/ready trigger
-    if (await handleArenaIsUp(message, lanWarningResponses)) return;
+    if (await handleArenaIsUp(message)) return;
 });
 
 // Handler 2: Commands (!export, !match-up-notes, !mu-question) + Refinement replies
@@ -351,6 +351,12 @@ client.on("messageCreate", async (message) => {
         const output = `📁 **${categoryName}** (${channelNames.length})\n` +
             channelNames.map(name => `• ${name}`).join("\n");
         await sendInChunks(output);
+        return;
+    }
+
+    // ===== LATEST AI COMMENT =====
+    if (message.content.toLowerCase() === "!latest") {
+        await handleLatest(message);
         return;
     }
 
