@@ -436,8 +436,8 @@ router.get('/', (req, res) => {
           var entry = JSON.parse(ev.data);
           if (entry.type === 'log') {
             var prefix = '[' + (entry.role || 'system') + '] ';
-            var msg = (entry.message || '').replace(/\\n/g, '\\n');
-            logContainer.textContent += prefix + msg + '\\n';
+            var msg = (entry.message || '').trim();
+            logContainer.textContent += prefix + msg + String.fromCharCode(10);
             logContainer.scrollTop = logContainer.scrollHeight;
             if (entry.stage) updatePipeline(entry.stage);
           } else if (entry.type === 'status') {

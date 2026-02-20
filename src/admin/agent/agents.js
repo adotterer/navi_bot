@@ -81,20 +81,25 @@ The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase 
 function extractJsonArrayCandidates(text) {
     const trimmed = text.trim();
     const candidates = [];
+    // 1. Prefer ```json ... ``` or ``` ... ``` blocks (take last one as it's often the actual output after thought)
     const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)```/g;
     let match;
+    const codeBlocks = [];
     while ((match = codeBlockRegex.exec(trimmed)) !== null) {
         const inner = match[1].trim();
-        if (inner.length > 2 && !candidates.includes(inner)) candidates.push(inner);
+        if (inner.length > 2) codeBlocks.push(inner);
     }
+    if (codeBlocks.length) candidates.push(codeBlocks[codeBlocks.length - 1]);
+    // 2. Last top-level array (from last '[' to last ']') — favors actual output after reasoning
     const lastClose = trimmed.lastIndexOf(']');
     const lastOpen = trimmed.lastIndexOf('[');
     if (lastOpen !== -1 && lastClose !== -1 && lastOpen < lastClose) {
         const lastArray = trimmed.slice(lastOpen, lastClose + 1);
         if (!candidates.includes(lastArray)) candidates.push(lastArray);
     }
+    // 3. First top-level array as fallback
     const firstMatch = trimmed.match(/\[[\s\S]*\]/);
-    if (firstMatch && !candidates.includes(firstMatch[0])) candidates.push(firstMatch[0]);
+    if (firstMatch && firstMatch[0].length > 2 && !candidates.includes(firstMatch[0])) candidates.push(firstMatch[0]);
     return candidates;
 }
 
@@ -188,38 +193,49 @@ function tryParseJsonArray(str) {
     }
 }
 
-/** Try to fix JSON with literal newlines inside "content" string values (common in Coder output). */
+/** Replace literal newlines inside double-quoted string values so JSON can parse. */
+function escapeNewlinesInJsonStrings(str) {
+    let out = '';
+    let i = 0;
+    let inString = false;
+    let escape = false;
+    while (i < str.length) {
+        const c = str[i];
+        if (escape) {
+            out += c;
+            escape = false;
+            i++;
+            continue;
+        }
+        if (c === '\\') {
+            out += c;
+            escape = true;
+            i++;
+            continue;
+        }
+        if (c === '"' && !escape) {
+            inString = !inString;
+            out += c;
+            i++;
+            continue;
+        }
+        if (inString && (c === '\n' || c === '\r')) {
+            out += c === '\r' && str[i + 1] === '\n' ? '\\n' : (c === '\r' ? '\\r' : '\\n');
+            if (c === '\r' && str[i + 1] === '\n') i++;
+            i++;
+            continue;
+        }
+        out += c;
+        i++;
+    }
+    return out;
+}
+
+/** Try to fix JSON with literal newlines inside string values (common in Coder output). */
 function tryParseJsonArrayWithNewlineFix(str) {
     let arr = tryParseJsonArray(str);
     if (arr) return arr;
-    if (!str.includes('\n')) return null;
-    const contentKey = '"content"';
-    let fixed = str;
-    let idx = 0;
-    while ((idx = fixed.indexOf(contentKey, idx)) !== -1) {
-        const valueStart = fixed.indexOf('"', idx + contentKey.length);
-        if (valueStart === -1) break;
-        let end = valueStart + 1;
-        let found = false;
-        while (end < fixed.length) {
-            const next = fixed.indexOf('"', end);
-            if (next === -1) { idx = fixed.length; break; }
-            if (fixed[next - 1] !== '\\') {
-                const segment = fixed.slice(valueStart + 1, next);
-                if (segment.includes('\n')) {
-                    const escaped = segment.replace(/\r\n/g, '\\n').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
-                    fixed = fixed.slice(0, valueStart + 1) + escaped + fixed.slice(next);
-                    idx = valueStart + 1 + escaped.length + 1;
-                } else {
-                    idx = next + 1;
-                }
-                found = true;
-                break;
-            }
-            end = next + 1;
-        }
-        if (!found) break;
-    }
+    const fixed = escapeNewlinesInJsonStrings(str);
     arr = tryParseJsonArray(fixed);
     return arr;
 }
@@ -311,16 +327,56 @@ Preserve existing code where no change is needed; only include files that change
 
 /**
  * Extract edits array from Coder output. Prefers ```json ... ``` block, then last [...], then first [...].
- * Uses relaxed parse (trailing commas + literal newlines in strings) so Coder output is more likely to parse.
+ * Also accepts object with .edits or .changes array. Uses relaxed parse (trailing commas + literal newlines in strings).
  */
 function parseCoderEdits(text) {
+    const normalizeEdits = (arr) => {
+        if (!Array.isArray(arr)) return [];
+        return arr
+            .filter((e) => e && (e.path || e.file) && (e.content != null || e.text != null))
+            .map((e) => ({ path: String(e.path || e.file), content: String(e.content ?? e.text ?? '') }));
+    };
+
+    // Try whole text as JSON object with .edits or .changes
+    const tryParseObject = (raw) => {
+        try {
+            return JSON.parse(escapeNewlinesInJsonStrings(raw).replace(/,\s*]/g, ']').replace(/,\s*}/g, '}'));
+        } catch (_) { return null; }
+    };
+    const trimmedForObj = text.trim();
+    const firstBrace = trimmedForObj.indexOf('{');
+    const lastBrace = trimmedForObj.lastIndexOf('}');
+    const objCandidates = [
+        trimmedForObj,
+        ...(firstBrace !== -1 && lastBrace > firstBrace ? [trimmedForObj.slice(firstBrace, lastBrace + 1)] : []),
+    ];
+    for (const raw of objCandidates) {
+        if (!raw.startsWith('{')) continue;
+        const parsed = tryParseObject(raw);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            const arr = parsed.edits ?? parsed.changes ?? parsed.files;
+            const edits = normalizeEdits(Array.isArray(arr) ? arr : []);
+            if (edits.length) return edits;
+        }
+    }
+
     for (const raw of extractJsonArrayCandidates(text)) {
         const arr = tryParseJsonArrayWithNewlineFix(raw);
         if (!arr || !Array.isArray(arr)) continue;
-        const edits = arr
-            .filter((e) => e && (e.path || e.file) && (e.content != null || e.text != null))
-            .map((e) => ({ path: String(e.path || e.file), content: String(e.content ?? e.text ?? '') }));
+        const edits = normalizeEdits(arr);
         if (edits.length) return edits;
+    }
+
+    // Fallback: strip to first [ and last ] and parse
+    const trimmed = text.trim();
+    const firstBracket = trimmed.indexOf('[');
+    const lastBracket = trimmed.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket > firstBracket) {
+        const arr = tryParseJsonArrayWithNewlineFix(trimmed.slice(firstBracket, lastBracket + 1));
+        if (arr && Array.isArray(arr)) {
+            const edits = normalizeEdits(arr);
+            if (edits.length) return edits;
+        }
     }
     return [];
 }
