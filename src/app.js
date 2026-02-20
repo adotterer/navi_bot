@@ -17,7 +17,44 @@ export function createApp() {
     app.use(express.static('public'));
     app.use('/exports', express.static('.'));
     app.get('/', (req, res) => {
-        res.send('Navi Bot is running! 🧚');
+        res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Navi Bot</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5; }
+        #status { padding: 15px 30px; border-radius: 30px; color: white; font-weight: bold; font-size: 1.2em; min-width: 120px; text-align: center; }
+        .online { background-color: #4caf50; }
+        .offline { background-color: #f44336; }
+    </style>
+</head>
+<body>
+    <h1>Navi Bot 🧚</h1>
+    <div id="status">Checking...</div>
+    <script>
+        async function updateStatus() {
+            const el = document.getElementById('status');
+            try {
+                const res = await fetch('/health');
+                if (res.ok) {
+                    el.textContent = 'Online';
+                    el.className = 'online';
+                } else {
+                    el.textContent = 'Offline';
+                    el.className = 'offline';
+                }
+            } catch (e) {
+                el.textContent = 'Offline';
+                el.className = 'offline';
+            }
+        }
+        updateStatus();
+        setInterval(updateStatus, 5000);
+    </script>
+</body>
+</html>
+        `);
     });
 
     app.get('/health', (req, res) => res.json({ status: 'ok' }));
