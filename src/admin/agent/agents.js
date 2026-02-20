@@ -166,23 +166,35 @@ Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (
     }
 }
 
+/** Try JSON.parse; if it fails, try again after removing trailing commas before ] or }. */
+function tryParseJsonArray(str) {
+    try {
+        const arr = JSON.parse(str);
+        return Array.isArray(arr) ? arr : null;
+    } catch (_) {
+        const fixed = str.replace(/,\s*]/g, ']').replace(/,\s*}/g, '}');
+        try {
+            const arr = JSON.parse(fixed);
+            return Array.isArray(arr) ? arr : null;
+        } catch (_) {
+            return null;
+        }
+    }
+}
+
 /**
  * Parse Planner steps from model output. Prefers ```json block, then last [...], then first [...].
  */
 function parsePlannerSteps(text) {
     for (const raw of extractJsonArrayCandidates(text)) {
-        try {
-            const arr = JSON.parse(raw);
-            if (!Array.isArray(arr)) continue;
-            const mapped = arr.map((s) => ({
-                what: String(s.what ?? s.description ?? ''),
-                files: Array.isArray(s.files) ? s.files.map(String) : [],
-                changeDescription: s.changeDescription != null ? String(s.changeDescription) : undefined,
-            }));
-            if (mapped.length) return mapped;
-        } catch (_) {
-            /* try next candidate */
-        }
+        const arr = tryParseJsonArray(raw);
+        if (!arr || !arr.length) continue;
+        const mapped = arr.map((s) => ({
+            what: String(s.what ?? s.description ?? ''),
+            files: Array.isArray(s.files) ? s.files.map(String) : [],
+            changeDescription: s.changeDescription != null ? String(s.changeDescription) : undefined,
+        }));
+        if (mapped.length) return mapped;
     }
     return [];
 }

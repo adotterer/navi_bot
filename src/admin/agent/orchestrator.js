@@ -159,15 +159,20 @@ export async function runPipeline(runId, opts = {}) {
             )
         );
 
-        for (const { planResult } of planResults) {
+        for (const { task, planResult } of planResults) {
             if (!planResult.ok) {
-                updateRun(runId, { status: 'error', error: planResult.error });
-                log('system', 'error', 'Planner failed: ' + planResult.error + '\n');
-                return;
+                log('system', 'planning', `Planner: ${task.title} — failed: ${planResult.error}\n`);
             }
         }
 
-        const allSteps = planResults.flatMap(({ planResult }) => planResult.steps);
+        const allSteps = planResults.flatMap(({ task, planResult }) =>
+            planResult.ok && planResult.steps && planResult.steps.length ? planResult.steps : []
+        );
+        if (allSteps.length === 0) {
+            updateRun(runId, { status: 'error', error: 'No implementation steps could be parsed from any Planner.' });
+            log('system', 'error', 'No implementation steps could be parsed from any Planner.\n');
+            return;
+        }
 
         if (checkCancelled(runId, log)) return;
         updateRun(runId, { status: 'coding' });
