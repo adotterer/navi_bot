@@ -83,7 +83,7 @@ webhookRouter.post('/github/webhook', async (req, res) => {
     const embed = new EmbedBuilder()
         .setColor(INFO_EMBED_COLOR)
         .setDescription(
-            `🚀 **Deployed to Elastic Beanstalk**\n` +
+            `🚀 **Deployed Navi Bot**\n` +
             `• **Commit:** \`${sha}\` — ${commitMsg}\n` +
             `• **Author:** ${author}\n` +
             `• **Branch:** main\n` +
