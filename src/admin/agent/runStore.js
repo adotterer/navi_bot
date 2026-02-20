@@ -3,7 +3,7 @@
  * Tracks status, logs, flight plan, PR URL, and error per run.
  */
 
-const RUN_STATUSES = ['pending', 'research', 'planning', 'coding', 'creating_pr', 'done', 'error', 'cancelled'];
+const RUN_STATUSES = ['pending', 'research', 'planning', 'coding', 'reviewing', 'creating_pr', 'done', 'error', 'cancelled'];
 const MAX_RUNS_RETAINED = 50;
 
 /** @type {Map<string, { runId: string, status: string, logs: Array<{ role: string, stage: string, message: string, timestamp: string }>, flightPlan?: any, prUrl?: string, error?: string, createdAt: number }>} */

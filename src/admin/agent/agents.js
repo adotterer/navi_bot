@@ -131,7 +131,9 @@ function parseFlightPlan(text) {
  */
 export async function runPlanner(task, opts = {}) {
     const { onChunk, fileContext = '', grepContext = '' } = opts;
-    const systemPrompt = `You are a Planner. Given a single task from a flight plan, output an implementation plan: an ordered list of steps. Each step should specify what to do, which file(s) to touch, and optionally a short change description. Each step should be an actionable implementation step (code or config change), not a pure analysis step. Prefer steps that produce file edits.
+    const systemPrompt = `You are a Planner. Technical project planner: read shared context findings, then decompose goals into a small number of substantial coding tasks. Prefer fewer larger tasks over many small ones — each Coder agent can handle significant multi-file changes. Define dependencies between tasks. Write descriptions specific enough that a coder can implement without guessing intent.
+
+Given a single task from a flight plan, output an implementation plan: an ordered list of steps. Each step should specify what to do, which file(s) to touch, and optionally a short change description. Each step should be an actionable implementation step (code or config change), not a pure analysis step. Prefer steps that produce file edits.
 
 Prefer steps that EDIT existing files shown in "Relevant file contents" or "Files that match the mission" above; only add steps that create NEW files when the mission explicitly requires a new module. When the mission asks to match existing behavior (e.g. use the same embed style as !mu/!mq), the "files" array must include the existing handler file(s) to modify and you should reference the same imports and patterns (e.g. createSplitEmbeds, EmbedBuilder, SUMMARY_DISCLAIMER, color "#36AAD4") that already appear in the codebase.
 
@@ -256,7 +258,7 @@ function parsePlannerSteps(text) {
  * @returns {Promise<{ ok: true, edits: Array<{ path: string, content: string }> } | { ok: false, error: string }>}
  */
 export async function runCoder(step, fileContext, opts = {}) {
-    const { onChunk } = opts;
+    const { onChunk, reviewFeedback } = opts;
     const fileSection = Object.entries(fileContext).length
         ? '\n\nCurrent file contents (use these to produce the full new content):\n' +
           Object.entries(fileContext)
@@ -275,7 +277,10 @@ When "Current file contents" are provided above, you MUST base your edit on that
 Preserve existing code where no change is needed; only include files that change. Output nothing but the JSON array. Example:
 [{"path":"src/app.js","content":"// full file content here\\n"}]`;
 
-    const userContent = `Step: ${step.what}\n${step.changeDescription || ''}\nFiles to consider: ${(step.files || []).join(', ')}${fileSection}\n\nProduce the edits array (full file content for each changed file).`;
+    let userContent = `Step: ${step.what}\n${step.changeDescription || ''}\nFiles to consider: ${(step.files || []).join(', ')}${fileSection}\n\nProduce the edits array (full file content for each changed file).`;
+    if (reviewFeedback && reviewFeedback.trim()) {
+        userContent += `\n\nReviewer feedback (you must address this): ${reviewFeedback.trim()}`;
+    }
 
     try {
         const result = await withTimeout(
@@ -348,5 +353,45 @@ export async function validateCoderStep(step, missionSummary, edits) {
         };
     } catch (_) {
         return { ok: true, status: 'done' };
+    }
+}
+
+/**
+ * Run the Reviewer agent: inspect aggregated edits and return OK or actionable feedback for the Coder.
+ * @param {Array<{ path: string, content: string }>} aggregatedEdits - Proposed file edits
+ * @param {string} prompt - Mission prompt
+ * @param {object} opts
+ * @param {(chunk: string) => void} [opts.onChunk]
+ * @returns {Promise<{ ok: true, feedback: string|null } | { ok: false, error: string }>}
+ */
+export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
+    const editSummary = (aggregatedEdits || [])
+        .map((e) => `--- ${e.path} ---\n${(e.content || '').slice(0, 8000)}${(e.content || '').length > 8000 ? '\n... (truncated)' : ''}`)
+        .join('\n\n');
+    const systemPrompt = `You are a Reviewer. You see the proposed code changes for a mission. Check for correctness and consistency (e.g. API usage, types, existing patterns). If everything looks good, reply with exactly: OK. If something must be fixed, reply with FIX: followed by one short, actionable sentence for the coder (e.g. "EmbedBuilder.setColor expects a string; use a quoted hex string."). Output nothing else.`;
+    const userContent = `Mission: ${(prompt || '').slice(0, 1000)}\n\nProposed changes:\n${editSummary}`;
+    try {
+        const response = await withTimeout(
+            (async () => {
+                const res = await genAI.models.generateContent({
+                    model: MODEL,
+                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
+                    config: { maxOutputTokens: 256 },
+                });
+                return res;
+            })(),
+            GEMINI_TIMEOUT_MS,
+            'Reviewer timed out'
+        );
+        const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
+        const text = String(raw ?? '').trim();
+        const fixPrefix = /^fix\s*:\s*/i;
+        if (fixPrefix.test(text)) {
+            const feedback = text.replace(fixPrefix, '').trim();
+            return { ok: true, feedback: feedback || null };
+        }
+        return { ok: true, feedback: null };
+    } catch (err) {
+        return { ok: false, error: err.message || String(err) };
     }
 }

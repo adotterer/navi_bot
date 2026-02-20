@@ -65,6 +65,8 @@ router.get('/', (req, res) => {
                     <span class="text-slate-300">\u2192</span>
                     <span id="phase-coder" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Coder</span>
                     <span class="text-slate-300">\u2192</span>
+                    <span id="phase-review" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Review</span>
+                    <span class="text-slate-300">\u2192</span>
                     <span id="phase-pr" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Create PR</span>
                   </div>
                 </div>
@@ -145,17 +147,19 @@ router.get('/', (req, res) => {
 
   function updatePipeline(status, runData) {
     runData = runData || {};
-    var statusToPhase = { research: 'researcher', planning: 'planning', coding: 'coding', creating_pr: 'creating_pr', done: 'creating_pr', error: 'creating_pr', cancelled: 'creating_pr' };
+    var statusToPhase = { research: 'researcher', planning: 'planning', coding: 'coding', reviewing: 'reviewing', creating_pr: 'creating_pr', done: 'creating_pr', error: 'creating_pr', cancelled: 'creating_pr' };
     var current = statusToPhase[status] || status;
     var labels = {
       researcher: 'Researcher',
       planning: runData.flightPlan && runData.flightPlan.length ? 'Planner (' + runData.flightPlan.length + ' tasks)' : 'Planner',
       coding: runData.stepResults && runData.stepResults.length ? 'Coder (' + runData.stepResults.length + ' steps)' : 'Coder',
+      reviewing: 'Review',
       creating_pr: 'Create PR'
     };
-    var order = ['researcher', 'planning', 'coding', 'creating_pr'];
+    var order = ['researcher', 'planning', 'coding', 'reviewing', 'creating_pr'];
     order.forEach(function(phase, i) {
-      var el = document.getElementById('phase-' + (phase === 'planning' ? 'planner' : phase === 'creating_pr' ? 'pr' : phase));
+      var phaseId = phase === 'planning' ? 'planner' : phase === 'creating_pr' ? 'pr' : phase === 'reviewing' ? 'review' : phase;
+      var el = document.getElementById('phase-' + phaseId);
       if (!el) return;
       el.textContent = labels[phase] || el.textContent;
       el.className = 'phase px-2 py-1 rounded border text-sm ';

@@ -4,7 +4,7 @@
  */
 import pLimit from 'p-limit';
 import { appendLog, getRun, updateRun, isRunCancelled } from './runStore.js';
-import { runResearcher, runPlanner, runCoder, validateCoderStep } from './agents.js';
+import { runResearcher, runPlanner, runCoder, validateCoderStep, runReviewer } from './agents.js';
 import { callTool } from './toolRegistry.js';
 
 /**
@@ -232,11 +232,55 @@ export async function runPipeline(runId, opts = {}) {
             return;
         }
 
+        const MAX_REVIEW_ROUNDS = 2;
+        let reviewRound = 0;
+        let editsToReview = [...aggregatedEdits];
+
+        while (reviewRound < MAX_REVIEW_ROUNDS) {
+            if (checkCancelled(runId, log)) return;
+            updateRun(runId, { status: 'reviewing' });
+            log('system', 'reviewing', reviewRound === 0 ? 'Running Reviewer…\n' : `Review round ${reviewRound + 1}…\n`);
+
+            const reviewResult = await runReviewer(editsToReview, prompt, {});
+            if (!reviewResult.ok) {
+                log('system', 'reviewing', `Reviewer failed: ${reviewResult.error}\n`);
+                break;
+            }
+            if (!reviewResult.feedback || !reviewResult.feedback.trim()) {
+                break;
+            }
+
+            log('system', 'reviewing', `Reviewer requested changes: ${reviewResult.feedback}\n`);
+            const paths = editsToReview.map((e) => e.path).filter(Boolean);
+            const syntheticStep = {
+                what: 'Address reviewer feedback',
+                changeDescription: reviewResult.feedback,
+                files: paths,
+            };
+            const fileContext = {};
+            for (const e of editsToReview) {
+                if (e.path && e.content != null) fileContext[e.path] = e.content;
+            }
+            const fixResult = await runCoder(syntheticStep, fileContext, { reviewFeedback: reviewResult.feedback });
+            if (!fixResult.ok || !fixResult.edits?.length) {
+                log('system', 'reviewing', `Coder fix pass failed or produced no edits: ${fixResult.error || 'no edits'}\n`);
+                break;
+            }
+            const byPath = new Map(editsToReview.map((e) => [e.path, e.content]));
+            for (const e of fixResult.edits) {
+                if (e.path) byPath.set(e.path, e.content);
+            }
+            editsToReview = Array.from(byPath.entries()).map(([path, content]) => ({ path, content }));
+            const runAfterReview = getRun(runId);
+            if (runAfterReview) runAfterReview.edits = editsToReview;
+            reviewRound++;
+        }
+
         if (checkCancelled(runId, log)) return;
         updateRun(runId, { status: 'creating_pr' });
-        log('system', 'creating_pr', `Collected ${aggregatedEdits.length} file edit(s). Creating PR…\n`);
+        log('system', 'creating_pr', `Collected ${editsToReview.length} file edit(s). Creating PR…\n`);
 
-        const prResult = await createPrIfConfigured(runId, { prompt, edits: aggregatedEdits });
+        const prResult = await createPrIfConfigured(runId, { prompt, edits: editsToReview });
         if (prResult.ok && prResult.prUrl) {
             updateRun(runId, { status: 'done', prUrl: prResult.prUrl });
             log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
