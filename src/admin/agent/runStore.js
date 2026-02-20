@@ -41,6 +41,7 @@ function createRun(opts = {}) {
         error: undefined,
         createdAt: Date.now(),
         prompt: opts.prompt || '',
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
     };
     runs.set(runId, run);
     runOrder.push(runId);
@@ -107,6 +108,7 @@ function updateRun(runId, updates) {
     if (updates.error != null) run.error = updates.error;
     if (updates.flightPlan != null) run.flightPlan = updates.flightPlan;
     if (updates.stepResults != null) run.stepResults = updates.stepResults;
+    if (updates.usage != null) run.usage = updates.usage;
 }
 
 function setRunCancelled(runId) {
