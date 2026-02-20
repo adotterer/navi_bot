@@ -50,7 +50,7 @@ router.get('/', (req, res) => {
       </div>
       <div class="flex min-h-[400px]">
         <div id="repo-sidebar" class="w-60 border-r border-slate-200 bg-slate-50 overflow-y-auto flex-shrink-0">
-          <ul id="repo-tree" class="py-2 text-sm"></ul>
+          <ul id="repo-tree" class="py-2 text-sm"><li class="px-3 py-2 text-slate-500 text-sm">Loading…</li></ul>
         </div>
         <div id="repo-content-wrap" class="flex-1 min-w-0 flex flex-col bg-slate-900">
           <div id="repo-content-header" class="px-3 py-1.5 bg-slate-800 text-slate-300 text-sm font-mono truncate border-b border-slate-700"></div>
@@ -347,7 +347,7 @@ router.get('/', (req, res) => {
           var entry = JSON.parse(ev.data);
           if (entry.type === 'log') {
             var prefix = '[' + (entry.role || 'system') + '] ';
-            logContainer.textContent += prefix + (entry.message || '').replace(/\\n/g, '\n');
+            logContainer.textContent += prefix + (entry.message || '').replace(/\\n/g, '\\x0A');
             logContainer.scrollTop = logContainer.scrollHeight;
           } else if (entry.type === 'status') {
             runStage.textContent = entry.status || '';
