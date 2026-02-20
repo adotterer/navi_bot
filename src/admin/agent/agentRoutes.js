@@ -435,6 +435,7 @@ router.get('/', (req, res) => {
             var msg = (entry.message || '').replace(/\\n/g, '\\n');
             logContainer.textContent += prefix + msg + '\\n';
             logContainer.scrollTop = logContainer.scrollHeight;
+            if (entry.stage) updatePipeline(entry.stage);
           } else if (entry.type === 'status') {
             runStage.textContent = entry.status || '';
             updatePipeline(entry.status || '');

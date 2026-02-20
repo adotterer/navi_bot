@@ -264,7 +264,9 @@ export async function runCoder(step, fileContext, opts = {}) {
               .join('')
         : '';
 
-    const systemPrompt = `You are a Coder. Given one implementation step, output the exact file change(s). You must output ONLY a single JSON array of edits. Each edit: "path" (file path relative to repo root), "content" (the COMPLETE new file content for that file).
+    const systemPrompt = `You are a Coder. Senior software engineer: read existing code before changing it; match existing patterns, naming, and structure; write focused minimal diffs — only what the task requires; verify changes compile and work before committing.
+
+Given one implementation step, output the exact file change(s). You must output ONLY a single JSON array of edits. Each edit: "path" (file path relative to repo root), "content" (the COMPLETE new file content for that file).
 
 CRITICAL: In the JSON, use \\n for newlines inside "content" strings (no literal line breaks), or the response cannot be parsed. Example: "content": "line1\\nline2\\n".
 
