@@ -66,8 +66,15 @@ webhookRouter.post('/github/webhook', async (req, res) => {
 
     const commit = payload.head_commit || {};
     const sha = (commit.id || '').slice(0, 7);
-    const commitMsg = (commit.message || '').split('\n')[0].trim();
-    const author = commit.author?.name || commit.author?.username || 'unknown';
+    const msgLines = (commit.message || '').split('\n').map((l) => l.trim()).filter(Boolean);
+    let commitMsg = payload.pull_request?.title || msgLines[0] || '';
+    if (!payload.pull_request?.title && commitMsg.startsWith('Merge pull request') && msgLines[1]) {
+        commitMsg = msgLines[1];
+    }
+    let author = commit.author?.name || commit.author?.username || payload.sender?.login || 'unknown';
+    if (author === 'Andrew Dotterer' || author === 'adotterer') {
+        author = 'Ticomaster';
+    }
     const now = new Date().toLocaleString('en-US', {
         month: 'short', day: 'numeric', year: 'numeric',
         hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
