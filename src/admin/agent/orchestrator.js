@@ -1,10 +1,11 @@
 /**
- * Orchestrator: runs Researcher -> Planners -> Coders, aggregates edits, then PR (when implemented).
+ * Orchestrator: runs Researcher -> Planners -> Coders, aggregates edits, then PR.
+ * Uses tool registry for read_file and grep_search; passes fileContext and grepContext to Planner.
  */
 import pLimit from 'p-limit';
 import { appendLog, getRun, updateRun, isRunCancelled } from './runStore.js';
 import { runResearcher, runPlanner, runCoder, validateCoderStep } from './agents.js';
-import { readFile } from './codebaseTools.js';
+import { callTool } from './toolRegistry.js';
 
 /**
  * Run the full pipeline for a given runId.
@@ -21,6 +22,74 @@ function checkCancelled(runId, log) {
         return true;
     }
     return false;
+}
+
+/** Derive 2-5 search keywords from mission prompt for grep. */
+function missionKeywords(prompt, maxKeywords = 5) {
+    const tokens = (prompt || '')
+        .replace(/[^\w\s-]/g, ' ')
+        .split(/\s+/)
+        .filter((w) => w.length > 2 && !/^\d+$/.test(w));
+    const seen = new Set();
+    const out = [];
+    for (const t of tokens) {
+        const lower = t.toLowerCase();
+        if (!seen.has(lower)) {
+            seen.add(lower);
+            out.push(t);
+            if (out.length >= maxKeywords) break;
+        }
+    }
+    return out;
+}
+
+/** Build grep context string from mission prompt (call grep_search for each keyword). */
+async function buildGrepContext(prompt) {
+    const keywords = missionKeywords(prompt, 4);
+    if (!keywords.length) return '';
+    const allMatches = [];
+    for (const kw of keywords) {
+        const r = await callTool('grep_search', { pattern: kw, pathPrefix: '' });
+        if (r.ok && Array.isArray(r.result)) {
+            for (const m of r.result) {
+                allMatches.push({ path: m.path, lineNumber: m.lineNumber, line: m.line });
+            }
+        }
+    }
+    const byPath = new Map();
+    for (const m of allMatches) {
+        if (!byPath.has(m.path)) byPath.set(m.path, []);
+        byPath.get(m.path).push(m);
+    }
+    const lines = [];
+    const maxPerPath = 5;
+    const maxTotal = 30;
+    for (const [p, arr] of byPath.entries()) {
+        if (lines.length >= maxTotal) break;
+        for (let i = 0; i < Math.min(maxPerPath, arr.length) && lines.length < maxTotal; i++) {
+            const m = arr[i];
+            lines.push(`${p}:${m.lineNumber}: ${m.line}`);
+        }
+    }
+    return lines.length ? lines.join('\n') : '';
+}
+
+/** Build file context string from task hints (read_file for each path-like hint). Cap total ~25KB. */
+async function buildFileContextForTask(task, maxChars = 25000) {
+    const hints = task.hints ? String(task.hints).split(/[\s,]+/).map((s) => s.trim()).filter(Boolean) : [];
+    const filePaths = hints.filter((h) => /\.(js|ts|json|md|mjs|cjs|tsx|jsx|yml|yaml|html|css)$/i.test(h) || h.includes('/'));
+    let total = 0;
+    const parts = [];
+    for (const p of filePaths) {
+        if (total >= maxChars) break;
+        const r = await callTool('read_file', { path: p });
+        if (r.ok && typeof r.result === 'string') {
+            const snippet = r.result.length > 8000 ? r.result.slice(0, 8000) + '\n... (truncated)' : r.result;
+            parts.push(`--- ${p} ---\n${snippet}\n`);
+            total += snippet.length;
+        }
+    }
+    return parts.join('\n');
 }
 
 export async function runPipeline(runId, opts = {}) {
@@ -45,6 +114,8 @@ export async function runPipeline(runId, opts = {}) {
 
         if (checkCancelled(runId, log)) return;
 
+        const grepContext = await buildGrepContext(prompt);
+
         const allEdits = []; // { path, content }[]
         const limitPlanners = pLimit(Math.max(1, Math.min(5, maxParallelPlanners)));
         const limitCoders = pLimit(Math.max(1, Math.min(10, maxParallelCoders)));
@@ -55,7 +126,8 @@ export async function runPipeline(runId, opts = {}) {
             flightPlan.map((task, i) =>
                 limitPlanners(async () => {
                     log('system', 'planning', `Planner: ${task.title}\n`);
-                    const planResult = await runPlanner(task, {});
+                    const fileContext = await buildFileContextForTask(task);
+                    const planResult = await runPlanner(task, { fileContext, grepContext });
                     if (planResult.ok) {
                         const n = (planResult.steps && planResult.steps.length) || 0;
                         log('system', 'planning', `Planner: ${task.title} — ${n} step(s)\n`);
@@ -83,8 +155,8 @@ export async function runPipeline(runId, opts = {}) {
                     log('system', 'coding', `Coder: ${step.what}\n`);
                     const fileContext = {};
                     for (const p of step.files || []) {
-                        const r = await readFile(p);
-                        if (r.ok) fileContext[p] = r.content;
+                        const r = await callTool('read_file', { path: p });
+                        if (r.ok && typeof r.result === 'string') fileContext[p] = r.result;
                     }
                     const coderResult = await runCoder(step, fileContext, {});
                     return { step, coderResult, stepIndex: j };

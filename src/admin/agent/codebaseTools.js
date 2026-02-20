@@ -259,4 +259,114 @@ export async function getFileTree(prefix = '', maxDepth = 2) {
     }
 }
 
+/** Max grep matches total and per file to avoid token overflow. */
+const GREP_MAX_TOTAL = 100;
+const GREP_MAX_PER_FILE = 10;
+
+/**
+ * Search for a pattern in text files under pathPrefix. Returns matching lines.
+ * @param {string} pattern - Search pattern (substring match, case-insensitive).
+ * @param {string} [pathPrefix=''] - Path relative to workspace to search under (e.g. 'src' or '' for root).
+ * @param {{ maxTotal?: number, maxPerFile?: number }} [opts]
+ * @returns {Promise<{ ok: true, matches: Array<{ path: string, lineNumber: number, line: string }> } | { ok: false, error: string }>}
+ */
+export async function grepSearch(pattern, pathPrefix = '', opts = {}) {
+    const maxTotal = opts.maxTotal ?? GREP_MAX_TOTAL;
+    const maxPerFile = opts.maxPerFile ?? GREP_MAX_PER_FILE;
+    const matches = [];
+    const patternLower = (pattern || '').toLowerCase();
+    if (!patternLower) return { ok: true, matches: [] };
+
+    if (GITHUB_MODE) {
+        const repo = getRepoFromEnv();
+        const ref = await getDefaultBranch();
+        try {
+            const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+            const q = `repo:${repo.owner}/${repo.repo} ${pattern.replace(/["\\]/g, (c) => '\\' + c)}`;
+            const { data } = await octokit.rest.search.code({
+                q: pathPrefix ? `${q} path:${pathPrefix}` : q,
+                per_page: Math.min(30, maxTotal),
+            });
+            if (!data.items || !data.items.length) return { ok: true, matches: [] };
+            for (const item of data.items) {
+                if (matches.length >= maxTotal) break;
+                const filePath = item.path;
+                let content = '';
+                try {
+                    const { data: fileData } = await octokit.repos.getContent({
+                        owner: repo.owner,
+                        repo: repo.repo,
+                        path: filePath,
+                        ref,
+                    });
+                    if (fileData.encoding === 'base64') content = Buffer.from(fileData.content, 'base64').toString('utf8');
+                    else content = String(fileData.content ?? '');
+                } catch (_) {
+                    continue;
+                }
+                const lines = content.split(/\r?\n/);
+                let perFile = 0;
+                for (let i = 0; i < lines.length && perFile < maxPerFile && matches.length < maxTotal; i++) {
+                    if (lines[i].toLowerCase().includes(patternLower)) {
+                        matches.push({ path: filePath, lineNumber: i + 1, line: lines[i].trim().slice(0, 200) });
+                        perFile++;
+                    }
+                }
+            }
+            return { ok: true, matches };
+        } catch (err) {
+            if (err.status === 403 || err.status === 422) return { ok: true, matches: [] };
+            return { ok: false, error: err.message || String(err) };
+        }
+    }
+
+    const resolved = resolvePath(pathPrefix);
+    if (!resolved.ok) return resolved;
+    function walkDir(dirAbsolute) {
+        if (matches.length >= maxTotal) return;
+        let entries;
+        try {
+            entries = fs.readdirSync(dirAbsolute, { withFileTypes: true });
+        } catch (_) {
+            return;
+        }
+        for (const e of entries) {
+            if (matches.length >= maxTotal) return;
+            if (e.name.startsWith('.') || EXCLUDED_DIRS.has(e.name)) continue;
+            const full = path.join(dirAbsolute, e.name);
+            const rel = path.relative(WORKSPACE_ROOT, full).replace(/\\/g, '/');
+            if (e.isDirectory()) {
+                walkDir(full);
+            } else {
+                const ext = path.extname(e.name).slice(1).toLowerCase();
+                if (ext && !TEXT_EXTENSIONS.has(ext)) continue;
+                let stat;
+                try {
+                    stat = fs.statSync(full);
+                } catch (_) {
+                    continue;
+                }
+                if (stat.size > MAX_FILE_SIZE) continue;
+                let content;
+                try {
+                    content = fs.readFileSync(full, 'utf8');
+                } catch (_) {
+                    continue;
+                }
+                if (/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(content)) continue;
+                const lines = content.split(/\r?\n/);
+                let perFile = 0;
+                for (let i = 0; i < lines.length && perFile < maxPerFile && matches.length < maxTotal; i++) {
+                    if (lines[i].toLowerCase().includes(patternLower)) {
+                        matches.push({ path: rel, lineNumber: i + 1, line: lines[i].trim().slice(0, 200) });
+                        perFile++;
+                    }
+                }
+            }
+        }
+    }
+    walkDir(resolved.absolute);
+    return { ok: true, matches };
+}
+
 export { WORKSPACE_ROOT, resolvePath };

@@ -126,13 +126,16 @@ function parseFlightPlan(text) {
  * @returns {Promise<{ ok: true, steps: Array<{ what: string, files: string[], changeDescription?: string }> } | { ok: false, error: string }>}
  */
 export async function runPlanner(task, opts = {}) {
-    const { onChunk } = opts;
+    const { onChunk, fileContext = '', grepContext = '' } = opts;
     const systemPrompt = `You are a Planner. Given a single task from a flight plan, output an implementation plan: an ordered list of steps. Each step should specify what to do, which file(s) to touch, and optionally a short change description. Each step should be an actionable implementation step (code or config change), not a pure analysis step. Prefer steps that produce file edits.
 
 Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (array of file paths, e.g. ["src/app.js"]), "changeDescription" (optional). Example:
 [{"what":"Add GET /health handler","files":["src/app.js"],"changeDescription":"Add app.get('/health', ...) returning { status: 'ok' }"}]`;
 
-    const userContent = `Task: ${task.title}\n${task.description}${task.hints ? '\nHints: ' + task.hints : ''}\n\nProduce the implementation steps as a single JSON array.`;
+    let userContent = `Task: ${task.title}\n${task.description}${task.hints ? '\nHints: ' + task.hints : ''}`;
+    if (grepContext) userContent += `\n\nFiles that match the mission (from codebase search):\n${grepContext}`;
+    if (fileContext) userContent += `\n\nRelevant file contents (for context only):\n${fileContext}`;
+    userContent += '\n\nProduce the implementation steps as a single JSON array.';
 
     try {
         const result = await withTimeout(
@@ -199,7 +202,11 @@ export async function runCoder(step, fileContext, opts = {}) {
               .join('')
         : '';
 
-    const systemPrompt = `You are a Coder. Given one implementation step, output the exact file change(s). You must output ONLY a single JSON array of edits. Each edit: "path" (file path relative to repo root), "content" (the COMPLETE new file content for that file). Preserve existing code where no change is needed; only include files that change. Output nothing but the JSON array. Example:
+    const systemPrompt = `You are a Coder. Given one implementation step, output the exact file change(s). You must output ONLY a single JSON array of edits. Each edit: "path" (file path relative to repo root), "content" (the COMPLETE new file content for that file).
+
+When "Current file contents" are provided above, you MUST base your edit on that content: preserve unchanged parts and only modify what the step asks; do not replace entire files with unrelated code. Do not invent content that does not match this codebase (e.g. wrong project names, unrelated constants). For NEW files (no current contents), create minimal content that fulfills the step and matches the repo's style (imports, naming, structure).
+
+Preserve existing code where no change is needed; only include files that change. Output nothing but the JSON array. Example:
 [{"path":"src/app.js","content":"// full file content here\\n"}]`;
 
     const userContent = `Step: ${step.what}\n${step.changeDescription || ''}\nFiles to consider: ${(step.files || []).join(', ')}${fileSection}\n\nProduce the edits array (full file content for each changed file).`;

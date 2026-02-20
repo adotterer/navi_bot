@@ -58,30 +58,46 @@ router.get('/', (req, res) => {
       </div>
     </div>
     <div id="run-area" class="hidden">
-      <div class="flex items-center gap-3 mb-2 flex-wrap">
-        <span id="run-status" class="text-sm font-medium text-slate-700">Running…</span>
-        <span id="run-stage" class="text-sm text-slate-500"></span>
-        <button type="button" id="stop-btn" class="hidden rounded-lg bg-red-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">Stop run</button>
-      </div>
-      <div id="pipeline-area" class="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3">
-        <div class="flex flex-wrap items-center gap-3 text-sm">
-          <span id="phase-researcher" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Researcher</span>
-          <span class="text-slate-300">\u2192</span>
-          <span id="phase-planner" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Planner</span>
-          <span class="text-slate-300">\u2192</span>
-          <span id="phase-coder" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Coder</span>
-          <span class="text-slate-300">\u2192</span>
-          <span id="phase-pr" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Create PR</span>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <section class="rounded-lg border border-slate-200 bg-white overflow-hidden">
+            <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Mission</div>
+            <div id="run-mission" class="p-4 text-sm text-slate-700 whitespace-pre-wrap break-words bg-white min-h-[4rem]"></div>
+          </section>
+          <section class="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+            <div class="flex items-center gap-3 flex-wrap">
+              <span id="run-status" class="text-sm font-medium text-slate-700">Running…</span>
+              <span id="run-stage" class="text-sm text-slate-500"></span>
+              <button type="button" id="stop-btn" class="hidden rounded-lg bg-red-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">Stop run</button>
+            </div>
+            <div id="pipeline-area" class="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+              <div class="flex flex-wrap items-center gap-3 text-sm">
+                <span id="phase-researcher" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Researcher</span>
+                <span class="text-slate-300">\u2192</span>
+                <span id="phase-planner" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Planner</span>
+                <span class="text-slate-300">\u2192</span>
+                <span id="phase-coder" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Coder</span>
+                <span class="text-slate-300">\u2192</span>
+                <span id="phase-pr" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Create PR</span>
+              </div>
+            </div>
+            <div id="result-area" class="rounded-lg border border-slate-200 bg-emerald-50/50 p-4 hidden">
+              <a id="pr-link" href="#" target="_blank" rel="noopener" class="text-emerald-700 hover:text-emerald-800 font-medium underline">Open PR</a>
+              <p id="error-msg" class="text-red-600 text-sm mt-2 hidden"></p>
+              <p id="result-note" class="text-slate-500 text-xs mt-2 hidden"></p>
+            </div>
+          </section>
         </div>
-      </div>
-      <div id="log-container" class="rounded-lg border border-slate-200 bg-slate-900 text-slate-100 p-4 font-mono text-sm max-h-96 overflow-y-auto whitespace-pre-wrap break-words"></div>
-      <div id="step-results-area" class="mt-4 hidden">
-        <div class="text-sm font-medium text-slate-700 mb-2">Step results</div>
-        <ul id="step-results-list" class="list-disc list-inside text-sm text-slate-600 space-y-1"></ul>
-      </div>
-      <div id="result-area" class="mt-4 hidden">
-        <a id="pr-link" href="#" target="_blank" rel="noopener" class="text-emerald-600 hover:text-emerald-700 font-medium">Open PR</a>
-        <p id="error-msg" class="text-red-600 text-sm mt-2 hidden"></p>
+        <div class="space-y-4">
+          <section class="rounded-lg border border-slate-200 bg-white overflow-hidden">
+            <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Audit log</div>
+            <div id="log-container" class="bg-slate-900 text-slate-100 p-4 font-mono text-sm max-h-96 overflow-y-auto whitespace-pre-wrap break-words"></div>
+          </section>
+          <section id="step-results-area" class="rounded-lg border border-slate-200 bg-white overflow-hidden hidden">
+            <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Step results</div>
+            <ul id="step-results-list" class="p-4 list-disc list-inside text-sm text-slate-600 space-y-1"></ul>
+          </section>
+        </div>
       </div>
       <div id="files-area" class="mt-6 hidden border border-slate-200 rounded-lg bg-white overflow-hidden">
         <div class="border-b border-slate-200 px-3 py-2 bg-slate-50 text-sm font-medium text-slate-700">Proposed changes</div>
@@ -310,15 +326,29 @@ router.get('/', (req, res) => {
 
   function showResult(prUrl, err) {
     resultArea.classList.remove('hidden');
+    var resultNote = document.getElementById('result-note');
     if (prUrl) {
       prLink.href = prUrl;
       prLink.textContent = 'Open PR';
       prLink.classList.remove('hidden');
-      errorMsg.classList.add('hidden');
+      if (err) {
+        errorMsg.classList.add('hidden');
+        if (resultNote) {
+          resultNote.textContent = 'Some steps failed. You can still review the PR.';
+          resultNote.classList.remove('hidden');
+        }
+      } else {
+        errorMsg.classList.add('hidden');
+        if (resultNote) resultNote.classList.add('hidden');
+      }
+      resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } else if (err) {
       prLink.classList.add('hidden');
       errorMsg.textContent = err;
       errorMsg.classList.remove('hidden');
+      if (resultNote) resultNote.classList.add('hidden');
+    } else {
+      if (resultNote) resultNote.classList.add('hidden');
     }
     if (currentRunId) {
       fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
@@ -358,6 +388,8 @@ router.get('/', (req, res) => {
     var maxCoders = document.getElementById('maxCoders').value || '3';
     startBtn.disabled = true;
     runArea.classList.remove('hidden');
+    var missionEl = document.getElementById('run-mission');
+    if (missionEl) missionEl.textContent = promptEl.value.trim() || '(No mission text)';
     logContainer.textContent = '';
     document.getElementById('step-results-area').classList.add('hidden');
     document.getElementById('step-results-list').innerHTML = '';
@@ -365,6 +397,7 @@ router.get('/', (req, res) => {
     filesArea.classList.add('hidden');
     prLink.classList.add('hidden');
     errorMsg.classList.add('hidden');
+    document.getElementById('result-note').classList.add('hidden');
     runStatus.textContent = 'Starting…';
     runStage.textContent = '';
     updatePipeline('research');
