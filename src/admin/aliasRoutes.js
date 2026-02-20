@@ -6,7 +6,7 @@ import express from 'express';
 import fs from 'fs';
 import { getNicknameAliases } from '../matchups/characterAliases.js';
 import { ALIASES_PATH, fetchAliasesFromS3, putAliasesToS3 } from '../shared/aliasSync.js';
-import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge } from './layout.js';
+import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript } from './layout.js';
 
 const router = express.Router();
 
@@ -49,6 +49,7 @@ router.get('/', async (req, res) => {
     </div>
     <p class="text-slate-600 text-sm mb-6">Add nicknames or shortcuts that resolve to a character (e.g. <strong>palu</strong> → <strong>palutena</strong>). Used by !mu, !fd, and !aliases. Click <strong>Save to S3</strong> when done.</p>
     ${saved ? '<div class="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm px-4 py-3 mb-6">Saved to S3.</div>' : ''}
+    <div class="pb-24">
     <form id="aliases-form" method="post" action="/admin/aliases" class="space-y-6">
       <textarea id="aliases-body" name="body" class="hidden" aria-hidden="true"></textarea>
       <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
@@ -57,27 +58,43 @@ router.get('/', async (req, res) => {
           <tbody id="aliases-tbody">${rowsHtml}</tbody>
         </table>
       </div>
-      <div class="flex flex-wrap items-end gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-        <div>
-          <label for="new-alias" class="block text-sm font-medium text-slate-700 mb-1">New alias</label>
-          <input type="text" id="new-alias" class="rounded border border-slate-300 px-3 py-2 text-sm w-48" placeholder="e.g. pika" />
+      <details class="add-alias-details rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100/50 select-none">Add new alias</summary>
+        <div class="add-row-section p-4 pt-0 border-t border-slate-200/80">
+          <div class="min-w-0 flex-1">
+            <label for="new-alias" class="block text-sm font-medium text-slate-700 mb-1">New alias</label>
+            <input type="text" id="new-alias" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pika" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <label for="new-canonical" class="block text-sm font-medium text-slate-700 mb-1">Maps to</label>
+            <input type="text" id="new-canonical" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pikachu" />
+          </div>
+          <button type="button" id="add-row-btn" class="rounded-lg border border-slate-300 bg-white font-medium py-2 px-4 text-sm text-slate-700 hover:bg-slate-100 self-end">Add row</button>
         </div>
-        <div>
-          <label for="new-canonical" class="block text-sm font-medium text-slate-700 mb-1">Maps to</label>
-          <input type="text" id="new-canonical" class="rounded border border-slate-300 px-3 py-2 text-sm w-48" placeholder="e.g. pikachu" />
-        </div>
-        <button type="button" id="add-row-btn" class="rounded-lg border border-slate-300 bg-white font-medium py-2 px-4 text-sm text-slate-700 hover:bg-slate-100">Add row</button>
-      </div>
-      <div class="flex flex-wrap gap-3">
-        <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-        <a href="/admin" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Back to dashboard</a>
-      </div>
+      </details>
     </form>
     <details class="mt-8">
       <summary class="text-sm text-slate-500 cursor-pointer hover:text-slate-700">Advanced: edit as JSON</summary>
       <textarea id="aliases-json-fallback" rows="12" class="mt-2 w-full font-mono text-sm rounded border border-slate-300 px-3 py-2 text-slate-900" placeholder="Raw JSON (for power users)"></textarea>
       <p class="text-xs text-slate-500 mt-1">Changes here are not saved unless you replace the table and save. Use the table above for normal editing.</p>
     </details>
+    </div>
+    <style>#aliases-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
+    <div id="aliases-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="aliases">
+      <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
+        <div class="save-bar-content">
+          <div id="aliases-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
+          <div class="text-slate-400 text-sm"></div>
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
+            <button type="submit" form="aliases-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+            <a href="/admin" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Back to dashboard</a>
+          </div>
+        </div>
+        ${saveBarToggleButton()}
+      </div>
+    </div>
+    ${saveBarMinimizeScript('aliases-action-bar', 'aliases')}
     <script>
 (function(){
   var form = document.getElementById('aliases-form');
@@ -87,6 +104,11 @@ router.get('/', async (req, res) => {
   var newCanonical = document.getElementById('new-canonical');
   var addBtn = document.getElementById('add-row-btn');
   var jsonFallback = document.getElementById('aliases-json-fallback');
+  var unsavedReminder = document.getElementById('aliases-unsaved-reminder');
+  var dirty = false;
+  function markDirty() { dirty = true; }
+  function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden'); }
+  function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.add('hidden'); }
 
   function addRow(alias, canonical) {
     var tr = document.createElement('tr');
@@ -94,13 +116,15 @@ router.get('/', async (req, res) => {
     var esc = function(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
     tr.innerHTML = '<td class="py-2 px-3"><input type="text" class="alias-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(alias) + '" placeholder="e.g. palu" /></td><td class="py-2 px-3"><input type="text" class="canonical-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(canonical) + '" placeholder="e.g. palutena" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>';
     tbody.appendChild(tr);
-    tr.querySelector('.delete-row').addEventListener('click', function() { tr.remove(); });
+    tr.querySelector('.delete-row').addEventListener('click', function() { tr.remove(); markDirty(); showReminder(); });
   }
   addBtn.addEventListener('click', function() {
     var a = (newAlias.value || '').trim();
     var c = (newCanonical.value || '').trim();
     if (!a || !c) return;
     addRow(a, c);
+    markDirty();
+    showReminder();
     newAlias.value = '';
     newCanonical.value = '';
     newAlias.focus();
@@ -108,8 +132,11 @@ router.get('/', async (req, res) => {
   tbody.addEventListener('click', function(e) {
     if (e.target.classList.contains('delete-row')) e.target.closest('tr').remove();
   });
+  tbody.addEventListener('input', function(e) { if (e.target.matches('.alias-input, .canonical-input')) { markDirty(); showReminder(); } });
+  tbody.addEventListener('blur', function(e) { if (e.target.matches('.alias-input, .canonical-input')) showReminder(); }, true);
   form.addEventListener('submit', function(e) {
     e.preventDefault();
+    clearDirty();
     var obj = {};
     var rows = tbody.querySelectorAll('tr');
     for (var i = 0; i < rows.length; i++) {
@@ -120,12 +147,31 @@ router.get('/', async (req, res) => {
     bodyInput.value = JSON.stringify(obj, null, 2);
     form.submit();
   });
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else {
+        clearDirty();
+        var obj = {};
+        tbody.querySelectorAll('tr').forEach(function(tr) {
+          var a = (tr.querySelector('.alias-input').value || '').trim();
+          var c = (tr.querySelector('.canonical-input').value || '').trim();
+          if (a && c) obj[a] = c;
+        });
+        bodyInput.value = JSON.stringify(obj, null, 2);
+        form.submit();
+      }
+    }
+  });
   jsonFallback.addEventListener('blur', function() {
     try {
       var data = JSON.parse(jsonFallback.value);
       if (data && typeof data === 'object' && !Array.isArray(data)) {
         tbody.innerHTML = '';
         Object.entries(data).sort(function(a,b) { return a[0].localeCompare(b[0]); }).forEach(function(pair) { addRow(pair[0], pair[1]); });
+        markDirty();
+        showReminder();
       }
     } catch (_) {}
   });
@@ -205,6 +251,7 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
     </div>
     <p class="text-slate-600 text-sm mb-6">Add nicknames or shortcuts that resolve to a character. Click <strong>Save to S3</strong> when done.</p>
     ${error ? `<div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">${escapeHtml(error)}</div>` : ''}
+    <div class="pb-24">
     <form id="aliases-form" method="post" action="/admin/aliases" class="space-y-6">
       <textarea id="aliases-body" name="body" class="hidden" aria-hidden="true"></textarea>
       <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
@@ -213,26 +260,42 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
           <tbody id="aliases-tbody">${rowsHtml}</tbody>
         </table>
       </div>
-      <div class="flex flex-wrap items-end gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-        <div>
-          <label for="new-alias" class="block text-sm font-medium text-slate-700 mb-1">New alias</label>
-          <input type="text" id="new-alias" class="rounded border border-slate-300 px-3 py-2 text-sm w-48" placeholder="e.g. pika" />
+      <details class="add-alias-details rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100/50 select-none">Add new alias</summary>
+        <div class="add-row-section p-4 pt-0 border-t border-slate-200/80">
+          <div class="min-w-0 flex-1">
+            <label for="new-alias" class="block text-sm font-medium text-slate-700 mb-1">New alias</label>
+            <input type="text" id="new-alias" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pika" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <label for="new-canonical" class="block text-sm font-medium text-slate-700 mb-1">Maps to</label>
+            <input type="text" id="new-canonical" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pikachu" />
+          </div>
+          <button type="button" id="add-row-btn" class="rounded-lg border border-slate-300 bg-white font-medium py-2 px-4 text-sm text-slate-700 hover:bg-slate-100 self-end">Add row</button>
         </div>
-        <div>
-          <label for="new-canonical" class="block text-sm font-medium text-slate-700 mb-1">Maps to</label>
-          <input type="text" id="new-canonical" class="rounded border border-slate-300 px-3 py-2 text-sm w-48" placeholder="e.g. pikachu" />
-        </div>
-        <button type="button" id="add-row-btn" class="rounded-lg border border-slate-300 bg-white font-medium py-2 px-4 text-sm text-slate-700 hover:bg-slate-100">Add row</button>
-      </div>
-      <div class="flex flex-wrap gap-3">
-        <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-        <a href="/admin" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Back to dashboard</a>
-      </div>
+      </details>
     </form>
     <details class="mt-8">
       <summary class="text-sm text-slate-500 cursor-pointer hover:text-slate-700">Advanced: edit as JSON</summary>
       <textarea id="aliases-json-fallback" rows="12" class="mt-2 w-full font-mono text-sm rounded border border-slate-300 px-3 py-2 text-slate-900"></textarea>
     </details>
+    </div>
+    <style>#aliases-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
+    <div id="aliases-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="aliases">
+      <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
+        <div class="save-bar-content">
+          <div id="aliases-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
+          <div class="text-slate-400 text-sm"></div>
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
+            <button type="submit" form="aliases-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+            <a href="/admin" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Back to dashboard</a>
+          </div>
+        </div>
+        ${saveBarToggleButton()}
+      </div>
+    </div>
+    ${saveBarMinimizeScript('aliases-action-bar', 'aliases')}
     <script>
 (function(){
   var form = document.getElementById('aliases-form');
@@ -242,19 +305,26 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
   var newCanonical = document.getElementById('new-canonical');
   var addBtn = document.getElementById('add-row-btn');
   var jsonFallback = document.getElementById('aliases-json-fallback');
+  var unsavedReminder = document.getElementById('aliases-unsaved-reminder');
+  var dirty = false;
+  function markDirty() { dirty = true; }
+  function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden'); }
+  function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.add('hidden'); }
   function addRow(alias, canonical) {
     var tr = document.createElement('tr');
     tr.className = 'alias-row border-b border-slate-200 hover:bg-slate-50/50';
     var esc = function(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
     tr.innerHTML = '<td class="py-2 px-3"><input type="text" class="alias-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(alias) + '" placeholder="e.g. palu" /></td><td class="py-2 px-3"><input type="text" class="canonical-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(canonical) + '" placeholder="e.g. palutena" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>';
     tbody.appendChild(tr);
-    tr.querySelector('.delete-row').addEventListener('click', function() { tr.remove(); });
+    tr.querySelector('.delete-row').addEventListener('click', function() { tr.remove(); markDirty(); showReminder(); });
   }
   addBtn.addEventListener('click', function() {
     var a = (newAlias.value || '').trim();
     var c = (newCanonical.value || '').trim();
     if (!a || !c) return;
     addRow(a, c);
+    markDirty();
+    showReminder();
     newAlias.value = '';
     newCanonical.value = '';
     newAlias.focus();
@@ -262,8 +332,11 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
   tbody.addEventListener('click', function(e) {
     if (e.target.classList.contains('delete-row')) e.target.closest('tr').remove();
   });
+  tbody.addEventListener('input', function(e) { if (e.target.matches('.alias-input, .canonical-input')) { markDirty(); showReminder(); } });
+  tbody.addEventListener('blur', function(e) { if (e.target.matches('.alias-input, .canonical-input')) showReminder(); }, true);
   form.addEventListener('submit', function(e) {
     e.preventDefault();
+    clearDirty();
     var obj = {};
     var rows = tbody.querySelectorAll('tr');
     for (var i = 0; i < rows.length; i++) {
@@ -274,12 +347,31 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
     bodyInput.value = JSON.stringify(obj, null, 2);
     form.submit();
   });
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else {
+        clearDirty();
+        var obj = {};
+        tbody.querySelectorAll('tr').forEach(function(tr) {
+          var a = (tr.querySelector('.alias-input').value || '').trim();
+          var c = (tr.querySelector('.canonical-input').value || '').trim();
+          if (a && c) obj[a] = c;
+        });
+        bodyInput.value = JSON.stringify(obj, null, 2);
+        form.submit();
+      }
+    }
+  });
   jsonFallback.addEventListener('blur', function() {
     try {
       var data = JSON.parse(jsonFallback.value);
       if (data && typeof data === 'object' && !Array.isArray(data)) {
         tbody.innerHTML = '';
         Object.entries(data).sort(function(a,b) { return a[0].localeCompare(b[0]); }).forEach(function(pair) { addRow(pair[0], pair[1]); });
+        markDirty();
+        showReminder();
       }
     } catch (_) {}
   });

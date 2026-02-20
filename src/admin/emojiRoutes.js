@@ -10,7 +10,7 @@ import {
     putEmojisToS3
 } from '../shared/emojiSync.js';
 import fs from 'fs';
-import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge } from './layout.js';
+import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript } from './layout.js';
 
 const router = express.Router();
 
@@ -63,6 +63,7 @@ router.get('/', async (req, res) => {
     </div>
     <p class="text-slate-600 text-sm mb-6">Custom emojis you can insert in prompts (e.g. <code class="font-mono text-xs bg-slate-100 px-1 rounded">&lt;:6symbolnavi:1341400385709019138&gt;</code>). Used in the prompt editor. Save to S3 to persist.</p>
     ${saved ? '<div class="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm px-4 py-3 mb-6">Saved to S3.</div>' : ''}
+    <div class="pb-20">
     <form id="emojis-form" method="post" action="/admin/emojis" class="space-y-6">
       <textarea id="emojis-body" name="body" class="hidden" aria-hidden="true"></textarea>
       <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
@@ -71,22 +72,35 @@ router.get('/', async (req, res) => {
           <tbody id="emojis-tbody">${rowsHtml}</tbody>
         </table>
       </div>
-      <div class="flex flex-wrap items-end gap-3 p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-        <div>
+      <div class="add-row-section p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+        <div class="min-w-0 flex-1">
           <label for="new-label" class="block text-sm font-medium text-slate-700 mb-1">New label</label>
-          <input type="text" id="new-label" class="rounded border border-slate-300 px-3 py-2 text-sm w-40" placeholder="e.g. Navi bullet" />
+          <input type="text" id="new-label" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 max-w-[10rem] sm:max-w-none sm:w-40" placeholder="e.g. Navi bullet" />
         </div>
-        <div>
+        <div class="min-w-0 flex-1">
           <label for="new-code" class="block text-sm font-medium text-slate-700 mb-1">Code</label>
-          <input type="text" id="new-code" class="rounded border border-slate-300 px-3 py-2 text-sm w-72 font-mono" placeholder="<:name:id> or <a:name:id>" />
+          <input type="text" id="new-code" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 font-mono max-w-[18rem] sm:max-w-none sm:w-72" placeholder="<:name:id> or <a:name:id>" />
         </div>
-        <button type="button" id="add-emoji-row-btn" class="rounded-lg border border-slate-300 bg-white font-medium py-2 px-4 text-sm text-slate-700 hover:bg-slate-100">Add row</button>
-      </div>
-      <div class="flex flex-wrap gap-3">
-        <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-        <a href="/admin" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Back to dashboard</a>
+        <button type="button" id="add-emoji-row-btn" class="rounded-lg border border-slate-300 bg-white font-medium py-2 px-4 text-sm text-slate-700 hover:bg-slate-100 self-end">Add row</button>
       </div>
     </form>
+    </div>
+    <style>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
+    <div id="emojis-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="emojis">
+      <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
+        <div class="save-bar-content">
+          <div id="emojis-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
+          <div class="text-slate-400 text-sm"></div>
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
+            <button type="submit" form="emojis-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+            <a href="/admin" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Back to dashboard</a>
+          </div>
+        </div>
+        ${saveBarToggleButton()}
+      </div>
+    </div>
+    ${saveBarMinimizeScript('emojis-action-bar', 'emojis')}
     <script>
 (function(){
   var form = document.getElementById('emojis-form');
@@ -95,6 +109,11 @@ router.get('/', async (req, res) => {
   var newLabel = document.getElementById('new-label');
   var newCode = document.getElementById('new-code');
   var addBtn = document.getElementById('add-emoji-row-btn');
+  var unsavedReminder = document.getElementById('emojis-unsaved-reminder');
+  var dirty = false;
+  function markDirty() { dirty = true; }
+  function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden'); }
+  function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.add('hidden'); }
   function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function codeToUrl(code) {
     var m = (code || '').match(/<(a?):([^:]+):(\\d+)>/);
@@ -107,13 +126,15 @@ router.get('/', async (req, res) => {
     tr.className = 'emoji-row border-b border-slate-200 hover:bg-slate-50/50';
     tr.innerHTML = '<td class="py-2 px-3 w-10 align-middle">' + img + '</td><td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(label) + '" placeholder="e.g. Navi bullet" /></td><td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" value="' + esc(code) + '" placeholder="<:name:id>" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-emoji-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>';
     tbody.appendChild(tr);
-    tr.querySelector('.delete-emoji-row').addEventListener('click', function() { tr.remove(); });
+    tr.querySelector('.delete-emoji-row').addEventListener('click', function() { tr.remove(); markDirty(); showReminder(); });
   }
   addBtn.addEventListener('click', function() {
     var label = (newLabel.value || '').trim();
     var code = (newCode.value || '').trim();
     if (!label || !code) return;
     addRow(label, code);
+    markDirty();
+    showReminder();
     newLabel.value = '';
     newCode.value = '';
     newLabel.focus();
@@ -121,8 +142,11 @@ router.get('/', async (req, res) => {
   tbody.addEventListener('click', function(e) {
     if (e.target.classList.contains('delete-emoji-row')) e.target.closest('tr').remove();
   });
+  tbody.addEventListener('input', function(e) { if (e.target.matches('.label-input, .code-input')) { markDirty(); showReminder(); } });
+  tbody.addEventListener('blur', function(e) { if (e.target.matches('.label-input, .code-input')) showReminder(); }, true);
   form.addEventListener('submit', function(e) {
     e.preventDefault();
+    clearDirty();
     var list = [];
     var rows = tbody.querySelectorAll('tr');
     for (var i = 0; i < rows.length; i++) {
@@ -132,6 +156,23 @@ router.get('/', async (req, res) => {
     }
     bodyInput.value = JSON.stringify(list, null, 2);
     form.submit();
+  });
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else {
+        clearDirty();
+        var list = [];
+        tbody.querySelectorAll('tr').forEach(function(tr) {
+          var label = (tr.querySelector('.label-input').value || '').trim();
+          var code = (tr.querySelector('.code-input').value || '').trim();
+          if (label && code) list.push({ label: label, code: code });
+        });
+        bodyInput.value = JSON.stringify(list, null, 2);
+        form.submit();
+      }
+    }
   });
 })();
     </script>
@@ -167,36 +208,102 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
             .map(({ label, code }) => {
                 const url = emojiCodeToUrl(code);
                 const img = url ? `<img src="${escapeHtml(url)}" alt="" class="inline-block h-6 w-6 object-contain rounded" loading="lazy">` : '';
-                return `<tr class="emoji-row border-b border-slate-200"><td class="py-2 px-3 w-10 align-middle">${img}</td><td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="${escapeHtml(label)}" /></td><td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" value="${escapeHtml(code)}" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-emoji-row text-sm text-slate-500 hover:text-red-600">Remove</button></td></tr>`;
+                return `<tr class="emoji-row border-b border-slate-200 hover:bg-slate-50/50"><td class="py-2 px-3 w-10 align-middle">${img}</td><td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="${escapeHtml(label)}" placeholder="e.g. Navi bullet" /></td><td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" value="${escapeHtml(code)}" placeholder="<:name:id>" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-emoji-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td></tr>`;
             })
             .join('');
         const content = `
   ${adminNav('emojis')}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Emojis' }])}
-    <h1 class="text-2xl font-semibold text-slate-800 mb-2">Discord emoji library</h1>
+    <div class="flex items-center gap-2 mb-2">
+      <h1 class="text-2xl font-semibold text-slate-800">Discord emoji library</h1>
+    </div>
+    <p class="text-slate-600 text-sm mb-6">Custom emojis you can insert in prompts. Save to S3 to persist.</p>
     <div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">${escapeHtml(saveError)}</div>
-    <form id="emojis-form" method="post" action="/admin/emojis">
-      <textarea id="emojis-body" name="body" class="hidden">${escapeHtml(raw)}</textarea>
+    <div class="pb-20">
+    <form id="emojis-form" method="post" action="/admin/emojis" class="space-y-6">
+      <textarea id="emojis-body" name="body" class="hidden" aria-hidden="true">${escapeHtml(raw)}</textarea>
       <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <table class="w-full text-sm">
           <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-3 w-10"></th><th class="text-left py-3 px-3 font-semibold text-slate-700">Label</th><th class="text-left py-3 px-3 font-semibold text-slate-700">Code</th><th class="w-20"></th></tr></thead>
           <tbody id="emojis-tbody">${rowsHtml}</tbody>
         </table>
       </div>
-      <div class="flex gap-3 mt-4">
-        <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5">Save to S3</button>
-        <a href="/admin/emojis" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 inline-block">Cancel</a>
+      <div class="add-row-section p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+        <div class="min-w-0 flex-1">
+          <label for="new-label" class="block text-sm font-medium text-slate-700 mb-1">New label</label>
+          <input type="text" id="new-label" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 max-w-[10rem] sm:max-w-none sm:w-40" placeholder="e.g. Navi bullet" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <label for="new-code" class="block text-sm font-medium text-slate-700 mb-1">Code</label>
+          <input type="text" id="new-code" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 font-mono max-w-[18rem] sm:max-w-none sm:w-72" placeholder="<:name:id> or <a:name:id>" />
+        </div>
+        <button type="button" id="add-emoji-row-btn" class="rounded-lg border border-slate-300 bg-white font-medium py-2 px-4 text-sm text-slate-700 hover:bg-slate-100 self-end">Add row</button>
       </div>
     </form>
+    </div>
+    <style>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
+    <div id="emojis-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="emojis">
+      <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
+        <div class="save-bar-content">
+          <div id="emojis-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
+          <div class="text-slate-400 text-sm"></div>
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
+            <button type="submit" form="emojis-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+            <a href="/admin" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Back to dashboard</a>
+          </div>
+        </div>
+        ${saveBarToggleButton()}
+      </div>
+    </div>
+    ${saveBarMinimizeScript('emojis-action-bar', 'emojis')}
     <script>
 (function(){
+  var form = document.getElementById('emojis-form');
   var tbody = document.getElementById('emojis-tbody');
+  var bodyInput = document.getElementById('emojis-body');
+  var newLabel = document.getElementById('new-label');
+  var newCode = document.getElementById('new-code');
+  var addBtn = document.getElementById('add-emoji-row-btn');
+  var unsavedReminder = document.getElementById('emojis-unsaved-reminder');
+  var dirty = false;
+  function markDirty() { dirty = true; }
+  function showReminder() { if (dirty && unsavedReminder) unsavedReminder.classList.remove('hidden'); }
+  function clearDirty() { dirty = false; if (unsavedReminder) unsavedReminder.classList.add('hidden'); }
+  function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function codeToUrl(code) {
+    var m = (code || '').match(/<(a?):([^:]+):(\\d+)>/);
+    return m ? 'https://cdn.discordapp.com/emojis/' + m[3] + '.' + (m[1] === 'a' ? 'gif' : 'png') : null;
+  }
+  function addRow(label, code) {
+    var url = codeToUrl(code);
+    var img = url ? '<img src="' + esc(url) + '" alt="" class="inline-block h-6 w-6 object-contain rounded" loading="lazy">' : '';
+    var tr = document.createElement('tr');
+    tr.className = 'emoji-row border-b border-slate-200 hover:bg-slate-50/50';
+    tr.innerHTML = '<td class="py-2 px-3 w-10 align-middle">' + img + '</td><td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(label) + '" placeholder="e.g. Navi bullet" /></td><td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" value="' + esc(code) + '" placeholder="<:name:id>" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-emoji-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>';
+    tbody.appendChild(tr);
+    tr.querySelector('.delete-emoji-row').addEventListener('click', function() { tr.remove(); markDirty(); showReminder(); });
+  }
+  addBtn.addEventListener('click', function() {
+    var label = (newLabel.value || '').trim();
+    var code = (newCode.value || '').trim();
+    if (!label || !code) return;
+    addRow(label, code);
+    markDirty();
+    showReminder();
+    newLabel.value = '';
+    newCode.value = '';
+    newLabel.focus();
+  });
   tbody.addEventListener('click', function(e) {
     if (e.target.classList.contains('delete-emoji-row')) e.target.closest('tr').remove();
   });
-  document.getElementById('emojis-form').addEventListener('submit', function(e) {
+  tbody.addEventListener('input', function(e) { if (e.target.matches('.label-input, .code-input')) { markDirty(); showReminder(); } });
+  tbody.addEventListener('blur', function(e) { if (e.target.matches('.label-input, .code-input')) showReminder(); }, true);
+  form.addEventListener('submit', function(e) {
     e.preventDefault();
+    clearDirty();
     var list = [];
     var rows = tbody.querySelectorAll('tr');
     for (var i = 0; i < rows.length; i++) {
@@ -204,8 +311,25 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
       var code = (rows[i].querySelector('.code-input').value || '').trim();
       if (label && code) list.push({ label: label, code: code });
     }
-    document.getElementById('emojis-body').value = JSON.stringify(list, null, 2);
-    e.target.submit();
+    bodyInput.value = JSON.stringify(list, null, 2);
+    form.submit();
+  });
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else {
+        clearDirty();
+        var list = [];
+        tbody.querySelectorAll('tr').forEach(function(tr) {
+          var label = (tr.querySelector('.label-input').value || '').trim();
+          var code = (tr.querySelector('.code-input').value || '').trim();
+          if (label && code) list.push({ label: label, code: code });
+        });
+        bodyInput.value = JSON.stringify(list, null, 2);
+        form.submit();
+      }
+    }
   });
 })();
     </script>

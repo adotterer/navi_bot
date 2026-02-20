@@ -13,7 +13,7 @@ import {
     putFramedataCSV,
     clearFramedataCache
 } from '../shared/dataReader.js';
-import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge } from './layout.js';
+import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript } from './layout.js';
 import { headS3Key } from '../shared/s3Helper.js';
 
 const S3_STATS_PREFIX = 'admin/data/stats/';
@@ -256,19 +256,19 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
       .csv-edit-layout { padding: 0 0.5rem; }
       #csv-body { display: none !important; }
       #csv-spreadsheet-wrap { min-height: 12rem; overflow-x: auto; overflow-y: auto; }
-      .csv-grid { font-size: 0.9375rem; width: max-content; min-width: 100%; }
-      .csv-grid td { border: 1px solid #cbd5e1; padding: 0.75rem 1rem; }
-      .csv-grid .cell-input, .csv-grid .cell-textarea { border: 1px solid #e2e8f0; border-radius: 4px; padding: 0.625rem 0.875rem; }
+      .csv-grid { font-size: 0.8125rem; width: max-content; min-width: 100%; }
+      .csv-grid td { border: 1px solid #cbd5e1; padding: 0.25rem 0.375rem; }
+      .csv-grid .cell-input, .csv-grid .cell-textarea { border: 1px solid #e2e8f0; border-radius: 3px; padding: 0.25rem 0.375rem; }
       .csv-grid .cell-input:focus, .csv-grid .cell-textarea:focus { border-color: #10b981; box-shadow: 0 0 0 1px #10b981; outline: none; }
-      .csv-grid .cell-textarea { resize: vertical; min-height: 2.75rem; word-wrap: break-word; white-space: pre-wrap; }
-      .csv-grid td .cell-input, .csv-grid td .cell-textarea { min-height: 2.25rem; }
-      .csv-grid td.cell-notes { min-width: 320px; max-width: 480px; }
-      .csv-grid .cell-gif { min-width: 140px; }
-      .csv-grid .cell-gif img { max-width: 100px; height: auto; display: block; border-radius: 4px; border: 1px solid #e2e8f0; }
-      .csv-grid .cell-gif .gif-url-input { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; padding: 0.375rem 0.5rem; }
-      .csv-grid .cell-gif .gif-filename { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
-      .csv-grid .cell-move-name span { padding: 0.25rem 0; }
-      .csv-grid tbody tr:first-child td span { padding: 0.625rem 0.875rem; padding-left: calc(0.875rem + 1px); }
+      .csv-grid .cell-textarea { resize: vertical; min-height: 2.25rem; word-wrap: break-word; white-space: pre-wrap; }
+      .csv-grid td .cell-input, .csv-grid td .cell-textarea { min-height: 1.5rem; }
+      .csv-grid td.cell-notes { min-width: 200px; max-width: 320px; }
+      .csv-grid .cell-gif { min-width: 100px; }
+      .csv-grid .cell-gif img { max-width: 80px; height: auto; display: block; border-radius: 3px; border: 1px solid #e2e8f0; }
+      .csv-grid .cell-gif .gif-url-input { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.7rem; padding: 0.2rem 0.3rem; }
+      .csv-grid .cell-gif .gif-filename { font-size: 0.7rem; color: #64748b; margin-top: 2px; }
+      .csv-grid .cell-move-name span { padding: 0.125rem 0; }
+      .csv-grid tbody tr:first-child td span { padding: 0.25rem 0.375rem; padding-left: calc(0.375rem + 1px); }
       #csv-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
     </style>
     <script>
@@ -377,7 +377,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
     var tbody = gridEl.appendChild(document.createElement('tbody'));
     if (!rows.length) {
       var tr = tbody.insertRow();
-      tr.innerHTML = '<td><input type="text" class="cell-input w-full min-w-[80px] bg-transparent" placeholder="Cell"></td>';
+      tr.innerHTML = '<td><input type="text" class="cell-input w-full min-w-[52px] bg-transparent" placeholder="Cell"></td>';
       return;
     }
     var maxCols = Math.max.apply(null, rows.map(function(r) { return r.length; }));
@@ -459,7 +459,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
         var single = document.createElement('input');
         single.type = 'text';
         single.value = rawVal;
-        single.className = 'cell-input w-full min-w-[80px] bg-transparent';
+        single.className = 'cell-input w-full min-w-[52px] bg-transparent';
         single.addEventListener('input', markDirty);
         single.addEventListener('blur', showReminder);
         td.appendChild(single);
@@ -491,17 +491,21 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
 })();
     </script>
   `)}
-  <div id="csv-action-bar" class="bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
-    <div class="max-w-[85rem] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div id="csv-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
-      <div id="csv-unsaved-reminder-placeholder" class="text-slate-400 text-sm"></div>
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
-        <button type="submit" form="csv-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-        <a href="${backUrl}" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
+  <div id="csv-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="csv">
+    <div class="save-bar-inner max-w-[85rem] mx-auto px-4 py-3">
+      <div class="save-bar-content">
+        <div id="csv-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
+        <div id="csv-unsaved-reminder-placeholder" class="text-slate-400 text-sm"></div>
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
+          <button type="submit" form="csv-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+          <a href="${backUrl}" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
+        </div>
       </div>
+      ${saveBarToggleButton()}
     </div>
   </div>
+  ${saveBarMinimizeScript('csv-action-bar', 'csv')}
 `;
     return `<!DOCTYPE html>
 <html lang="en">

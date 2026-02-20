@@ -1107,3 +1107,97 @@ html {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Save bar: full collapse when minimized (~48px), only expand control visible */
+.save-bar .save-bar-inner {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  transition: padding 0.2s ease;
+}
+.save-bar .save-bar-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.save-bar .save-bar-toggle {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: color 0.15s, background-color 0.15s;
+}
+.save-bar .save-bar-toggle:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+.save-bar .save-bar-toggle:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
+}
+.save-bar .save-bar-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.save-bar .save-bar-toggle .save-bar-icon-up {
+  display: none;
+}
+.save-bar-minimized .save-bar-toggle .save-bar-icon-down {
+  display: none;
+}
+.save-bar-minimized .save-bar-toggle .save-bar-icon-up {
+  display: block !important;
+}
+.save-bar-minimized .save-bar-inner {
+  padding: 0.5rem 1rem;
+  justify-content: center;
+  min-height: 48px;
+}
+.save-bar-minimized .save-bar-content {
+  display: none !important;
+}
+.save-bar-minimized .save-bar-toggle {
+  margin: 0;
+}
+
+/* Add alias/emoji row: stack on small screens so bar doesn’t cover inputs */
+.add-row-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.min-w-0 {
+  min-width: 0;
+}
+.flex-1 {
+  flex: 1 1 0%;
+}
+.self-end {
+  align-self: flex-end;
+}
+@media (min-width: 640px) {
+  .add-row-section {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+}

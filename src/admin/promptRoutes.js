@@ -4,7 +4,7 @@
 import express from 'express';
 import { getPromptTemplate, savePromptTemplate, getPromptMeta, listPromptIds, resetPromptToDefault } from '../shared/promptLoader.js';
 import { getEmojiLibrary } from '../shared/emojiSync.js';
-import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge } from './layout.js';
+import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript } from './layout.js';
 import { headS3Key } from '../shared/s3Helper.js';
 
 const S3_PROMPTS_PREFIX = 'admin/prompts/';
@@ -440,17 +440,21 @@ function promptEditPage(id, meta, body, opts = {}) {
       })();
     </script>
   `)}
-  <div id="prompt-action-bar" class="bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]">
-    <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div id="prompt-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
-      <div id="prompt-unsaved-placeholder" class="text-slate-400 text-sm"></div>
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
-        <button type="submit" form="prompt-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-        <a href="/admin/prompts" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
+  <div id="prompt-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="prompts">
+    <div class="save-bar-inner max-w-4xl mx-auto px-4 py-3">
+      <div class="save-bar-content">
+        <div id="prompt-unsaved-reminder" class="text-amber-700 text-sm font-medium hidden">Unsaved changes</div>
+        <div id="prompt-unsaved-placeholder" class="text-slate-400 text-sm"></div>
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
+          <button type="submit" form="prompt-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+          <a href="/admin/prompts" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
+        </div>
       </div>
+      ${saveBarToggleButton()}
     </div>
   </div>
+  ${saveBarMinimizeScript('prompt-action-bar', 'prompts')}
 `;
     return `<!DOCTYPE html>
 <html lang="en">
