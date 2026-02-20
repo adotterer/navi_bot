@@ -193,8 +193,13 @@ router.get('/', (req, res) => {
       repoBranch.innerHTML = data.branches.map(function(b) {
         return '<option value="' + escapeHtml(b) + '"' + (b === data.current ? ' selected' : '') + '>' + escapeHtml(b) + '</option>';
       }).join('');
-      loadRepoBranch(data.current || repoBranch.value);
-      repoBranch.addEventListener('change', function() { loadRepoBranch(repoBranch.value); });
+      if (data.repoUnavailable) {
+        repoTree.innerHTML = '<li class="px-3 py-2 text-slate-500 text-sm">Repo browser is only available when running from a git clone (e.g. locally).</li>';
+        repoBranch.disabled = true;
+      } else {
+        loadRepoBranch(data.current || repoBranch.value);
+        repoBranch.addEventListener('change', function() { loadRepoBranch(repoBranch.value); });
+      }
     })
     .catch(function() {});
 
@@ -378,7 +383,7 @@ router.get('/', (req, res) => {
 router.get('/repo/branches', async (req, res) => {
     const result = await listBranches();
     if (!result.ok) return res.status(500).json({ ok: false, error: result.error });
-    res.json({ ok: true, current: result.current, branches: result.branches });
+    res.json({ ok: true, current: result.current, branches: result.branches, repoUnavailable: result.repoUnavailable });
 });
 router.get('/repo/tree', async (req, res) => {
     const branch = req.query.branch || 'main';

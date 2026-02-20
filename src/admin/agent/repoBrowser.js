@@ -21,6 +21,8 @@ function resolveRepoRoot() {
 }
 
 const REPO_ROOT = resolveRepoRoot();
+/** In production (e.g. EB) the app is deployed as a zip without .git; repo browser only works in a clone. */
+const REPO_AVAILABLE = fs.existsSync(path.join(REPO_ROOT, '.git'));
 const git = simpleGit({ baseDir: REPO_ROOT });
 
 function safeRelativePath(input) {
@@ -33,9 +35,12 @@ function safeRelativePath(input) {
 }
 
 /**
- * @returns {Promise<{ ok: true, current: string, branches: string[] } | { ok: false, error: string }>}
+ * @returns {Promise<{ ok: true, current: string, branches: string[], repoUnavailable?: boolean } | { ok: false, error: string }>}
  */
 export async function listBranches() {
+    if (!REPO_AVAILABLE) {
+        return { ok: true, current: 'main', branches: ['main'], repoUnavailable: true };
+    }
     try {
         const summary = await git.branchLocal();
         const current = summary.current;
@@ -53,6 +58,7 @@ export async function listBranches() {
  * @returns {Promise<{ ok: true, entries: Array<{ name: string, type: 'dir'|'file', path: string }> } | { ok: false, error: string }>}
  */
 export async function getTree(ref, dirPath) {
+    if (!REPO_AVAILABLE) return { ok: false, error: 'Repo browser not available (no git in this environment)' };
     const safe = safeRelativePath(dirPath);
     if (safe === null) return { ok: false, error: 'Invalid path' };
     const refTrim = typeof ref === 'string' ? ref.trim() : '';
@@ -97,6 +103,7 @@ export async function getTree(ref, dirPath) {
  * @returns {Promise<{ ok: true, content: string } | { ok: false, error: string }>}
  */
 export async function getFileContent(ref, filePath) {
+    if (!REPO_AVAILABLE) return { ok: false, error: 'Repo browser not available (no git in this environment)' };
     const safe = safeRelativePath(filePath);
     if (safe === null) return { ok: false, error: 'Invalid path' };
     try {
