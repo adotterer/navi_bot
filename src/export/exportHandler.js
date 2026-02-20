@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { EmbedBuilder } from 'discord.js';
 import { fetchAllMessages, fetchFromS3, uploadToS3 } from '../shared/s3Helper.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
 import { sendSplitMessage } from '../shared/messageSplitter.js';
@@ -91,7 +92,10 @@ export async function handleExportCharacter(message) {
     }
 
     try {
-        await message.reply(`⏳ Exporting messages from #${channel.name}...`);
+        const statusEmbed = new EmbedBuilder()
+            .setColor(0x36AAD4)
+            .setDescription(`⏳ Exporting messages from #${channel.name}...`);
+        await message.reply({ embeds: [statusEmbed] });
 
         const messages = await fetchAllMessages(channel);
         const jsonData = JSON.stringify(messages, null, 2);
@@ -99,7 +103,12 @@ export async function handleExportCharacter(message) {
         fs.writeFileSync(filename, jsonData);
 
         const s3Url = await uploadToS3(filename, jsonData);
-        await message.reply(`✅ Exported #${channel.name}: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+
+        const successEmbed = new EmbedBuilder()
+            .setColor(0x36AAD4)
+            .setDescription(`✅ Exported #${channel.name}: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        await message.reply({ embeds: [successEmbed] });
+
         console.log(`✅ Exported ${messages.length} messages from #${channel.name}`);
     } catch (error) {
         console.error(error);
