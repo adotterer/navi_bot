@@ -38,7 +38,7 @@ router.get('/', (req, res) => {
                 class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
             </div>
             <div class="pt-6">
-              <button type="submit" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Start run</button>
+              <button type="button" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Start run</button>
             </div>
           </div>
         </form>
@@ -388,8 +388,7 @@ router.get('/', (req, res) => {
     }
   }
 
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
+  function startRun() {
     var promptEl = document.getElementById('prompt');
     var maxPlanners = document.getElementById('maxPlanners').value || '2';
     var maxCoders = document.getElementById('maxCoders').value || '3';
@@ -473,6 +472,14 @@ router.get('/', (req, res) => {
       stopBtn.classList.add('hidden');
       showResult(null, err.message || 'Failed to start run');
     });
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    startRun();
+  });
+  startBtn.addEventListener('click', function() {
+    startRun();
   });
 
   stopBtn.addEventListener('click', function() {
