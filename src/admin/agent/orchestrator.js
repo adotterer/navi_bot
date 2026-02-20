@@ -69,7 +69,7 @@ export async function runPipeline(runId, opts = {}) {
                     log('system', 'coding', `Coder: ${step.what}\n`);
                     const fileContext = {};
                     for (const p of step.files || []) {
-                        const r = readFile(p);
+                        const r = await readFile(p);
                         if (r.ok) fileContext[p] = r.content;
                     }
                     const coderResult = await runCoder(step, fileContext, {

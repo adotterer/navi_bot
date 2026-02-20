@@ -31,7 +31,7 @@ export async function runResearcher(missionPrompt, opts = {}) {
     const { onChunk } = opts;
     let treeInfo = '';
     try {
-        const treeResult = getFileTree('', 2);
+        const treeResult = await getFileTree('', 2);
         if (treeResult.ok && treeResult.tree) {
             treeInfo = '\n\nRelevant codebase structure (top 2 levels):\n```json\n' + JSON.stringify(treeResult.tree, null, 2) + '\n```';
         }
