@@ -4,6 +4,7 @@ import { fetchAllMessages, fetchFromS3, uploadToS3 } from '../shared/s3Helper.js
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
+import { isCommandAllowed } from '../shared/commandMetadata.js';
 
 const ERROR_EMBED_COLOR = '#FF4444';
 
@@ -50,6 +51,7 @@ function findMatchupChannel(guild, slug) {
 }
 
 export async function handleExportCharacter(message) {
+    if (!isCommandAllowed(message, "export")) return;
     const guild = message.guild;
     if (!guild) {
         await message.reply({ embeds: [buildEmbed("❌ This command must be used in a server.", ERROR_EMBED_COLOR)] });
@@ -116,6 +118,7 @@ export async function handleExportCharacter(message) {
 }
 
 export async function handleExportMatchups(message) {
+    if (!isCommandAllowed(message, "export")) return;
     const guild = message.guild;
     const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
     
