@@ -27,14 +27,14 @@ router.get('/', (req, res) => {
   ${adminNav('data')}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Data' }])}
-    <h1 class="text-2xl font-semibold text-slate-800 mb-6">Edit data</h1>
+    <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-6">Edit data</h1>
     <div class="grid gap-4 sm:grid-cols-2">
-      <a href="/admin/data/stats" class="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group">
+      <a href="/admin/data/stats" class="block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-md transition-all group">
         <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Stats CSVs</h2>
         <p class="mt-2 text-sm text-slate-500">Weight, air-speed, reflectors, etc.</p>
         <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>
       </a>
-      <a href="/admin/data/framedata" class="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group">
+      <a href="/admin/data/framedata" class="block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-md transition-all group">
         <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Framedata CSVs</h2>
         <p class="mt-2 text-sm text-slate-500">Per-character move data.</p>
         <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>
@@ -45,7 +45,7 @@ router.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Data')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
@@ -78,7 +78,7 @@ router.get('/stats', async (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Stats')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
@@ -138,7 +138,7 @@ router.get('/framedata', (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Framedata')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
