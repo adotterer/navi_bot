@@ -7,6 +7,7 @@ import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/ch
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
 import { loadCharacterFrameData, findMove, parseCharacterAndMove } from './frameDataHelper.js';
+import { calculateCost } from '../shared/aiUsage.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -328,6 +329,13 @@ Provide your answer here:`;
             contents: prompt
         });
         const aiResponse = response.text;
+        
+        const usage = response.usageMetadata;
+        if (usage) {
+            const { promptTokenCount, candidatesTokenCount } = usage;
+            const cost = calculateCost(promptTokenCount, candidatesTokenCount);
+            console.log(`📊 AI Usage (Stats Question): ${promptTokenCount} prompt tokens, ${candidatesTokenCount} candidate tokens. Cost: ${cost.toFixed(6)}`);
+        }
         
         const embeds = createSplitEmbeds(EmbedBuilder, aiResponse, "#36AAD4");
         message.channel.send({ embeds });
