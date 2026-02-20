@@ -169,7 +169,7 @@ router.get('/', (req, res) => {
   function populateDocsPanel(data) {
     if (!data) return;
     var missionEl = document.getElementById('docs-mission');
-    if (missionEl) missionEl.textContent = (data.prompt || '').trim() || '(No mission)';
+    if (missionEl) missionEl.textContent = (data.prompt || '').trim() || "(No mission)";
     var docs = data.docs || {};
     ['overview', 'requirements', 'architecture', 'decisions', 'notes'].forEach(function(section) {
       var el = document.getElementById('docs-' + section);
@@ -189,7 +189,7 @@ router.get('/', (req, res) => {
           parts.push('  - ' + what);
         });
       }
-      implEl.textContent = parts.length ? parts.join('\n') : '(No plan yet)';
+      implEl.textContent = parts.length ? parts.join("\n") : "(No plan yet)";
     }
     if (docsPanel) docsPanel.classList.remove('hidden');
   }
