@@ -280,6 +280,7 @@ export async function getPromptTemplate(id) {
     }
     if (fromS3 != null && fromS3 !== '') {
         templateCache.set(id, fromS3);
+        
         return fromS3;
     }
     const builtin = DEFAULT_PROMPTS[id];
