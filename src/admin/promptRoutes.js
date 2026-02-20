@@ -2,7 +2,7 @@
  * Admin routes for editing prompt templates. Uses promptLoader.
  */
 import express from 'express';
-import { getPromptTemplate, savePromptTemplate, getPromptMeta, listPromptIds, resetPromptToDefault } from '../shared/promptLoader.js';
+import { getPromptTemplate, savePromptTemplate, getPromptMeta, listPromptIds, resetPromptToDefault, listPromptHistory, getPromptHistoryEntry, revertPromptToVersion } from '../shared/promptLoader.js';
 import { getEmojiLibrary } from '../shared/emojiSync.js';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript } from './layout.js';
 import { headS3Key } from '../shared/s3Helper.js';
@@ -26,6 +26,56 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/:id/history', async (req, res) => {
+    const { id } = req.params;
+    if (!getPromptMeta(id)) {
+        return res.status(404).json({ error: 'Unknown prompt ID.' });
+    }
+    try {
+        const list = await listPromptHistory(id);
+        res.set('Content-Type', 'application/json').send(JSON.stringify(list));
+    } catch (err) {
+        console.error('Admin prompt history list:', err);
+        res.status(500).json({ error: 'Failed to list history.' });
+    }
+});
+
+router.get('/:id/history/:versionKey', async (req, res) => {
+    const { id, versionKey } = req.params;
+    if (!getPromptMeta(id)) {
+        return res.status(404).send('Prompt not found.');
+    }
+    try {
+        const decoded = decodeURIComponent(versionKey);
+        const body = await getPromptHistoryEntry(id, decoded);
+        if (body == null) {
+            return res.status(404).send('Version not found.');
+        }
+        res.set('Content-Type', 'text/plain; charset=utf-8').send(body);
+    } catch (err) {
+        console.error('Admin prompt history get:', err);
+        res.status(500).send('Error loading version.');
+    }
+});
+
+router.post('/:id/revert', express.urlencoded({ extended: true }), async (req, res) => {
+    const { id } = req.params;
+    const versionKey = (req.body && req.body.versionKey) || req.query.versionKey;
+    if (!getPromptMeta(id)) {
+        return res.status(404).send('Unknown prompt ID.');
+    }
+    if (!versionKey || typeof versionKey !== 'string') {
+        return res.redirect(`/admin/prompts/${id}?error=revert`);
+    }
+    try {
+        await revertPromptToVersion(id, versionKey.trim());
+        res.redirect(`/admin/prompts/${id}?saved=1`);
+    } catch (err) {
+        console.error('Admin prompt revert:', err);
+        res.redirect(`/admin/prompts/${id}?error=revert`);
+    }
+});
+
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
     const meta = getPromptMeta(id);
@@ -40,7 +90,7 @@ router.get('/:id', async (req, res) => {
         const saved = req.query.saved === '1';
         const reset = req.query.reset === '1';
         const emojiLibrary = getEmojiLibrary();
-        res.send(promptEditPage(id, meta, body, { saved, reset, s3InUse, emojiLibrary }));
+        res.send(promptEditPage(id, meta, body, { saved, reset, s3InUse, emojiLibrary, error: req.query.error }));
     } catch (err) {
         console.error('Admin prompt get:', err);
         res.status(500).send('Error loading prompt.');
@@ -168,18 +218,23 @@ function promptEditPage(id, meta, body, opts = {}) {
     const saveErrorBanner = opts.saveError
         ? `<div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">${escapeHtml(opts.saveError)}</div>`
         : '';
+    const revertErrorBanner = opts.error === 'revert'
+        ? '<div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">Could not revert. Version may have been deleted or invalid.</div>'
+        : '';
     const content = `
   ${adminNav('prompts')}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/prompts', label: 'Prompts' }, { label: id }])}
-    <div class="flex items-center gap-2 mb-1">
+    <div class="flex items-center gap-2 mb-1 flex-wrap">
       <h1 class="text-2xl font-semibold text-slate-800">${escapeHtml(id)}</h1>
       ${opts.s3InUse ? s3Badge() : ''}
+      <button type="button" class="prompt-version-history-open prompt-header-btn text-slate-600 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700">Version history</button>
     </div>
     <p class="text-slate-600 text-sm mb-6">${escapeHtml(meta.description)}</p>
     ${savedBanner}
     ${resetBanner}
     ${saveErrorBanner}
+    ${revertErrorBanner}
     ${varsSection}
     ${emojiSection}
     <div class="admin-save-bar-spacer">
@@ -208,6 +263,15 @@ function promptEditPage(id, meta, body, opts = {}) {
       <form method="post" action="/admin/prompts/${escapeHtml(id)}/reset" class="mt-6 pt-6 border-t border-slate-200">
         <button type="submit" class="text-sm text-slate-500 hover:text-amber-600 font-medium" onclick="return confirm('Restore the built-in default for this prompt?');">Reset to default</button>
       </form>
+    </div>
+    <div id="prompt-version-history-sidecar" class="prompt-history-sidecar" aria-hidden="true">
+      <div class="prompt-history-sidecar-inner">
+        <div class="prompt-history-sidecar-header">
+          <span class="font-semibold text-slate-800">Version history</span>
+          <button type="button" id="prompt-version-history-close" class="prompt-history-close-btn" aria-label="Close">×</button>
+        </div>
+        <div id="prompt-version-history-list" class="prompt-history-sidecar-body text-sm text-slate-600" data-prompt-id="${escapeHtml(id)}"></div>
+      </div>
     </div>
     <style>
       #prompt-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
@@ -246,6 +310,17 @@ function promptEditPage(id, meta, body, opts = {}) {
       .prompt-editor-wrap .prompt-highlight { z-index: 0; pointer-events: none; color: #0f172a; }
       .prompt-editor-wrap .prompt-textarea { z-index: 1; background: transparent; color: transparent; caret-color: #0f172a; resize: vertical; border: none; outline: none; }
       .prompt-editor-wrap .prompt-textarea::placeholder { color: #94a3b8; }
+      .prompt-history-sidecar { position: fixed; top: 0; right: 0; bottom: 0; width: 320px; z-index: 40; pointer-events: none; }
+      .prompt-history-sidecar .prompt-history-sidecar-inner { height: 100%; background: #fff; border-left: 1px solid #e2e8f0; box-shadow: -4px 0 16px rgba(0,0,0,0.08); transform: translateX(100%); transition: transform 0.2s ease; display: flex; flex-direction: column; pointer-events: auto; }
+      .prompt-history-sidecar.open .prompt-history-sidecar-inner { transform: translateX(0); }
+      .prompt-history-sidecar.open { pointer-events: auto; }
+      .prompt-history-sidecar-header { flex-shrink: 0; padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+      .prompt-history-close-btn { width: 2rem; height: 2rem; padding: 0; border: none; background: transparent; font-size: 1.5rem; line-height: 1; color: #64748b; cursor: pointer; border-radius: 0.25rem; }
+      .prompt-history-close-btn:hover { background: #f1f5f9; color: #475569; }
+      .prompt-history-sidecar-body { flex: 1; overflow: auto; padding: 1rem 1.25rem; }
+      .prompt-history-sidecar-body ul { list-style: none; padding: 0; margin: 0; }
+      .prompt-history-sidecar-body li { padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+      .prompt-history-sidecar-body li:last-child { border-bottom: none; }
     </style>
     <script>
       (function(){
@@ -436,6 +511,76 @@ function promptEditPage(id, meta, body, opts = {}) {
         }
       })();
     </script>
+    <script>
+    (function(){
+      var sidecar = document.getElementById('prompt-version-history-sidecar');
+      var listEl = document.getElementById('prompt-version-history-list');
+      var openBtns = document.querySelectorAll('.prompt-version-history-open');
+      var closeBtn = document.getElementById('prompt-version-history-close');
+      if (!sidecar || !listEl || !openBtns.length) return;
+      var id = listEl.getAttribute('data-prompt-id');
+      if (!id) return;
+      var loaded = false;
+      var revertConfirmMsg = 'Replace current prompt with this version?';
+      function esc(s) {
+        var div = document.createElement('div');
+        div.textContent = s == null ? '' : s;
+        return div.innerHTML;
+      }
+      function loadHistory() {
+        if (loaded) return;
+        listEl.textContent = 'Loading…';
+        var timeout = setTimeout(function() {
+          if (listEl.textContent === 'Loading…') listEl.textContent = 'Could not load history.';
+        }, 12000);
+        var url = '/admin/prompts/' + encodeURIComponent(id) + '/history';
+        fetch(url, { credentials: 'same-origin' })
+          .then(function(r) {
+            if (!r.ok) return [];
+            return r.json();
+          })
+          .then(function(arr) {
+            clearTimeout(timeout);
+            loaded = true;
+            if (!Array.isArray(arr) || arr.length === 0) {
+              listEl.textContent = 'No previous versions.';
+              return;
+            }
+            var html = '<ul>';
+            for (var i = 0; i < arr.length; i++) {
+              var item = arr[i];
+              var date = item.lastModified ? new Date(item.lastModified).toLocaleString() : item.key;
+              var viewUrl = '/admin/prompts/' + encodeURIComponent(id) + '/history/' + encodeURIComponent(item.key);
+              html += '<li>';
+              html += '<span class="text-slate-600">' + esc(date) + '</span>';
+              html += '<a href="' + esc(viewUrl) + '" target="_blank" rel="noopener" class="text-emerald-600 hover:text-emerald-700">View</a>';
+              html += '<form method="post" action="/admin/prompts/' + encodeURIComponent(id) + '/revert" class="inline">';
+              html += '<input type="hidden" name="versionKey" value="' + esc(item.key) + '">';
+              html += '<button type="submit" class="text-amber-600 hover:text-amber-700" onclick="return confirm(revertConfirmMsg);">Revert</button>';
+              html += '</form>';
+              html += '</li>';
+            }
+            html += '</ul>';
+            listEl.innerHTML = html;
+          })
+          .catch(function() {
+            clearTimeout(timeout);
+            loaded = true;
+            listEl.textContent = 'Could not load history.';
+          });
+      }
+      function openSidecar() {
+        sidecar.classList.add('open');
+        sidecar.setAttribute('aria-hidden', 'false');
+        loadHistory();
+      }
+      for (var i = 0; i < openBtns.length; i++) openBtns[i].addEventListener('click', openSidecar);
+      if (closeBtn) closeBtn.addEventListener('click', function() {
+        sidecar.classList.remove('open');
+        sidecar.setAttribute('aria-hidden', 'true');
+      });
+    })();
+    </script>
   `)}
   <div id="prompt-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="prompts">
     <div class="save-bar-inner max-w-4xl mx-auto px-4 py-3">
@@ -444,6 +589,7 @@ function promptEditPage(id, meta, body, opts = {}) {
         <div class="flex flex-wrap items-center gap-3">
           <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
           <button type="submit" form="prompt-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+          <button type="button" class="prompt-version-history-open rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50">Version history</button>
           <a href="/admin/prompts" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
         </div>
       </div>

@@ -2,9 +2,10 @@
  * Load and render Gemini prompt templates. Templates live in S3 (admin/prompts/<id>.txt)
  * with fallback to built-in defaults. Variables use {{variableName}} syntax.
  */
-import { fetchFromS3Raw, putToS3 } from './s3Helper.js';
+import { fetchFromS3Raw, putToS3, listS3KeysWithPrefix, deleteFromS3 } from './s3Helper.js';
 
 const S3_PREFIX = 'admin/prompts/';
+const HISTORY_LIMIT = 20;
 
 const PROMPT_META = {
     mu_notes: {
@@ -287,8 +288,23 @@ export async function getPromptTemplate(id) {
 
 export async function savePromptTemplate(id, body) {
     const s3Key = S3_PREFIX + id + '.txt';
+    let current = null;
+    try {
+        current = await fetchFromS3Raw(s3Key);
+    } catch (_) {}
+    if (current != null && current !== body) {
+        const iso = new Date().toISOString().replace(/:/g, '-') + '.txt';
+        const historyKey = S3_PREFIX + id + '/history/' + iso;
+        await putToS3(historyKey, current, 'text/plain');
+    }
     await putToS3(s3Key, body, 'text/plain');
     templateCache.delete(id);
+    const historyPrefix = S3_PREFIX + id + '/history/';
+    const list = await listS3KeysWithPrefix(historyPrefix, 200);
+    list.sort((a, b) => (b.Key || '').localeCompare(a.Key || ''));
+    for (let i = HISTORY_LIMIT; i < list.length; i++) {
+        await deleteFromS3(list[i].Key);
+    }
 }
 
 export async function resetPromptToDefault(id) {
@@ -296,6 +312,42 @@ export async function resetPromptToDefault(id) {
     if (builtin == null) return;
     const s3Key = S3_PREFIX + id + '.txt';
     await putToS3(s3Key, builtin, 'text/plain');
+    templateCache.delete(id);
+}
+
+/** List version history for a prompt. Returns [{ key, lastModified }] newest first. key is the filename (versionKey) for URLs. */
+export async function listPromptHistory(id) {
+    const prefix = S3_PREFIX + id + '/history/';
+    const list = await listS3KeysWithPrefix(prefix, 100);
+    return list
+        .map((c) => ({
+            key: c.Key ? c.Key.slice(prefix.length) : '',
+            lastModified: c.LastModified
+        }))
+        .filter((e) => e.key)
+        .sort((a, b) => b.key.localeCompare(a.key));
+}
+
+/** Fetch raw body of a history entry. historyKey is filename (e.g. 2025-02-19T18-30-00.000Z.txt) or full key. */
+export async function getPromptHistoryEntry(id, historyKey) {
+    const fullKey = historyKey.includes('/') ? historyKey : S3_PREFIX + id + '/history/' + historyKey;
+    return await fetchFromS3Raw(fullKey);
+}
+
+/** Revert prompt to a history version: save current to history, then overwrite current with the version. Clears cache. */
+export async function revertPromptToVersion(id, historyKey) {
+    const body = await getPromptHistoryEntry(id, historyKey);
+    if (body == null) throw new Error('History version not found');
+    const s3Key = S3_PREFIX + id + '.txt';
+    let current = null;
+    try {
+        current = await fetchFromS3Raw(s3Key);
+    } catch (_) {}
+    if (current != null && current !== body) {
+        const iso = new Date().toISOString().replace(/:/g, '-') + '.txt';
+        await putToS3(S3_PREFIX + id + '/history/' + iso, current, 'text/plain');
+    }
+    await putToS3(s3Key, body, 'text/plain');
     templateCache.delete(id);
 }
 

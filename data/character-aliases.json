@@ -38,6 +38,7 @@
   "incin": "incineroar",
   "isa": "isabelle",
   "ivy": "ivysaur",
+  "jiggly": "jigglypuff",
   "k rool": "king-k-rool",
   "k.rool": "king-k-rool",
   "kaz": "kazuya",
@@ -79,7 +80,6 @@
   "rosalina & luma": "rosalina-and-luma",
   "rosalina and luma": "rosalina-and-luma",
   "seph": "sephiroth",
-  "Seph": "sephiroth",
   "simon": "simon-richter",
   "swordfighter": "mii-swordfighter",
   "swordsfighter": "mii-swordfighter",
@@ -94,6 +94,5 @@
   "younglink": "young-link",
   "zard": "charizard",
   "zero suit samus": "zero-suit-samus",
-  "zss": "zero-suit-samus",
-  "jiggly": "jigglypuff"
+  "zss": "zero-suit-samus"
 }

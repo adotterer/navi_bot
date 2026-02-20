@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 // Env names: prefer .env.example (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME)
 const AWS_REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-west-1';
@@ -77,6 +77,33 @@ export async function hasS3KeysWithPrefix(prefix) {
     } catch (_) {
         return false;
     }
+}
+
+/** List keys with the given prefix. Returns array of { Key, LastModified, Size }. */
+export async function listS3KeysWithPrefix(prefix, maxKeys = 100) {
+    try {
+        const res = await s3Client.send(new ListObjectsV2Command({
+            Bucket: S3_BUCKET_NAME,
+            Prefix: prefix,
+            MaxKeys: maxKeys
+        }));
+        const contents = res.Contents ?? [];
+        return contents.map((c) => ({
+            Key: c.Key,
+            LastModified: c.LastModified,
+            Size: c.Size
+        }));
+    } catch (_) {
+        return [];
+    }
+}
+
+/** Delete one object by key. */
+export async function deleteFromS3(key) {
+    await s3Client.send(new DeleteObjectCommand({
+        Bucket: S3_BUCKET_NAME,
+        Key: key
+    }));
 }
 
 /** Upload raw string to S3 (for admin prompts, CSV). Key is full path e.g. admin/prompts/mu_notes.txt */
