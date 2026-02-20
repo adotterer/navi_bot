@@ -14,6 +14,7 @@ function runToSnapshot(run) {
         status: run.status,
         cancelled: !!run.cancelled,
         prompt: run.prompt,
+        model: run.model || '',
         title: run.title || '',
         inputTokens: run.inputTokens || 0,
         outputTokens: run.outputTokens || 0,

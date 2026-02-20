@@ -49,6 +49,7 @@ function createRun(opts = {}) {
         error: undefined,
         createdAt: Date.now(),
         prompt: opts.prompt || '',
+        model: opts.model || '',
         title: '',
         inputTokens: 0,
         outputTokens: 0,
@@ -132,6 +133,7 @@ function updateRun(runId, updates) {
         }
     }
     if (updates.prompt != null) run.prompt = updates.prompt;
+    if (updates.model != null) run.model = updates.model;
     if (updates.title != null) run.title = updates.title;
     if (updates.inputTokens != null) run.inputTokens = (run.inputTokens || 0) + updates.inputTokens;
     if (updates.outputTokens != null) run.outputTokens = (run.outputTokens || 0) + updates.outputTokens;
@@ -247,6 +249,7 @@ function hydrateRun(runId, snapshot) {
         error: snapshot.error,
         createdAt: snapshot.createdAt ?? Date.now(),
         prompt: snapshot.prompt ?? '',
+        model: snapshot.model ?? '',
         title: snapshot.title ?? '',
         inputTokens: snapshot.inputTokens ?? 0,
         outputTokens: snapshot.outputTokens ?? 0,

@@ -197,6 +197,7 @@ export async function runPipeline(runId, opts = {}) {
     const run = getRun(runId);
     const resume = !!opts.resume;
     const prompt = (opts.prompt ?? run?.prompt ?? '').trim();
+    const model = opts.model ?? run?.model ?? '';
     const log = (role, stage, message) => appendLog(runId, { role, stage, message });
 
     const abortCtrl = new AbortController();
@@ -216,7 +217,7 @@ export async function runPipeline(runId, opts = {}) {
             updateRun(runId, { status: 'research' });
             log('system', 'research', resume ? 'Resuming: re-running Researcher…\n' : 'Running Researcher…\n');
 
-            const researchResult = await runResearcher(prompt, { docs: getRun(runId)?.docs, signal });
+            const researchResult = await runResearcher(prompt, { docs: getRun(runId)?.docs, signal, model });
             if (!researchResult.ok) {
                 updateRun(runId, { status: 'error', error: researchResult.error });
                 log('system', 'error', 'Researcher failed: ' + researchResult.error + '\n');
@@ -237,6 +238,10 @@ export async function runPipeline(runId, opts = {}) {
 
         const { grepText: grepContext, grepPaths } = await buildGrepContext(prompt);
         const allowedPaths = buildAllowedPaths(flightPlan, grepPaths);
+        // New Discord commands need main.js (routing); grep only searches src/ so add it when mission mentions a command.
+        if (/![a-z][a-zA-Z0-9-]*|discord command|new command/i.test(prompt || '')) {
+            allowedPaths.add('main.js');
+        }
 
         const allEdits = [];
         const limitPlanners = pLimit(Math.max(1, Math.min(5, maxParallelPlanners)));
@@ -253,7 +258,7 @@ export async function runPipeline(runId, opts = {}) {
                     limitPlanners(async () => {
                         log('system', 'planning', `Planner: ${task.title}\n`);
                         const fileContext = await buildFileContextForTask(task, grepPaths);
-                        const planResult = await runPlanner(task, { fileContext, grepContext, docs: getRun(runId)?.docs, flightPlan, steps: getRun(runId)?.steps, signal });
+                        const planResult = await runPlanner(task, { fileContext, grepContext, docs: getRun(runId)?.docs, flightPlan, steps: getRun(runId)?.steps, signal, model });
                         if (planResult.ok) {
                             const n = (planResult.steps && planResult.steps.length) || 0;
                             log('system', 'planning', `Planner: ${task.title} — ${n} step(s)\n`);
@@ -320,15 +325,23 @@ export async function runPipeline(runId, opts = {}) {
                             if (r.ok && typeof r.result === 'string') fileContext[p] = r.result;
                         }
                     }
-                    // If the step or mission references Discord commands, always inject promptLoader.js
-                    // so the Coder sees authoritative one-line descriptions rather than inventing them.
+                    // If the step or mission references Discord commands, inject promptLoader.js and main.js
+                    // so the Coder sees how commands are registered and can add PROMPT_META / routing.
                     const stepText = ((step.what || '') + ' ' + (step.changeDescription || '') + ' ' + prompt).toLowerCase();
+                    const isDiscordCommandStep = /!mu|!mq|!export|!fd|!latest|![\w-]+|discord command|register.*command/i.test(stepText);
                     const PROMPT_LOADER_PATH = 'src/shared/promptLoader.js';
-                    if (!fileContext[PROMPT_LOADER_PATH] && /!mu|!mq|!export|!fd|discord command/i.test(stepText)) {
-                        const r = await callTool('read_file', { path: PROMPT_LOADER_PATH });
-                        if (r.ok && typeof r.result === 'string') fileContext[PROMPT_LOADER_PATH] = r.result;
+                    const MAIN_PATH = 'main.js';
+                    if (isDiscordCommandStep) {
+                        if (!fileContext[PROMPT_LOADER_PATH]) {
+                            const r = await callTool('read_file', { path: PROMPT_LOADER_PATH });
+                            if (r.ok && typeof r.result === 'string') fileContext[PROMPT_LOADER_PATH] = r.result;
+                        }
+                        if (!fileContext[MAIN_PATH]) {
+                            const r = await callTool('read_file', { path: MAIN_PATH });
+                            if (r.ok && typeof r.result === 'string') fileContext[MAIN_PATH] = r.result;
+                        }
                     }
-                    const coderResult = await runCoder(step, fileContext, { signal, missionPrompt: prompt });
+                    const coderResult = await runCoder(step, fileContext, { signal, missionPrompt: prompt, model });
                     return { step, task, coderResult, stepIndex: j, useExisting: false };
                 })
             )
@@ -353,7 +366,7 @@ export async function runPipeline(runId, opts = {}) {
                 log('system', 'coding', `Coder: ${step.what} — failed: ${coderResult?.error || 'No result'}\n`);
                 continue;
             }
-            const validation = await validateCoderStep(step, prompt, coderResult.edits || [], { allowedPaths, signal });
+            const validation = await validateCoderStep(step, prompt, coderResult.edits || [], { allowedPaths, signal, model });
             updateRun(runId, {
                 inputTokens: (coderResult.inputTokens || 0) + (validation.inputTokens || 0),
                 outputTokens: (coderResult.outputTokens || 0) + (validation.outputTokens || 0),
@@ -454,6 +467,7 @@ export async function runPipeline(runId, opts = {}) {
             log('system', 'reviewing', reviewRound === 0 ? 'Running Reviewer…\n' : `Review round ${reviewRound + 1}…\n`);
 
             const reviewResult = await runReviewer(editsToReview, prompt, {
+                model,
                 importWarnings: reviewRound === 0 ? importWarnings : [],
                 signal,
             });
@@ -477,7 +491,7 @@ export async function runPipeline(runId, opts = {}) {
             for (const e of editsToReview) {
                 if (e.path && e.content != null) fileContext[e.path] = e.content;
             }
-            const fixResult = await runCoder(syntheticStep, fileContext, { reviewFeedback: reviewResult.feedback, signal, missionPrompt: prompt });
+            const fixResult = await runCoder(syntheticStep, fileContext, { reviewFeedback: reviewResult.feedback, signal, missionPrompt: prompt, model });
             updateRun(runId, { inputTokens: fixResult.inputTokens || 0, outputTokens: fixResult.outputTokens || 0 });
             if (!fixResult.ok || !fixResult.edits?.length) {
                 log('system', 'reviewing', `Coder fix pass failed or produced no edits: ${fixResult.error || 'no edits'}\n`);

@@ -14,14 +14,38 @@ function getGenAI() {
         if (!apiKey) throw new Error('GEMINI_API_KEY must be set for Agent PR.');
         _genAI = new GoogleGenAI({
             apiKey,
-            defaultModel: process.env.GEMINI_MODEL || process.env.AGENT_MODEL || 'gemini-2.0-flash-exp',
+            defaultModel: process.env.GEMINI_MODEL || process.env.AGENT_MODEL || 'gemini-3-flash-preview',
         });
     }
     return _genAI;
 }
 
-const MODEL = process.env.AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
+const MODEL = process.env.AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
 const GEMINI_TIMEOUT_MS = Number(process.env.AGENT_GEMINI_TIMEOUT_MS) || 180000;
+
+/**
+ * List Gemini models that support generateContent (for Missions model dropdown).
+ * Uses the same SDK/client as the rest of the app. Returns [] when API key is missing or request fails.
+ * @returns {Promise<Array<{ id: string, displayName: string }>>}
+ */
+export async function listModelsForMissions() {
+    try {
+        const genAI = getGenAI();
+        const pager = await genAI.models.list();
+        const out = [];
+        for await (const m of pager) {
+            const name = (m.name || '').replace(/^models\//, '');
+            if (!name.startsWith('gemini')) continue;
+            const methods = m.supportedGenerationMethods || m.supportedActions || [];
+            if (methods.length > 0 && !methods.includes('generateContent')) continue;
+            out.push({ id: name, displayName: m.displayName || name });
+        }
+        out.sort((a, b) => a.id.localeCompare(b.id));
+        return out;
+    } catch (_) {
+        return [];
+    }
+}
 
 function withTimeout(promise, ms, message = 'Request timed out') {
     return Promise.race([
@@ -38,7 +62,8 @@ function withTimeout(promise, ms, message = 'Request timed out') {
  * @returns {Promise<{ ok: true, flightPlan: Array<{ id: string, title: string, description: string, hints?: string }> } | { ok: false, error: string }>}
  */
 export async function runResearcher(missionPrompt, opts = {}) {
-    const { onChunk, docs, signal } = opts;
+    const { onChunk, docs, signal, model: modelOverride } = opts;
+    const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     let treeInfo = '';
     try {
         const treeResult = await getFileTree('', 3);
@@ -64,7 +89,7 @@ export async function runResearcher(missionPrompt, opts = {}) {
         const result = await withTimeout(
             (async () => {
                 const response = await getGenAI().models.generateContentStream({
-                    model: MODEL,
+                    model,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
                     config: { maxOutputTokens: 4096, responseMimeType: 'application/json', abortSignal: signal },
                 });
@@ -297,7 +322,8 @@ function tryParseJsonObject(str) {
  * @returns {Promise<{ ok: true, steps: Array<{ what: string, files: string[], changeDescription?: string }> } | { ok: false, error: string }>}
  */
 export async function runPlanner(task, opts = {}) {
-    const { onChunk, fileContext = '', grepContext = '', docs, flightPlan, steps, signal } = opts;
+    const { onChunk, fileContext = '', grepContext = '', docs, flightPlan, steps, signal, model: modelOverride } = opts;
+    const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     const systemPrompt = await getAgentPrompt('planner');
     let userContent = `Task: ${task.title}\n${task.description}${task.hints ? '\nHints: ' + task.hints : ''}`;
     if (docs && typeof docs === 'object') {
@@ -319,7 +345,7 @@ export async function runPlanner(task, opts = {}) {
         const result = await withTimeout(
             (async () => {
                 const response = await getGenAI().models.generateContentStream({
-                    model: MODEL,
+                    model,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
                     config: { maxOutputTokens: 8192, responseMimeType: 'application/json', abortSignal: signal },
                 });
@@ -484,7 +510,8 @@ function parsePlannerSteps(text) {
  * @returns {Promise<{ ok: true, edits: Array<{ path: string, content: string }> } | { ok: false, error: string }>}
  */
 export async function runCoder(step, fileContext, opts = {}) {
-    const { onChunk, reviewFeedback, signal, missionPrompt } = opts;
+    const { onChunk, reviewFeedback, signal, missionPrompt, model: modelOverride } = opts;
+    const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     const fileSection = Object.entries(fileContext).length
         ? '\n\nCurrent file contents (copy "search" text EXACTLY from here):\n' +
           Object.entries(fileContext)
@@ -503,7 +530,7 @@ export async function runCoder(step, fileContext, opts = {}) {
         const result = await withTimeout(
             (async () => {
                 const response = await getGenAI().models.generateContentStream({
-                    model: MODEL,
+                    model,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
                     config: { maxOutputTokens: 16384, responseMimeType: 'application/json', abortSignal: signal },
                 });
@@ -667,7 +694,8 @@ function parseCoderEdits(text) {
  * @returns {Promise<{ ok: true, status: 'done'|'failed', reason?: string }>}
  */
 export async function validateCoderStep(step, missionSummary, edits, opts = {}) {
-    const { allowedPaths, signal } = opts;
+    const { allowedPaths, signal, model: modelOverride } = opts;
+    const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     if (allowedPaths && allowedPaths.size > 0) {
         for (const e of edits || []) {
             if (e.path && !allowedPaths.has(e.path)) {
@@ -683,7 +711,7 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
     const prompt = `Step: ${step.what}\n${step.changeDescription || ''}\nMission context: ${(missionSummary || '').slice(0, 500)}\n\nCoder produced edits for: ${editSummary}.\n\nDo these edits satisfy the step and mission? Reply with exactly one word: done or failed. Optionally add a short reason after a colon (e.g. "failed: edits change wrong file").`;
     try {
         const response = await getGenAI().models.generateContent({
-            model: MODEL,
+            model,
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             config: { maxOutputTokens: 128, abortSignal: signal },
         });
@@ -714,7 +742,8 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
  * @returns {Promise<{ ok: true, feedback: string|null } | { ok: false, error: string }>}
  */
 export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
-    const { importWarnings = [], signal } = opts;
+    const { importWarnings = [], signal, model: modelOverride } = opts;
+    const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     const editSummary = (aggregatedEdits || [])
         .map((e) => `--- ${e.path} ---\n${(e.content || '').slice(0, 8000)}${(e.content || '').length > 8000 ? '\n... (truncated)' : ''}`)
         .join('\n\n');
@@ -727,7 +756,7 @@ export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
         const response = await withTimeout(
             (async () => {
                 const res = await getGenAI().models.generateContent({
-                    model: MODEL,
+                    model,
                     contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
                     config: { maxOutputTokens: 256, abortSignal: signal },
                 });

@@ -9,6 +9,7 @@ import { listBranches, getTree, getFileContent } from './repoBrowser.js';
 import { loadRunFromS3, loadRunMetadataFromS3, persistRunToS3 } from './agentRunPersistence.js';
 import { listS3KeysWithPrefix, deleteFromS3 } from '../../shared/s3Helper.js';
 import { getAgentPrompt, saveAgentPrompt, resetAgentPromptToDefault, listAgentPromptIds } from './agentPromptLoader.js';
+import { listModelsForMissions } from './agents.js';
 
 const router = express.Router();
 const SSE_HEARTBEAT_MS = 15000;
@@ -41,6 +42,12 @@ router.get('/', (req, res) => {
           <textarea id="prompt" name="prompt" rows="4" placeholder="e.g. Add a health check endpoint at GET /health that returns { status: 'ok' }"
             class="w-full min-h-[100px] rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none font-mono text-sm resize-y"></textarea>
           <div class="flex flex-wrap gap-4 items-end">
+            <div>
+              <label for="model" class="block text-xs font-medium text-slate-500 mb-1">Model <span class="font-normal text-slate-400">(hover for use-case)</span></label>
+              <select id="model" name="model" class="rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-sm min-w-[180px]">
+                <option value="">Loading…</option>
+              </select>
+            </div>
             <div>
               <label for="maxPlanners" class="block text-xs font-medium text-slate-500 mb-1">Max planners</label>
               <input type="number" id="maxPlanners" name="maxPlanners" min="1" max="5" value="2"
@@ -215,6 +222,32 @@ router.get('/', (req, res) => {
   var repoContent = document.getElementById('repo-content');
   var repoExpanded = {};
   var repoTreeCache = {};
+
+  (function loadModels() {
+    var sel = document.getElementById('model');
+    if (!sel) return;
+    fetch('/admin/agent/models', { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var models = data.models || [];
+        var defaultId = data.default || (models[0] && models[0].id) || '';
+        sel.innerHTML = '';
+        models.forEach(function(m) {
+          var opt = document.createElement('option');
+          opt.value = m.id;
+          var label = m.displayName || m.id;
+          if (m.sortTier === 0) label = '\u2605 ' + label;
+          opt.textContent = label;
+          if (m.hint) opt.title = m.hint;
+          sel.appendChild(opt);
+        });
+        if (defaultId) sel.value = defaultId;
+      })
+      .catch(function() {
+        sel.innerHTML = '<option value="gemini-3-flash-preview" title="Best for Missions: fast, strong at code and planning.">\u2605 gemini-3-flash-preview</option>';
+        sel.value = 'gemini-3-flash-preview';
+      });
+  })();
 
   function updateDocsPanelOnly(docs) {
     if (!docs || typeof docs !== 'object') return;
@@ -493,6 +526,11 @@ router.get('/', (req, res) => {
         if (data.error) { alert('Could not load run: ' + data.error); return; }
         var promptEl = document.getElementById('prompt');
         if (promptEl && data.prompt) promptEl.value = data.prompt;
+        var modelEl = document.getElementById('model');
+        if (modelEl && data.model) {
+          modelEl.value = data.model;
+          if (modelEl.selectedIndex < 0 && modelEl.options.length) modelEl.value = modelEl.options[0].value;
+        }
         currentRunId = runId;
         docsPopulated = true;
         runArea.classList.remove('hidden');
@@ -713,12 +751,15 @@ router.get('/', (req, res) => {
       var el = document.getElementById('docs-' + section);
       if (el) seedDocs[section] = el.value || '';
     });
+    var modelEl = document.getElementById('model');
+    var model = (modelEl && modelEl.value) ? modelEl.value.trim() : '';
     fetch('/admin/agent/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
       body: JSON.stringify({
         prompt: promptEl.value.trim(),
+        model: model,
         maxParallelPlanners: parseInt(maxPlanners, 10) || 2,
         maxParallelCoders: parseInt(maxCoders, 10) || 3,
         seedDocs: seedDocs
@@ -917,6 +958,67 @@ router.get('/', (req, res) => {
 </html>`);
 });
 
+// ----- GET /admin/agent/models – list Gemini models that support generateContent (official list via SDK) -----
+const DEFAULT_MODEL_ID = 'gemini-3-flash-preview';
+const MODELS_CACHE_MS = 10 * 60 * 1000; // 10 minutes
+let modelsCache = null;
+let modelsCacheTime = 0;
+
+/** Assign sort order and short description for Missions dropdown. Lower sortTier = better for this project. */
+function modelMeta(id, displayName) {
+    const lower = (id || '').toLowerCase();
+    const name = (displayName || id || '').toLowerCase();
+    if (/image|imagen|generation.*image|image.*generation/.test(lower) || /image\s*gen|image\s*generation/i.test(name)) {
+        return { sortTier: 4, hint: 'Image generation. Not used for Missions (text/code).' };
+    }
+    if (/computer.use|computeruse|nano\s*banana|veo|audio|tts|speech/.test(lower)) {
+        return { sortTier: 4, hint: 'Specialized (computer use, audio, video). Not for Missions.' };
+    }
+    if (/lite|nano|8b|small/.test(lower) && !/flash-lite.*001/.test(lower)) {
+        return { sortTier: 2, hint: 'Lightweight & fast. Good for simple Missions; may miss nuance on complex tasks.' };
+    }
+    if (/experimental|exp\b|preview/.test(lower) && !/2\.5.*preview/.test(lower)) {
+        return { sortTier: 3, hint: 'Experimental/preview. Use for cutting-edge; behavior may change.' };
+    }
+    if (/3-flash|2\.0-flash\b|2\.5-flash\b|1\.5-flash\b/.test(lower) && !/lite|nano|8b|image/.test(lower)) {
+        return { sortTier: 0, hint: 'Best for Missions: fast, strong at code and planning. Recommended.' };
+    }
+    if (/3-pro|2\.5-pro|2\.0-pro|1\.5-pro/.test(lower)) {
+        return { sortTier: 0, hint: 'Best for hard Missions: best reasoning and multi-step code. Recommended.' };
+    }
+    return { sortTier: 1, hint: 'General text/code. Good for Missions.' };
+}
+
+router.get('/models', async (req, res) => {
+    const now = Date.now();
+    if (modelsCache && now - modelsCacheTime < MODELS_CACHE_MS) {
+        return res.json(modelsCache);
+    }
+    try {
+        const supported = await listModelsForMissions();
+        if (supported.length === 0) {
+            const fallback = [{ id: DEFAULT_MODEL_ID, displayName: DEFAULT_MODEL_ID, hint: 'Best for Missions: fast, strong at code and planning.' }];
+            const payload = { models: fallback, default: DEFAULT_MODEL_ID, fromCache: false };
+            return res.json(payload);
+        }
+        const enriched = supported.map((m) => {
+            const { sortTier, hint } = modelMeta(m.id, m.displayName);
+            return { ...m, sortTier, hint: hint || 'General text/code.' };
+        });
+        enriched.sort((a, b) => {
+            if (a.sortTier !== b.sortTier) return a.sortTier - b.sortTier;
+            return (a.id || '').localeCompare(b.id || '');
+        });
+        const defaultId = enriched.some((m) => m.id === DEFAULT_MODEL_ID) ? DEFAULT_MODEL_ID : enriched[0].id;
+        modelsCache = { models: enriched, default: defaultId, fromCache: false };
+        modelsCacheTime = now;
+        res.json(modelsCache);
+    } catch (_) {
+        const fallback = [{ id: DEFAULT_MODEL_ID, displayName: DEFAULT_MODEL_ID, hint: 'Best for Missions: fast, strong at code and planning.' }];
+        res.json({ models: fallback, default: DEFAULT_MODEL_ID, fromCache: false });
+    }
+});
+
 // ----- GET /admin/agent/prompts – edit Researcher, Planner, Coder, Reviewer system prompts -----
 const AGENT_PROMPT_LABELS = { researcher: 'Researcher', planner: 'Planner', coder: 'Coder', reviewer: 'Reviewer' };
 router.get('/prompts', async (req, res) => {
@@ -1113,7 +1215,7 @@ router.get('/run/:runId', async (req, res) => {
         run = getRun(req.params.runId);
     }
     if (!run) return res.status(404).json({ error: 'Run not found' });
-    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits } = run;
+    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits, model } = run;
     res.json({
         runId,
         status,
@@ -1128,6 +1230,7 @@ router.get('/run/:runId', async (req, res) => {
         prompt,
         title: title || '',
         edits: edits || [],
+        model: model || '',
     });
 });
 
@@ -1149,15 +1252,15 @@ router.patch('/run/:runId/docs', express.json(), (req, res) => {
 
 // ----- POST /admin/agent/run – start run (returns runId, runs orchestrator in background) -----
 router.post('/run', express.json(), (req, res) => {
-    const { prompt = '', maxParallelPlanners = 2, maxParallelCoders = 3, seedDocs } = req.body || {};
-    const runId = createRun({ prompt });
+    const { prompt = '', model = '', maxParallelPlanners = 2, maxParallelCoders = 3, seedDocs } = req.body || {};
+    const runId = createRun({ prompt, model });
     if (seedDocs && typeof seedDocs === 'object') {
         updateRun(runId, { docs: seedDocs });
     }
     res.json({ runId });
 
     setImmediate(() => {
-        runPipeline(runId, { prompt, maxParallelPlanners, maxParallelCoders });
+        runPipeline(runId, { prompt, model, maxParallelPlanners, maxParallelCoders });
     });
 });
 
@@ -1175,7 +1278,7 @@ router.post('/run/:runId/resume', async (req, res) => {
     if (terminal) return res.status(400).json({ ok: false, error: 'Run already finished; cannot resume' });
 
     res.json({ ok: true });
-    setImmediate(() => runPipeline(runId, { prompt: run.prompt, maxParallelPlanners: 2, maxParallelCoders: 3, resume: true }));
+    setImmediate(() => runPipeline(runId, { prompt: run.prompt, model: run.model, maxParallelPlanners: 2, maxParallelCoders: 3, resume: true }));
 });
 
 // ----- GET /admin/agent/stream/:runId – SSE -----
