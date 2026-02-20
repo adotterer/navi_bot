@@ -244,7 +244,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
         <p class="text-slate-600 text-sm mt-1">Edit cells below; click <strong>Save to S3</strong> to upload.</p>
         ${savedBanner}
       </div>
-      <form id="csv-form" method="post" action="${saveAction}" class="flex flex-1 flex-col min-h-0 flex-shrink-0 pb-20">
+      <form id="csv-form" method="post" action="${saveAction}" class="flex flex-1 flex-col min-h-0 flex-shrink-0 admin-save-bar-spacer">
         <textarea id="csv-body" name="body" hidden aria-hidden="true"></textarea>
         <div id="csv-spreadsheet-wrap" class="flex-1 min-h-0 min-w-0 overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200/50">
           <table id="csv-grid" class="csv-grid border-collapse"></table>

@@ -1180,6 +1180,9 @@ html {
 }
 
 /* Add alias/emoji row: stack on small screens so bar doesn’t cover inputs */
+.admin-save-bar-spacer {
+  padding-bottom: 7rem;
+}
 .add-row-section {
   display: flex;
   flex-direction: column;

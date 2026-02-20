@@ -182,7 +182,7 @@ function promptEditPage(id, meta, body, opts = {}) {
     ${saveErrorBanner}
     ${varsSection}
     ${emojiSection}
-    <div class="pb-20">
+    <div class="admin-save-bar-spacer">
       <div id="prompt-split" class="prompt-split flex gap-0 min-h-[380px]">
         <div id="prompt-editor-column" class="prompt-editor-column flex flex-col min-w-0 flex-1 bg-white rounded-l-xl">
           <form id="prompt-form" method="post" action="/admin/prompts/${escapeHtml(id)}" class="flex flex-col flex-1 min-h-0 px-3">

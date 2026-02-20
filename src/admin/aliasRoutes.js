@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
     </div>
     <p class="text-slate-600 text-sm mb-6">Add nicknames or shortcuts that resolve to a character (e.g. <strong>palu</strong> → <strong>palutena</strong>). Used by !mu, !fd, and !aliases. Click <strong>Save to S3</strong> when done.</p>
     ${saved ? '<div class="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm px-4 py-3 mb-6">Saved to S3.</div>' : ''}
-    <div class="pb-24">
+    <div class="admin-save-bar-spacer">
     <form id="aliases-form" method="post" action="/admin/aliases" class="space-y-6">
       <textarea id="aliases-body" name="body" class="hidden" aria-hidden="true"></textarea>
       <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
@@ -249,7 +249,7 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
     </div>
     <p class="text-slate-600 text-sm mb-6">Add nicknames or shortcuts that resolve to a character. Click <strong>Save to S3</strong> when done.</p>
     ${error ? `<div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">${escapeHtml(error)}</div>` : ''}
-    <div class="pb-24">
+    <div class="admin-save-bar-spacer">
     <form id="aliases-form" method="post" action="/admin/aliases" class="space-y-6">
       <textarea id="aliases-body" name="body" class="hidden" aria-hidden="true"></textarea>
       <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
