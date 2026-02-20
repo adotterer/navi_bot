@@ -138,7 +138,7 @@ function dashboardPage(s3 = {}) {
       </a>
       <a href="/admin/agent" class="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group">
         <div class="flex items-center gap-2">
-          <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Agent PR</h2>
+          <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Missions</h2>
         </div>
         <p class="mt-2 text-sm text-slate-500">Gemini agents (researcher, planners, coders) produce a flight plan and open a GitHub PR from your mission prompt.</p>
         <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>

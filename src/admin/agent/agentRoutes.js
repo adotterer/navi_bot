@@ -17,9 +17,9 @@ router.get('/', (req, res) => {
     const content = `
   ${adminNav('agent')}
   ${adminContainer(`
-    ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Agent PR' }])}
+    ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Missions' }])}
     <div class="flex items-center justify-between mb-8">
-      <h1 class="text-2xl font-semibold text-slate-800">Agent PR</h1>
+      <h1 class="text-2xl font-semibold text-slate-800">Missions</h1>
     </div>
     <p class="text-slate-600 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
     <section class="rounded-xl border border-slate-200 bg-white overflow-hidden w-full mb-4">
@@ -910,7 +910,7 @@ router.get('/', (req, res) => {
 `;
     res.send(`<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Agent PR')}${prismHead}</head>
+<head>${adminHead('Missions')}${prismHead}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
 </html>`);
 });

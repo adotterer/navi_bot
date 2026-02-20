@@ -17,7 +17,7 @@ function adminNav(active = 'dashboard') {
         { href: '/admin/data', label: 'Data', key: 'data' },
         { href: '/admin/aliases', label: 'Aliases', key: 'aliases' },
         { href: '/admin/emojis', label: 'Emojis', key: 'emojis' },
-        { href: '/admin/agent', label: 'Agent PR', key: 'agent' },
+        { href: '/admin/agent', label: 'Missions', key: 'agent' },
     ];
     const items = links
         .map(
