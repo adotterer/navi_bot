@@ -20,8 +20,8 @@ router.get('/', (req, res) => {
       <h1 class="text-2xl font-semibold text-slate-800">Agent PR</h1>
     </div>
     <p class="text-slate-600 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
-    <div class="agent-split flex gap-4 mb-8">
-      <div class="agent-prompt-column flex flex-col min-w-0 w-[340px] flex-shrink-0 rounded-xl border border-slate-200 bg-white overflow-hidden">
+    <div class="agent-split flex flex-col gap-4 mb-8">
+      <div class="agent-prompt-column flex flex-col min-w-0 rounded-xl border border-slate-200 bg-white overflow-hidden">
         <div class="border-b border-slate-200 px-4 py-2.5 bg-slate-50 text-sm font-medium text-slate-700">Mission prompt</div>
         <form id="agent-form" class="flex flex-col p-4 gap-4">
           <textarea id="prompt" name="prompt" rows="4" placeholder="e.g. Add a health check endpoint at GET /health that returns { status: 'ok' }"
