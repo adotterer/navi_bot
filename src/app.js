@@ -27,11 +27,27 @@ export function createApp() {
         #status { padding: 15px 30px; border-radius: 30px; color: white; font-weight: bold; font-size: 1.2em; min-width: 120px; text-align: center; }
         .online { background-color: #4caf50; }
         .offline { background-color: #f44336; }
+        .admin-btn { margin-top: 20px; padding: 10px 20px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        table { margin-top: 30px; border-collapse: collapse; font-size: 0.9em; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { padding: 8px 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #fafafa; font-weight: bold; color: #666; }
     </style>
 </head>
 <body>
     <h1>Navi Bot 🧚</h1>
     <div id="status">Checking...</div>
+    <a href="/admin" class="admin-btn">Admin</a>
+    <table>
+        <thead>
+            <tr><th>Command</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>!mu</code></td></tr>
+            <tr><td><code>!mq</code></td></tr>
+            <tr><td><code>!export</code></td></tr>
+            <tr><td><code>!fd</code></td></tr>
+        </tbody>
+    </table>
     <script>
         async function updateStatus() {
             const el = document.getElementById('status');
