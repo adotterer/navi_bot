@@ -37,9 +37,8 @@ router.get('/', (req, res) => {
           <input type="number" id="maxCoders" name="maxCoders" min="1" max="10" value="3"
             class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
         </div>
-        <div class="pt-6 flex items-center gap-3">
+        <div class="pt-6">
           <button type="submit" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Start run</button>
-          <button type="button" id="stop-btn" class="hidden rounded-lg bg-red-600 text-white font-medium py-2.5 px-5 hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">Stop run</button>
         </div>
       </div>
     </form>
@@ -59,9 +58,21 @@ router.get('/', (req, res) => {
       </div>
     </div>
     <div id="run-area" class="hidden">
-      <div class="flex items-center gap-2 mb-2">
+      <div class="flex items-center gap-3 mb-2 flex-wrap">
         <span id="run-status" class="text-sm font-medium text-slate-700">Running…</span>
         <span id="run-stage" class="text-sm text-slate-500"></span>
+        <button type="button" id="stop-btn" class="hidden rounded-lg bg-red-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">Stop run</button>
+      </div>
+      <div id="pipeline-area" class="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3">
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          <span id="phase-researcher" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Researcher</span>
+          <span class="text-slate-300">\u2192</span>
+          <span id="phase-planner" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Planner</span>
+          <span class="text-slate-300">\u2192</span>
+          <span id="phase-coder" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Coder</span>
+          <span class="text-slate-300">\u2192</span>
+          <span id="phase-pr" class="phase px-2 py-1 rounded border border-slate-200 text-slate-500">Create PR</span>
+        </div>
       </div>
       <div id="log-container" class="rounded-lg border border-slate-200 bg-slate-900 text-slate-100 p-4 font-mono text-sm max-h-96 overflow-y-auto whitespace-pre-wrap break-words"></div>
       <div id="step-results-area" class="mt-4 hidden">
@@ -111,6 +122,40 @@ router.get('/', (req, res) => {
   var repoContent = document.getElementById('repo-content');
   var repoExpanded = {};
   var repoTreeCache = {};
+
+  function updatePipeline(status, runData) {
+    runData = runData || {};
+    var statusToPhase = { research: 'researcher', planning: 'planning', coding: 'coding', creating_pr: 'creating_pr', done: 'creating_pr', error: 'creating_pr', cancelled: 'creating_pr' };
+    var current = statusToPhase[status] || status;
+    var labels = {
+      researcher: 'Researcher',
+      planning: runData.flightPlan && runData.flightPlan.length ? 'Planner (' + runData.flightPlan.length + ' tasks)' : 'Planner',
+      coding: runData.stepResults && runData.stepResults.length ? 'Coder (' + runData.stepResults.length + ' steps)' : 'Coder',
+      creating_pr: 'Create PR'
+    };
+    var order = ['researcher', 'planning', 'coding', 'creating_pr'];
+    order.forEach(function(phase, i) {
+      var el = document.getElementById('phase-' + (phase === 'planning' ? 'planner' : phase === 'creating_pr' ? 'pr' : phase));
+      if (!el) return;
+      el.textContent = labels[phase] || el.textContent;
+      el.className = 'phase px-2 py-1 rounded border text-sm ';
+      var idx = order.indexOf(phase);
+      var currentIdx = order.indexOf(current);
+      if (status === 'done' || status === 'cancelled') {
+        el.className += 'border-slate-200 text-emerald-600 bg-emerald-50';
+      } else if (status === 'error' && idx < order.length - 1) {
+        el.className += 'border-slate-200 text-emerald-600 bg-emerald-50';
+      } else if (status === 'error' && idx === order.length - 1) {
+        el.className += 'border-red-200 text-red-700 bg-red-50';
+      } else if (idx < currentIdx) {
+        el.className += 'border-emerald-200 text-emerald-700 bg-emerald-50';
+      } else if (idx === currentIdx) {
+        el.className += 'border-amber-300 text-amber-800 bg-amber-50 animate-pulse';
+      } else {
+        el.className += 'border-slate-200 text-slate-500';
+      }
+    });
+  }
 
   function repoCacheKey(branch, path) { return branch + ':' + (path || ''); }
   function fetchTree(branch, path, cb) {
@@ -279,6 +324,7 @@ router.get('/', (req, res) => {
       fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
         .then(function(r) { return r.json(); })
         .then(function(data) {
+          updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults });
           if (data.edits && data.edits.length) showFileBrowser(data.edits);
           if (data.stepResults && data.stepResults.length) {
             var area = document.getElementById('step-results-area');
@@ -321,6 +367,7 @@ router.get('/', (req, res) => {
     errorMsg.classList.add('hidden');
     runStatus.textContent = 'Starting…';
     runStage.textContent = '';
+    updatePipeline('research');
 
     fetch('/admin/agent/run', {
       method: 'POST',
@@ -351,6 +398,7 @@ router.get('/', (req, res) => {
             logContainer.scrollTop = logContainer.scrollHeight;
           } else if (entry.type === 'status') {
             runStage.textContent = entry.status || '';
+            updatePipeline(entry.status || '');
           } else if (entry.type === 'done') {
             runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done';
             runStage.textContent = '';

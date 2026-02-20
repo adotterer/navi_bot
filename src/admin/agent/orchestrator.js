@@ -32,9 +32,7 @@ export async function runPipeline(runId, opts = {}) {
         updateRun(runId, { status: 'research' });
         log('system', 'research', 'Running Researcher…\n');
 
-        const researchResult = await runResearcher(prompt, {
-            onChunk: (chunk) => log('researcher', 'research', chunk),
-        });
+        const researchResult = await runResearcher(prompt, {});
         if (!researchResult.ok) {
             updateRun(runId, { status: 'error', error: researchResult.error });
             log('system', 'error', 'Researcher failed: ' + researchResult.error + '\n');
@@ -57,9 +55,11 @@ export async function runPipeline(runId, opts = {}) {
             flightPlan.map((task, i) =>
                 limitPlanners(async () => {
                     log('system', 'planning', `Planner: ${task.title}\n`);
-                    const planResult = await runPlanner(task, {
-                        onChunk: (chunk) => log('planner', 'planning', chunk),
-                    });
+                    const planResult = await runPlanner(task, {});
+                    if (planResult.ok) {
+                        const n = (planResult.steps && planResult.steps.length) || 0;
+                        log('system', 'planning', `Planner: ${task.title} — ${n} step(s)\n`);
+                    }
                     return { task, planResult, taskIndex: i };
                 })
             )
@@ -95,9 +95,9 @@ export async function runPipeline(runId, opts = {}) {
         const stepResults = [];
         for (const { step, coderResult } of coderResults) {
             if (!coderResult.ok) {
-                updateRun(runId, { status: 'error', error: coderResult.error });
-                log('system', 'error', `Coder: ${step.what} — failed: ${coderResult.error}\n`);
-                return;
+                stepResults.push({ step, status: 'failed', reason: coderResult.error });
+                log('system', 'coding', `Coder: ${step.what} — failed: ${coderResult.error}\n`);
+                continue;
             }
             const validation = await validateCoderStep(step, prompt, coderResult.edits || []);
             stepResults.push({
