@@ -6,10 +6,19 @@ import { fetchFromS3Raw, putToS3 } from '../../shared/s3Helper.js';
 
 const S3_PREFIX = 'admin/agent-prompts/';
 
+/** Project-specific package/API rules — agents must use these, not alternate package names or APIs. */
+const PROJECT_PACKAGE_RULES = `
+PROJECT PACKAGES (use these exactly — wrong package names or APIs break the app):
+- Google AI: Use package "@google/genai" (NOT "@google/generative-ai"). Import: GoogleGenAI from '@google/genai'. Client: new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) or apiKey: process.env.GOOGLE_API_KEY. Generate: genAI.models.generateContent({ model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview', contents: prompt }). Response text: response.text (property). Do NOT use getGenerativeModel, generateContent(prompt), or result.response.text() — that is the old @google/generative-ai API.
+- Discord: discord.js v14. Message collections from fetch(): use .at(index) or [...collection.values()] for indexing; avoid .first(n)[1] for "second item".
+- Env: Prefer process.env.GEMINI_MODEL (or GOOGLE_API_KEY where questionHandler does) and existing env names; do not invent new env keys without necessity.`;
+
 const DEFAULT_PROMPTS = {
     researcher: `You are a Researcher for a codebase. Your job is to take a high-level mission and produce a "flight plan": a short list of concrete, ordered tasks that together achieve the mission.
 
 The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase structure below to inform your task list. Output ONLY a valid JSON array of tasks, no other text. Each task must have: "id" (short slug), "title" (one line), "description" (one or two sentences), and "hints" (comma-separated exact file paths when possible, e.g. "src/export/exportHandler.js, src/matchups/matchupHandler.js").
+
+When the mission involves AI/Gemini or new Discord commands, include in hints the files that already use the correct patterns: e.g. src/matchups/matchupHandler.js or src/messages/questionHandler.js for Gemini (@google/genai), and main.js for command routing.
 
 FILE MAPPING RULES — use these to select the correct hint paths:
 - Discord commands (!mu, !mq, !export, !fd, etc.): src/export/exportHandler.js, src/matchups/matchupHandler.js, src/messages/questionHandler.js, src/shared/messageSplitter.js, src/shared/promptLoader.js (contains one-line descriptions for every command)
@@ -29,6 +38,8 @@ Example:
 Given a single task from a flight plan, output an implementation plan: an ordered list of steps. Each step should specify what to do, which file(s) to touch, and optionally a short change description. Each step should be an actionable implementation step (code or config change), not a pure analysis step. Prefer steps that produce file edits.
 
 Prefer steps that EDIT existing files shown in "Relevant file contents" or "Files that match the mission" above; only add steps that create NEW files when the mission explicitly requires a new module. When the mission asks to match existing behavior (e.g. use the same embed style as !mu/!mq), the "files" array must include the existing handler file(s) to modify and you should reference the same imports and patterns (e.g. createSplitEmbeds, EmbedBuilder, SUMMARY_DISCLAIMER, color "#36AAD4") that already appear in the codebase. The "files" array must only contain paths that appear in the "Relevant file contents" or "Files that match the mission" above. Do not use index.js, main.js, or paths not listed.
+
+When a step involves calling an AI (Gemini) or Discord message/collection APIs, add to changeDescription that the Coder must use the project's existing package and API: @google/genai (not @google/generative-ai), genAI.models.generateContent({ model, contents }), and for Discord collections use .at(index) or array conversion — see existing handlers (e.g. matchupHandler.js, questionHandler.js) for the exact pattern.
 
 CRITICAL RULES — violating any of these causes broken code:
 1. UI CHANGES: If the mission requires any visible UI change (adding a button, replacing a link, showing data, modifying click behavior), you MUST include the file that renders that HTML or contains its inline JavaScript in the "files" array. In this codebase, admin UI pages are rendered server-side in their route handler files (e.g. agentRoutes.js renders the Agent PR page including all its <script> JS). Never stop at a backend store or helper file if the UI itself must change.
@@ -62,11 +73,14 @@ IMPORT PATH RULES — incorrect imports will break the app:
 - Before adding any import, verify the module being imported is either (a) shown in "Current file contents" at the path you are importing, or (b) a file you are creating in this same edit. Never import a module that does not exist.
 - Only import named exports that are explicitly listed in the export statement of the source file shown in "Current file contents".
 - When you add a new exported function to a file that uses a named export list (e.g. "export { foo, bar }"), you MUST also patch that export line to include the new function name.
+${PROJECT_PACKAGE_RULES}
 
 Example (imports change + function change in one file, two separate patches):
 [{"path":"src/app.js","search":"const old = require('old');","replace":"const newMod = require('new');"},{"path":"src/app.js","search":"function foo() { return 1; }","replace":"function foo() { return 2; }"}]`,
 
     reviewer: `You are a Reviewer. You see proposed code changes for a mission. Check each of the following in order and stop at the first problem:
+
+0. PACKAGE / API — If any edit imports "@google/generative-ai" or uses getGenerativeModel, model.generateContent(prompt), or result.response.text(), report FIX: this project uses @google/genai only; use GoogleGenAI from '@google/genai', genAI.models.generateContent({ model, contents }), and response.text. If Discord message collections are indexed like .first(n)[1], report FIX: use .at(index) or [...collection.values()] for reliable indexing.
 
 1. IMPORT PATHS — For every new import added in these edits, verify the module path is correct relative to the file being edited. A file at "src/admin/routes.js" importing from "src/admin/agent/runStore.js" must use "./agent/runStore.js", NOT "../agent/runStore.js". If any import path is wrong, report FIX.
 2. MISSING MODULES — For every new import added, verify the module either (a) already exists in the codebase at the stated path, or (b) is being created in these same edits. If an import references a file that is not shown in the proposed changes and likely does not exist (e.g. a utility file with a novel name), report FIX.
