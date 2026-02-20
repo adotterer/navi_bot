@@ -103,6 +103,43 @@ function extractJsonArrayCandidates(text) {
     return candidates;
 }
 
+/** Like extractJsonArrayCandidates but returns every code block (so Coder can try each). Order: last block, first block, rest, then last/first array. */
+function extractAllJsonArrayCandidatesForEdits(text) {
+    const trimmed = text.trim();
+    const seen = new Set();
+    const add = (s) => {
+        const t = s.trim();
+        if (t.length > 2 && !seen.has(t)) { seen.add(t); return t; }
+        return null;
+    };
+    const candidates = [];
+    const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)```/g;
+    const codeBlocks = [];
+    let m;
+    while ((m = codeBlockRegex.exec(trimmed)) !== null) {
+        const inner = m[1].trim();
+        if (inner.length > 2) codeBlocks.push(inner);
+    }
+    if (codeBlocks.length) {
+        candidates.push(codeBlocks[codeBlocks.length - 1]);
+        if (codeBlocks.length > 1) candidates.push(codeBlocks[0]);
+        for (let i = 1; i < codeBlocks.length - 1; i++) candidates.push(codeBlocks[i]);
+    }
+    const lastClose = trimmed.lastIndexOf(']');
+    const lastOpen = trimmed.lastIndexOf('[');
+    if (lastOpen !== -1 && lastClose !== -1 && lastOpen < lastClose) {
+        const lastArray = trimmed.slice(lastOpen, lastClose + 1);
+        const a = add(lastArray);
+        if (a) candidates.push(a);
+    }
+    const firstMatch = trimmed.match(/\[[\s\S]*\]/);
+    if (firstMatch && firstMatch[0].length > 2) {
+        const a = add(firstMatch[0]);
+        if (a) candidates.push(a);
+    }
+    return candidates;
+}
+
 /**
  * Parse flight plan from model output (extract JSON array). Prefers ```json block, then last [...], then first [...].
  * @param {string} text
@@ -284,13 +321,15 @@ export async function runCoder(step, fileContext, opts = {}) {
 
     const systemPrompt = `You are a Coder. Senior software engineer: read existing code before changing it; match existing patterns, naming, and structure; write focused minimal diffs — only what the task requires; verify changes compile and work before committing.
 
-Given one implementation step, output the exact file change(s). You must output ONLY a single JSON array of edits. Each edit: "path" (file path relative to repo root), "content" (the COMPLETE new file content for that file).
+Given one implementation step, output the exact file change(s). You MUST output a single JSON array of edits only. Each edit: "path" (file path relative to repo root), "content" (the COMPLETE new file content for that file).
 
-CRITICAL: In the JSON, use \\n for newlines inside "content" strings (no literal line breaks), or the response cannot be parsed. Example: "content": "line1\\nline2\\n".
+CRITICAL parsing rules:
+- Output ONLY the JSON array. Do not wrap it in a markdown code block (no \`\`\`json). Start your response with [ and end with ].
+- Inside "content" strings use escaped newlines: \\n (not literal line breaks), or the response cannot be parsed.
 
-When "Current file contents" are provided above, you MUST base your edit on that content: preserve unchanged parts and only modify what the step asks; do not replace entire files with unrelated code. Do not invent content that does not match this codebase (e.g. wrong project names, unrelated constants). For NEW files (no current contents), create minimal content that fulfills the step and matches the repo's style (imports, naming, structure).
+When "Current file contents" are provided above, you MUST base your edit on that content: preserve unchanged parts and only modify what the step asks; do not replace entire files with unrelated code. Do not invent content that does not match this codebase. For NEW files (no current contents), create minimal content that fulfills the step and matches the repo's style.
 
-Preserve existing code where no change is needed; only include files that change. Output nothing but the JSON array. Example:
+Preserve existing code where no change is needed; only include files that change. Example (output exactly this format, no other text):
 [{"path":"src/app.js","content":"// full file content here\\n"}]`;
 
     let userContent = `Step: ${step.what}\n${step.changeDescription || ''}\nFiles to consider: ${(step.files || []).join(', ')}${fileSection}\n\nProduce the edits array (full file content for each changed file).`;
@@ -326,23 +365,23 @@ Preserve existing code where no change is needed; only include files that change
 }
 
 /**
- * Extract edits array from Coder output. Prefers ```json ... ``` block, then last [...], then first [...].
- * Also accepts object with .edits or .changes array. Uses relaxed parse (trailing commas + literal newlines in strings).
+ * Extract edits array from Coder output. Tries object wrappers, every code block, last/first array, and single-edit object.
+ * Uses relaxed parse (trailing commas + literal newlines in strings).
  */
 function parseCoderEdits(text) {
     const normalizeEdits = (arr) => {
         if (!Array.isArray(arr)) return [];
         return arr
-            .filter((e) => e && (e.path || e.file) && (e.content != null || e.text != null))
+            .filter((e) => e && typeof e === 'object' && (e.path || e.file))
             .map((e) => ({ path: String(e.path || e.file), content: String(e.content ?? e.text ?? '') }));
     };
 
-    // Try whole text as JSON object with .edits or .changes
     const tryParseObject = (raw) => {
         try {
             return JSON.parse(escapeNewlinesInJsonStrings(raw).replace(/,\s*]/g, ']').replace(/,\s*}/g, '}'));
         } catch (_) { return null; }
     };
+
     const trimmedForObj = text.trim();
     const firstBrace = trimmedForObj.indexOf('{');
     const lastBrace = trimmedForObj.lastIndexOf('}');
@@ -353,21 +392,32 @@ function parseCoderEdits(text) {
     for (const raw of objCandidates) {
         if (!raw.startsWith('{')) continue;
         const parsed = tryParseObject(raw);
-        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-            const arr = parsed.edits ?? parsed.changes ?? parsed.files;
-            const edits = normalizeEdits(Array.isArray(arr) ? arr : []);
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) continue;
+        const arr = parsed.edits ?? parsed.changes ?? parsed.files;
+        if (Array.isArray(arr)) {
+            const edits = normalizeEdits(arr);
+            if (edits.length) return edits;
+        }
+        if ((parsed.path || parsed.file) && (parsed.content != null || parsed.text != null)) {
+            const edits = normalizeEdits([parsed]);
             if (edits.length) return edits;
         }
     }
 
-    for (const raw of extractJsonArrayCandidates(text)) {
-        const arr = tryParseJsonArrayWithNewlineFix(raw);
+    const stripToJson = (s) => {
+        const t = s.trim();
+        const start = Math.min(t.indexOf('[') >= 0 ? t.indexOf('[') : 1e9, t.indexOf('{') >= 0 ? t.indexOf('{') : 1e9);
+        if (start < 1e9) return t.slice(start).trim();
+        return t;
+    };
+
+    for (const raw of extractAllJsonArrayCandidatesForEdits(text)) {
+        const arr = tryParseJsonArrayWithNewlineFix(stripToJson(raw));
         if (!arr || !Array.isArray(arr)) continue;
         const edits = normalizeEdits(arr);
         if (edits.length) return edits;
     }
 
-    // Fallback: strip to first [ and last ] and parse
     const trimmed = text.trim();
     const firstBracket = trimmed.indexOf('[');
     const lastBracket = trimmed.lastIndexOf(']');
@@ -375,6 +425,16 @@ function parseCoderEdits(text) {
         const arr = tryParseJsonArrayWithNewlineFix(trimmed.slice(firstBracket, lastBracket + 1));
         if (arr && Array.isArray(arr)) {
             const edits = normalizeEdits(arr);
+            if (edits.length) return edits;
+        }
+    }
+
+    const firstBrace2 = trimmed.indexOf('{');
+    const lastBrace2 = trimmed.lastIndexOf('}');
+    if (firstBrace2 !== -1 && lastBrace2 > firstBrace2) {
+        const single = tryParseObject(trimmed.slice(firstBrace2, lastBrace2 + 1));
+        if (single && (single.path || single.file) && (single.content != null || single.text != null)) {
+            const edits = normalizeEdits([single]);
             if (edits.length) return edits;
         }
     }
