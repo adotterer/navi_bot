@@ -7,6 +7,7 @@ import { promptRoutes } from './promptRoutes.js';
 import { dataRoutes } from './dataRoutes.js';
 import { aliasRoutes } from './aliasRoutes.js';
 import { emojiRoutes } from './emojiRoutes.js';
+import { commandRoutes } from './commandRoutes.js';
 import { agentRoutes } from './agent/agentRoutes.js';
 import { adminHead, adminNav, adminContainer, escapeHtml, s3Badge } from './layout.js';
 import { headS3Key, hasS3KeysWithPrefix } from '../shared/s3Helper.js';
@@ -58,6 +59,7 @@ router.use('/prompts', requireAdmin, promptRoutes);
 router.use('/data', requireAdmin, dataRoutes);
 router.use('/aliases', requireAdmin, aliasRoutes);
 router.use('/emojis', requireAdmin, emojiRoutes);
+router.use('/commands', requireAdmin, commandRoutes);
 router.use('/agent', requireAdmin, agentRoutes);
 
 function loginPage(opts = {}) {
