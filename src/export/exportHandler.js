@@ -1,7 +1,8 @@
 import fs from 'fs';
+import { EmbedBuilder } from "discord.js";
 import { fetchAllMessages, fetchFromS3, uploadToS3 } from '../shared/s3Helper.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
-import { sendSplitMessage } from '../shared/messageSplitter.js';
+import { createSplitEmbeds, sendSplitMessage } from '../shared/messageSplitter.js';
 
 export async function handleExportFalco(message) {
     const guild = message.guild;

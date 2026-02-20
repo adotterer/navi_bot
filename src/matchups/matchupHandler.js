@@ -5,6 +5,7 @@ import { sendSplitMessage, createSplitEmbeds } from '../shared/messageSplitter.j
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
 import { EmbedBuilder } from 'discord.js';
 import { buildMatchupReferenceData } from '../shared/promptDataHelper.js';
+import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
     defaultModel: process.env.GEMINI_MODEL || 'gemini-3-flash-preview'
@@ -187,7 +188,7 @@ Generate the matchup summary now:`;
         });
         const summary = response.text;
         
-        const embeds = createSplitEmbeds(EmbedBuilder, summary, "#36AAD4", SUMMARY_DISCLAIMER);
+        const embeds = createSplitEmbeds(EmbedBuilder, summary, INFO_EMBED_COLOR, SUMMARY_DISCLAIMER);
         message.channel.send({ embeds });
 
         console.log(`✅ Generated match-up notes for ${displayName}`);
@@ -330,7 +331,7 @@ Provide the best possible answer now:`;
 
         const answer = response.text;
         
-        const embeds = createSplitEmbeds(EmbedBuilder, answer, "#36AAD4", SUMMARY_DISCLAIMER);
+        const embeds = createSplitEmbeds(EmbedBuilder, answer, INFO_EMBED_COLOR, SUMMARY_DISCLAIMER);
         message.channel.send({ embeds });
 
         console.log(`✅ Answered MU question for ${displayName}`);
@@ -471,7 +472,7 @@ ${channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n')}`;
         const refinedSummary = response.text;
         
         const refinedWithTitle = `**Refined Summary:**\n${refinedSummary}`;
-        const embeds = createSplitEmbeds(EmbedBuilder, refinedWithTitle, "#36AAD4", SUMMARY_DISCLAIMER);
+        const embeds = createSplitEmbeds(EmbedBuilder, refinedWithTitle, INFO_EMBED_COLOR, SUMMARY_DISCLAIMER);
         message.channel.send({ embeds });
 
         console.log(`✅ Refined match-up notes for ${characterName} based on user feedback`);

@@ -3,6 +3,7 @@ import { sendSplitMessage, createSplitEmbeds } from "../shared/messageSplitter.j
 import { fetchFromS3 } from "../shared/s3Helper.js";
 import { SUMMARY_DISCLAIMER } from "../shared/responseNotices.js";
 import { EmbedBuilder } from 'discord.js';
+import { INFO_EMBED_COLOR } from './faqAndAliasHandler.js';
 
 const genAI = new GoogleGenAI({
     apiKey: process.env.GOOGLE_API_KEY
@@ -101,7 +102,7 @@ Provide the best possible answer now:`;
 
         const answer = response.text;
         
-        const embeds = createSplitEmbeds(EmbedBuilder, answer, "#36AAD4", SUMMARY_DISCLAIMER);
+        const embeds = createSplitEmbeds(EmbedBuilder, answer, INFO_EMBED_COLOR, SUMMARY_DISCLAIMER);
         message.channel.send({ embeds });
     } catch (error) {
         console.error("Error in handleQuestion:", error);
