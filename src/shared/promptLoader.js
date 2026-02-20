@@ -7,7 +7,7 @@ import { fetchFromS3Raw, putToS3, listS3KeysWithPrefix, deleteFromS3 } from './s
 const S3_PREFIX = 'admin/prompts/';
 const HISTORY_LIMIT = 20;
 
-const PROMPT_META = {
+export let PROMPT_META = {
     mu_notes: {
         description: '!mu – full matchup summary for a character (alias: !mu-notes)',
         variables: [
@@ -268,6 +268,28 @@ export function getPromptMeta(id) {
     return PROMPT_META[id] || null;
 }
 
+export function getCommandMetadata(id) {
+    return getPromptMeta(id);
+}
+
+export async function updateCommandMetadata(id, updates) {
+    const meta = { ...PROMPT_META };
+    if (!meta[id]) throw new Error('Command not found');
+    meta[id] = {
+        ...meta[id],
+        description: updates.description,
+        allowedChannels: updates.whereItWorks
+    };
+    await savePromptMeta(meta);
+}
+
+export function isCommandAllowed(id, message) {
+    const meta = getPromptMeta(id);
+    if (!meta || !meta.allowedChannels || meta.allowedChannels === 'all') return true;
+    const allowed = String(meta.allowedChannels).split(',').map(s => s.trim());
+    return allowed.includes(message.channelId) || (message.channel?.name && allowed.includes(message.channel.name));
+}
+
 export async function getPromptTemplate(id) {
     if (templateCache.has(id)) return templateCache.get(id);
     const s3Key = S3_PREFIX + id + '.txt';
@@ -306,6 +328,12 @@ export async function savePromptTemplate(id, body) {
     for (let i = HISTORY_LIMIT; i < list.length; i++) {
         await deleteFromS3(list[i].Key);
     }
+}
+
+export async function savePromptMeta(newMeta) {
+    const s3Key = S3_PREFIX + 'meta.json';
+    await putToS3(s3Key, JSON.stringify(newMeta, null, 2), 'application/json');
+    PROMPT_META = newMeta;
 }
 
 export async function resetPromptToDefault(id) {
