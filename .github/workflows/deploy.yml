@@ -27,7 +27,7 @@ jobs:
 
       - name: Notify Discord audit-logs
         env:
-          GITHUB_WEBHOOK_SECRET: ${{ secrets.GITHUB_WEBHOOK_SECRET }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
         run: |
           sleep 45
           PAYLOAD=$(jq -n \
@@ -36,7 +36,7 @@ jobs:
             --arg msg "${{ github.event.head_commit.message }}" \
             --arg author "${{ github.event.head_commit.author.name }}" \
             '{ref: $ref, head_commit: {id: $sha, message: $msg, author: {name: $author}}}')
-          SIG="sha256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$GITHUB_WEBHOOK_SECRET" | awk '{print $2}')"
+          SIG="sha256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
           curl -s -o /dev/null -w "%{http_code}" \
             -X POST https://navi.adotterer.com/github/webhook \
             -H "Content-Type: application/json" \

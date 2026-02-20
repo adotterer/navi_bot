@@ -15,7 +15,7 @@ import { getClient } from '../shared/discordClient.js';
 export const webhookRouter = express.Router();
 
 function verifySignature(rawBody, signatureHeader) {
-    const secret = process.env.GITHUB_WEBHOOK_SECRET;
+    const secret = process.env.WEBHOOK_SECRET;
     if (!secret || !signatureHeader) return false;
     const expected = 'sha256=' + createHmac('sha256', secret).update(rawBody).digest('hex');
     try {
