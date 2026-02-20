@@ -31,15 +31,27 @@ export async function runResearcher(missionPrompt, opts = {}) {
     const { onChunk } = opts;
     let treeInfo = '';
     try {
-        const treeResult = await getFileTree('', 2);
+        const treeResult = await getFileTree('', 3);
         if (treeResult.ok && treeResult.tree) {
-            treeInfo = '\n\nRelevant codebase structure (top 2 levels):\n```json\n' + JSON.stringify(treeResult.tree, null, 2) + '\n```';
+            treeInfo = '\n\nRelevant codebase structure (top 3 levels):\n```json\n' + JSON.stringify(treeResult.tree, null, 2) + '\n```';
         }
     } catch (_) {}
 
     const systemPrompt = `You are a Researcher for a codebase. Your job is to take a high-level mission and produce a "flight plan": a short list of concrete, ordered tasks that together achieve the mission.
 
-The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase structure below to inform your task list. Output ONLY a valid JSON array of tasks, no other text. Each task must have: "id" (short slug), "title" (one line), "description" (one or two sentences), and "hints" (comma-separated exact file paths when possible, e.g. "src/export/exportHandler.js, src/matchups/matchupHandler.js"). For missions about Discord commands (!mu, !mq, !export) or embed/branding, always include the relevant handler paths in hints (e.g. src/export/exportHandler.js, src/matchups/matchupHandler.js, src/messages/questionHandler.js, src/shared/messageSplitter.js). Never suggest generic filenames like index.js or main.js unless they actually exist in the repo structure. Example:
+The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase structure below to inform your task list. Output ONLY a valid JSON array of tasks, no other text. Each task must have: "id" (short slug), "title" (one line), "description" (one or two sentences), and "hints" (comma-separated exact file paths when possible, e.g. "src/export/exportHandler.js, src/matchups/matchupHandler.js").
+
+FILE MAPPING RULES — use these to select the correct hint paths:
+- Discord commands (!mu, !mq, !export, !fd, etc.): src/export/exportHandler.js, src/matchups/matchupHandler.js, src/messages/questionHandler.js, src/shared/messageSplitter.js
+- Admin panel UI pages: each admin page is rendered server-side in its own routes file. The file that renders the page HTML AND its inline <script> JS is the SAME file. For the Agent PR page: src/admin/agent/agentRoutes.js. For aliases: src/admin/aliasRoutes.js. For prompts: src/admin/promptRoutes.js. For the main dashboard/nav: src/admin/routes.js and src/admin/layout.js.
+- Agent pipeline logic: src/admin/agent/orchestrator.js, src/admin/agent/agents.js
+- Agent run state: src/admin/agent/runStore.js
+- Shared utilities: src/shared/messageSplitter.js, src/shared/s3Helper.js, src/shared/promptLoader.js
+- If the mission involves changes to both a backend store AND a UI button/display, always include BOTH the store file AND the UI routes file in hints.
+- If the mission introduces a new shared utility module, include it as a hint with a path under src/shared/.
+
+Never suggest generic filenames like index.js or main.js unless they actually exist in the repo structure.
+Example:
 [{"id":"add-route","title":"Add health route","description":"Add GET /health that returns { status: 'ok' }.","hints":"src/app.js"}]`;
 
     const userContent = `Mission:\n${missionPrompt}${treeInfo}\n\nProduce the flight plan as a single JSON array.`;
@@ -194,6 +206,12 @@ export async function runPlanner(task, opts = {}) {
 Given a single task from a flight plan, output an implementation plan: an ordered list of steps. Each step should specify what to do, which file(s) to touch, and optionally a short change description. Each step should be an actionable implementation step (code or config change), not a pure analysis step. Prefer steps that produce file edits.
 
 Prefer steps that EDIT existing files shown in "Relevant file contents" or "Files that match the mission" above; only add steps that create NEW files when the mission explicitly requires a new module. When the mission asks to match existing behavior (e.g. use the same embed style as !mu/!mq), the "files" array must include the existing handler file(s) to modify and you should reference the same imports and patterns (e.g. createSplitEmbeds, EmbedBuilder, SUMMARY_DISCLAIMER, color "#36AAD4") that already appear in the codebase. The "files" array must only contain paths that appear in the "Relevant file contents" or "Files that match the mission" above. Do not use index.js, main.js, or paths not listed.
+
+CRITICAL RULES — violating any of these causes broken code:
+1. UI CHANGES: If the mission requires any visible UI change (adding a button, replacing a link, showing data, modifying click behavior), you MUST include the file that renders that HTML or contains its inline JavaScript in the "files" array. In this codebase, admin UI pages are rendered server-side in their route handler files (e.g. agentRoutes.js renders the Agent PR page including all its <script> JS). Never stop at a backend store or helper file if the UI itself must change.
+2. NEW IMPORTS: If a step adds an import from a new utility file (e.g. "import { foo } from '../shared/myUtil.js'"), you MUST either (a) include a separate step that creates that file, or (b) only import from files shown in "Relevant file contents". Never instruct the Coder to import a module that does not exist and is not being created.
+3. WIRING: If a step introduces a new flag or function (e.g. setAborted()), include a step that wires it into the running process that should check it (e.g. the orchestrator loop). A flag that is set but never read is dead code.
+4. EXPORTS: If a step adds a new function that other files will call, include updating the export statement of that file in the same step's changeDescription.
 
 Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (array of file paths, e.g. ["src/app.js"]), "changeDescription" (optional). Example:
 [{"what":"Add GET /health handler","files":["src/app.js"],"changeDescription":"Add app.get('/health', ...) returning { status: 'ok' }"}]`;
@@ -364,6 +382,12 @@ RULES:
 - For a NEW file (not in "Current file contents"), use "search": "" and "replace": "<full new file content>".
 - Only edit files listed in "Files to consider" or shown in "Current file contents". Do not touch index.js or unlisted files.
 - Use escaped newlines (\\n) inside all string values — never literal line breaks.
+
+IMPORT PATH RULES — incorrect imports will break the app:
+- Import paths must be relative to the file you are editing. To compute the correct path: find the file being edited in "Current file contents", note its directory, then write the path relative to that directory. Example: editing "src/admin/routes.js" (directory: src/admin/) and importing from "src/admin/agent/runStore.js" → use "./agent/runStore.js". Editing "src/admin/agent/orchestrator.js" (directory: src/admin/agent/) and importing from "src/admin/agent/runStore.js" → use "./runStore.js".
+- Before adding any import, verify the module being imported is either (a) shown in "Current file contents" at the path you are importing, or (b) a file you are creating in this same edit. Never import a module that does not exist.
+- Only import named exports that are explicitly listed in the export statement of the source file shown in "Current file contents".
+- When you add a new exported function to a file that uses a named export list (e.g. "export { foo, bar }"), you MUST also patch that export line to include the new function name.
 
 Example (imports change + function change in one file, two separate patches):
 [{"path":"src/app.js","search":"const old = require('old');","replace":"const newMod = require('new');"},{"path":"src/app.js","search":"function foo() { return 1; }","replace":"function foo() { return 2; }"}]`;
@@ -564,11 +588,25 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
  * @returns {Promise<{ ok: true, feedback: string|null } | { ok: false, error: string }>}
  */
 export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
+    const { importWarnings = [] } = opts;
     const editSummary = (aggregatedEdits || [])
         .map((e) => `--- ${e.path} ---\n${(e.content || '').slice(0, 8000)}${(e.content || '').length > 8000 ? '\n... (truncated)' : ''}`)
         .join('\n\n');
-    const systemPrompt = `You are a Reviewer. You see the proposed code changes for a mission. Check for correctness and consistency (e.g. API usage, types, existing patterns). If everything looks good, reply with exactly: OK. If something must be fixed, reply with FIX: followed by one short, actionable sentence for the coder (e.g. "EmbedBuilder.setColor expects a string; use a quoted hex string."). Output nothing else.`;
-    const userContent = `Mission: ${(prompt || '').slice(0, 1000)}\n\nProposed changes:\n${editSummary}`;
+    const systemPrompt = `You are a Reviewer. You see proposed code changes for a mission. Check each of the following in order and stop at the first problem:
+
+1. IMPORT PATHS — For every new import added in these edits, verify the module path is correct relative to the file being edited. A file at "src/admin/routes.js" importing from "src/admin/agent/runStore.js" must use "./agent/runStore.js", NOT "../agent/runStore.js". If any import path is wrong, report FIX.
+2. MISSING MODULES — For every new import added, verify the module either (a) already exists in the codebase at the stated path, or (b) is being created in these same edits. If an import references a file that is not shown in the proposed changes and likely does not exist (e.g. a utility file with a novel name), report FIX.
+3. MISSING EXPORTS — If a function or value is imported by name (e.g. "import { abortRun } from ..."), verify that the source file in these edits actually exports it. If the function exists in the file but is not in the export statement, report FIX.
+4. UI COMPLETENESS — If the mission requires a visible UI change (adding a button, replacing a link, showing new data), verify that the file containing the rendered HTML or inline JavaScript was actually modified in these edits. Backend-only changes are incomplete if the mission required a frontend change. Report FIX if the UI file is missing.
+5. WIRING — If a new flag or function is introduced (e.g. "abortRun"), verify it is actually called somewhere in the pipeline (e.g. the orchestrator or equivalent loop checks it). A flag that is set but never read is a FIX.
+
+If ALL checks pass, reply with exactly: OK
+If any check fails, reply with FIX: followed by ONE short, actionable sentence describing the most critical issue (e.g. "Fix: import path in routes.js should be './agent/runStore.js' not '../agent/runStore.js'").
+Output nothing else.`;
+    const warningsSection = importWarnings.length > 0
+        ? `\n\nSTATIC ANALYSIS WARNINGS (pre-detected issues you must address):\n${importWarnings.map((w) => '- ' + w).join('\n')}`
+        : '';
+    const userContent = `Mission: ${(prompt || '').slice(0, 1000)}${warningsSection}\n\nProposed changes:\n${editSummary}`;
     try {
         const response = await withTimeout(
             (async () => {

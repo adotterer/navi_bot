@@ -96,6 +96,48 @@ function parseHintPaths(task) {
     return hints.filter((h) => /\.(js|ts|json|md|mjs|cjs|tsx|jsx|yml|yaml|html|css)$/i.test(h) || (h.includes('/') && h.length > 2));
 }
 
+/**
+ * Scan aggregated edits for import statements that reference non-existent local modules.
+ * Returns an array of warning strings (empty = all clear).
+ * Only checks relative imports (starting with ./ or ../).
+ */
+async function validateImportPaths(aggregatedEdits) {
+    const warnings = [];
+    const editedPaths = new Set(aggregatedEdits.map((e) => e.path));
+    const importRe = /(?:import\s.*?from\s+|require\s*\()\s*['"](\.[^'"]+)['"]/g;
+    for (const edit of aggregatedEdits) {
+        if (!edit.path || !edit.content) continue;
+        const fileDir = edit.path.split('/').slice(0, -1).join('/');
+        let m;
+        importRe.lastIndex = 0;
+        while ((m = importRe.exec(edit.content)) !== null) {
+            const importSpec = m[1];
+            // Resolve the import relative to the editing file's directory
+            const segments = (fileDir ? fileDir + '/' + importSpec : importSpec).split('/');
+            const resolved = [];
+            for (const seg of segments) {
+                if (seg === '..') resolved.pop();
+                else if (seg !== '.') resolved.push(seg);
+            }
+            const resolvedPath = resolved.join('/');
+            // Check with common JS extensions
+            const candidates = [resolvedPath, resolvedPath + '.js', resolvedPath + '/index.js'];
+            const inEdits = candidates.some((c) => editedPaths.has(c));
+            if (inEdits) continue;
+            // Check if the file exists on disk
+            let found = false;
+            for (const candidate of candidates) {
+                const r = await callTool('read_file', { path: candidate });
+                if (r.ok && r.result != null) { found = true; break; }
+            }
+            if (!found) {
+                warnings.push(`${edit.path} imports '${importSpec}' → resolved to '${resolvedPath}' which does not exist`);
+            }
+        }
+    }
+    return warnings;
+}
+
 /** Build run-wide allowed path set: grep paths + all task hints from flight plan. */
 function buildAllowedPaths(flightPlan, grepPaths) {
     const pathSet = new Set(grepPaths || []);
@@ -293,6 +335,14 @@ export async function runPipeline(runId, opts = {}) {
             return;
         }
 
+        // Static import validation: catch broken relative imports before Reviewer sees them.
+        const importWarnings = await validateImportPaths(aggregatedEdits);
+        if (importWarnings.length > 0) {
+            for (const w of importWarnings) {
+                log('system', 'reviewing', `⚠️ Import path warning: ${w}\n`);
+            }
+        }
+
         const MAX_REVIEW_ROUNDS = 2;
         let reviewRound = 0;
         let editsToReview = [...aggregatedEdits];
@@ -302,7 +352,9 @@ export async function runPipeline(runId, opts = {}) {
             updateRun(runId, { status: 'reviewing' });
             log('system', 'reviewing', reviewRound === 0 ? 'Running Reviewer…\n' : `Review round ${reviewRound + 1}…\n`);
 
-            const reviewResult = await runReviewer(editsToReview, prompt, {});
+            const reviewResult = await runReviewer(editsToReview, prompt, {
+                importWarnings: reviewRound === 0 ? importWarnings : [],
+            });
             if (!reviewResult.ok) {
                 log('system', 'reviewing', `Reviewer failed: ${reviewResult.error}\n`);
                 break;
