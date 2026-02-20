@@ -11,7 +11,7 @@ import { webhookRouter } from './admin/webhookRoutes.js';
 export function createApp() {
     const app = express();
 
-    // Raw body parser must be registered before urlencoded/json so the webhook
+    // Raw body parser must be registered before urlencoded/json so the webhook.
     // route receives raw bytes for HMAC signature verification.
     app.use('/github/webhook', express.raw({ type: 'application/json' }));
     app.use(webhookRouter);
