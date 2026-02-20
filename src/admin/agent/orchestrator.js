@@ -3,7 +3,8 @@
  * Uses tool registry for read_file and grep_search; passes fileContext and grepContext to Planner.
  */
 import pLimit from 'p-limit';
-import { appendLog, getRun, updateRun, isRunCancelled } from './runStore.js';
+import { setMaxListeners } from 'node:events';
+import { appendLog, getRun, updateRun, isRunCancelled, notifyDocsUpdate, registerAbortController, unregisterAbortController } from './runStore.js';
 import { persistRunToS3 } from './agentRunPersistence.js';
 import { runResearcher, runPlanner, runCoder, validateCoderStep, runReviewer } from './agents.js';
 import { callTool } from './toolRegistry.js';
@@ -44,6 +45,23 @@ function missionKeywords(prompt, maxKeywords = 5) {
     return out;
 }
 
+/**
+ * Derive a short one-line title from the flightPlan for display in the run list and PR.
+ * @param {Array<{ title?: string, id?: string }>} flightPlan
+ * @returns {string}
+ */
+function deriveRunTitle(flightPlan) {
+    if (!flightPlan || !flightPlan.length) return '';
+    if (flightPlan.length === 1) return flightPlan[0].title || flightPlan[0].id || '';
+    const first = flightPlan[0].title || flightPlan[0].id || '';
+    const second = flightPlan[1].title || flightPlan[1].id || '';
+    const rest = flightPlan.length - 2;
+    const combined = rest > 0
+        ? `${first}, ${second} (+${rest} more)`
+        : `${first} and ${second}`;
+    return combined.length > 90 ? combined.slice(0, 87) + '…' : combined;
+}
+
 /** Patterns we always grep when mission mentions embed/Discord/branding (so Planner sees the real pattern). */
 const MISSION_GREP_PATTERNS = ['createSplitEmbeds', 'EmbedBuilder', 'message.reply', 'SUMMARY_DISCLAIMER'];
 
@@ -53,9 +71,11 @@ const MISSION_GREP_PATTERNS = ['createSplitEmbeds', 'EmbedBuilder', 'message.rep
  */
 async function buildGrepContext(prompt) {
     const keywords = missionKeywords(prompt, 5);
-    const patterns = [...keywords];
+    // Extract Discord !command tokens verbatim (e.g. !mu, !mq, !export) — missionKeywords strips the ! so we extract them separately
+    const commandTokens = [...(prompt || '').matchAll(/![a-z][a-zA-Z0-9]*/g)].map((m) => m[0]);
+    const patterns = [...new Set([...commandTokens, ...keywords])];
     const promptLower = (prompt || '').toLowerCase();
-    if (promptLower.includes('embed') || promptLower.includes('discord') || promptLower.includes('branding') || promptLower.includes('!mu') || promptLower.includes('!mq') || promptLower.includes('!export')) {
+    if (promptLower.includes('embed') || promptLower.includes('discord') || promptLower.includes('branding') || commandTokens.length > 0) {
         patterns.push(...MISSION_GREP_PATTERNS);
     }
     const seen = new Set();
@@ -179,6 +199,11 @@ export async function runPipeline(runId, opts = {}) {
     const prompt = (opts.prompt ?? run?.prompt ?? '').trim();
     const log = (role, stage, message) => appendLog(runId, { role, stage, message });
 
+    const abortCtrl = new AbortController();
+    setMaxListeners(50, abortCtrl.signal);
+    const signal = abortCtrl.signal;
+    registerAbortController(runId, abortCtrl);
+
     let flightPlan = run?.flightPlan;
     let allSteps = run?.steps;
     const existingStepResults = run?.stepResults || [];
@@ -191,7 +216,7 @@ export async function runPipeline(runId, opts = {}) {
             updateRun(runId, { status: 'research' });
             log('system', 'research', resume ? 'Resuming: re-running Researcher…\n' : 'Running Researcher…\n');
 
-            const researchResult = await runResearcher(prompt, { docs: getRun(runId)?.docs });
+            const researchResult = await runResearcher(prompt, { docs: getRun(runId)?.docs, signal });
             if (!researchResult.ok) {
                 updateRun(runId, { status: 'error', error: researchResult.error });
                 log('system', 'error', 'Researcher failed: ' + researchResult.error + '\n');
@@ -199,7 +224,11 @@ export async function runPipeline(runId, opts = {}) {
             }
 
             flightPlan = researchResult.flightPlan;
-            updateRun(runId, { flightPlan });
+            const overview = [prompt.trim()].concat(flightPlan.map((t) => `- ${t.title || t.id}`)).join('\n\nTasks:\n');
+            const requirements = flightPlan.map((t) => (t.title ? `**${t.title}**: ` : '') + (t.description || '')).join('\n\n');
+            const title = deriveRunTitle(flightPlan);
+            updateRun(runId, { flightPlan, title, docs: { overview, requirements }, inputTokens: researchResult.inputTokens || 0, outputTokens: researchResult.outputTokens || 0 });
+            notifyDocsUpdate(runId);
             log('system', 'research', `Flight plan: ${flightPlan.length} task(s).\n`);
             await persistRunToS3(runId);
         }
@@ -224,7 +253,7 @@ export async function runPipeline(runId, opts = {}) {
                     limitPlanners(async () => {
                         log('system', 'planning', `Planner: ${task.title}\n`);
                         const fileContext = await buildFileContextForTask(task, grepPaths);
-                        const planResult = await runPlanner(task, { fileContext, grepContext, docs: getRun(runId)?.docs, flightPlan, steps: getRun(runId)?.steps });
+                        const planResult = await runPlanner(task, { fileContext, grepContext, docs: getRun(runId)?.docs, flightPlan, steps: getRun(runId)?.steps, signal });
                         if (planResult.ok) {
                             const n = (planResult.steps && planResult.steps.length) || 0;
                             log('system', 'planning', `Planner: ${task.title} — ${n} step(s)\n`);
@@ -251,7 +280,17 @@ export async function runPipeline(runId, opts = {}) {
                 return;
             }
 
-            updateRun(runId, { steps: allSteps });
+            const planInputTokens = planResults.reduce((s, { planResult }) => s + (planResult.inputTokens || 0), 0);
+            const planOutputTokens = planResults.reduce((s, { planResult }) => s + (planResult.outputTokens || 0), 0);
+            updateRun(runId, { steps: allSteps, inputTokens: planInputTokens, outputTokens: planOutputTokens });
+            const runAfterPlan = getRun(runId);
+            const existingReqs = runAfterPlan?.docs?.requirements || '';
+            const implSteps = allSteps.map(({ step }, i) => `${i + 1}. ${step.what || 'Step'}`).join('\n');
+            const requirementsWithImpl = existingReqs + (implSteps ? '\n\nImplementation steps:\n' + implSteps : '');
+            if (requirementsWithImpl !== existingReqs) {
+                updateRun(runId, { docs: { requirements: requirementsWithImpl } });
+                notifyDocsUpdate(runId);
+            }
             await persistRunToS3(runId);
         }
 
@@ -281,7 +320,15 @@ export async function runPipeline(runId, opts = {}) {
                             if (r.ok && typeof r.result === 'string') fileContext[p] = r.result;
                         }
                     }
-                    const coderResult = await runCoder(step, fileContext, {});
+                    // If the step or mission references Discord commands, always inject promptLoader.js
+                    // so the Coder sees authoritative one-line descriptions rather than inventing them.
+                    const stepText = ((step.what || '') + ' ' + (step.changeDescription || '') + ' ' + prompt).toLowerCase();
+                    const PROMPT_LOADER_PATH = 'src/shared/promptLoader.js';
+                    if (!fileContext[PROMPT_LOADER_PATH] && /!mu|!mq|!export|!fd|discord command/i.test(stepText)) {
+                        const r = await callTool('read_file', { path: PROMPT_LOADER_PATH });
+                        if (r.ok && typeof r.result === 'string') fileContext[PROMPT_LOADER_PATH] = r.result;
+                    }
+                    const coderResult = await runCoder(step, fileContext, { signal, missionPrompt: prompt });
                     return { step, task, coderResult, stepIndex: j, useExisting: false };
                 })
             )
@@ -306,7 +353,11 @@ export async function runPipeline(runId, opts = {}) {
                 log('system', 'coding', `Coder: ${step.what} — failed: ${coderResult?.error || 'No result'}\n`);
                 continue;
             }
-            const validation = await validateCoderStep(step, prompt, coderResult.edits || [], { allowedPaths });
+            const validation = await validateCoderStep(step, prompt, coderResult.edits || [], { allowedPaths, signal });
+            updateRun(runId, {
+                inputTokens: (coderResult.inputTokens || 0) + (validation.inputTokens || 0),
+                outputTokens: (coderResult.outputTokens || 0) + (validation.outputTokens || 0),
+            });
             stepResults.push({
                 step,
                 status: validation.status,
@@ -346,17 +397,22 @@ export async function runPipeline(runId, opts = {}) {
         for (const [filePath, patches] of byPathPatches.entries()) {
             if (byPathContent.has(filePath)) continue; // full-content edit takes precedence
             const readResult = await callTool('read_file', { path: filePath });
-            if (!readResult.ok) {
-                log('system', 'coding', `[patch] Could not read ${filePath} for patching: ${readResult.error}\n`);
-                continue;
+            let content = '';
+            if (readResult.ok) {
+                content = readResult.result;
+            } else {
+                // File doesn't exist yet — only valid if at least one patch creates it from scratch (search === '')
+                const hasNewFileMarker = patches.some((p) => p.search === '');
+                if (!hasNewFileMarker) {
+                    log('system', 'coding', `[patch] Could not read ${filePath} for patching: ${readResult.error}\n`);
+                    continue;
+                }
             }
-            let content = readResult.result;
             for (const { search, replace } of patches) {
                 if (search === '') {
-                    // New file or full replace
-                    content = replace;
+                    content = replace ?? '';
                 } else if (content.includes(search)) {
-                    content = content.replace(search, replace);
+                    content = content.replace(search, replace ?? '');
                 } else {
                     log('system', 'coding', `[patch] Search text not found in ${filePath} — patch skipped\n`);
                 }
@@ -399,7 +455,9 @@ export async function runPipeline(runId, opts = {}) {
 
             const reviewResult = await runReviewer(editsToReview, prompt, {
                 importWarnings: reviewRound === 0 ? importWarnings : [],
+                signal,
             });
+            updateRun(runId, { inputTokens: reviewResult.inputTokens || 0, outputTokens: reviewResult.outputTokens || 0 });
             if (!reviewResult.ok) {
                 log('system', 'reviewing', `Reviewer failed: ${reviewResult.error}\n`);
                 break;
@@ -419,16 +477,30 @@ export async function runPipeline(runId, opts = {}) {
             for (const e of editsToReview) {
                 if (e.path && e.content != null) fileContext[e.path] = e.content;
             }
-            const fixResult = await runCoder(syntheticStep, fileContext, { reviewFeedback: reviewResult.feedback });
+            const fixResult = await runCoder(syntheticStep, fileContext, { reviewFeedback: reviewResult.feedback, signal, missionPrompt: prompt });
+            updateRun(runId, { inputTokens: fixResult.inputTokens || 0, outputTokens: fixResult.outputTokens || 0 });
             if (!fixResult.ok || !fixResult.edits?.length) {
                 log('system', 'reviewing', `Coder fix pass failed or produced no edits: ${fixResult.error || 'no edits'}\n`);
                 break;
             }
-            const byPath = new Map(editsToReview.map((e) => [e.path, e.content]));
+            const byPath = new Map(editsToReview.map((e) => [e.path, e.content ?? '']));
             for (const e of fixResult.edits) {
-                if (e.path && allowedPaths.has(e.path)) byPath.set(e.path, e.content);
+                if (!e.path || !allowedPaths.has(e.path)) continue;
+                if (e.search !== undefined) {
+                    // Patch edit: apply search/replace to current content
+                    const current = byPath.get(e.path) ?? '';
+                    if (e.search === '') {
+                        byPath.set(e.path, e.replace ?? '');
+                    } else if (current.includes(e.search)) {
+                        byPath.set(e.path, current.replace(e.search, e.replace ?? ''));
+                    }
+                } else if (e.content != null) {
+                    byPath.set(e.path, e.content);
+                }
             }
-            editsToReview = Array.from(byPath.entries()).map(([path, content]) => ({ path, content }));
+            editsToReview = Array.from(byPath.entries())
+                .filter(([, content]) => content != null)
+                .map(([path, content]) => ({ path, content }));
             const runAfterReview = getRun(runId);
             if (runAfterReview) runAfterReview.edits = editsToReview;
             reviewRound++;
@@ -440,7 +512,7 @@ export async function runPipeline(runId, opts = {}) {
         updateRun(runId, { status: 'creating_pr' });
         log('system', 'creating_pr', `Collected ${editsToReview.length} file edit(s). Creating PR…\n`);
 
-        const prResult = await createPrIfConfigured(runId, { prompt, edits: editsToReview });
+        const prResult = await createPrIfConfigured(runId, { prompt, edits: editsToReview, title: getRun(runId)?.title || '' });
         if (prResult.ok && prResult.prUrl) {
             updateRun(runId, { status: 'done', prUrl: prResult.prUrl });
             log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
@@ -453,9 +525,17 @@ export async function runPipeline(runId, opts = {}) {
         }
         await persistRunToS3(runId);
     } catch (err) {
-        updateRun(runId, { status: 'error', error: err.message || String(err) });
-        appendLog(runId, { role: 'system', stage: 'error', message: (err.message || String(err)) + '\n' });
-        await persistRunToS3(runId);
+        const isAbort = err?.name === 'AbortError' || isRunCancelled(runId);
+        if (isAbort) {
+            updateRun(runId, { status: 'cancelled' });
+            appendLog(runId, { role: 'system', stage: 'cancelled', message: 'Run stopped by user.\n' });
+        } else {
+            updateRun(runId, { status: 'error', error: err.message || String(err) });
+            appendLog(runId, { role: 'system', stage: 'error', message: (err.message || String(err)) + '\n' });
+        }
+    } finally {
+        unregisterAbortController(runId);
+        await persistRunToS3(runId).catch(() => {});
     }
 }
 

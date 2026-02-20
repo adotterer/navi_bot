@@ -158,6 +158,8 @@ npm run admin
 
 This runs only the Express server (default port **8081**). Open `http://localhost:8081/admin`, log in with `ADMIN_USERNAME` / `ADMIN_PASSWORD` (and set `SESSION_SECRET` in `.env`). Prompt and CSV edits are stored in **S3** (`admin/prompts/`, `admin/data/stats/`, `admin/data/framedata/`), so ensure `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `S3_BUCKET_NAME` are set if you want to test saving. Use `npm run dev:admin` for auto-restart during admin UI development.
 
+**Agent PR (local):** To run Agent PR from this server without touching your local git (no branch checkout, no push from your machine), set `AGENT_NO_LOCAL_GIT=1` in `.env`. The agent will create branches and PRs via the GitHub API only. You need `GITHUB_TOKEN` and `GITHUB_REPO=owner/repo` for PR creation.
+
 ### Elastic Beanstalk Deployment
 ```bash
 git add .

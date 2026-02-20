@@ -41,7 +41,7 @@ function validateEditPath(relativePath) {
  * @returns {Promise<{ ok: boolean, prUrl?: string, error?: string }>}
  */
 export async function createPr(runId, opts = {}) {
-    const { prompt = '', edits = [] } = opts;
+    const { prompt = '', edits = [], title: runTitle = '' } = opts;
     const token = process.env.GITHUB_TOKEN;
     if (!token) {
         return { ok: true }; // no-op when not configured
@@ -53,8 +53,9 @@ export async function createPr(runId, opts = {}) {
 
     const branchName = 'agent/' + runId.replace(/[^a-z0-9-]/gi, '-').slice(0, 80);
 
-    if (!hasGitClone()) {
-        return createPrViaApi(runId, { prompt, edits, branchName, token });
+    const useApiOnly = process.env.AGENT_NO_LOCAL_GIT === 'true' || process.env.AGENT_NO_LOCAL_GIT === '1';
+    if (useApiOnly || !hasGitClone()) {
+        return createPrViaApi(runId, { prompt, edits, branchName, token, runTitle });
     }
 
     const git = simpleGit({ baseDir: WORKSPACE_ROOT });
@@ -82,6 +83,7 @@ export async function createPr(runId, opts = {}) {
         await git.checkoutLocalBranch(branchName);
 
         for (const { absolute, content } of resolvedEdits) {
+            if (content == null) continue; // skip edits with no resolved content
             const dir = path.dirname(absolute);
             if (!fs.existsSync(dir)) {
                 fs.mkdirSync(dir, { recursive: true });
@@ -91,7 +93,7 @@ export async function createPr(runId, opts = {}) {
 
         const relPaths = resolvedEdits.map((e) => e.relative);
         await git.add(relPaths);
-        const title = prompt.slice(0, 72) || `Agent PR ${runId}`;
+        const title = (runTitle || prompt).slice(0, 72) || `Agent PR ${runId}`;
         const body = (prompt ? `## Mission\n${prompt}\n\n` : '') + `**Run ID:** ${runId}\n**Files:** ${relPaths.join(', ')}`;
         await git.commit(title + (title.length >= 72 ? '…' : ''));
         await git.push('origin', branchName);
@@ -126,7 +128,7 @@ export async function createPr(runId, opts = {}) {
  * Create PR using only GitHub API (no local git). Used when deployed without a clone.
  */
 async function createPrViaApi(runId, opts) {
-    const { prompt, edits, branchName, token } = opts;
+    const { prompt, edits, branchName, token, runTitle = '' } = opts;
     const repo = getRepoFromEnv();
     if (!repo) {
         return { ok: false, error: 'GITHUB_REPO required when no local git (e.g. owner/repo)' };
@@ -136,6 +138,7 @@ async function createPrViaApi(runId, opts) {
     for (const e of edits) {
         const v = validateEditPath(e.path);
         if (!v.ok) return { ok: false, error: `${e.path}: ${v.error}` };
+        if (e.content == null) continue; // skip edits with no resolved content
         validated.push({ path: v.relative, content: e.content });
     }
 
@@ -184,7 +187,7 @@ async function createPrViaApi(runId, opts) {
             });
         }
 
-        const title = (prompt || `Agent PR ${runId}`).slice(0, 72);
+        const title = (runTitle || prompt || `Agent PR ${runId}`).slice(0, 72);
         const body = (prompt ? `## Mission\n${prompt}\n\n` : '') + `**Run ID:** ${runId}\n**Files:** ${validated.map((e) => e.path).join(', ')}`;
 
         const { data: pr } = await octokit.pulls.create({

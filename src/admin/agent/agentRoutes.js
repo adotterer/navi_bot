@@ -3,10 +3,11 @@
  */
 import express from 'express';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml } from '../layout.js';
-import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled, hydrateRun, DEFAULT_DOCS } from './runStore.js';
+import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled, hydrateRun, deleteRun, DEFAULT_DOCS } from './runStore.js';
 import { runPipeline } from './orchestrator.js';
 import { listBranches, getTree, getFileContent } from './repoBrowser.js';
-import { loadRunFromS3, persistRunToS3 } from './agentRunPersistence.js';
+import { loadRunFromS3, loadRunMetadataFromS3, persistRunToS3 } from './agentRunPersistence.js';
+import { listS3KeysWithPrefix, deleteFromS3 } from '../../shared/s3Helper.js';
 
 const router = express.Router();
 const SSE_HEARTBEAT_MS = 15000;
@@ -21,6 +22,16 @@ router.get('/', (req, res) => {
       <h1 class="text-2xl font-semibold text-slate-800">Agent PR</h1>
     </div>
     <p class="text-slate-600 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
+    <section class="rounded-xl border border-slate-200 bg-white overflow-hidden w-full mb-4">
+      <button type="button" id="past-runs-toggle" class="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-50 text-sm font-medium text-slate-700 text-left hover:bg-slate-100 transition-colors">
+        <span>Recent runs</span>
+        <span id="past-runs-count" class="text-xs text-slate-400 font-normal"></span>
+        <span id="past-runs-chevron" class="ml-auto text-slate-400 text-xs">▾</span>
+      </button>
+      <div id="past-runs-list" class="divide-y divide-slate-100 max-h-60 overflow-y-auto hidden">
+        <p id="past-runs-empty" class="px-4 py-3 text-sm text-slate-400">No past runs found.</p>
+      </div>
+    </section>
     <div class="flex flex-col gap-6 mb-8">
       <section class="rounded-xl border border-slate-200 bg-white overflow-hidden w-full">
         <div class="border-b border-slate-200 px-4 py-2.5 bg-slate-50 text-sm font-medium text-slate-700">Mission prompt</div>
@@ -38,8 +49,10 @@ router.get('/', (req, res) => {
               <input type="number" id="maxCoders" name="maxCoders" min="1" max="10" value="3"
                 class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
             </div>
-            <div>
-              <button type="button" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Start run</button>
+            <div class="flex items-center gap-2">
+              <button type="button" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:enabled:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed">Start run</button>
+              <button type="button" id="stop-btn" disabled class="rounded-lg bg-red-600 text-white font-medium py-2.5 px-5 hover:enabled:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed" title="Stop the current run — work so far is saved to S3">Stop run</button>
+              <button type="button" id="resume-btn" class="hidden rounded-lg bg-amber-500 text-white font-medium py-2.5 px-5 hover:bg-amber-600 focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 transition-colors">Resume</button>
             </div>
           </div>
         </form>
@@ -49,15 +62,19 @@ router.get('/', (req, res) => {
           <div class="flex flex-col flex-1 min-h-0 p-4 gap-4 overflow-auto">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-shrink-0">
               <section class="rounded-lg border border-slate-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[200px]">
-                <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700 flex-shrink-0">Audit log</div>
-                <div id="log-container" class="bg-slate-900 text-slate-100 p-4 font-mono text-sm flex-1 overflow-y-auto whitespace-pre-wrap break-words rounded-b"></div>
+                <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700 flex-shrink-0 flex items-center gap-3">
+                  <span>Audit log</span>
+                  <span id="run-timer" class="ml-auto text-xs font-mono text-slate-400 tabular-nums hidden">0:00</span>
+                </div>
+                <div id="log-container" class="bg-slate-900 text-slate-100 p-4 font-mono text-sm flex-1 overflow-y-auto whitespace-pre-wrap break-words"></div>
+                <div id="run-tokens-bar" class="hidden border-t border-slate-100 px-4 py-1.5 text-xs text-slate-400 flex items-center gap-1">
+                  <span id="run-tokens"></span>
+                </div>
               </section>
               <section class="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
                 <div class="flex items-center gap-3 flex-wrap">
                   <span id="run-status" class="text-sm font-medium text-slate-700">Running…</span>
                   <span id="run-stage" class="text-sm text-slate-500"></span>
-                  <button type="button" id="stop-btn" class="rounded-lg bg-red-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed" title="Stop the current run">Stop run</button>
-                  <button type="button" id="resume-btn" class="hidden rounded-lg bg-amber-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-amber-700 focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-colors">Resume</button>
                 </div>
                 <div class="text-xs text-slate-500 mb-1">Mission</div>
                 <div id="run-mission" class="p-2 text-sm text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded min-h-[2rem] mb-3"></div>
@@ -149,6 +166,37 @@ router.get('/', (req, res) => {
   var errorMsg = document.getElementById('error-msg');
   var currentRunId = null;
   var eventSource = null;
+  var runStartedAt = 0;
+  var timerInterval = null;
+
+  function startTimer(startTs) {
+    runStartedAt = startTs || Date.now();
+    clearInterval(timerInterval);
+    var timerEl = document.getElementById('run-timer');
+    if (timerEl) { timerEl.textContent = '0:00'; timerEl.classList.remove('hidden'); }
+    timerInterval = setInterval(function() {
+      var secs = Math.floor((Date.now() - runStartedAt) / 1000);
+      var m = Math.floor(secs / 60), s = secs % 60;
+      var timerEl2 = document.getElementById('run-timer');
+      if (timerEl2) timerEl2.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  function updateTokenDisplay(inT, outT) {
+    if (inT == null && outT == null) return;
+    inT = inT || 0; outT = outT || 0;
+    if (inT === 0 && outT === 0) return;
+    var cost = ((inT / 1e6) * 0.075) + ((outT / 1e6) * 0.30);
+    var bar = document.getElementById('run-tokens-bar');
+    var el = document.getElementById('run-tokens');
+    if (el) el.textContent = inT.toLocaleString() + ' in / ' + outT.toLocaleString() + ' out tokens — Est. $' + cost.toFixed(4);
+    if (bar) bar.classList.remove('hidden');
+  }
 
   var filesArea = document.getElementById('files-area');
   var filesList = document.getElementById('files-list');
@@ -165,6 +213,15 @@ router.get('/', (req, res) => {
   var repoContent = document.getElementById('repo-content');
   var repoExpanded = {};
   var repoTreeCache = {};
+
+  function updateDocsPanelOnly(docs) {
+    if (!docs || typeof docs !== 'object') return;
+    ['overview', 'requirements', 'architecture', 'decisions', 'notes'].forEach(function(section) {
+      var el = document.getElementById('docs-' + section);
+      if (el && el.tagName === 'TEXTAREA') el.value = docs[section] || '';
+    });
+    if (docsPanel) docsPanel.classList.remove('hidden');
+  }
 
   function populateDocsPanel(data) {
     if (!data) return;
@@ -354,6 +411,150 @@ router.get('/', (req, res) => {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
   }
+
+  function relativeTime(ts) {
+    var diff = Date.now() - (ts || 0);
+    var mins = Math.floor(diff / 60000);
+    if (mins < 2) return 'just now';
+    if (mins < 60) return mins + ' min ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + ' hr ago';
+    var days = Math.floor(hrs / 24);
+    return days + ' day' + (days === 1 ? '' : 's') + ' ago';
+  }
+
+  function loadPastRunsList() {
+    var listEl = document.getElementById('past-runs-list');
+    var emptyEl = document.getElementById('past-runs-empty');
+    var countEl = document.getElementById('past-runs-count');
+    if (!listEl) return;
+    Promise.all([
+      fetch('/admin/agent/runs', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; }),
+      fetch('/admin/agent/runs/history', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; })
+    ]).then(function(results) {
+      var memory = results[0].runs || [];
+      var history = results[1].runs || [];
+      var seen = new Set();
+      var all = [];
+      memory.concat(history).forEach(function(r) {
+        if (!seen.has(r.runId)) { seen.add(r.runId); all.push(r); }
+      });
+      all.sort(function(a, b) { return (b.createdAt || b.lastModified || 0) - (a.createdAt || a.lastModified || 0); });
+      all = all.slice(0, 20);
+      if (countEl) countEl.textContent = all.length ? '(' + all.length + ')' : '';
+      listEl.querySelectorAll('.past-run-row').forEach(function(el) { el.remove(); });
+      if (!all.length) {
+        if (emptyEl) emptyEl.classList.remove('hidden');
+        return;
+      }
+      if (emptyEl) emptyEl.classList.add('hidden');
+      all.forEach(function(r) {
+        var row = document.createElement('div');
+        row.className = 'past-run-row flex items-center gap-3 px-4 py-2 hover:bg-slate-50 group';
+        var ts = r.createdAt || r.lastModified || 0;
+        var mission = (r.title || r.prompt || '').trim().slice(0, 90) || '(No mission)';
+        var statusBadge = r.status ? '<span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 flex-shrink-0">' + escapeHtml(r.status) + '</span>' : '';
+        row.innerHTML = '<span class="text-xs text-slate-400 flex-shrink-0 w-20">' + escapeHtml(relativeTime(ts)) + '</span>'
+          + '<span class="text-sm text-slate-700 truncate flex-1">' + escapeHtml(mission) + '</span>'
+          + statusBadge
+          + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="load-run-btn text-xs font-medium text-emerald-600 hover:text-emerald-800 px-2 py-1 rounded hover:bg-emerald-50 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">Load</button>'
+          + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="delete-run-btn text-xs font-medium text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete run">✕</button>';
+        listEl.appendChild(row);
+      });
+      listEl.querySelectorAll('.load-run-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { loadPastRun(btn.getAttribute('data-run-id')); });
+      });
+      listEl.querySelectorAll('.delete-run-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var runId = btn.getAttribute('data-run-id');
+          if (!confirm('Delete this run? This cannot be undone.')) return;
+          fetch('/admin/agent/run/' + encodeURIComponent(runId), { method: 'DELETE', credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (!data.ok) { alert('Delete failed: ' + (data.error || 'unknown error')); return; }
+              if (currentRunId === runId) {
+                currentRunId = null;
+                runArea.classList.add('hidden');
+              }
+              loadPastRunsList();
+            })
+            .catch(function() { alert('Delete request failed'); });
+        });
+      });
+    });
+  }
+
+  function loadPastRun(runId) {
+    fetch('/admin/agent/run/' + encodeURIComponent(runId), { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.error) { alert('Could not load run: ' + data.error); return; }
+        var promptEl = document.getElementById('prompt');
+        if (promptEl && data.prompt) promptEl.value = data.prompt;
+        currentRunId = runId;
+        docsPopulated = true;
+        runArea.classList.remove('hidden');
+        var missionEl = document.getElementById('run-mission');
+        if (missionEl) missionEl.textContent = data.prompt || '(No mission)';
+        runStatus.textContent = data.status || 'loaded';
+        runStage.textContent = '';
+        var isActive = data.status && !['done', 'error', 'cancelled'].includes(data.status);
+        stopBtn.disabled = !isActive;
+        stopBtn.textContent = 'Stop run';
+        startBtn.disabled = isActive;
+        updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults });
+        updateResumeButton(data.status);
+        populateDocsPanel(data);
+        if (data.edits && data.edits.length) showFileBrowser(data.edits);
+        else filesArea.classList.add('hidden');
+        if (data.prUrl || data.error) {
+          showResult(data.prUrl, data.error);
+        } else {
+          resultArea.classList.add('hidden');
+        }
+        var stepArea = document.getElementById('step-results-area');
+        var stepList = document.getElementById('step-results-list');
+        if (data.stepResults && data.stepResults.length) {
+          stepList.innerHTML = data.stepResults.map(function(sr) {
+            var what = sr.step && sr.step.what ? sr.step.what : 'Step';
+            var ok = sr.status === 'done';
+            var reason = sr.reason ? ': ' + escapeHtml(sr.reason) : '';
+            return '<li class="' + (ok ? 'text-emerald-600' : 'text-red-600') + '">' + escapeHtml(what) + ' — ' + sr.status + reason + '</li>';
+          }).join('');
+          stepArea.classList.remove('hidden');
+        } else {
+          stepArea.classList.add('hidden');
+        }
+        logContainer.textContent = '';
+        if (data.logs && data.logs.length) {
+          data.logs.forEach(function(entry) {
+            logContainer.textContent += '[' + (entry.role || 'system') + '] ' + (entry.message || '').trim() + String.fromCharCode(10);
+          });
+          logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        document.getElementById('agent-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })
+      .catch(function() { alert('Failed to load run'); });
+  }
+
+  var pastRunsToggle = document.getElementById('past-runs-toggle');
+  var pastRunsListEl = document.getElementById('past-runs-list');
+  var pastRunsChevron = document.getElementById('past-runs-chevron');
+  var pastRunsOpen = false;
+  if (pastRunsToggle) {
+    pastRunsToggle.addEventListener('click', function() {
+      pastRunsOpen = !pastRunsOpen;
+      if (pastRunsOpen) {
+        pastRunsListEl.classList.remove('hidden');
+        if (pastRunsChevron) pastRunsChevron.textContent = '▴';
+      } else {
+        pastRunsListEl.classList.add('hidden');
+        if (pastRunsChevron) pastRunsChevron.textContent = '▾';
+      }
+    });
+  }
+
+  loadPastRunsList();
   function languageFromPath(path) {
     var ext = (path || '').split('.').pop().toLowerCase();
     var map = { js: 'javascript', mjs: 'javascript', cjs: 'javascript', json: 'json', md: 'markdown', html: 'markup', htm: 'markup', css: 'css', scss: 'css', yml: 'yaml', yaml: 'yaml', ts: 'typescript', tsx: 'typescript', jsx: 'javascript', sh: 'bash', bash: 'bash' };
@@ -407,6 +608,7 @@ router.get('/', (req, res) => {
       prLink.href = prUrl;
       prLink.textContent = 'Open PR';
       prLink.classList.remove('hidden');
+      runStatus.textContent = 'Done — PR created';
       if (err) {
         errorMsg.classList.add('hidden');
         if (resultNote) {
@@ -415,7 +617,10 @@ router.get('/', (req, res) => {
         }
       } else {
         errorMsg.classList.add('hidden');
-        if (resultNote) resultNote.classList.add('hidden');
+        if (resultNote) {
+          resultNote.textContent = 'Run complete. Use the link above to review the PR.';
+          resultNote.classList.remove('hidden');
+        }
       }
       resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } else if (err) {
@@ -479,7 +684,6 @@ router.get('/', (req, res) => {
     docsPopulated = false;
     startBtn.disabled = true;
     runArea.classList.remove('hidden');
-    stopBtn.classList.remove('hidden');
     stopBtn.disabled = true;
     stopBtn.textContent = 'Stop run';
     if (resumeBtn) resumeBtn.classList.add('hidden');
@@ -495,10 +699,18 @@ router.get('/', (req, res) => {
     prLink.classList.add('hidden');
     errorMsg.classList.add('hidden');
     document.getElementById('result-note').classList.add('hidden');
+    var tokensBar = document.getElementById('run-tokens-bar');
+    if (tokensBar) tokensBar.classList.add('hidden');
     runStatus.textContent = 'Starting…';
     runStage.textContent = '';
     updatePipeline('research');
+    startTimer();
 
+    var seedDocs = {};
+    ['overview', 'requirements', 'architecture', 'decisions', 'notes'].forEach(function(section) {
+      var el = document.getElementById('docs-' + section);
+      if (el) seedDocs[section] = el.value || '';
+    });
     fetch('/admin/agent/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -506,7 +718,8 @@ router.get('/', (req, res) => {
       body: JSON.stringify({
         prompt: promptEl.value.trim(),
         maxParallelPlanners: parseInt(maxPlanners, 10) || 2,
-        maxParallelCoders: parseInt(maxCoders, 10) || 3
+        maxParallelCoders: parseInt(maxCoders, 10) || 3,
+        seedDocs: seedDocs
       })
     })
     .then(function(r) { return r.json(); })
@@ -518,7 +731,57 @@ router.get('/', (req, res) => {
       stopBtn.textContent = 'Stop run';
       closeStream();
       eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(data.runId));
-      eventSource.onmessage = function(ev) {
+      function handleStreamError() {
+        if (!currentRunId) { closeStream(); return; }
+        closeStream();
+        runStatus.textContent = 'Checking run status…';
+        var pollCount = 0;
+        var maxPolls = 5;
+        var poll = function() {
+          pollCount++;
+          fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (data.error) {
+                runStatus.textContent = 'Stream closed';
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                stopTimer();
+                resumeBtn && resumeBtn.classList.add('hidden');
+                return;
+              }
+              if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
+                runStatus.textContent = data.status === 'done' ? 'Done — PR created' : (data.status === 'cancelled' ? 'Cancelled' : 'Error');
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                stopTimer();
+                resumeBtn && resumeBtn.classList.add('hidden');
+                showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error);
+                return;
+              }
+              // Run is still active — keep stop button enabled and try to reconnect
+              stopBtn.disabled = false;
+              if (pollCount < maxPolls) {
+                setTimeout(poll, 2000);
+              } else {
+                runStatus.textContent = 'Reconnecting…';
+                setTimeout(function() {
+                  if (!currentRunId) return;
+                  eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(currentRunId));
+                  eventSource.onmessage = onStreamMessage;
+                  eventSource.onerror = function() { handleStreamError(); };
+                }, 1500);
+              }
+            })
+            .catch(function() {
+              runStatus.textContent = 'Stream closed';
+              startBtn.disabled = false;
+              stopBtn.disabled = true;
+            });
+        };
+        poll();
+      }
+      function onStreamMessage(ev) {
         try {
           var entry = JSON.parse(ev.data);
           if (entry.type === 'log') {
@@ -531,35 +794,37 @@ router.get('/', (req, res) => {
             runStage.textContent = entry.status || '';
             updatePipeline(entry.status || '');
             maybePopulateDocs();
+            updateTokenDisplay(entry.inputTokens, entry.outputTokens);
+          } else if (entry.type === 'docs') {
+            updateDocsPanelOnly(entry.docs);
           } else if (entry.type === 'done') {
-            runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done';
+            runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created';
             runStage.textContent = '';
             closeStream();
+            stopTimer();
             startBtn.disabled = false;
-            stopBtn.classList.add('hidden');
+            stopBtn.disabled = true;
+            resumeBtn && resumeBtn.classList.add('hidden');
+            updateTokenDisplay(entry.inputTokens, entry.outputTokens);
             showResult(entry.prUrl, entry.error);
           } else if (entry.type === 'error') {
             runStatus.textContent = 'Error';
             closeStream();
+            stopTimer();
             startBtn.disabled = false;
-            stopBtn.classList.add('hidden');
+            stopBtn.disabled = true;
+            resumeBtn && resumeBtn.classList.add('hidden');
             showResult(null, entry.message || 'Run failed');
           }
         } catch (_) {}
-      };
-      eventSource.onerror = function() {
-        if (currentRunId) {
-          runStatus.textContent = 'Stream closed (run may still be in progress)';
-          startBtn.disabled = false;
-          stopBtn.classList.add('hidden');
-        }
-        closeStream();
-      };
+      }
+      eventSource.onmessage = onStreamMessage;
+      eventSource.onerror = function() { handleStreamError(); };
     })
     .catch(function(err) {
       runStatus.textContent = 'Error';
       startBtn.disabled = false;
-      stopBtn.classList.add('hidden');
+      stopBtn.disabled = true;
       showResult(null, err.message || 'Failed to start run');
     });
   }
@@ -603,10 +868,10 @@ router.get('/', (req, res) => {
       resumeBtn.disabled = true;
       resumeBtn.classList.add('hidden');
       runStatus.textContent = 'Resuming…';
-      stopBtn.classList.remove('hidden');
       stopBtn.disabled = false;
       stopBtn.textContent = 'Stop run';
       closeStream();
+      startTimer();
       fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/resume', { method: 'POST', credentials: 'same-origin' })
         .then(function(r) { return r.json(); })
         .then(function(data) {
@@ -616,42 +881,8 @@ router.get('/', (req, res) => {
             return;
           }
           eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(currentRunId));
-          eventSource.onmessage = function(ev) {
-            try {
-              var entry = JSON.parse(ev.data);
-              if (entry.type === 'log') {
-                var prefix = '[' + (entry.role || 'system') + '] ';
-                logContainer.textContent += prefix + (entry.message || '').trim() + String.fromCharCode(10);
-                logContainer.scrollTop = logContainer.scrollHeight;
-                if (entry.stage) updatePipeline(entry.stage);
-              } else if (entry.type === 'status') {
-                runStage.textContent = entry.status || '';
-                updatePipeline(entry.status || '');
-                maybePopulateDocs();
-              } else if (entry.type === 'done') {
-                runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done';
-                runStage.textContent = '';
-                closeStream();
-                startBtn.disabled = false;
-                stopBtn.classList.add('hidden');
-                showResult(entry.prUrl, entry.error);
-              } else if (entry.type === 'error') {
-                runStatus.textContent = 'Error';
-                closeStream();
-                startBtn.disabled = false;
-                stopBtn.classList.add('hidden');
-                showResult(null, entry.message || 'Run failed');
-              }
-            } catch (_) {}
-          };
-          eventSource.onerror = function() {
-            if (currentRunId) {
-              runStatus.textContent = 'Stream closed (run may still be in progress)';
-              startBtn.disabled = false;
-              stopBtn.classList.add('hidden');
-            }
-            closeStream();
-          };
+          eventSource.onmessage = onStreamMessage;
+          eventSource.onerror = function() { handleStreamError(); };
           if (resumeBtn) resumeBtn.disabled = false;
         })
         .catch(function() {
@@ -706,10 +937,51 @@ router.get('/repo/file', async (req, res) => {
     res.json({ ok: true, content: result.content });
 });
 
-// ----- GET /admin/agent/runs – list recent runs -----
+// ----- GET /admin/agent/runs – list recent in-memory runs -----
 router.get('/runs', (req, res) => {
     const limit = Math.min(50, parseInt(req.query.limit, 10) || 20);
     res.json({ runs: listRuns(limit) });
+});
+
+// ----- GET /admin/agent/runs/history – list runs persisted to S3 (survives server restart) -----
+router.get('/runs/history', async (req, res) => {
+    try {
+        const keys = await listS3KeysWithPrefix('admin/agent-runs/', 50);
+        const sorted = keys
+            .sort((a, b) => new Date(b.LastModified || 0) - new Date(a.LastModified || 0))
+            .slice(0, 20);
+        const runs = await Promise.all(sorted.map(async (k) => {
+            const runId = k.Key.replace('admin/agent-runs/', '').replace('.json', '');
+            const fallbackTs = k.LastModified ? new Date(k.LastModified).getTime() : 0;
+            const meta = await loadRunMetadataFromS3(runId);
+            return {
+                runId,
+                title: meta?.title || '',
+                prompt: meta?.prompt || '',
+                status: meta?.status || '',
+                createdAt: meta?.createdAt || fallbackTs,
+                lastModified: fallbackTs,
+            };
+        }));
+        res.json({ runs });
+    } catch (_) {
+        res.json({ runs: [] });
+    }
+});
+
+// ----- DELETE /admin/agent/run/:runId – delete run from memory and S3 -----
+router.delete('/run/:runId', async (req, res) => {
+    const { runId } = req.params;
+    const run = getRun(runId);
+    if (run) {
+        const active = !['done', 'error', 'cancelled'].includes(run.status);
+        if (active) return res.status(400).json({ ok: false, error: 'Cannot delete an active run; stop it first.' });
+    }
+    deleteRun(runId);
+    try {
+        await deleteFromS3('admin/agent-runs/' + runId + '.json');
+    } catch (_) {}
+    res.json({ ok: true });
 });
 
 // ----- POST /admin/agent/run/:runId/cancel – request run to stop (no more token use after next check) -----
@@ -724,11 +996,17 @@ router.post('/run/:runId/cancel', (req, res) => {
     res.json({ ok: true });
 });
 
-// ----- GET /admin/agent/run/:runId – run summary (includes steps, docs, edits) -----
-router.get('/run/:runId', (req, res) => {
-    const run = getRun(req.params.runId);
+// ----- GET /admin/agent/run/:runId – run summary; falls back to S3 if not in memory -----
+router.get('/run/:runId', async (req, res) => {
+    let run = getRun(req.params.runId);
+    if (!run) {
+        const snapshot = await loadRunFromS3(req.params.runId);
+        if (!snapshot) return res.status(404).json({ error: 'Run not found' });
+        hydrateRun(req.params.runId, snapshot);
+        run = getRun(req.params.runId);
+    }
     if (!run) return res.status(404).json({ error: 'Run not found' });
-    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, edits } = run;
+    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits } = run;
     res.json({
         runId,
         status,
@@ -741,6 +1019,7 @@ router.get('/run/:runId', (req, res) => {
         error,
         createdAt,
         prompt,
+        title: title || '',
         edits: edits || [],
     });
 });
@@ -763,8 +1042,11 @@ router.patch('/run/:runId/docs', express.json(), (req, res) => {
 
 // ----- POST /admin/agent/run – start run (returns runId, runs orchestrator in background) -----
 router.post('/run', express.json(), (req, res) => {
-    const { prompt = '', maxParallelPlanners = 2, maxParallelCoders = 3 } = req.body || {};
+    const { prompt = '', maxParallelPlanners = 2, maxParallelCoders = 3, seedDocs } = req.body || {};
     const runId = createRun({ prompt });
+    if (seedDocs && typeof seedDocs === 'object') {
+        updateRun(runId, { docs: seedDocs });
+    }
     res.json({ runId });
 
     setImmediate(() => {
@@ -809,7 +1091,7 @@ router.get('/stream/:runId', (req, res) => {
     run.logs.forEach((entry) => {
         res.write('data: ' + JSON.stringify({ type: 'log', ...entry }) + '\n\n');
     });
-    res.write('data: ' + JSON.stringify({ type: 'status', status: run.status }) + '\n\n');
+    res.write('data: ' + JSON.stringify({ type: 'status', status: run.status, inputTokens: run.inputTokens || 0, outputTokens: run.outputTokens || 0 }) + '\n\n');
 
     if (run.status === 'done' || run.status === 'error' || run.status === 'cancelled') {
         res.write('data: ' + JSON.stringify({
@@ -817,6 +1099,8 @@ router.get('/stream/:runId', (req, res) => {
             prUrl: run.prUrl,
             error: run.status === 'cancelled' ? 'Run stopped by user.' : run.error,
             cancelled: run.status === 'cancelled',
+            inputTokens: run.inputTokens || 0,
+            outputTokens: run.outputTokens || 0,
         }) + '\n\n');
         res.end();
         return;
@@ -824,8 +1108,13 @@ router.get('/stream/:runId', (req, res) => {
 
     const unsub = subscribe((id, entry) => {
         if (id !== runId) return;
-        res.write('data: ' + JSON.stringify({ type: 'log', ...entry }) + '\n\n');
-        res.write('data: ' + JSON.stringify({ type: 'status', status: getRun(runId)?.status }) + '\n\n');
+        if (entry.type === 'docs') {
+            res.write('data: ' + JSON.stringify({ type: 'docs', docs: entry.docs }) + '\n\n');
+        } else {
+            res.write('data: ' + JSON.stringify({ type: 'log', ...entry }) + '\n\n');
+        }
+        const r = getRun(runId);
+        res.write('data: ' + JSON.stringify({ type: 'status', status: r?.status, inputTokens: r?.inputTokens || 0, outputTokens: r?.outputTokens || 0 }) + '\n\n');
     });
 
     const heartbeat = setInterval(() => {
@@ -843,6 +1132,8 @@ router.get('/stream/:runId', (req, res) => {
                 prUrl: r.prUrl,
                 error: r.status === 'cancelled' ? 'Run stopped by user.' : r.error,
                 cancelled: r.status === 'cancelled',
+                inputTokens: r.inputTokens || 0,
+                outputTokens: r.outputTokens || 0,
             }) + '\n\n');
             res.end();
         }

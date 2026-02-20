@@ -16,6 +16,9 @@ const runOrder = [];
 /** @type {Set<(runId: string, entry: object) => void>} */
 const listeners = new Set();
 
+/** @type {Map<string, AbortController>} */
+const abortControllers = new Map();
+
 /**
  * Generate a short unique run ID.
  * @returns {string}
@@ -46,6 +49,9 @@ function createRun(opts = {}) {
         error: undefined,
         createdAt: Date.now(),
         prompt: opts.prompt || '',
+        title: '',
+        inputTokens: 0,
+        outputTokens: 0,
     };
     runs.set(runId, run);
     runOrder.push(runId);
@@ -126,12 +132,43 @@ function updateRun(runId, updates) {
         }
     }
     if (updates.prompt != null) run.prompt = updates.prompt;
+    if (updates.title != null) run.title = updates.title;
+    if (updates.inputTokens != null) run.inputTokens = (run.inputTokens || 0) + updates.inputTokens;
+    if (updates.outputTokens != null) run.outputTokens = (run.outputTokens || 0) + updates.outputTokens;
 }
 
 function setRunCancelled(runId) {
     const run = runs.get(runId);
     if (!run) return;
     run.cancelled = true;
+    abortControllers.get(runId)?.abort();
+}
+
+/**
+ * Register an AbortController for a run so it can be cancelled immediately.
+ * @param {string} runId
+ * @param {AbortController} ctrl
+ */
+function registerAbortController(runId, ctrl) {
+    abortControllers.set(runId, ctrl);
+}
+
+/**
+ * Unregister the AbortController for a run (call when pipeline finishes).
+ * @param {string} runId
+ */
+function unregisterAbortController(runId) {
+    abortControllers.delete(runId);
+}
+
+/**
+ * Delete a run from the in-memory store.
+ * @param {string} runId
+ */
+function deleteRun(runId) {
+    runs.delete(runId);
+    const idx = runOrder.indexOf(runId);
+    if (idx !== -1) runOrder.splice(idx, 1);
 }
 
 function isRunCancelled(runId) {
@@ -141,12 +178,30 @@ function isRunCancelled(runId) {
 
 /**
  * Subscribe to new log entries (for SSE). Call the returned function to unsubscribe.
+ * Listener may receive log entries or docs updates: { type: 'docs', docs }.
  * @param {(runId: string, entry: object) => void} fn
  * @returns {() => void}
  */
 function subscribe(fn) {
     listeners.add(fn);
     return () => listeners.delete(fn);
+}
+
+/**
+ * Notify all subscribers that a run's docs were updated (for real-time docs in UI).
+ * @param {string} runId
+ */
+function notifyDocsUpdate(runId) {
+    const run = getRun(runId);
+    if (!run || !run.docs) return;
+    const docs = { ...run.docs };
+    listeners.forEach((fn) => {
+        try {
+            fn(runId, { type: 'docs', docs });
+        } catch (e) {
+            console.error('runStore docs listener error:', e);
+        }
+    });
 }
 
 /**
@@ -164,6 +219,7 @@ function listRuns(limit = 20) {
             status: run.status,
             createdAt: run.createdAt,
             prompt: run.prompt ? run.prompt.slice(0, 100) : undefined,
+            title: run.title || undefined,
         };
     }).filter(Boolean);
 }
@@ -191,9 +247,12 @@ function hydrateRun(runId, snapshot) {
         error: snapshot.error,
         createdAt: snapshot.createdAt ?? Date.now(),
         prompt: snapshot.prompt ?? '',
+        title: snapshot.title ?? '',
+        inputTokens: snapshot.inputTokens ?? 0,
+        outputTokens: snapshot.outputTokens ?? 0,
     };
     runs.set(runId, run);
     if (!runOrder.includes(runId)) runOrder.push(runId);
 }
 
-export { createRun, appendLog, getRun, updateRun, hydrateRun, subscribe, listRuns, setRunCancelled, isRunCancelled, RUN_STATUSES, DEFAULT_DOCS };
+export { createRun, appendLog, getRun, updateRun, hydrateRun, subscribe, notifyDocsUpdate, listRuns, setRunCancelled, isRunCancelled, deleteRun, registerAbortController, unregisterAbortController, RUN_STATUSES, DEFAULT_DOCS };
