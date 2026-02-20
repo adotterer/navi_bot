@@ -39,7 +39,7 @@ export async function runResearcher(missionPrompt, opts = {}) {
 
     const systemPrompt = `You are a Researcher for a codebase. Your job is to take a high-level mission and produce a "flight plan": a short list of concrete, ordered tasks that together achieve the mission.
 
-The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase structure below only to inform your task list. Output ONLY a valid JSON array of tasks, no other text. Each task must have: "id" (short slug, e.g. "add-route"), "title" (one line), "description" (one or two sentences), and optionally "hints" (suggested files or areas, e.g. "src/admin/"). Example:
+The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase structure below to inform your task list. Output ONLY a valid JSON array of tasks, no other text. Each task must have: "id" (short slug), "title" (one line), "description" (one or two sentences), and "hints" (comma-separated exact file paths when possible, e.g. "src/export/exportHandler.js, src/matchups/matchupHandler.js"). For missions about Discord commands (!mu, !mq, !export) or embed/branding, always include the relevant handler paths in hints (e.g. src/export/exportHandler.js, src/matchups/matchupHandler.js, src/messages/questionHandler.js, src/shared/messageSplitter.js). Example:
 [{"id":"add-route","title":"Add health route","description":"Add GET /health that returns { status: 'ok' }.","hints":"src/app.js"}]`;
 
     const userContent = `Mission:\n${missionPrompt}${treeInfo}\n\nProduce the flight plan as a single JSON array.`;
@@ -128,6 +128,8 @@ function parseFlightPlan(text) {
 export async function runPlanner(task, opts = {}) {
     const { onChunk, fileContext = '', grepContext = '' } = opts;
     const systemPrompt = `You are a Planner. Given a single task from a flight plan, output an implementation plan: an ordered list of steps. Each step should specify what to do, which file(s) to touch, and optionally a short change description. Each step should be an actionable implementation step (code or config change), not a pure analysis step. Prefer steps that produce file edits.
+
+Prefer steps that EDIT existing files shown in "Relevant file contents" or "Files that match the mission" above; only add steps that create NEW files when the mission explicitly requires a new module. When the mission asks to match existing behavior (e.g. use the same embed style as !mu/!mq), the "files" array must include the existing handler file(s) to modify and you should reference the same imports and patterns (e.g. createSplitEmbeds, EmbedBuilder, SUMMARY_DISCLAIMER, color "#36AAD4") that already appear in the codebase.
 
 Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (array of file paths, e.g. ["src/app.js"]), "changeDescription" (optional). Example:
 [{"what":"Add GET /health handler","files":["src/app.js"],"changeDescription":"Add app.get('/health', ...) returning { status: 'ok' }"}]`;

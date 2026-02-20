@@ -43,16 +43,31 @@ function missionKeywords(prompt, maxKeywords = 5) {
     return out;
 }
 
-/** Build grep context string from mission prompt (call grep_search for each keyword). */
+/** Patterns we always grep when mission mentions embed/Discord/branding (so Planner sees the real pattern). */
+const MISSION_GREP_PATTERNS = ['createSplitEmbeds', 'EmbedBuilder', 'message.reply', 'SUMMARY_DISCLAIMER'];
+
+/**
+ * Build grep context from mission: returns { grepText, grepPaths }.
+ * grepPaths = set of file paths that matched, so we can include them in Planner file context.
+ */
 async function buildGrepContext(prompt) {
-    const keywords = missionKeywords(prompt, 4);
-    if (!keywords.length) return '';
+    const keywords = missionKeywords(prompt, 5);
+    const patterns = [...keywords];
+    const promptLower = (prompt || '').toLowerCase();
+    if (promptLower.includes('embed') || promptLower.includes('discord') || promptLower.includes('branding') || promptLower.includes('!mu') || promptLower.includes('!mq') || promptLower.includes('!export')) {
+        patterns.push(...MISSION_GREP_PATTERNS);
+    }
+    const seen = new Set();
     const allMatches = [];
-    for (const kw of keywords) {
-        const r = await callTool('grep_search', { pattern: kw, pathPrefix: '' });
+    const pathSet = new Set();
+    for (const kw of patterns) {
+        if (!kw || seen.has(kw.toLowerCase())) continue;
+        seen.add(kw.toLowerCase());
+        const r = await callTool('grep_search', { pattern: kw, pathPrefix: 'src' });
         if (r.ok && Array.isArray(r.result)) {
             for (const m of r.result) {
                 allMatches.push({ path: m.path, lineNumber: m.lineNumber, line: m.line });
+                pathSet.add(m.path);
             }
         }
     }
@@ -62,8 +77,8 @@ async function buildGrepContext(prompt) {
         byPath.get(m.path).push(m);
     }
     const lines = [];
-    const maxPerPath = 5;
-    const maxTotal = 30;
+    const maxPerPath = 6;
+    const maxTotal = 50;
     for (const [p, arr] of byPath.entries()) {
         if (lines.length >= maxTotal) break;
         for (let i = 0; i < Math.min(maxPerPath, arr.length) && lines.length < maxTotal; i++) {
@@ -71,20 +86,27 @@ async function buildGrepContext(prompt) {
             lines.push(`${p}:${m.lineNumber}: ${m.line}`);
         }
     }
-    return lines.length ? lines.join('\n') : '';
+    const grepText = lines.length ? lines.join('\n') : '';
+    return { grepText, grepPaths: pathSet };
 }
 
-/** Build file context string from task hints (read_file for each path-like hint). Cap total ~25KB. */
-async function buildFileContextForTask(task, maxChars = 25000) {
+/** Build file context for a task: hint paths + grep-matched paths (so key files like exportHandler are included). */
+async function buildFileContextForTask(task, grepPaths, maxChars = 52000) {
     const hints = task.hints ? String(task.hints).split(/[\s,]+/).map((s) => s.trim()).filter(Boolean) : [];
-    const filePaths = hints.filter((h) => /\.(js|ts|json|md|mjs|cjs|tsx|jsx|yml|yaml|html|css)$/i.test(h) || h.includes('/'));
+    const fromHints = hints.filter((h) => /\.(js|ts|json|md|mjs|cjs|tsx|jsx|yml|yaml|html|css)$/i.test(h) || (h.includes('/') && h.length > 2));
+    const pathSet = new Set(fromHints);
+    if (grepPaths && grepPaths.size) {
+        grepPaths.forEach((p) => pathSet.add(p));
+    }
+    const pathList = Array.from(pathSet).filter((p) => /\.(js|ts|json|mjs|cjs|tsx|jsx|yml|yaml|html|css)$/i.test(p));
     let total = 0;
+    const perFileMax = 14000;
     const parts = [];
-    for (const p of filePaths) {
+    for (const p of pathList) {
         if (total >= maxChars) break;
         const r = await callTool('read_file', { path: p });
         if (r.ok && typeof r.result === 'string') {
-            const snippet = r.result.length > 8000 ? r.result.slice(0, 8000) + '\n... (truncated)' : r.result;
+            const snippet = r.result.length > perFileMax ? r.result.slice(0, perFileMax) + '\n... (truncated)' : r.result;
             parts.push(`--- ${p} ---\n${snippet}\n`);
             total += snippet.length;
         }
@@ -114,7 +136,7 @@ export async function runPipeline(runId, opts = {}) {
 
         if (checkCancelled(runId, log)) return;
 
-        const grepContext = await buildGrepContext(prompt);
+        const { grepText: grepContext, grepPaths } = await buildGrepContext(prompt);
 
         const allEdits = []; // { path, content }[]
         const limitPlanners = pLimit(Math.max(1, Math.min(5, maxParallelPlanners)));
@@ -126,7 +148,7 @@ export async function runPipeline(runId, opts = {}) {
             flightPlan.map((task, i) =>
                 limitPlanners(async () => {
                     log('system', 'planning', `Planner: ${task.title}\n`);
-                    const fileContext = await buildFileContextForTask(task);
+                    const fileContext = await buildFileContextForTask(task, grepPaths);
                     const planResult = await runPlanner(task, { fileContext, grepContext });
                     if (planResult.ok) {
                         const n = (planResult.steps && planResult.steps.length) || 0;
