@@ -2,30 +2,37 @@ import fs from 'fs';
 import { EmbedBuilder } from "discord.js";
 import { fetchAllMessages, fetchFromS3, uploadToS3 } from '../shared/s3Helper.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
-import { createSplitEmbeds, sendSplitMessage } from '../shared/messageSplitter.js';
+import { createSplitEmbeds } from '../shared/messageSplitter.js';
+import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
+
+const ERROR_EMBED_COLOR = '#FF4444';
+
+function buildEmbed(description, color = INFO_EMBED_COLOR) {
+    return new EmbedBuilder().setColor(color).setDescription(description);
+}
 
 export async function handleExportFalco(message) {
     const guild = message.guild;
     const channel = guild.channels.cache.find(ch => ch.name === "falco");
     
     if (!channel) {
-        await message.reply("❌ Channel 'falco' not found!");
+        await message.reply({ embeds: [buildEmbed("❌ Channel 'falco' not found!", ERROR_EMBED_COLOR)] });
         return;
     }
     
     try {
-        await message.reply("⏳ Exporting messages from #falco...");
+        await message.reply({ embeds: [buildEmbed("⏳ Exporting messages from #falco...")] });
         
         const messages = await fetchAllMessages(channel);
         
         const jsonData = JSON.stringify(messages, null, 2);
         fs.writeFileSync('falco_messages.json', jsonData);
         
-        await message.reply(`✅ Exported ${messages.length} messages to falco_messages.json`);
+        await message.reply({ embeds: [buildEmbed(`✅ Exported ${messages.length} messages to falco_messages.json`)] });
         console.log(`✅ Exported ${messages.length} messages from #falco`);
     } catch (error) {
         console.error(error);
-        await message.reply("❌ Error exporting messages: " + error.message);
+        await message.reply({ embeds: [buildEmbed("❌ Error exporting messages: " + error.message, ERROR_EMBED_COLOR)] });
     }
 }
 
@@ -45,13 +52,13 @@ function findMatchupChannel(guild, slug) {
 export async function handleExportCharacter(message) {
     const guild = message.guild;
     if (!guild) {
-        await message.reply("❌ This command must be used in a server.");
+        await message.reply({ embeds: [buildEmbed("❌ This command must be used in a server.", ERROR_EMBED_COLOR)] });
         return;
     }
 
     const input = message.content.trim().split(" ").slice(1).join(" ").trim();
     if (!input) {
-        await message.reply("❌ Usage: !export <character> (e.g., !export palu)");
+        await message.reply({ embeds: [buildEmbed("❌ Usage: `!export <character>` (e.g., `!export palu`)", ERROR_EMBED_COLOR)] });
         return;
     }
 
@@ -87,12 +94,12 @@ export async function handleExportCharacter(message) {
     const channel = findMatchupChannel(guild, slug);
 
     if (!channel) {
-        await message.reply(`❌ Channel '${slug}' not found in Match Ups categories.`);
+        await message.reply({ embeds: [buildEmbed(`❌ Channel '${slug}' not found in Match Ups categories.`, ERROR_EMBED_COLOR)] });
         return;
     }
 
     try {
-        await message.reply(`⏳ Exporting messages from #${channel.name}...`);
+        await message.reply({ embeds: [buildEmbed(`⏳ Exporting messages from #${channel.name}...`)] });
 
         const messages = await fetchAllMessages(channel);
         const jsonData = JSON.stringify(messages, null, 2);
@@ -100,11 +107,11 @@ export async function handleExportCharacter(message) {
         fs.writeFileSync(filename, jsonData);
 
         const s3Url = await uploadToS3(filename, jsonData);
-        await message.reply(`✅ Exported #${channel.name}: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        await message.reply({ embeds: [buildEmbed(`✅ Exported **#${channel.name}**: ${messages.length} messages → \`${filename}\`\n☁️ ${s3Url}`)] });
         console.log(`✅ Exported ${messages.length} messages from #${channel.name}`);
     } catch (error) {
         console.error(error);
-        await message.reply("❌ Error exporting messages: " + error.message);
+        await message.reply({ embeds: [buildEmbed("❌ Error exporting messages: " + error.message, ERROR_EMBED_COLOR)] });
     }
 }
 
@@ -113,7 +120,7 @@ export async function handleExportMatchups(message) {
     const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
     
     try {
-        await message.reply("⏳ Exporting all Match Ups channels, glossary, fundies, and game state channels...");
+        await message.reply({ embeds: [buildEmbed("⏳ Exporting all Match Ups channels, glossary, fundies, and game state channels...")] });
         
         let totalChannels = 0;
         let totalMessages = 0;
@@ -250,22 +257,23 @@ export async function handleExportMatchups(message) {
             console.error(`❌ Error exporting neutral:`, error.message);
         }
         
-        await message.reply(
-            `✅ Exported ${totalChannels} channels with ${totalMessages} total messages!\n\n` +
+        const summary =
+            `✅ Exported **${totalChannels} channels** with **${totalMessages} total messages**!\n\n` +
             exportedFiles.slice(0, 10).join('\n') +
-            (exportedFiles.length > 10 ? `\n... and ${exportedFiles.length - 10} more` : '')
-        );
+            (exportedFiles.length > 10 ? `\n... and ${exportedFiles.length - 10} more` : '');
+        const embeds = createSplitEmbeds(EmbedBuilder, summary, INFO_EMBED_COLOR);
+        await message.channel.send({ embeds });
         console.log(`✅ Completed: ${totalChannels} channels, ${totalMessages} total messages`);
     } catch (error) {
         console.error(error);
-        await message.reply("❌ Error exporting Match Ups channels: " + error.message);
+        await message.reply({ embeds: [buildEmbed("❌ Error exporting Match Ups channels: " + error.message, ERROR_EMBED_COLOR)] });
     }
 }
 
 export async function handleListThreadCounts(message) {
     const guild = message.guild;
     if (!guild) {
-        await message.reply("❌ This command must be used in a server.");
+        await message.reply({ embeds: [buildEmbed("❌ This command must be used in a server.", ERROR_EMBED_COLOR)] });
         return;
     }
 
@@ -273,7 +281,7 @@ export async function handleListThreadCounts(message) {
     const counts = [];
 
     try {
-        await message.reply("⏳ Counting messages in each character thread...");
+        await message.reply({ embeds: [buildEmbed("⏳ Counting messages in each character thread...")] });
 
         for (const categoryName of categoryNames) {
             const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
@@ -295,39 +303,38 @@ export async function handleListThreadCounts(message) {
         }
 
         if (counts.length === 0) {
-            await message.reply("⚠️ No matchup channels found.");
+            await message.reply({ embeds: [buildEmbed("⚠️ No matchup channels found.", ERROR_EMBED_COLOR)] });
             return;
         }
 
         counts.sort((a, b) => b.count - a.count);
         const lines = counts.map(c => `#${c.name}: ${c.count} messages`).join("\n");
-        const header = `📊 **Character Thread Message Counts** (${counts.length})\n`;
-        const output = header + lines;
+        const output = `📊 **Character Thread Message Counts** (${counts.length})\n${lines}`;
 
-        await sendSplitMessage(message, output, true);
+        const embeds = createSplitEmbeds(EmbedBuilder, output, INFO_EMBED_COLOR);
+        await message.channel.send({ embeds });
     } catch (error) {
         console.error(error);
-        await message.reply("❌ Error counting messages: " + error.message);
+        await message.reply({ embeds: [buildEmbed("❌ Error counting messages: " + error.message, ERROR_EMBED_COLOR)] });
     }
 }
 
 async function handleExportGlossary(message) {
     const guild = message.guild;
     if (!guild) {
-        await message.reply("❌ This command must be used in a server.");
+        await message.reply({ embeds: [buildEmbed("❌ This command must be used in a server.", ERROR_EMBED_COLOR)] });
         return;
     }
 
     try {
-        await message.reply(`⏳ Exporting glossary...`);
+        await message.reply({ embeds: [buildEmbed("⏳ Exporting glossary...")] });
 
-        // Find glossary channel in the guild
         const glossaryChannel = guild.channels.cache.find(
             ch => ch.isTextBased() && ch.name.toLowerCase().includes("glossary")
         );
 
         if (!glossaryChannel) {
-            await message.reply(`❌ Glossary channel not found in this server.`);
+            await message.reply({ embeds: [buildEmbed("❌ Glossary channel not found in this server.", ERROR_EMBED_COLOR)] });
             return;
         }
 
@@ -336,25 +343,24 @@ async function handleExportGlossary(message) {
         const filename = "glossary.json";
 
         const s3Url = await uploadToS3(filename, jsonData);
-        await message.reply(`✅ Exported glossary: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        await message.reply({ embeds: [buildEmbed(`✅ Exported **glossary**: ${messages.length} messages → \`${filename}\`\n☁️ ${s3Url}`)] });
         console.log(`✅ Exported ${messages.length} messages from glossary channel`);
     } catch (error) {
         console.error(error);
-        await message.reply("❌ Error exporting glossary: " + error.message);
+        await message.reply({ embeds: [buildEmbed("❌ Error exporting glossary: " + error.message, ERROR_EMBED_COLOR)] });
     }
 }
 
 async function handleExportFundies(message) {
     const guild = message.guild;
     if (!guild) {
-        await message.reply("❌ This command must be used in a server.");
+        await message.reply({ embeds: [buildEmbed("❌ This command must be used in a server.", ERROR_EMBED_COLOR)] });
         return;
     }
 
     try {
-        await message.reply(`⏳ Exporting fundies/fundamentals...`);
+        await message.reply({ embeds: [buildEmbed("⏳ Exporting fundies/fundamentals...")] });
 
-        // Find fundies/fundamentals channel in the guild
         const fundiesChannel = guild.channels.cache.find(
             ch => ch.isTextBased() && (
                 ch.name.toLowerCase().includes("fundies") ||
@@ -363,7 +369,7 @@ async function handleExportFundies(message) {
         );
 
         if (!fundiesChannel) {
-            await message.reply(`❌ Fundies/fundamentals channel not found in this server.`);
+            await message.reply({ embeds: [buildEmbed("❌ Fundies/fundamentals channel not found in this server.", ERROR_EMBED_COLOR)] });
             return;
         }
 
@@ -372,30 +378,30 @@ async function handleExportFundies(message) {
         const filename = "fundies.json";
 
         const s3Url = await uploadToS3(filename, jsonData);
-        await message.reply(`✅ Exported fundies/fundamentals: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        await message.reply({ embeds: [buildEmbed(`✅ Exported **fundies/fundamentals**: ${messages.length} messages → \`${filename}\`\n☁️ ${s3Url}`)] });
         console.log(`✅ Exported ${messages.length} messages from fundies/fundamentals channel`);
     } catch (error) {
         console.error(error);
-        await message.reply("❌ Error exporting fundies/fundamentals: " + error.message);
+        await message.reply({ embeds: [buildEmbed("❌ Error exporting fundies/fundamentals: " + error.message, ERROR_EMBED_COLOR)] });
     }
 }
 
 async function handleExportDisadvantage(message) {
     const guild = message.guild;
     if (!guild) {
-        await message.reply("❌ This command must be used in a server.");
+        await message.reply({ embeds: [buildEmbed("❌ This command must be used in a server.", ERROR_EMBED_COLOR)] });
         return;
     }
 
     try {
-        await message.reply(`⏳ Exporting disadvantage...`);
+        await message.reply({ embeds: [buildEmbed("⏳ Exporting disadvantage...")] });
 
         const disadvantageChannel = guild.channels.cache.find(
             ch => ch.isTextBased() && ch.name.toLowerCase().includes("disadvantage")
         );
 
         if (!disadvantageChannel) {
-            await message.reply(`❌ Disadvantage channel not found in this server.`);
+            await message.reply({ embeds: [buildEmbed("❌ Disadvantage channel not found in this server.", ERROR_EMBED_COLOR)] });
             return;
         }
 
@@ -404,30 +410,30 @@ async function handleExportDisadvantage(message) {
         const filename = "disadvantage.json";
 
         const s3Url = await uploadToS3(filename, jsonData);
-        await message.reply(`✅ Exported disadvantage: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        await message.reply({ embeds: [buildEmbed(`✅ Exported **disadvantage**: ${messages.length} messages → \`${filename}\`\n☁️ ${s3Url}`)] });
         console.log(`✅ Exported ${messages.length} messages from disadvantage channel`);
     } catch (error) {
         console.error(error);
-        await message.reply("❌ Error exporting disadvantage: " + error.message);
+        await message.reply({ embeds: [buildEmbed("❌ Error exporting disadvantage: " + error.message, ERROR_EMBED_COLOR)] });
     }
 }
 
 async function handleExportAdvantage(message) {
     const guild = message.guild;
     if (!guild) {
-        await message.reply("❌ This command must be used in a server.");
+        await message.reply({ embeds: [buildEmbed("❌ This command must be used in a server.", ERROR_EMBED_COLOR)] });
         return;
     }
 
     try {
-        await message.reply(`⏳ Exporting advantage...`);
+        await message.reply({ embeds: [buildEmbed("⏳ Exporting advantage...")] });
 
         const advantageChannel = guild.channels.cache.find(
             ch => ch.isTextBased() && ch.name.toLowerCase().includes("advantage")
         );
 
         if (!advantageChannel) {
-            await message.reply(`❌ Advantage channel not found in this server.`);
+            await message.reply({ embeds: [buildEmbed("❌ Advantage channel not found in this server.", ERROR_EMBED_COLOR)] });
             return;
         }
 
@@ -436,30 +442,30 @@ async function handleExportAdvantage(message) {
         const filename = "advantage.json";
 
         const s3Url = await uploadToS3(filename, jsonData);
-        await message.reply(`✅ Exported advantage: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        await message.reply({ embeds: [buildEmbed(`✅ Exported **advantage**: ${messages.length} messages → \`${filename}\`\n☁️ ${s3Url}`)] });
         console.log(`✅ Exported ${messages.length} messages from advantage channel`);
     } catch (error) {
         console.error(error);
-        await message.reply("❌ Error exporting advantage: " + error.message);
+        await message.reply({ embeds: [buildEmbed("❌ Error exporting advantage: " + error.message, ERROR_EMBED_COLOR)] });
     }
 }
 
 async function handleExportNeutral(message) {
     const guild = message.guild;
     if (!guild) {
-        await message.reply("❌ This command must be used in a server.");
+        await message.reply({ embeds: [buildEmbed("❌ This command must be used in a server.", ERROR_EMBED_COLOR)] });
         return;
     }
 
     try {
-        await message.reply(`⏳ Exporting neutral...`);
+        await message.reply({ embeds: [buildEmbed("⏳ Exporting neutral...")] });
 
         const neutralChannel = guild.channels.cache.find(
             ch => ch.isTextBased() && ch.name.toLowerCase().includes("neutral")
         );
 
         if (!neutralChannel) {
-            await message.reply(`❌ Neutral channel not found in this server.`);
+            await message.reply({ embeds: [buildEmbed("❌ Neutral channel not found in this server.", ERROR_EMBED_COLOR)] });
             return;
         }
 
@@ -468,10 +474,10 @@ async function handleExportNeutral(message) {
         const filename = "neutral.json";
 
         const s3Url = await uploadToS3(filename, jsonData);
-        await message.reply(`✅ Exported neutral: ${messages.length} messages → ${filename}\n☁️ ${s3Url}`);
+        await message.reply({ embeds: [buildEmbed(`✅ Exported **neutral**: ${messages.length} messages → \`${filename}\`\n☁️ ${s3Url}`)] });
         console.log(`✅ Exported ${messages.length} messages from neutral channel`);
     } catch (error) {
         console.error(error);
-        await message.reply("❌ Error exporting neutral: " + error.message);
+        await message.reply({ embeds: [buildEmbed("❌ Error exporting neutral: " + error.message, ERROR_EMBED_COLOR)] });
     }
 }
