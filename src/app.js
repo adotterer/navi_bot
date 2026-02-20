@@ -27,11 +27,14 @@ export function createApp() {
         #status { padding: 15px 30px; border-radius: 30px; color: white; font-weight: bold; font-size: 1.2em; min-width: 120px; text-align: center; }
         .online { background-color: #4caf50; }
         .offline { background-color: #f44336; }
+        .admin-link { margin-top: 20px; color: #666; text-decoration: none; font-size: 0.9em; }
+        .admin-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <h1>Navi Bot 🧚</h1>
     <div id="status">Checking...</div>
+    <a href="/admin" class="admin-link">Admin Panel</a>
     <script>
         async function updateStatus() {
             const el = document.getElementById('status');
