@@ -182,6 +182,42 @@ function tryParseJsonArray(str) {
     }
 }
 
+/** Try to fix JSON with literal newlines inside "content" string values (common in Coder output). */
+function tryParseJsonArrayWithNewlineFix(str) {
+    let arr = tryParseJsonArray(str);
+    if (arr) return arr;
+    if (!str.includes('\n')) return null;
+    const contentKey = '"content"';
+    let fixed = str;
+    let idx = 0;
+    while ((idx = fixed.indexOf(contentKey, idx)) !== -1) {
+        const valueStart = fixed.indexOf('"', idx + contentKey.length);
+        if (valueStart === -1) break;
+        let end = valueStart + 1;
+        let found = false;
+        while (end < fixed.length) {
+            const next = fixed.indexOf('"', end);
+            if (next === -1) { idx = fixed.length; break; }
+            if (fixed[next - 1] !== '\\') {
+                const segment = fixed.slice(valueStart + 1, next);
+                if (segment.includes('\n')) {
+                    const escaped = segment.replace(/\r\n/g, '\\n').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+                    fixed = fixed.slice(0, valueStart + 1) + escaped + fixed.slice(next);
+                    idx = valueStart + 1 + escaped.length + 1;
+                } else {
+                    idx = next + 1;
+                }
+                found = true;
+                break;
+            }
+            end = next + 1;
+        }
+        if (!found) break;
+    }
+    arr = tryParseJsonArray(fixed);
+    return arr;
+}
+
 /**
  * Parse Planner steps from model output. Prefers ```json block, then last [...], then first [...].
  */
@@ -189,11 +225,15 @@ function parsePlannerSteps(text) {
     for (const raw of extractJsonArrayCandidates(text)) {
         const arr = tryParseJsonArray(raw);
         if (!arr || !arr.length) continue;
-        const mapped = arr.map((s) => ({
-            what: String(s.what ?? s.description ?? ''),
-            files: Array.isArray(s.files) ? s.files.map(String) : [],
-            changeDescription: s.changeDescription != null ? String(s.changeDescription) : undefined,
-        }));
+        const mapped = arr.map((s, i) => {
+            const what = String(s.what ?? s.description ?? s.name ?? s.step ?? s.task ?? s.title ?? '').trim();
+            const files = Array.isArray(s.files) ? s.files.map(String) : [];
+            return {
+                what: what || (files[0] ? `Edit ${files[0]}` : `Step ${i + 1}`),
+                files,
+                changeDescription: s.changeDescription != null ? String(s.changeDescription) : undefined,
+            };
+        });
         if (mapped.length) return mapped;
     }
     return [];
@@ -217,6 +257,8 @@ export async function runCoder(step, fileContext, opts = {}) {
         : '';
 
     const systemPrompt = `You are a Coder. Given one implementation step, output the exact file change(s). You must output ONLY a single JSON array of edits. Each edit: "path" (file path relative to repo root), "content" (the COMPLETE new file content for that file).
+
+CRITICAL: In the JSON, use \\n for newlines inside "content" strings (no literal line breaks), or the response cannot be parsed. Example: "content": "line1\\nline2\\n".
 
 When "Current file contents" are provided above, you MUST base your edit on that content: preserve unchanged parts and only modify what the step asks; do not replace entire files with unrelated code. Do not invent content that does not match this codebase (e.g. wrong project names, unrelated constants). For NEW files (no current contents), create minimal content that fulfills the step and matches the repo's style (imports, naming, structure).
 
@@ -254,19 +296,16 @@ Preserve existing code where no change is needed; only include files that change
 
 /**
  * Extract edits array from Coder output. Prefers ```json ... ``` block, then last [...], then first [...].
+ * Uses relaxed parse (trailing commas + literal newlines in strings) so Coder output is more likely to parse.
  */
 function parseCoderEdits(text) {
     for (const raw of extractJsonArrayCandidates(text)) {
-        try {
-            const arr = JSON.parse(raw);
-            if (!Array.isArray(arr)) continue;
-            const edits = arr
-                .filter((e) => e && (e.path || e.file) && (e.content != null))
-                .map((e) => ({ path: String(e.path || e.file), content: String(e.content) }));
-            if (edits.length) return edits;
-        } catch (_) {
-            /* try next candidate */
-        }
+        const arr = tryParseJsonArrayWithNewlineFix(raw);
+        if (!arr || !Array.isArray(arr)) continue;
+        const edits = arr
+            .filter((e) => e && (e.path || e.file) && (e.content != null))
+            .map((e) => ({ path: String(e.path || e.file), content: String(e.content) }));
+        if (edits.length) return edits;
     }
     return [];
 }
