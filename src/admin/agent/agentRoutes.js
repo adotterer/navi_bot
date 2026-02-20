@@ -44,9 +44,6 @@ router.get('/', (req, res) => {
         </form>
       </div>
       <div class="agent-progress-column flex flex-col min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden min-h-[320px]">
-        <div id="run-placeholder" class="flex-1 flex items-center justify-center p-8 text-slate-500 text-sm text-center">
-          Start a run to see progress and audit log here.
-        </div>
         <div id="run-area" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0 overflow-auto p-4">
             <div class="space-y-4 min-w-0">
