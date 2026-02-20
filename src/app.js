@@ -27,11 +27,27 @@ export function createApp() {
         #status { padding: 15px 30px; border-radius: 30px; color: white; font-weight: bold; font-size: 1.2em; min-width: 120px; text-align: center; }
         .online { background-color: #4caf50; }
         .offline { background-color: #f44336; }
+        table { border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #eee; }
     </style>
 </head>
 <body>
     <h1>Navi Bot 🧚</h1>
     <div id="status">Checking...</div>
+    <table>
+        <thead>
+            <tr><th>Command</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>!mq &lt;query&gt;</code></td><td>Quickly add first search result</td></tr>
+            <tr><td><code>!mu &lt;query&gt;</code></td><td>Search and select multiple videos</td></tr>
+            <tr><td><code>!q</code></td><td>Display the current queue</td></tr>
+            <tr><td><code>!export</code></td><td>Generate download links for the queue</td></tr>
+            <tr><td><code>!fd</code></td><td>Force download immediately</td></tr>
+            <tr><td><code>!clear</code></td><td>Clear the current queue</td></tr>
+        </tbody>
+    </table>
     <script>
         async function updateStatus() {
             const el = document.getElementById('status');
