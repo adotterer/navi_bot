@@ -20,5 +20,7 @@ export function createApp() {
         res.send('Navi Bot is running! 🧚');
     });
 
+    app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
     return app;
 }
