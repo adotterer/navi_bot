@@ -59,6 +59,9 @@ export async function createPr(runId, opts = {}) {
 
     const git = simpleGit({ baseDir: WORKSPACE_ROOT });
 
+    // Remember where we started so we can restore it after the PR is pushed.
+    let originalBranch = null;
+
     try {
         const resolvedEdits = [];
         for (const e of edits) {
@@ -68,7 +71,11 @@ export async function createPr(runId, opts = {}) {
         }
 
         const branchResult = await git.branch();
-        const defaultBranch = branchResult.current || 'main';
+        originalBranch = branchResult.current;
+
+        // Always base the agent branch off the repo's default branch (main), not whatever
+        // the developer currently has checked out.
+        const defaultBranch = await resolveDefaultBranch(git);
         await git.checkout(defaultBranch);
         await git.pull();
 
@@ -107,6 +114,11 @@ export async function createPr(runId, opts = {}) {
         return { ok: true, prUrl: pr.html_url };
     } catch (err) {
         return { ok: false, error: err.message || String(err) };
+    } finally {
+        // Always restore the branch the developer was on before the agent ran.
+        if (originalBranch) {
+            try { await git.checkout(originalBranch); } catch (_) {}
+        }
     }
 }
 
@@ -195,6 +207,34 @@ function getRepoFromEnv() {
     if (!envRepo || !/^[^/]+\/[^/]+$/.test(envRepo.trim())) return null;
     const [owner, repo] = envRepo.trim().split('/');
     return { owner, repo: repo.replace(/\.git$/, '') };
+}
+
+/**
+ * Determine the repository's default branch.
+ * Prefers the remote HEAD symbolic ref; falls back to checking for
+ * 'main' then 'master', then 'main' as a last resort.
+ * @param {import('simple-git').SimpleGit} git
+ * @returns {Promise<string>}
+ */
+async function resolveDefaultBranch(git) {
+    // Try remote HEAD (works when origin is configured)
+    try {
+        const raw = await git.raw(['rev-parse', '--abbrev-ref', 'origin/HEAD']);
+        const ref = (raw || '').trim(); // e.g. "origin/main"
+        if (ref) {
+            const parts = ref.split('/');
+            return parts[parts.length - 1] || 'main';
+        }
+    } catch (_) {}
+
+    // Fall back: check if main or master exist locally
+    try {
+        const branches = await git.branchLocal();
+        if (branches.all.includes('main')) return 'main';
+        if (branches.all.includes('master')) return 'master';
+    } catch (_) {}
+
+    return 'main';
 }
 
 /**
