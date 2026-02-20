@@ -7,6 +7,7 @@ import { promptRoutes } from './promptRoutes.js';
 import { dataRoutes } from './dataRoutes.js';
 import { aliasRoutes } from './aliasRoutes.js';
 import { emojiRoutes } from './emojiRoutes.js';
+import { agentRoutes } from './agent/agentRoutes.js';
 import { adminHead, adminNav, adminContainer, escapeHtml, s3Badge } from './layout.js';
 import { headS3Key, hasS3KeysWithPrefix } from '../shared/s3Helper.js';
 
@@ -57,6 +58,7 @@ router.use('/prompts', requireAdmin, promptRoutes);
 router.use('/data', requireAdmin, dataRoutes);
 router.use('/aliases', requireAdmin, aliasRoutes);
 router.use('/emojis', requireAdmin, emojiRoutes);
+router.use('/agent', requireAdmin, agentRoutes);
 
 function loginPage(opts = {}) {
     const error = opts.error
@@ -132,6 +134,13 @@ function dashboardPage(s3 = {}) {
           ${badge(s3.emojis)}
         </div>
         <p class="mt-2 text-sm text-slate-500">Discord custom emoji library for use in prompts (insert as images in the editor).</p>
+        <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>
+      </a>
+      <a href="/admin/agent" class="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group">
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Agent PR</h2>
+        </div>
+        <p class="mt-2 text-sm text-slate-500">Gemini agents (researcher, planners, coders) produce a flight plan and open a GitHub PR from your mission prompt.</p>
         <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>
       </a>
     </div>
