@@ -30,17 +30,36 @@ export function createApp() {
 <head>
     <title>Navi Bot</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5; }
+        :root {
+            --status-online: #15803d; --status-offline: #b91c1c; --admin-bg: #1d4ed8;
+            --bg: #f0f2f5; --card-bg: white; --text: #333; --border: #eee; --header-bg: #fafafa;
+        }
+        .dark {
+            --status-online: #4ade80; --status-offline: #f87171; --admin-bg: #60a5fa;
+            --bg: #1a1a1a; --card-bg: #2d2d2d; --text: #f0f0f0; --border: #444; --header-bg: #333;
+        }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: var(--bg); color: var(--text); }
         #status { padding: 15px 30px; border-radius: 30px; color: white; font-weight: bold; font-size: 1.2em; min-width: 120px; text-align: center; }
-        .online { background-color: #4caf50; }
-        .offline { background-color: #f44336; }
-        .admin-btn { margin-top: 20px; padding: 10px 20px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .dark #status, .dark .admin-btn { color: #000; }
+        .online { background-color: var(--status-online); }
+        .offline { background-color: var(--status-offline); }
+        .admin-btn { margin-top: 20px; padding: 10px 20px; background: var(--admin-bg); color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
         table { margin-top: 30px; border-collapse: collapse; font-size: 0.9em; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         th, td { padding: 8px 15px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #fafafa; font-weight: bold; color: #666; }
+        .dark body { background: #1a1a1b; color: #d7dadc; }
+        .dark table { background: #272729; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .dark th, .dark td { border-bottom: 1px solid #343435; }
+        .dark th { background: #343435; color: #818384; }
+        .dark #sun-icon { display: block !important; }
+        .dark #moon-icon { display: none !important; }
     </style>
 </head>
 <body>
+    <button id="theme-toggle" style="position: absolute; top: 20px; right: 20px; background: none; border: none; cursor: pointer; padding: 8px;">
+        <svg id="sun-icon" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="display: none; color: #f1c40f;"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zM2 13h2a1 1 0 100-2H2a1 1 0 100 2zm18 0h2a1 1 0 100-2h-2a1 1 0 100 2zM11 2v2a1 1 0 100 2V2a1 1 0 100-2zm0 18v2a1 1 0 100 2v-2a1 1 0 100-2zM5.99 4.58a1 1 0 111.41 1.41L5.99 4.58zm12.02 12.02a1 1 0 111.41 1.41l-1.41-1.41zm-12.02 0l-1.41 1.41a1 1 0 111.41-1.41zm12.02-12.02l1.41-1.41a1 1 0 11-1.41 1.41z"/></svg>
+        <svg id="moon-icon" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="color: #2c3e50;"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
     <h1>Navi Bot 🧚</h1>
     <div id="status">Checking...</div>
     <a href="/admin" class="admin-btn">Admin</a>
@@ -56,6 +75,9 @@ export function createApp() {
         </tbody>
     </table>
     <script>
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
         async function updateStatus() {
             const el = document.getElementById('status');
             try {
@@ -74,6 +96,10 @@ export function createApp() {
         }
         updateStatus();
         setInterval(updateStatus, 5000);
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
     </script>
 </body>
 </html>
