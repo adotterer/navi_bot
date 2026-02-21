@@ -14,6 +14,8 @@ export async function executeQuery(query, variables = {}, authToken) {
         throw new Error('Start.gg auth token is required');
     }
 
+    console.log(`[start.gg] Executing GraphQL query with variables: ${JSON.stringify(variables)}`);
+
     try {
         const response = await axios.post(
             STARTGG_API_URL,
@@ -30,12 +32,14 @@ export async function executeQuery(query, variables = {}, authToken) {
         );
 
         if (response.data.errors) {
+            console.error('[start.gg] GraphQL Errors:', JSON.stringify(response.data.errors));
             throw new Error(`GraphQL Errors: ${JSON.stringify(response.data.errors)}`);
         }
 
         return response.data.data;
     } catch (error) {
         if (error.response) {
+            console.error('[start.gg] API Error:', error.response.status, JSON.stringify(error.response.data));
             throw new Error(`Start.gg API Error (${error.response.status}): ${JSON.stringify(error.response.data)}`);
         }
         throw error;
@@ -65,6 +69,10 @@ export async function getTournament(slug, authToken) {
                     id
                     name
                     slug
+                    streams {
+                        streamName
+                        streamSource
+                    }
                     videogame {
                         id
                         name
@@ -114,6 +122,10 @@ export async function getActiveTournaments(videogameId, authToken) {
                     events {
                         id
                         name
+                        streams {
+                            streamName
+                            streamSource
+                        }
                         videogame {
                             id
                             name
