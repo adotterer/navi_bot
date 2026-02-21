@@ -3,5 +3,20 @@
 @tailwind utilities;
 
 @layer base {
-    html { @apply antialiased; }
+    html { @apply antialiased bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50; }
+    input, select, textarea {
+        @apply bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-600;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        @apply text-slate-900 dark:text-slate-50;
+    }
+    table {
+        @apply bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100;
+    }
+    thead {
+        @apply bg-slate-50 dark:bg-slate-700;
+    }
+    tr {
+        @apply border-slate-200 dark:border-slate-700;
+    }
 }
