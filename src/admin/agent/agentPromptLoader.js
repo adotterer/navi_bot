@@ -78,19 +78,33 @@ ${PROJECT_PACKAGE_RULES}
 Example (imports change + function change in one file, two separate patches):
 [{"path":"src/app.js","search":"const old = require('old');","replace":"const newMod = require('new');"},{"path":"src/app.js","search":"function foo() { return 1; }","replace":"function foo() { return 2; }"}]`,
 
-    reviewer: `You are a Reviewer. You see proposed code changes for a mission. Check each of the following in order and stop at the first problem:
+    reviewer: `You are a Quality Reviewer. Your goal is to ensure the mission's code changes are correct, follow project rules, and are ready to merge. You see the proposed changes (diffs).
 
-0. PACKAGE / API — If any edit imports "@google/generative-ai" or uses getGenerativeModel, model.generateContent(prompt), or result.response.text(), report FIX: this project uses @google/genai only; use GoogleGenAI from '@google/genai', genAI.models.generateContent({ model, contents }), and response.text. If Discord message collections are indexed like .first(n)[1], report FIX: use .at(index) or [...collection.values()] for reliable indexing.
+CHECKLIST:
+1. PACKAGE / API: Enforce @google/genai (not @google/generative-ai). Enforce Discord .at(index) (not .first(n)).
+2. IMPORTS: Verify paths are relative to the file (e.g. src/admin/routes.js -> ./agent/runStore.js).
+3. EXPORTS/MODULES: Verify imports exist and are exported.
+4. WIRING/UI: Verify new functionality is connected/rendered.
 
-1. IMPORT PATHS — For every new import added in these edits, verify the module path is correct relative to the file being edited. A file at "src/admin/routes.js" importing from "src/admin/agent/runStore.js" must use "./agent/runStore.js", NOT "../agent/runStore.js". If any import path is wrong, report FIX.
-2. MISSING MODULES — For every new import added, verify the module either (a) already exists in the codebase at the stated path, or (b) is being created in these same edits. If an import references a file that is not shown in the proposed changes and likely does not exist (e.g. a utility file with a novel name), report FIX.
-3. MISSING EXPORTS — If a function or value is imported by name (e.g. "import { abortRun } from ..."), verify that the source file in these edits actually exports it. If the function exists in the file but is not in the export statement, report FIX.
-4. UI COMPLETENESS — If the mission requires a visible UI change (adding a button, replacing a link, showing new data), verify that the file containing the rendered HTML or inline JavaScript was actually modified in these edits. Backend-only changes are incomplete if the mission required a frontend change. Report FIX if the UI file is missing.
-5. WIRING — If a new flag or function is introduced (e.g. "abortRun"), verify it is actually called somewhere in the pipeline (e.g. the orchestrator or equivalent loop checks it). A flag that is set but never read is a FIX.
+Output a valid JSON object with two keys:
+- "report": A markdown string summarizing your review. Explain what you checked and any issues found. This text helps the user decide whether to apply your fixes.
+- "edits": A JSON array of patch edits to fix the issues (if any). These edits will be applied to the PR if the user approves.
 
-If ALL checks pass, reply with exactly: OK
-If any check fails, reply with FIX: followed by ONE short, actionable sentence describing the most critical issue (e.g. "Fix: import path in routes.js should be './agent/runStore.js' not '../agent/runStore.js'").
-Output nothing else.`,
+Each edit in "edits" has:
+- "path": file path relative to repo root
+- "search": EXACT lines to replace (whitespace must match exactly)
+- "replace": new lines to substitute
+
+RULES:
+- Output ONLY the JSON object. Start with { and end with }.
+- "search" must be unique and exist in the file.
+- "replace" must fix the violation.
+- Use escaped newlines (\\n) for all strings.
+
+${PROJECT_PACKAGE_RULES}`,
+
+
+
 
     auditor: `You are an Auditor for a codebase. The user requested an audit (analysis only — no code edits). Your job is to produce a clear, actionable report in markdown.
 
