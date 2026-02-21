@@ -178,8 +178,8 @@
           </div>
           <div id="files-area" class="mx-4 mb-4 hidden border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 overflow-hidden flex-shrink-0">
             <div class="border-b border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300">Proposed changes</div>
-            <div class="flex min-h-[320px]">
-              <div id="files-sidebar" class="w-56 border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto flex-shrink-0">
+            <div class="flex flex-col sm:flex-row min-h-[320px]">
+              <div id="files-sidebar" class="w-full sm:w-56 max-h-60 sm:max-h-none border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto flex-shrink-0">
                 <ul id="files-list" class="py-2 text-sm"></ul>
               </div>
               <div id="files-content-wrap" class="flex-1 min-w-0 flex flex-col bg-slate-900">
@@ -195,10 +195,11 @@
       <div class="border-b border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-3">
         <span class="text-sm font-medium text-slate-700">Repository</span>
         <select id="repo-branch" class="rounded border border-slate-300 dark:border-slate-600 px-2 py-1 text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"></select>
+        <button type="button" id="toggle-repo-files" class="ml-auto block sm:hidden text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700">Hide Files</button>
       </div>
-      <div class="flex min-h-[400px]">
-        <div id="repo-sidebar" class="w-60 border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto flex-shrink-0">
-          <ul id="repo-tree" class="py-2 text-sm"><li class="px-3 py-2 text-slate-500 text-sm">Loading…</li></ul>
+      <div class="flex flex-col sm:flex-row min-h-[400px]">
+        <div id="repo-sidebar" class="w-full sm:w-60 max-h-60 sm:max-h-none border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto flex-shrink-0">
+          <ul id="repo-tree" class="py-2 text-sm"><li class="px-2 sm:px-6 py-2 text-slate-500 text-sm">Loading…</li></ul>
         </div>
         <div id="repo-content-wrap" class="flex-1 min-w-0 flex flex-col bg-slate-900">
           <div id="repo-content-header" class="px-3 py-1.5 bg-slate-800 text-slate-300 text-sm font-mono truncate border-b border-slate-700"></div>
@@ -549,10 +550,10 @@
       .catch(function(e) { cb(e.message); });
   }
   function renderRepoTree(branch, path, parentEl) {
-    parentEl.innerHTML = '<li class="px-3 py-1 text-slate-500 text-xs">Loading…</li>';
+    parentEl.innerHTML = '<li class="px-2 sm:px-6 py-1 text-slate-500 text-xs">Loading…</li>';
     fetchTree(branch, path, function(err, entries) {
       parentEl.innerHTML = '';
-      if (err) { parentEl.innerHTML = '<li class="px-3 py-1 text-red-600 text-xs">' + escapeHtml(err) + '</li>'; return; }
+      if (err) { parentEl.innerHTML = '<li class="px-2 sm:px-6 py-1 text-red-600 text-xs">' + escapeHtml(err) + '</li>'; return; }
       if (!entries || !entries.length) return;
       entries.forEach(function(e) {
         var li = document.createElement('li');
@@ -563,8 +564,8 @@
         li.dataset.type = entryType;
         li.dataset.name = entryName;
         if (entryType === 'dir') {
-          li.className = 'repo-dir cursor-pointer px-3 py-1 hover:bg-slate-200 flex items-center gap-1';
-          li.innerHTML = '<span class="repo-dir-icon text-slate-500">\u25B6</span><span class="truncate text-zinc-900 dark:text-zinc-100">' + escapeHtml(entryName) + '</span>';
+          li.className = 'repo-dir cursor-pointer px-3 py-1 hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center gap-1';
+          li.innerHTML = '<span class="repo-dir-icon text-slate-500">\u25B6</span><span class="truncate text-slate-700 dark:text-slate-200">' + escapeHtml(entryName) + '</span>';
           li.addEventListener('click', function(ev) {
             ev.stopPropagation();
             var key = repoCacheKey(branch, entryPath);
@@ -576,7 +577,7 @@
               repoExpanded[key] = false;
             } else {
               var ul = document.createElement('ul');
-              ul.className = 'pl-4 border-l border-slate-200 ml-2 text-sm';
+              ul.className = 'pl-4 border-l border-slate-200 dark:border-slate-700 ml-2 text-sm bg-transparent dark:bg-slate-900';
               li.appendChild(ul);
               renderRepoTree(branch, entryPath, ul);
               li.querySelector('.repo-dir-icon').textContent = '\u25BC';
@@ -584,8 +585,8 @@
             }
           });
         } else {
-          li.className = 'repo-file cursor-pointer px-3 py-1 hover:bg-slate-200 flex items-center gap-1 pl-6';
-          li.innerHTML = '<span class="truncate text-zinc-900 dark:text-zinc-100">' + escapeHtml(entryName) + '</span>';
+          li.className = 'repo-file cursor-pointer px-3 py-1 hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center gap-1 pl-6';
+          li.innerHTML = '<span class="truncate text-slate-700 dark:text-slate-200">' + escapeHtml(entryName) + '</span>';
           li.addEventListener('click', function(ev) {
             ev.stopPropagation();
             repoContentHeader.textContent = entryPath;
@@ -814,7 +815,7 @@
       var li = document.createElement('li');
       var a = document.createElement('a');
       a.href = '#';
-      a.className = 'block px-3 py-1.5 hover:bg-slate-200 text-slate-700 truncate cursor-pointer';
+      a.className = 'block px-3 py-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 truncate cursor-pointer';
       a.textContent = e.path;
       a.dataset.index = String(i);
       a.addEventListener('click', function(ev) {
