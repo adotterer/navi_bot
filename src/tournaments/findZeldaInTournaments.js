@@ -242,7 +242,7 @@ async function findZeldaPlayersInTodaysTournaments() {
                                     tournamentSlug: tournament.slug,
                                     eventName: event.name,
                                     startAt: tournament.startAt,
-                                    streams: tournament.streams || [],
+                                    streams: tourData?.tournament?.streams || [],
                                     zeldaPlayer: {
                                         gamerTag: zeldaPlayer.gamerTag,
                                         playerId: zeldaPlayer.playerId,
