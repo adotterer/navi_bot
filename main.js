@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 
 // Import handlers
 import { handleExportCharacter, handleExportMatchups, handleListThreadCounts } from './src/export/exportHandler.js';
+import { handleDMMessage } from './src/messages/dmHandler.js';
 import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/matchups/matchupHandler.js';
 import { handleQuestion } from './src/messages/questionHandler.js';
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
@@ -66,6 +67,12 @@ client.on("clientReady", () => {
 // Handler 1: "should have" → "could have" + Arena LAN warning
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
+
+    // Handle DM messages
+    if (message.channel.type === 1) {
+        await handleDMMessage(message);
+        return;
+    }
 
     const channelName = message.channel?.name?.toLowerCase() || '';
     const normalizedChannelName = channelName.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
