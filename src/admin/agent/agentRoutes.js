@@ -511,7 +511,7 @@ router.get('/', (req, res) => {
         li.dataset.name = entryName;
         if (entryType === 'dir') {
           li.className = 'repo-dir cursor-pointer px-3 py-1 hover:bg-slate-200 flex items-center gap-1';
-          li.innerHTML = '<span class="repo-dir-icon text-slate-500">\u25B6</span><span class="truncate">' + escapeHtml(entryName) + '</span>';
+          li.innerHTML = '<span class="repo-dir-icon text-slate-500">\u25B6</span><span class="truncate text-zinc-900 dark:text-zinc-100">' + escapeHtml(entryName) + '</span>';
           li.addEventListener('click', function(ev) {
             ev.stopPropagation();
             var key = repoCacheKey(branch, entryPath);
@@ -532,7 +532,7 @@ router.get('/', (req, res) => {
           });
         } else {
           li.className = 'repo-file cursor-pointer px-3 py-1 hover:bg-slate-200 flex items-center gap-1 pl-6';
-          li.innerHTML = '<span class="truncate text-slate-700">' + escapeHtml(entryName) + '</span>';
+          li.innerHTML = '<span class="truncate text-zinc-900 dark:text-zinc-100">' + escapeHtml(entryName) + '</span>';
           li.addEventListener('click', function(ev) {
             ev.stopPropagation();
             repoContentHeader.textContent = entryPath;
@@ -618,7 +618,7 @@ router.get('/', (req, res) => {
       if (emptyEl) emptyEl.classList.add('hidden');
       all.forEach(function(r) {
         var row = document.createElement('div');
-        row.className = 'past-run-row flex items-center gap-3 px-4 py-2 hover:bg-slate-50 group';
+        row.className = 'past-run-row flex items-center gap-3 px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800/50 group';
         var ts = r.createdAt || r.lastModified || 0;
         var mission = (r.title || r.prompt || '').trim().slice(0, 90) || '(No mission)';
         var statusBadge = r.status ? '<span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex-shrink-0">' + escapeHtml(r.status) + '</span>' : '';
@@ -627,8 +627,8 @@ router.get('/', (req, res) => {
           + '<span class="text-sm text-slate-700 dark:text-slate-300 truncate flex-1">' + escapeHtml(mission) + '</span>'
           + modeBadge
           + statusBadge
-          + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="load-run-btn text-xs font-medium text-emerald-600 hover:text-emerald-800 px-2 py-1 rounded hover:bg-emerald-50 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">Load</button>'
-          + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="delete-run-btn text-xs font-medium text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete run">✕</button>';
+          + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="load-run-btn text-xs font-medium text-emerald-600 hover:text-emerald-800 px-2 py-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/30 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">Load</button>'
+          + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="delete-run-btn text-xs font-medium text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete run">✕</button>';
         listEl.appendChild(row);
       });
       listEl.querySelectorAll('.load-run-btn').forEach(function(btn) {
