@@ -259,3 +259,113 @@ async function getRepo(git) {
     } catch (_) {}
     return null;
 }
+
+/**
+ * Push additional edits to an existing PR branch (e.g. after "Apply fixes to PR").
+ * @param {string} runId
+ * @param {Array<{ path: string, content: string }>} edits - Resolved edits (path + full content per file).
+ * @returns {Promise<{ ok: boolean, prUrl?: string, error?: string }>}
+ */
+export async function pushEditsToBranch(runId, edits) {
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) return { ok: false, error: 'GITHUB_TOKEN not set' };
+    if (!edits || !edits.length) return { ok: false, error: 'No edits to apply' };
+
+    const branchName = 'agent/' + runId.replace(/[^a-z0-9-]/gi, '-').slice(0, 80);
+    const useApiOnly = process.env.AGENT_NO_LOCAL_GIT === 'true' || process.env.AGENT_NO_LOCAL_GIT === '1';
+
+    if (useApiOnly || !hasGitClone()) {
+        return pushEditsToBranchViaApi(runId, branchName, edits, token);
+    }
+
+    const git = simpleGit({ baseDir: WORKSPACE_ROOT });
+    let originalBranch = null;
+
+    try {
+        const resolvedEdits = [];
+        for (const e of edits) {
+            const r = resolvePath(e.path);
+            if (!r.ok) return { ok: false, error: `Invalid path ${e.path}: ${r.error}` };
+            resolvedEdits.push({ absolute: r.absolute, relative: e.path, content: e.content });
+        }
+
+        const branchResult = await git.branch();
+        originalBranch = branchResult.current;
+
+        await git.fetch();
+        const branchList = await git.branchLocal();
+        if (!branchList.all.includes(branchName)) {
+            await git.checkoutBranch(branchName, 'origin/' + branchName);
+        } else {
+            await git.checkout(branchName);
+        }
+        await git.pull();
+
+        for (const { absolute, content } of resolvedEdits) {
+            if (content == null) continue;
+            const dir = path.dirname(absolute);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(absolute, content, 'utf8');
+        }
+
+        const relPaths = resolvedEdits.map((e) => e.relative);
+        await git.add(relPaths);
+        await git.commit('Apply Quality Review fixes');
+        await git.push('origin', branchName);
+
+        const repo = await getRepo(git);
+        const prUrl = repo ? `https://github.com/${repo.owner}/${repo.repo}/pull/...` : undefined;
+        return { ok: true, prUrl };
+    } catch (err) {
+        return { ok: false, error: err.message || String(err) };
+    } finally {
+        if (originalBranch) {
+            try { await git.checkout(originalBranch); } catch (_) {}
+        }
+    }
+}
+
+async function pushEditsToBranchViaApi(runId, branchName, edits, token) {
+    const repo = getRepoFromEnv();
+    if (!repo) return { ok: false, error: 'GITHUB_REPO required (e.g. owner/repo)' };
+
+    const validated = [];
+    for (const e of edits) {
+        const v = validateEditPath(e.path);
+        if (!v.ok) return { ok: false, error: `${e.path}: ${v.error}` };
+        if (e.content == null) continue;
+        validated.push({ path: v.relative, content: e.content });
+    }
+    if (!validated.length) return { ok: false, error: 'No valid edits' };
+
+    try {
+        const octokit = new Octokit({ auth: token, log: { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} } });
+        for (const { path: filePath, content } of validated) {
+            let sha = null;
+            try {
+                const { data } = await octokit.repos.getContent({
+                    owner: repo.owner,
+                    repo: repo.repo,
+                    path: filePath,
+                    ref: branchName,
+                });
+                if (!Array.isArray(data) && data.sha) sha = data.sha;
+            } catch (e) {
+                if (e.status !== 404) throw e;
+            }
+            await octokit.repos.createOrUpdateFileContents({
+                owner: repo.owner,
+                repo: repo.repo,
+                path: filePath,
+                message: 'Apply Quality Review fixes',
+                content: Buffer.from(content, 'utf8').toString('base64'),
+                branch: branchName,
+                ...(sha ? { sha } : {}),
+            });
+        }
+        const prUrl = `https://github.com/${repo.owner}/${repo.repo}/pulls`;
+        return { ok: true, prUrl };
+    } catch (err) {
+        return { ok: false, error: err.message || String(err) };
+    }
+}
