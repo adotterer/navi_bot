@@ -102,6 +102,7 @@ router.get('/', (req, res) => {
                 <div id="run-mission" class="run-mission-display p-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 rounded min-h-[2rem] mb-3 prose prose-slate dark:prose-invert max-w-none"></div>
                 <div id="pipeline-area" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-2.5">
                   <div id="pipeline-inner" class="flex flex-wrap items-center gap-2 text-sm"></div>
+                  <p id="pipeline-hint" class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 hidden"></p>
                 </div>
                 <div id="result-area" class="rounded-lg border border-slate-200 dark:border-slate-600 bg-emerald-50/50 dark:bg-slate-800 dark:border-emerald-800/50 p-4 hidden mt-2">
                   <a id="pr-link" href="#" target="_blank" rel="noopener" class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-medium underline">Open PR</a>
@@ -399,9 +400,19 @@ router.get('/', (req, res) => {
         '<span id="phase-coder" class="' + phaseBaseClass + '">Coder</span>' + arrowHtml +
         '<span id="phase-review" class="' + phaseBaseClass + '">Review</span>' + arrowHtml +
         '<span id="phase-pr" class="' + phaseBaseClass + '">Create PR</span>' + arrowHtml +
-        '<span id="phase-tester" class="' + phaseBaseClass + '">Tester</span>';
+        '<span id="phase-tester" class="' + phaseBaseClass + '" title="Reviews the branch diff and produces a Merge / Request changes / Reject report.">Quality review</span>';
     }
     inner.innerHTML = html;
+    var hint = document.getElementById('pipeline-hint');
+    if (hint) {
+      if (mode === 'pr') {
+        hint.textContent = 'Last step: automated quality review of the branch (Merge / Request changes / Reject).';
+        hint.classList.remove('hidden');
+      } else {
+        hint.textContent = '';
+        hint.classList.add('hidden');
+      }
+    }
   }
 
   function updatePipeline(status, runData) {
@@ -432,7 +443,7 @@ router.get('/', (req, res) => {
         coding: runData.stepResults && runData.stepResults.length ? 'Coder (' + runData.stepResults.length + ' steps)' : 'Coder',
         reviewing: 'Review',
         creating_pr: 'Create PR',
-        tester: 'Tester'
+        tester: 'Quality review'
       };
       phaseIdMap = { researcher: 'researcher', planning: 'planner', coding: 'coder', reviewing: 'review', creating_pr: 'pr', tester: 'tester' };
     }
@@ -442,6 +453,7 @@ router.get('/', (req, res) => {
       var el = document.getElementById('phase-' + phaseId);
       if (!el) return;
       el.textContent = labels[phase] || el.textContent;
+      if (phase === 'tester') el.setAttribute('title', 'Reviews the branch diff and produces a Merge / Request changes / Reject report.');
       el.className = phaseBaseClass;
       var idx = order.indexOf(phase);
       var currentIdx = order.indexOf(current);
