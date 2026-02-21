@@ -204,6 +204,10 @@ export async function checkTodaysTournaments(authToken) {
                         events {
                             id
                             name
+                            streams {
+                                streamName
+                                streamSource
+                            }
                         }
                     }
                 }
@@ -213,6 +217,7 @@ export async function checkTodaysTournaments(authToken) {
             try {
                 tourData = await executeWithRetry(tourQuery, { slug: tournament.slug }, authToken);
             } catch (e) {
+                console.error(`[TournamentCheck] Error fetching data for ${tournament.slug}:`, e.message);
                 continue;
             }
             const events = tourData?.tournament?.events || [];
@@ -252,12 +257,17 @@ export async function checkTodaysTournaments(authToken) {
 
                     // If we found Zelda players in this tournament, add it to the map (once per tournament)
                     if (foundPlayersInTournament.length > 0 && !tournamentMatches.has(tournament.slug)) {
+                        const tourStreams = tourData?.tournament?.streams || [];
+                        const firstStream = tourStreams[0];
+                        const streamUrl = firstStream ? `twitch.tv/${firstStream.streamName}` : 'Stream not available in start.gg data';
+
                         tournamentMatches.set(tournament.slug, {
                             tournamentName: tournament.name,
                             tournamentSlug: tournament.slug,
                             eventName: event.name,
                             startAt: tournament.startAt,
-                            streams: tournament.streams || [],
+                            stream: streamUrl,
+                            streams: tourStreams,
                             zeldaPlayers: foundPlayersInTournament
                         });
                     }
