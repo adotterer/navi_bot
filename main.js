@@ -1,8 +1,9 @@
-import { Client, GatewayIntentBits } from "discord.js";
+import { Client, GatewayIntentBits, ChannelType } from "discord.js";
 import dotenv from 'dotenv';
 
 // Import handlers
 import { handleExportCharacter, handleExportMatchups, handleListThreadCounts } from './src/export/exportHandler.js';
+import { handleDMMessage } from './src/messages/dmHandler.js';
 import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/matchups/matchupHandler.js';
 import { handleQuestion } from './src/messages/questionHandler.js';
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
@@ -67,6 +68,11 @@ client.on("clientReady", () => {
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
+    if (message.channel?.type === ChannelType.DM) {
+        await handleDMMessage(message);
+        return;
+    }
+
     const channelName = message.channel?.name?.toLowerCase() || '';
     const normalizedChannelName = channelName.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
     const isAskNaviChannel = normalizedChannelName.includes('ask') && normalizedChannelName.includes('navi');
@@ -123,6 +129,7 @@ client.on("messageCreate", async (message) => {
 // Handler 2: Commands (!export, !match-up-notes, !mu-question) + Refinement replies
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
+    if (message.channel?.type === ChannelType.DM) return;
 
     const channelName = message.channel?.name?.toLowerCase() || '';
     const normalizedChannelName = channelName.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();

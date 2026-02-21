@@ -10,7 +10,7 @@ const S3_PREFIX = 'admin/agent-prompts/';
 const PROJECT_PACKAGE_RULES = `
 PROJECT PACKAGES (use these exactly — wrong package names or APIs break the app):
 - Google AI: Use package "@google/genai" (NOT "@google/generative-ai"). Import: GoogleGenAI from '@google/genai'. Client: new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) or apiKey: process.env.GOOGLE_API_KEY. Generate: genAI.models.generateContent({ model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview', contents: prompt }). Response text: response.text (property). Do NOT use getGenerativeModel, generateContent(prompt), or result.response.text() — that is the old @google/generative-ai API.
-- Discord: discord.js v14. Message collections from fetch(): use .at(index) or [...collection.values()] for indexing; avoid .first(n)[1] for "second item".
+- Discord: discord.js v14. Message collections from fetch(): use .at(index) or [...collection.values()] for indexing; avoid .first(n)[1] for "second item". For DM checks use ChannelType.DM from 'discord.js' (e.g. message.channel?.type === ChannelType.DM), not the number 1.
 - Env: Prefer process.env.GEMINI_MODEL (or GOOGLE_API_KEY where questionHandler does) and existing env names; do not invent new env keys without necessity.`;
 
 const DEFAULT_PROMPTS = {
@@ -22,6 +22,7 @@ When the mission involves AI/Gemini or new Discord commands, include in hints th
 
 FILE MAPPING RULES — use these to select the correct hint paths:
 - Discord commands (!mu, !mq, !export, !fd, etc.): src/export/exportHandler.js, src/matchups/matchupHandler.js, src/messages/questionHandler.js, src/shared/messageSplitter.js, src/shared/promptLoader.js (contains one-line descriptions for every command)
+- Discord DM handling: message routing lives in main.js (messageCreate). For missions about DMs or "direct message", add a dedicated handler under src/messages/ (e.g. src/messages/dmHandler.js) and wire it from main.js; include main.js and src/messages/ (and existing handlers like questionHandler.js, faqAndAliasHandler.js) in hints.
 - Admin panel UI pages: each admin page is rendered server-side in its own routes file. The file that renders the page HTML AND its inline <script> JS is the SAME file. For the Agent PR page: src/admin/agent/agentRoutes.js. For aliases: src/admin/aliasRoutes.js. For prompts: src/admin/promptRoutes.js. For the main dashboard/nav: src/admin/routes.js and src/admin/layout.js.
 - Agent pipeline logic: src/admin/agent/orchestrator.js, src/admin/agent/agents.js
 - Agent run state: src/admin/agent/runStore.js
@@ -46,6 +47,7 @@ CRITICAL RULES — violating any of these causes broken code:
 2. NEW IMPORTS: If a step adds an import from a new utility file (e.g. "import { foo } from '../shared/myUtil.js'"), you MUST either (a) include a separate step that creates that file, or (b) only import from files shown in "Relevant file contents". Never instruct the Coder to import a module that does not exist and is not being created.
 3. WIRING: If a step introduces a new flag or function (e.g. setAborted()), include a step that wires it into the running process that should check it (e.g. the orchestrator loop). A flag that is set but never read is dead code.
 4. EXPORTS: If a step adds a new function that other files will call, include updating the export statement of that file in the same step's changeDescription.
+5. DM / NEW HANDLERS: When the mission involves DMs or "direct message", (a) use one new module (e.g. src/messages/dmHandler.js) that exports a single entry (e.g. handleDMMessage) and delegates to existing handlers; (b) in main.js add an early branch in the first messageCreate listener (e.g. if DM, call that handler and return); do not add a second messageCreate listener for DMs; (c) the wiring step's "files" must include main.js and the new handler path.
 
 Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (array of file paths, e.g. ["src/app.js"]), "changeDescription" (optional, ONE sentence max — do not write multi-line prose). Example:
 [{"what":"Add GET /health handler","files":["src/app.js"],"changeDescription":"Add app.get('/health', ...) returning { status: 'ok' }"}]`,
@@ -73,6 +75,7 @@ IMPORT PATH RULES — incorrect imports will break the app:
 - Before adding any import, verify the module being imported is either (a) shown in "Current file contents" at the path you are importing, or (b) a file you are creating in this same edit. Never import a module that does not exist.
 - Only import named exports that are explicitly listed in the export statement of the source file shown in "Current file contents".
 - When you add a new exported function to a file that uses a named export list (e.g. "export { foo, bar }"), you MUST also patch that export line to include the new function name.
+- When adding a new message or event handler (e.g. a DM handler), it MUST be invoked where existing handlers are registered (e.g. in main.js inside the appropriate messageCreate block). Do not leave new handler functions uncalled.
 ${PROJECT_PACKAGE_RULES}
 
 Example (imports change + function change in one file, two separate patches):
@@ -87,6 +90,7 @@ Example (imports change + function change in one file, two separate patches):
 3. MISSING EXPORTS — If a function or value is imported by name (e.g. "import { abortRun } from ..."), verify that the source file in these edits actually exports it. If the function exists in the file but is not in the export statement, report FIX.
 4. UI COMPLETENESS — If the mission requires a visible UI change (adding a button, replacing a link, showing new data), verify that the file containing the rendered HTML or inline JavaScript was actually modified in these edits. Backend-only changes are incomplete if the mission required a frontend change. Report FIX if the UI file is missing.
 5. WIRING — If a new flag or function is introduced (e.g. "abortRun"), verify it is actually called somewhere in the pipeline (e.g. the orchestrator or equivalent loop checks it). A flag that is set but never read is a FIX.
+6. HANDLER WIRING — If the mission or the diff introduces a new handler (e.g. for DMs), verify it is called from the appropriate place (e.g. main.js messageCreate). If the new handler is never invoked, report FIX.
 
 If ALL checks pass, reply with exactly: OK
 If any check fails, reply with FIX: followed by ONE short, actionable sentence describing the most critical issue (e.g. "Fix: import path in routes.js should be './agent/runStore.js' not '../agent/runStore.js'").
