@@ -73,21 +73,21 @@ client.on("messageCreate", async (message) => {
         const ch = message.channel;
         console.log(`[messageCreate] no guild | channelId=${ch?.id} type=${ch?.type} isDMBased=${typeof ch?.isDMBased === 'function' ? ch.isDMBased() : 'N/A'} content=${(message.content || '').slice(0, 40)}`);
     }
-
-    // DMs: isDMBased() for full/partial DM channels, or no guild (fallback)
-    const isDM = message.channel?.isDMBased?.() || !message.guild;
-    if (isDM) {
-        console.log(`📩 DM from ${message.author.tag}: ${(message.content || '').slice(0, 80)}`);
-        try {
-            await handleDMMessage(message);
-        } catch (err) {
-            console.error('[DM] handleDMMessage error:', err);
-            try {
-                await message.reply('Something went wrong. Try again or use !docs for help.').catch(() => {});
-            } catch (_) {}
-        }
-        return;
-    }
+    // DMs: isDMBased() for full/partial DM channels, or no guild (fallback) 
+    // (doesn't work)
+    // const isDM = message.channel?.isDMBased?.() || !message.guild;
+    // if (isDM) {
+    //     console.log(`📩 DM from ${message.author.tag}: ${(message.content || '').slice(0, 80)}`);
+    //     try {
+    //         await handleDMMessage(message);
+    //     } catch (err) {
+    //         console.error('[DM] handleDMMessage error:', err);
+    //         try {
+    //             await message.reply('Something went wrong. Try again or use !docs for help.').catch(() => {});
+    //         } catch (_) {}
+    //     }
+    //     return;
+    // }
 
     const channelName = message.channel?.name?.toLowerCase() || '';
     const normalizedChannelName = channelName.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();

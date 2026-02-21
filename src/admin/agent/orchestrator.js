@@ -389,6 +389,13 @@ export async function runPipeline(runId, opts = {}) {
         if (/![a-z][a-zA-Z0-9-]*|discord command|new command/i.test(prompt || '')) {
             allowedPaths.add('main.js');
         }
+        // Missions control panel: main page HTML+script in agentPageContentInner.html; models API in agentRoutes.js.
+        const AGENT_ROUTES_PATH = 'src/admin/agent/agentRoutes.js';
+        const AGENT_PAGE_INNER_PATH = 'src/admin/agent/agentPageContentInner.html';
+        if (/\/admin\/agent|missions control panel|model dropdown|model menu|agent page|model selector/i.test(prompt || '')) {
+            allowedPaths.add(AGENT_ROUTES_PATH);
+            allowedPaths.add(AGENT_PAGE_INNER_PATH);
+        }
 
         const allEdits = [];
         const isClaude = typeof model === 'string' && model.trim().toLowerCase().startsWith('claude-');
@@ -491,6 +498,27 @@ export async function runPipeline(runId, opts = {}) {
                             const r = await callTool('read_file', { path: MAIN_PATH });
                             if (r.ok && typeof r.result === 'string') fileContext[MAIN_PATH] = r.result;
                         }
+                    }
+                    // Missions UI: main page form + script live in agentPageContentInner.html; model API in agentRoutes.js.
+                    const isMissionsUiStep = /\/admin\/agent|missions control panel|model dropdown|model menu|agent page|model selector|modelmeta|model meta/i.test(stepText);
+                    const isFormTextareaStep = /textarea|tip|help line|help text|mission prompt/i.test(stepText)
+                        && !/model dropdown|model selector|model menu|modelmeta|model meta/i.test(stepText);
+                    if (isMissionsUiStep && !fileContext[AGENT_PAGE_INNER_PATH]) {
+                        const r = await callTool('read_file', { path: AGENT_PAGE_INNER_PATH });
+                        if (r.ok && typeof r.result === 'string') {
+                            let content = r.result;
+                            const INNER_TRUNCATE_LINES = 280;
+                            if (isFormTextareaStep && content.split('\n').length > INNER_TRUNCATE_LINES) {
+                                const lines = content.split('\n');
+                                content = lines.slice(0, INNER_TRUNCATE_LINES).join('\n')
+                                    + `\n\n<!-- ... (file truncated; ${lines.length} lines total). Mission prompt textarea (id=prompt) and form are above. -->\n`;
+                            }
+                            fileContext[AGENT_PAGE_INNER_PATH] = content;
+                        }
+                    }
+                    if (isMissionsUiStep && !fileContext[AGENT_ROUTES_PATH] && /model dropdown|model selector|modelmeta|model meta/i.test(stepText)) {
+                        const r = await callTool('read_file', { path: AGENT_ROUTES_PATH });
+                        if (r.ok && typeof r.result === 'string') fileContext[AGENT_ROUTES_PATH] = r.result;
                     }
                     const coderResult = await runCoder(step, fileContext, { signal, missionPrompt: prompt, model });
                     return { step, task, coderResult, stepIndex: j, useExisting: false };

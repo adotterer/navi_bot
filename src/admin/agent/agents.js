@@ -739,6 +739,11 @@ function parseCoderEdits(text) {
                 }
                 // Full-content format: {path, content}
                 return { path, content: String(e.content ?? e.text ?? '') };
+            })
+            .filter((e) => {
+                // Reject edits with no substantive content so we fail parse instead of validation "failed: no"
+                if (e.search !== undefined) return true; // patch format: allow replace === '' (deletion)
+                return (e.content && e.content.trim().length > 0);
             });
     };
 
