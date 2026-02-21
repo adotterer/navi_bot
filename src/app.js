@@ -1,3 +1,4 @@
+// hello world
 /**
  * Express app factory. Used by main.js (full bot) and server-admin.js (Express-only for local admin testing).
  * No Discord code – safe to run without touching the Discord token.
