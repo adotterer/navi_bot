@@ -21,30 +21,30 @@ router.get('/', (req, res) => {
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Missions' }])}
     <div class="flex items-center justify-between mb-8">
-      <h1 class="text-2xl font-semibold text-slate-800">Missions</h1>
-      <a href="/admin/agent/prompts" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Edit agent prompts</a>
+      <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Missions</h1>
+      <a href="/admin/agent/prompts" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">Edit agent prompts</a>
     </div>
-    <p class="text-slate-600 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
-    <section class="rounded-xl border border-slate-200 bg-white overflow-hidden w-full mb-4">
-      <button type="button" id="past-runs-toggle" class="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-50 text-sm font-medium text-slate-700 text-left hover:bg-slate-100 transition-colors">
+    <p class="text-slate-600 dark:text-slate-400 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
+    <section class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden w-full mb-4">
+      <button type="button" id="past-runs-toggle" class="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
         <span>Recent runs</span>
         <span id="past-runs-count" class="text-xs text-slate-400 font-normal"></span>
         <span id="past-runs-chevron" class="ml-auto text-slate-400 text-xs">▾</span>
       </button>
-      <div id="past-runs-list" class="divide-y divide-slate-100 max-h-60 overflow-y-auto hidden">
+      <div id="past-runs-list" class="divide-y divide-slate-100 dark:divide-slate-700 max-h-60 overflow-y-auto hidden">
         <p id="past-runs-empty" class="px-4 py-3 text-sm text-slate-400">No past runs found.</p>
       </div>
     </section>
     <div class="flex flex-col gap-6 mb-8">
-      <section class="rounded-xl border border-slate-200 bg-white overflow-hidden w-full">
-        <div class="border-b border-slate-200 px-4 py-2.5 bg-slate-50 text-sm font-medium text-slate-700">Mission prompt</div>
+      <section class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden w-full">
+        <div class="border-b border-slate-200 dark:border-slate-700 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300">Mission prompt</div>
         <form id="agent-form" class="flex flex-col p-4 gap-4">
           <textarea id="prompt" name="prompt" rows="4" placeholder="e.g. Add a health check endpoint at GET /health that returns { status: 'ok' }"
-            class="w-full min-h-[100px] rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none font-mono text-sm resize-y"></textarea>
+            class="w-full min-h-[100px] rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none font-mono text-sm resize-y"></textarea>
           <div class="flex flex-wrap gap-4 items-end">
             <div>
-              <label for="model" class="block text-xs font-medium text-slate-500 mb-1">Model <span class="font-normal text-slate-400">(hover for use-case)</span></label>
-              <select id="model" name="model" class="rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-sm min-w-[180px]">
+              <label for="model" class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Model <span class="font-normal text-slate-400">(hover for use-case)</span></label>
+              <select id="model" name="model" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-sm min-w-[180px]">
                 <option value="">Loading…</option>
               </select>
             </div>
@@ -66,28 +66,28 @@ router.get('/', (req, res) => {
           </div>
         </form>
       </section>
-      <div class="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden min-h-[420px] flex flex-col">
+      <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-hidden min-h-[420px] flex flex-col">
         <div id="run-area" class="hidden flex flex-col flex-1 min-h-0 overflow-hidden">
           <div class="flex flex-col flex-1 min-h-0 p-4 gap-4 overflow-auto">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-shrink-0">
-              <section class="rounded-lg border border-slate-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[200px]">
-                <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700 flex-shrink-0 flex items-center gap-3">
+              <section class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden flex flex-col flex-1 min-h-[200px]">
+                <div class="border-b border-slate-200 dark:border-slate-700 px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300 flex-shrink-0 flex items-center gap-3">
                   <span>Audit log</span>
                   <span id="run-timer" class="ml-auto text-xs font-mono text-slate-400 tabular-nums hidden">0:00</span>
                 </div>
                 <div id="log-container" class="bg-slate-900 text-slate-100 p-4 font-mono text-sm flex-1 overflow-y-auto whitespace-pre-wrap break-words"></div>
-                <div id="run-tokens-bar" class="hidden border-t border-slate-100 px-4 py-1.5 text-xs text-slate-400 flex items-center gap-1">
+                <div id="run-tokens-bar" class="hidden border-t border-slate-100 dark:border-slate-700 px-4 py-1.5 text-xs text-slate-400 flex items-center gap-1">
                   <span id="run-tokens"></span>
                 </div>
               </section>
-              <section class="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+              <section class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-3">
                 <div class="flex items-center gap-3 flex-wrap">
-                  <span id="run-status" class="text-sm font-medium text-slate-700">Running…</span>
-                  <span id="run-stage" class="text-sm text-slate-500"></span>
+                  <span id="run-status" class="text-sm font-medium text-slate-700 dark:text-slate-300">Running…</span>
+                  <span id="run-stage" class="text-sm text-slate-500 dark:text-slate-400"></span>
                 </div>
-                <div class="text-xs text-slate-500 mb-1">Mission</div>
-                <div id="run-mission" class="p-2 text-sm text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded min-h-[2rem] mb-3"></div>
-                <div id="pipeline-area" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Mission</div>
+                <div id="run-mission" class="p-2 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words bg-slate-50 dark:bg-slate-900/50 rounded min-h-[2rem] mb-3"></div>
+                <div id="pipeline-area" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-2.5">
                   <div class="flex flex-wrap items-center gap-2 text-sm">
                     <span id="phase-researcher" class="phase px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 font-medium transition-all">Researcher</span>
                     <span class="text-slate-300">\u2192</span>
@@ -107,12 +107,12 @@ router.get('/', (req, res) => {
                 </div>
               </section>
             </div>
-            <section id="docs-panel" class="rounded-lg border border-slate-200 bg-white overflow-hidden flex-shrink-0 hidden">
-              <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Docs</div>
+            <section id="docs-panel" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden flex-shrink-0 hidden">
+              <div class="border-b border-slate-200 dark:border-slate-700 px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300">Docs</div>
               <div class="p-4 space-y-4 max-h-[320px] overflow-y-auto">
                 <div>
                   <label class="block text-xs font-medium text-slate-500 mb-1">Mission</label>
-                  <div id="docs-mission" class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 bg-slate-50 whitespace-pre-wrap min-h-[3rem]"></div>
+                  <div id="docs-mission" class="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 whitespace-pre-wrap min-h-[3rem]"></div>
                 </div>
                 <div><label class="block text-xs font-medium text-slate-500 mb-1">Overview</label><textarea id="docs-overview" data-section="overview" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
                 <div><label class="block text-xs font-medium text-slate-500 mb-1">Requirements</label><textarea id="docs-requirements" data-section="requirements" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
@@ -121,20 +121,20 @@ router.get('/', (req, res) => {
                 <div><label class="block text-xs font-medium text-slate-500 mb-1">Notes</label><textarea id="docs-notes" data-section="notes" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
                 <div>
                   <label class="block text-xs font-medium text-slate-500 mb-1">Implementation plan</label>
-                  <div id="docs-implementation" class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 bg-slate-50 whitespace-pre-wrap min-h-[2rem]"></div>
+                  <div id="docs-implementation" class="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 whitespace-pre-wrap min-h-[2rem]"></div>
                 </div>
                 <button type="button" id="docs-save-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-emerald-700">Save docs</button>
               </div>
             </section>
-            <section id="step-results-area" class="rounded-lg border border-slate-200 bg-white overflow-hidden hidden flex-shrink-0">
-              <div class="border-b border-slate-200 px-4 py-2 bg-slate-50 text-sm font-medium text-slate-700">Step results</div>
+            <section id="step-results-area" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden hidden flex-shrink-0">
+              <div class="border-b border-slate-200 dark:border-slate-700 px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300">Step results</div>
               <ul id="step-results-list" class="p-4 list-disc list-inside text-sm text-slate-600 space-y-1"></ul>
             </section>
           </div>
-          <div id="files-area" class="mx-4 mb-4 hidden border border-slate-200 rounded-lg bg-white overflow-hidden flex-shrink-0">
-            <div class="border-b border-slate-200 px-3 py-2 bg-slate-50 text-sm font-medium text-slate-700">Proposed changes</div>
+          <div id="files-area" class="mx-4 mb-4 hidden border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 overflow-hidden flex-shrink-0">
+            <div class="border-b border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300">Proposed changes</div>
             <div class="flex min-h-[320px]">
-              <div id="files-sidebar" class="w-56 border-r border-slate-200 bg-slate-50 overflow-y-auto flex-shrink-0">
+              <div id="files-sidebar" class="w-56 border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto flex-shrink-0">
                 <ul id="files-list" class="py-2 text-sm"></ul>
               </div>
               <div id="files-content-wrap" class="flex-1 min-w-0 flex flex-col bg-slate-900">
@@ -146,13 +146,13 @@ router.get('/', (req, res) => {
         </div>
       </div>
     </div>
-    <div class="border border-slate-200 rounded-lg bg-white overflow-hidden mb-8">
-      <div class="border-b border-slate-200 px-3 py-2 bg-slate-50 flex items-center gap-3">
+    <div class="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 overflow-hidden mb-8">
+      <div class="border-b border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-3">
         <span class="text-sm font-medium text-slate-700">Repository</span>
-        <select id="repo-branch" class="rounded border border-slate-300 px-2 py-1 text-sm text-slate-800 bg-white"></select>
+        <select id="repo-branch" class="rounded border border-slate-300 dark:border-slate-600 px-2 py-1 text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"></select>
       </div>
       <div class="flex min-h-[400px]">
-        <div id="repo-sidebar" class="w-60 border-r border-slate-200 bg-slate-50 overflow-y-auto flex-shrink-0">
+        <div id="repo-sidebar" class="w-60 border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto flex-shrink-0">
           <ul id="repo-tree" class="py-2 text-sm"><li class="px-3 py-2 text-slate-500 text-sm">Loading…</li></ul>
         </div>
         <div id="repo-content-wrap" class="flex-1 min-w-0 flex flex-col bg-slate-900">
@@ -954,7 +954,7 @@ router.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Missions')}${prismHead}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
@@ -1034,8 +1034,8 @@ router.get('/prompts', async (req, res) => {
           <button type="button" class="agent-prompt-reset rounded-lg border border-slate-300 text-slate-600 text-sm font-medium py-1.5 px-3 hover:bg-slate-50" data-id="${escapeHtml(id)}">Reset to default</button>
         </div>
       </div>
-      <textarea class="agent-prompt-body w-full min-h-[200px] rounded-none border-0 px-4 py-3 font-mono text-sm text-slate-800 resize-y focus:ring-2 focus:ring-emerald-500 focus:ring-inset" data-id="${escapeHtml(id)}" spellcheck="false">${escapeHtml(body || '')}</textarea>
-      <div class="agent-prompt-status border-t border-slate-100 px-4 py-1.5 text-xs text-slate-400 hidden" data-id="${escapeHtml(id)}"></div>
+      <textarea class="agent-prompt-body w-full min-h-[200px] rounded-none border-0 px-4 py-3 font-mono text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-800 resize-y focus:ring-2 focus:ring-emerald-500 focus:ring-inset" data-id="${escapeHtml(id)}" spellcheck="false">${escapeHtml(body || '')}</textarea>
+      <div class="agent-prompt-status border-t border-slate-100 dark:border-slate-700 px-4 py-1.5 text-xs text-slate-400 hidden" data-id="${escapeHtml(id)}"></div>
     </section>`).join('');
         const content = `
   ${adminNav('agent')}
@@ -1091,7 +1091,7 @@ router.get('/prompts', async (req, res) => {
         res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Agent prompts')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
     } catch (err) {
         console.error('Agent prompts page:', err);

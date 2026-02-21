@@ -33,10 +33,10 @@ router.get('/', async (req, res) => {
     const saved = req.query.saved === '1';
     const rowsHtml = entries
         .map(([alias, canonical]) => `
-        <tr class="alias-row border-b border-slate-200 hover:bg-slate-50/50">
-          <td class="py-2 px-3"><input type="text" class="alias-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="${escapeHtml(alias)}" placeholder="e.g. palu" /></td>
-          <td class="py-2 px-3"><input type="text" class="canonical-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="${escapeHtml(canonical)}" placeholder="e.g. palutena" /></td>
-          <td class="py-2 px-3 w-20"><button type="button" class="delete-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>
+        <tr class="alias-row border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+          <td class="py-2 px-3"><input type="text" class="alias-input w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1.5 text-sm" value="${escapeHtml(alias)}" placeholder="e.g. palu" /></td>
+          <td class="py-2 px-3"><input type="text" class="canonical-input w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1.5 text-sm" value="${escapeHtml(canonical)}" placeholder="e.g. palutena" /></td>
+          <td class="py-2 px-3 w-20"><button type="button" class="delete-row text-sm text-slate-500 dark:text-slate-400 hover:text-red-600 font-medium">Remove</button></td>
         </tr>`)
         .join('');
     const content = `
@@ -44,32 +44,32 @@ router.get('/', async (req, res) => {
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Aliases' }])}
     <div class="flex items-center gap-2 mb-2">
-      <h1 class="text-2xl font-semibold text-slate-800">Character aliases</h1>
+      <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Character aliases</h1>
       ${s3InUse ? s3Badge() : ''}
     </div>
-    <p class="text-slate-600 text-sm mb-6">Add nicknames or shortcuts that resolve to a character (e.g. <strong>palu</strong> → <strong>palutena</strong>). Used by !mu, !fd, and !aliases. Click <strong>Save to S3</strong> when done.</p>
-    ${saved ? '<div class="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm px-4 py-3 mb-6">Saved to S3.</div>' : ''}
+    <p class="text-slate-600 dark:text-slate-400 text-sm mb-6">Add nicknames or shortcuts that resolve to a character (e.g. <strong>palu</strong> → <strong>palutena</strong>). Used by !mu, !fd, and !aliases. Click <strong>Save to S3</strong> when done.</p>
+    ${saved ? '<div class="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 text-sm px-4 py-3 mb-6">Saved to S3.</div>' : ''}
     <div class="admin-save-bar-spacer">
     <form id="aliases-form" method="post" action="/admin/aliases" class="space-y-6">
       <textarea id="aliases-body" name="body" class="hidden" aria-hidden="true"></textarea>
-      <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
         <table class="w-full text-sm">
-          <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-3 font-semibold text-slate-700">Alias (what users type)</th><th class="text-left py-3 px-3 font-semibold text-slate-700">Maps to (canonical character)</th><th class="w-20"></th></tr></thead>
+          <thead><tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700"><th class="text-left py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">Alias (what users type)</th><th class="text-left py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">Maps to (canonical character)</th><th class="w-20"></th></tr></thead>
           <tbody id="aliases-tbody">${rowsHtml}</tbody>
         </table>
       </div>
-      <details class="add-alias-details rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden">
-        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100/50 select-none">Add new alias</summary>
-        <div class="add-row-section p-4 pt-0 border-t border-slate-200/80">
+      <details class="add-alias-details rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 overflow-hidden">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-700/50 select-none">Add new alias</summary>
+        <div class="add-row-section p-4 pt-0 border-t border-slate-200/80 dark:border-slate-700">
           <div class="min-w-0 flex-1">
-            <label for="new-alias" class="block text-sm font-medium text-slate-700 mb-1">New alias</label>
-            <input type="text" id="new-alias" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pika" />
+            <label for="new-alias" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New alias</label>
+            <input type="text" id="new-alias" class="rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pika" />
           </div>
           <div class="min-w-0 flex-1">
-            <label for="new-canonical" class="block text-sm font-medium text-slate-700 mb-1">Maps to</label>
-            <input type="text" id="new-canonical" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pikachu" />
+            <label for="new-canonical" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Maps to</label>
+            <input type="text" id="new-canonical" class="rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pikachu" />
           </div>
-          <button type="button" id="add-row-btn" class="rounded-lg border border-slate-300 bg-white font-medium py-2 px-4 text-sm text-slate-700 hover:bg-slate-100 self-end">Add row</button>
+          <button type="button" id="add-row-btn" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-medium py-2 px-4 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 self-end">Add row</button>
         </div>
       </details>
     </form>
@@ -80,14 +80,14 @@ router.get('/', async (req, res) => {
     </details>
     </div>
     <style>#aliases-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
-    <div id="aliases-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="aliases">
+    <div id="aliases-action-bar" class="save-bar bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="aliases">
       <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
         <div class="save-bar-content">
           <div class="text-slate-400 text-sm"></div>
           <div class="flex flex-wrap items-center gap-3">
             <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
             <button type="submit" form="aliases-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-            <a href="/admin" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Back to dashboard</a>
+            <a href="/admin" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-medium py-2.5 px-5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 inline-block">Back to dashboard</a>
           </div>
         </div>
         ${saveBarToggleButton()}
@@ -190,7 +190,7 @@ router.get('/', async (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Aliases')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
@@ -233,10 +233,10 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
     const entries = Object.entries(aliases).sort((a, b) => a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }));
     const rowsHtml = entries
         .map(([alias, canonical]) => `
-        <tr class="alias-row border-b border-slate-200 hover:bg-slate-50/50">
-          <td class="py-2 px-3"><input type="text" class="alias-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="${escapeHtml(alias)}" placeholder="e.g. palu" /></td>
-          <td class="py-2 px-3"><input type="text" class="canonical-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="${escapeHtml(canonical)}" placeholder="e.g. palutena" /></td>
-          <td class="py-2 px-3 w-20"><button type="button" class="delete-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>
+        <tr class="alias-row border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+          <td class="py-2 px-3"><input type="text" class="alias-input w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1.5 text-sm" value="${escapeHtml(alias)}" placeholder="e.g. palu" /></td>
+          <td class="py-2 px-3"><input type="text" class="canonical-input w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1.5 text-sm" value="${escapeHtml(canonical)}" placeholder="e.g. palutena" /></td>
+          <td class="py-2 px-3 w-20"><button type="button" class="delete-row text-sm text-slate-500 dark:text-slate-400 hover:text-red-600 font-medium">Remove</button></td>
         </tr>`)
         .join('');
     const content = `
@@ -244,7 +244,7 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Aliases' }])}
     <div class="flex items-center gap-2 mb-2">
-      <h1 class="text-2xl font-semibold text-slate-800">Character aliases</h1>
+      <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Character aliases</h1>
       ${s3InUse ? s3Badge() : ''}
     </div>
     <p class="text-slate-600 text-sm mb-6">Add nicknames or shortcuts that resolve to a character. Click <strong>Save to S3</strong> when done.</p>
@@ -252,24 +252,24 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
     <div class="admin-save-bar-spacer">
     <form id="aliases-form" method="post" action="/admin/aliases" class="space-y-6">
       <textarea id="aliases-body" name="body" class="hidden" aria-hidden="true"></textarea>
-      <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
         <table class="w-full text-sm">
-          <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-3 font-semibold text-slate-700">Alias (what users type)</th><th class="text-left py-3 px-3 font-semibold text-slate-700">Maps to (canonical character)</th><th class="w-20"></th></tr></thead>
+          <thead><tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700"><th class="text-left py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">Alias (what users type)</th><th class="text-left py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">Maps to (canonical character)</th><th class="w-20"></th></tr></thead>
           <tbody id="aliases-tbody">${rowsHtml}</tbody>
         </table>
       </div>
-      <details class="add-alias-details rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden">
-        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100/50 select-none">Add new alias</summary>
-        <div class="add-row-section p-4 pt-0 border-t border-slate-200/80">
+      <details class="add-alias-details rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 overflow-hidden">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-700/50 select-none">Add new alias</summary>
+        <div class="add-row-section p-4 pt-0 border-t border-slate-200/80 dark:border-slate-700">
           <div class="min-w-0 flex-1">
-            <label for="new-alias" class="block text-sm font-medium text-slate-700 mb-1">New alias</label>
-            <input type="text" id="new-alias" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pika" />
+            <label for="new-alias" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New alias</label>
+            <input type="text" id="new-alias" class="rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pika" />
           </div>
           <div class="min-w-0 flex-1">
-            <label for="new-canonical" class="block text-sm font-medium text-slate-700 mb-1">Maps to</label>
-            <input type="text" id="new-canonical" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pikachu" />
+            <label for="new-canonical" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Maps to</label>
+            <input type="text" id="new-canonical" class="rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm w-full min-w-0 sm:w-48" placeholder="e.g. pikachu" />
           </div>
-          <button type="button" id="add-row-btn" class="rounded-lg border border-slate-300 bg-white font-medium py-2 px-4 text-sm text-slate-700 hover:bg-slate-100 self-end">Add row</button>
+          <button type="button" id="add-row-btn" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-medium py-2 px-4 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 self-end">Add row</button>
         </div>
       </details>
     </form>
@@ -279,14 +279,14 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
     </details>
     </div>
     <style>#aliases-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
-    <div id="aliases-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="aliases">
+    <div id="aliases-action-bar" class="save-bar bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="aliases">
       <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
         <div class="save-bar-content">
-                     <div class="text-slate-400 text-sm"></div>
+          <div class="text-slate-400 text-sm"></div>
           <div class="flex flex-wrap items-center gap-3">
             <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
             <button type="submit" form="aliases-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-            <a href="/admin" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Back to dashboard</a>
+            <a href="/admin" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-medium py-2.5 px-5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 inline-block">Back to dashboard</a>
           </div>
         </div>
         ${saveBarToggleButton()}
@@ -388,7 +388,7 @@ function renderAliasesTablePage(aliases, error, s3InUse = false) {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Aliases')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`;
 }
 

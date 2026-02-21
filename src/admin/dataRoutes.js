@@ -27,17 +27,17 @@ router.get('/', (req, res) => {
   ${adminNav('data')}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Data' }])}
-    <h1 class="text-2xl font-semibold text-slate-800 mb-6">Edit data</h1>
+    <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-6">Edit data</h1>
     <div class="grid gap-4 sm:grid-cols-2">
-      <a href="/admin/data/stats" class="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group">
-        <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Stats CSVs</h2>
-        <p class="mt-2 text-sm text-slate-500">Weight, air-speed, reflectors, etc.</p>
-        <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>
+      <a href="/admin/data/stats" class="block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-md transition-all group">
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Stats CSVs</h2>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Weight, air-speed, reflectors, etc.</p>
+        <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Open →</span>
       </a>
-      <a href="/admin/data/framedata" class="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all group">
-        <h2 class="text-lg font-semibold text-slate-800 group-hover:text-emerald-700">Framedata CSVs</h2>
-        <p class="mt-2 text-sm text-slate-500">Per-character move data.</p>
-        <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open →</span>
+      <a href="/admin/data/framedata" class="block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-md transition-all group">
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Framedata CSVs</h2>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Per-character move data.</p>
+        <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Open →</span>
       </a>
     </div>
   `)}
@@ -45,7 +45,7 @@ router.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Data')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
@@ -56,8 +56,8 @@ router.get('/stats', async (req, res) => {
     const rows = files
         .map(
             (f, i) => `
-        <tr class="border-b border-slate-200 hover:bg-slate-50/80">
-          <td class="py-3 px-4"><a href="/admin/data/stats/${encodeURIComponent(f)}" class="font-medium text-emerald-600 hover:text-emerald-700">${escapeHtml(f)}</a></td>
+        <tr class="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
+          <td class="py-3 px-4"><a href="/admin/data/stats/${encodeURIComponent(f)}" class="font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">${escapeHtml(f)}</a></td>
           <td class="py-3 px-4">${s3Flags[i] ? s3Badge() : ''}</td>
         </tr>`
         )
@@ -66,10 +66,10 @@ router.get('/stats', async (req, res) => {
   ${adminNav('data')}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/data', label: 'Data' }, { label: 'Stats' }])}
-    <h1 class="text-2xl font-semibold text-slate-800 mb-6">Stats CSVs</h1>
-    <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+    <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-6">Stats CSVs</h1>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
       <table class="w-full">
-        <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">File</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 w-16"></th></tr></thead>
+        <thead><tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">File</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 w-16"></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
@@ -78,7 +78,7 @@ router.get('/stats', async (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Stats')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
@@ -117,8 +117,8 @@ router.get('/framedata', (req, res) => {
     const rows = chars
         .map(
             (c) => `
-        <tr class="border-b border-slate-200 hover:bg-slate-50/80">
-          <td class="py-3 px-4"><a href="/admin/data/framedata/${encodeURIComponent(c)}" class="font-medium text-emerald-600 hover:text-emerald-700">${escapeHtml(c)}</a></td>
+        <tr class="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
+          <td class="py-3 px-4"><a href="/admin/data/framedata/${encodeURIComponent(c)}" class="font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">${escapeHtml(c)}</a></td>
         </tr>`
         )
         .join('');
@@ -126,10 +126,10 @@ router.get('/framedata', (req, res) => {
   ${adminNav('data')}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/data', label: 'Data' }, { label: 'Framedata' }])}
-    <h1 class="text-2xl font-semibold text-slate-800 mb-6">Framedata by character</h1>
-    <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+    <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-6">Framedata by character</h1>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
       <table class="w-full">
-        <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Character</th></tr></thead>
+        <thead><tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Character</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
@@ -138,7 +138,7 @@ router.get('/framedata', (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Framedata')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
@@ -149,8 +149,8 @@ router.get('/framedata/:character', async (req, res) => {
     const rows = sections
         .map(
             (s, i) => `
-        <tr class="border-b border-slate-200 hover:bg-slate-50/80">
-          <td class="py-3 px-4"><a href="/admin/data/framedata/${encodeURIComponent(character)}/${encodeURIComponent(s)}" class="font-medium text-emerald-600 hover:text-emerald-700">${escapeHtml(s)}</a></td>
+        <tr class="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
+          <td class="py-3 px-4"><a href="/admin/data/framedata/${encodeURIComponent(character)}/${encodeURIComponent(s)}" class="font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">${escapeHtml(s)}</a></td>
           <td class="py-3 px-4">${s3Flags[i] ? s3Badge() : ''}</td>
         </tr>`
         )
@@ -159,10 +159,10 @@ router.get('/framedata/:character', async (req, res) => {
   ${adminNav('data')}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/data', label: 'Data' }, { href: '/admin/data/framedata', label: 'Framedata' }, { label: character }])}
-    <h1 class="text-2xl font-semibold text-slate-800 mb-6">${escapeHtml(character)}</h1>
-    <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+    <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-6">${escapeHtml(character)}</h1>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
       <table class="w-full">
-        <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Section</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 w-16"></th></tr></thead>
+        <thead><tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Section</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 w-16"></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
@@ -171,7 +171,7 @@ router.get('/framedata/:character', async (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead(character)}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
@@ -229,7 +229,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
                 { label: param2 },
             ];
     const savedBanner = saved
-        ? '<div class="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm px-4 py-3 mb-6">Saved. Bot will use this content (S3 override).</div>'
+        ? '<div class="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 text-sm px-4 py-3 mb-6">Saved. Bot will use this content (S3 override).</div>'
         : '';
     const content = `
   ${adminNav('data')}
@@ -238,15 +238,15 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
       <div class="flex-shrink-0 mb-4">
         ${breadcrumb(breadcrumbItems)}
         <div class="flex items-center gap-2 mt-1">
-      <h1 class="text-xl font-semibold text-slate-800">${escapeHtml(title)}</h1>
+      <h1 class="text-xl font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(title)}</h1>
       ${s3InUse ? s3Badge() : ''}
     </div>
-        <p class="text-slate-600 text-sm mt-1">Edit cells below; click <strong>Save to S3</strong> to upload.</p>
+        <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">Edit cells below; click <strong>Save to S3</strong> to upload.</p>
         ${savedBanner}
       </div>
       <form id="csv-form" method="post" action="${saveAction}" class="flex flex-1 flex-col min-h-0 flex-shrink-0 admin-save-bar-spacer">
         <textarea id="csv-body" name="body" hidden aria-hidden="true"></textarea>
-        <div id="csv-spreadsheet-wrap" class="flex-1 min-h-0 min-w-0 overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-200/50">
+        <div id="csv-spreadsheet-wrap" class="flex-1 min-h-0 min-w-0 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm ring-1 ring-slate-200/50 dark:ring-slate-600/50">
           <table id="csv-grid" class="csv-grid border-collapse"></table>
         </div>
       </form>
@@ -270,6 +270,12 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
       .csv-grid .cell-move-name span { padding: 0.125rem 0; }
       .csv-grid tbody tr:first-child td span { padding: 0.25rem 0.375rem; padding-left: calc(0.375rem + 1px); }
       #csv-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
+      .dark #csv-spreadsheet-wrap .csv-grid td { border-color: #475569; }
+      .dark #csv-spreadsheet-wrap .csv-grid .cell-input, .dark #csv-spreadsheet-wrap .csv-grid .cell-textarea { border-color: #475569; background: #334155; color: #f1f5f9; }
+      .dark #csv-spreadsheet-wrap .csv-grid .cell-input:focus, .dark #csv-spreadsheet-wrap .csv-grid .cell-textarea:focus { border-color: #10b981; box-shadow: 0 0 0 1px #10b981; }
+      .dark #csv-spreadsheet-wrap .csv-grid tbody tr:first-child td { background: #1e293b; border-color: #475569; }
+      .dark #csv-spreadsheet-wrap .csv-grid .cell-gif img { border-color: #475569; }
+      .dark #csv-spreadsheet-wrap .csv-grid .cell-gif .gif-filename { color: #94a3b8; }
     </style>
     <script>
 (function(){
@@ -379,10 +385,10 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
     var headers = rows[0].map(function(h) { return (h || '').trim(); });
     for (var r = 0; r < rows.length; r++) {
       var tr = tbody.insertRow();
-      tr.className = r === 0 ? 'bg-slate-100 sticky top-0' : 'hover:bg-slate-50/50';
+      tr.className = r === 0 ? 'bg-slate-100 dark:bg-slate-800 sticky top-0' : 'hover:bg-slate-50/50 dark:hover:bg-slate-700/50';
       for (var c = 0; c < maxCols; c++) {
         var td = tr.insertCell();
-        td.className = r === 0 ? 'border-slate-200 sticky top-0 bg-slate-100 z-10' : 'align-top';
+        td.className = r === 0 ? 'border-slate-200 dark:border-slate-600 sticky top-0 bg-slate-100 dark:bg-slate-800 z-10' : 'align-top';
         var rawVal = rows[r][c] != null ? rows[r][c] : '';
         var header = (headers[c] || '').toLowerCase();
         var isNotes = header.indexOf('notes') !== -1;
@@ -391,7 +397,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
 
         if (r === 0) {
           var label = document.createElement('span');
-          label.className = 'font-semibold text-slate-700 block';
+          label.className = 'font-semibold text-slate-700 dark:text-slate-200 block';
           label.textContent = abbrevHeader(headers[c]);
           label.title = headers[c] || '';
           td.appendChild(label);
@@ -430,7 +436,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
           var ta = document.createElement('textarea');
           ta.value = rawVal;
           ta.rows = 3;
-          ta.className = 'cell-textarea w-full min-w-0 bg-white text-slate-900';
+          ta.className = 'cell-textarea w-full min-w-0 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100';
           ta.addEventListener('input', markDirty);
           td.appendChild(ta);
           continue;
@@ -443,7 +449,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
           moveHidden.value = rawVal;
           td.appendChild(moveHidden);
           var moveSpan = document.createElement('span');
-          moveSpan.className = 'block text-slate-700';
+          moveSpan.className = 'block text-slate-700 dark:text-slate-300';
           moveSpan.textContent = moveDisplayName(rawVal);
           moveSpan.title = rawVal || '';
           td.appendChild(moveSpan);
@@ -481,14 +487,14 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
 })();
     </script>
   `)}
-  <div id="csv-action-bar" class="save-bar bg-white border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="csv">
+  <div id="csv-action-bar" class="save-bar bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="csv">
     <div class="save-bar-inner max-w-[85rem] mx-auto px-4 py-3">
       <div class="save-bar-content">
         <div id="csv-unsaved-reminder-placeholder" class="text-slate-400 text-sm"></div>
         <div class="flex flex-wrap items-center gap-3">
           <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
           <button type="submit" form="csv-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-          <a href="${backUrl}" class="rounded-lg border border-slate-300 bg-white font-medium py-2.5 px-5 text-slate-700 hover:bg-slate-50 inline-block">Cancel</a>
+          <a href="${backUrl}" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-medium py-2.5 px-5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 inline-block">Cancel</a>
         </div>
       </div>
       ${saveBarToggleButton()}
@@ -499,7 +505,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead(escapeHtml(title))}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`;
 }
 
