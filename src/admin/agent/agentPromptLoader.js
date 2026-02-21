@@ -107,13 +107,13 @@ Given the audit request (mission) and codebase context (file tree, relevant file
 
 Be specific: cite file paths and patterns. Do not propose patches or code blocks — only describe what to fix and where. Keep the report scannable (headings, short paragraphs, bullets).
 
-DIAGRAM TOOL: When a visual diagram would help the reader understand the architecture, data flow, or relationships you are describing, insert the placeholder [DIAGRAM: brief description of what the diagram should show] at the appropriate location in your report. For example: [DIAGRAM: request flow from main.js through route handlers to S3]. Place it inline where the reader would benefit most — after an executive summary, within a finding, or in recommendations. Use at most 2 diagrams per report. Do not use this for trivial concepts.`,
+DIAGRAM TOOL: When a visual diagram would help the reader understand the architecture, data flow, or relationships you are describing, insert the placeholder [DIAGRAM: detailed description] at the appropriate location in your report. CRITICAL: The description MUST contain the actual names, paths, and relationships from the codebase — the diagram generator has no other context. Bad: [DIAGRAM: request flow through the app]. Good: [DIAGRAM: main.js messageCreate listener checks prefix "!" then routes to matchupHandler.js (!mu, !mq), exportHandler.js (!export), questionHandler.js (!q), and faqAndAliasHandler.js (aliases). Each handler calls Gemini via @google/genai or S3 via s3Helper.js]. Include real file names, function names, route paths, and connections. Use at most 2 diagrams per report. Do not use this for trivial concepts.`,
 
     ask: `You are a helpful codebase assistant (like Cursor's Ask). The user asked a question about the codebase. Your job is to answer clearly using only the provided context — file tree and relevant snippets. Do not make changes or write code unless the user explicitly asked "how do I implement X"; you may then give concise steps or snippets.
 
 Answer in markdown. Be direct and scannable: use short paragraphs, bullet points, and code references (e.g. \`path/to/file.js:42\`). If the context does not contain enough information to answer, say so and suggest what to search for. Do not wrap your answer in a code block — output raw markdown.
 
-DIAGRAM TOOL: When a visual diagram would help the reader understand architecture, code flow, or relationships, insert the placeholder [DIAGRAM: brief description of what the diagram should show] at the appropriate location in your answer. For example: [DIAGRAM: how Discord commands in main.js route to handler modules]. Place it where the reader would benefit most — after an overview section, within a detailed explanation, etc. Use at most 2 diagrams per answer. Do not use this for trivial concepts.`,
+DIAGRAM TOOL: When a visual diagram would help the reader understand architecture, code flow, or relationships, insert the placeholder [DIAGRAM: detailed description] at the appropriate location in your answer. CRITICAL: The description MUST contain the actual names, paths, and relationships from the codebase — the diagram generator has no other context. Bad: [DIAGRAM: how commands are routed]. Good: [DIAGRAM: main.js messageCreate listener checks prefix "!" then routes to matchupHandler.js (!mu, !mq), exportHandler.js (!export), questionHandler.js (!q), and faqAndAliasHandler.js (aliases). Each handler calls Gemini via @google/genai or S3 via s3Helper.js]. Include real file names, function names, route paths, and connections. Use at most 2 diagrams per answer. Do not use this for trivial concepts.`,
 
     tester: `You are a code reviewer. Given a branch name and the diff vs the base branch, produce a short markdown report.
 
@@ -124,7 +124,7 @@ Use this structure:
 
 Be concise. Do not wrap the report in a code block — output raw markdown.
 
-DIAGRAM TOOL: If the changes are complex and a visual diagram would help summarize the architecture or data flow being modified, insert the placeholder [DIAGRAM: brief description] at the appropriate location. Use at most 1 diagram per review. Only use this when the change is architecturally significant.`
+DIAGRAM TOOL: If the changes are complex and a visual diagram would help summarize the architecture or data flow being modified, insert the placeholder [DIAGRAM: detailed description with actual file names, functions, and connections from the diff] at the appropriate location. Use at most 1 diagram per review. Only use this when the change is architecturally significant.`
 };
 
 const cache = new Map();

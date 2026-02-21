@@ -48,17 +48,22 @@ const DIAGRAM_PLACEHOLDER_RE = /\[DIAGRAM:\s*([^\]]+)\]/g;
 
 /**
  * Generate a single explanatory diagram image via an image-capable Gemini model.
- * @param {string} description - What the diagram should depict.
+ * @param {string} description - What the diagram should depict (from the agent's placeholder).
+ * @param {string} surroundingContext - Nearby text from the report to ground the diagram.
  * @param {string} runId - Run ID (for S3 key).
- * @param {'audit'|'ask'|'review'} type - Determines S3 key and serving route.
+ * @param {string} type - Determines S3 key and serving route.
  * @param {AbortSignal} [signal]
  * @returns {Promise<{ ok: true, key: string } | { ok: false, warning: string }>}
  */
-async function generateDiagramImage(description, runId, type, signal) {
+async function generateDiagramImage(description, surroundingContext, runId, type, signal) {
+    const contextBlock = surroundingContext
+        ? `\n\nREFERENCE (use ONLY these real names and relationships — do NOT invent any names, routes, files, or endpoints that are not listed here):\n${surroundingContext}`
+        : '';
+    const prompt = `Generate a single clean, labeled diagram image showing: ${description}${contextBlock}\n\nRULES:\n- Use ONLY the names, files, routes, and relationships explicitly mentioned above.\n- Do NOT invent or hallucinate any file names, routes, endpoints, class names, or functions.\n- If something is not mentioned above, do not include it.\n- Use boxes and arrows in a flowchart or architecture style.\n- Keep it simple, readable, and well-labeled.\n- White or light background.\n- No text outside the diagram.`;
     try {
         const response = await getGenAI().models.generateContent({
             model: DIAGRAM_MODEL,
-            contents: [{ role: 'user', parts: [{ text: `Generate a single clear, explanatory diagram image: ${description}\n\nThe diagram should be clean, easy to read, and use labels. Do not include any text outside the image.` }] }],
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
             config: { responseModalities: ['IMAGE', 'TEXT'], maxOutputTokens: 4096, abortSignal: signal },
         });
         const parts = response?.candidates?.[0]?.content?.parts;
@@ -86,6 +91,19 @@ async function generateDiagramImage(description, runId, type, signal) {
 }
 
 /**
+ * Extract ~800 chars of report text surrounding a match position to give the image model grounding context.
+ */
+function extractSurroundingContext(report, matchIndex, matchLength) {
+    const RADIUS = 600;
+    const start = Math.max(0, matchIndex - RADIUS);
+    const end = Math.min(report.length, matchIndex + matchLength + RADIUS);
+    let snippet = report.slice(start, end);
+    if (start > 0) snippet = '...' + snippet;
+    if (end < report.length) snippet = snippet + '...';
+    return snippet.replace(DIAGRAM_PLACEHOLDER_RE, '').trim();
+}
+
+/**
  * Scan report text for [DIAGRAM: description] placeholders, generate each diagram,
  * and replace with inline markdown images.
  * @param {string} report - Raw report text from the agent.
@@ -104,7 +122,8 @@ async function processDiagramPlaceholders(report, runId, type, signal) {
     for (let i = 0; i < matches.length; i++) {
         const m = matches[i];
         const description = m[1].trim();
-        const result = await generateDiagramImage(description, runId, `${type}-${i}`, signal);
+        const surrounding = extractSurroundingContext(report, m.index, m[0].length);
+        const result = await generateDiagramImage(description, surrounding, runId, `${type}-${i}`, signal);
         if (result.ok) {
             diagramKeys.push(result.key);
             const imgUrl = `/admin/agent/run/${encodeURIComponent(runId)}/diagram/${diagramKeys.length - 1}`;
