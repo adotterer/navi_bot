@@ -7,7 +7,7 @@ const FONTS =
     '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">';
 
 function adminHead(title) {
-    return `<meta charset="utf-8"><title>${escapeHtml(title)} – Navi Admin</title>${FONTS}${STYLESHEET}<script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>`;
+    return `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} – Navi Admin</title>${FONTS}${STYLESHEET}<script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>`;
 }
 
 function adminNav(active = 'dashboard') {
@@ -32,8 +32,8 @@ function adminNav(active = 'dashboard') {
         .join('');
     return `
   <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-      <nav class="flex items-center gap-1">${items}</nav>
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap">
+      <nav class="flex items-center gap-1 flex-wrap">${items}</nav>
       <div class="flex items-center gap-4">
         <button id="theme-toggle" type="button" class="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-lg transition-colors border border-slate-200 dark:border-slate-700" title="Toggle theme">
           <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
@@ -76,7 +76,7 @@ function breadcrumb(items) {
             return `<a href="${item.href}" class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300">${escapeHtml(item.label)}</a>`;
         })
         .join('<span class="text-slate-300 dark:text-slate-600 mx-2">/</span>');
-    return `<nav class="text-sm mb-6 flex items-center" aria-label="Breadcrumb">${parts}</nav>`;
+    return `<nav class="text-sm mb-6 flex items-center flex-wrap" aria-label="Breadcrumb">${parts}</nav>`;
 }
 
 function escapeHtml(s) {
