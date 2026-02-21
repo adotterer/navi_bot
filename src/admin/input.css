@@ -4,4 +4,11 @@
 
 @layer base {
     html { @apply antialiased; }
+
+    input[type='text'],
+    input[type='password'],
+    input[type='email'],
+    textarea {
+        @apply bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-200 dark:border-slate-700;
+    }
 }
