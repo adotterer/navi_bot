@@ -1283,11 +1283,22 @@
       var html = reportEl ? '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title></head><body><div class="report">' + (reportEl.innerHTML || '') + '</div></body></html>' : '';
       copyToClipboard(html).then(function() { btn.textContent = 'Copied'; setTimeout(restoreBtn, 1500); }).catch(function() {});
     } else if (btn.classList.contains('report-use-prompt')) {
-      copyToClipboard(md || '');
       var promptEl = document.getElementById('prompt');
-      if (promptEl) { promptEl.focus(); promptEl.scrollIntoView({ behavior: 'smooth' }); }
-      btn.textContent = 'Copied';
-      setTimeout(restoreBtn, 1500);
+      if (promptEl) {
+        var promptText = report === 'audit' ? ('Implement the following audit recommendations:\n\n' + (md || '')) : (md || '');
+        promptEl.value = promptText;
+        if (report === 'audit') {
+          var modeEl = document.getElementById('mode');
+          if (modeEl) {
+            modeEl.value = 'pr';
+            var prPlaceholder = promptEl.getAttribute('data-placeholder-pr');
+            if (prPlaceholder != null) promptEl.placeholder = prPlaceholder;
+          }
+        }
+        promptEl.focus();
+        promptEl.scrollIntoView({ behavior: 'smooth' });
+      }
+      copyToClipboard(md || '').then(function() { btn.textContent = 'Copied'; setTimeout(restoreBtn, 1500); }).catch(function() { setTimeout(restoreBtn, 1500); });
     } else if (btn.classList.contains('report-print')) {
       var content = reportEl ? reportEl.innerHTML : '';
       var w = window.open('', '_blank');
