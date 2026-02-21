@@ -151,11 +151,11 @@ function promptsListPage(list) {
   ${adminNav('prompts')}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Prompts' }])}
-    <h1 class="text-2xl font-semibold text-slate-800 mb-2">Edit prompts</h1>
-    <p class="text-slate-600 text-sm mb-6">Variables use <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">&#123;&#123;name&#125;&#125;</code>. Don't remove or rename variables.</p>
-    <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+    <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-2">Edit prompts</h1>
+    <p class="text-slate-600 dark:text-slate-400 text-sm mb-6">Variables use <code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">&#123;&#123;name&#125;&#125;</code>. Don't remove or rename variables.</p>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
       <table class="w-full">
-        <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Prompt ID</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Description</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 w-16"></th></tr></thead>
+        <thead><tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Prompt ID</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Description</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 w-16"></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
@@ -183,8 +183,8 @@ function promptEditPage(id, meta, body, opts = {}) {
     const varsSection =
         variables.length > 0
             ? `
-    <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-      <p class="text-sm font-medium text-slate-700 mb-2">Insert variable at cursor</p>
+    <div class="mb-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-4">
+      <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Insert variable at cursor</p>
       <div class="flex flex-wrap gap-2" id="var-pills">${varPills}</div>
     </div>`
             : '';
@@ -203,10 +203,10 @@ function promptEditPage(id, meta, body, opts = {}) {
     const emojiSection =
         emojiLibrary.length > 0
             ? `
-    <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-      <p class="text-sm font-medium text-slate-700 mb-2">Insert emoji at cursor</p>
+    <div class="mb-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-4">
+      <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Insert emoji at cursor</p>
       <div class="flex flex-wrap gap-2" id="emoji-pills">${emojiPills}</div>
-      <p class="text-xs text-slate-500 mt-2">Emojis appear as images in the editor; the underlying code is saved. Manage library in <a href="/admin/emojis" class="text-emerald-600 hover:text-emerald-700">Emojis</a>.</p>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Emojis appear as images in the editor; the underlying code is saved. Manage library in <a href="/admin/emojis" class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">Emojis</a>.</p>
     </div>`
             : '';
     const savedBanner = opts.saved
@@ -226,11 +226,11 @@ function promptEditPage(id, meta, body, opts = {}) {
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/prompts', label: 'Prompts' }, { label: id }])}
     <div class="flex items-center gap-2 mb-1 flex-wrap">
-      <h1 class="text-2xl font-semibold text-slate-800">${escapeHtml(id)}</h1>
+      <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(id)}</h1>
       ${opts.s3InUse ? s3Badge() : ''}
       <button type="button" class="prompt-version-history-open prompt-header-btn text-slate-600 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700">Version history</button>
     </div>
-    <p class="text-slate-600 text-sm mb-6">${escapeHtml(meta.description)}</p>
+    <p class="text-slate-600 dark:text-slate-400 text-sm mb-6">${escapeHtml(meta.description)}</p>
     ${savedBanner}
     ${resetBanner}
     ${saveErrorBanner}
@@ -242,7 +242,7 @@ function promptEditPage(id, meta, body, opts = {}) {
         <div id="prompt-editor-column" class="prompt-editor-column flex flex-col min-w-0 flex-1 bg-white rounded-l-xl">
           <form id="prompt-form" method="post" action="/admin/prompts/${escapeHtml(id)}" class="flex flex-col flex-1 min-h-0 px-3">
             <div class="prompt-editor-header flex items-center justify-between gap-2 px-3 py-2.5">
-              <label for="prompt-body" class="text-sm font-medium text-slate-700">Template body</label>
+              <label for="prompt-body" class="text-sm font-medium text-slate-700 dark:text-slate-300">Template body</label>
               <button type="button" id="prompt-show-preview-btn" class="prompt-header-btn hidden text-slate-600 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700" title="Show preview panel">Show preview</button>
             </div>
             <div id="prompt-editor-wrap" class="prompt-editor-wrap rounded-xl border border-slate-300 flex-1 min-h-[320px] focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">

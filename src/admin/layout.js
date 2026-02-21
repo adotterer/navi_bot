@@ -64,7 +64,7 @@ function adminNav(active = 'dashboard') {
 }
 
 function adminContainer(innerHtml) {
-    return `<main class="max-w-5xl mx-auto px-4 py-8 font-sans">${innerHtml}</main>`;
+    return `<main class="max-w-5xl mx-auto px-4 py-8 font-sans text-slate-900 dark:text-slate-100">${innerHtml}</main>`;
 }
 
 function breadcrumb(items) {
