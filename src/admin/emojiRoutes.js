@@ -47,8 +47,8 @@ router.get('/', async (req, res) => {
             return `
         <tr class="emoji-row border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
           <td class="py-2 px-3 w-10 align-middle">${img}</td>
-          <td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="${escapeHtml(label)}" placeholder="e.g. Navi bullet" /></td>
-          <td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" value="${escapeHtml(code)}" placeholder="<:name:id>" /></td>
+          <td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" value="${escapeHtml(label)}" placeholder="e.g. Navi bullet" /></td>
+          <td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" value="${escapeHtml(code)}" placeholder="<:name:id>" /></td>
           <td class="py-2 px-3 w-20"><button type="button" class="delete-emoji-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>
         </tr>`;
         })
@@ -121,7 +121,7 @@ router.get('/', async (req, res) => {
     var img = url ? '<img src="' + esc(url) + '" alt="" class="inline-block h-6 w-6 object-contain rounded" loading="lazy">' : '';
     var tr = document.createElement('tr');
     tr.className = 'emoji-row border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50';
-    tr.innerHTML = '<td class="py-2 px-3 w-10 align-middle">' + img + '</td><td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="' + esc(label) + '" placeholder="e.g. Navi bullet" /></td><td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" value="' + esc(code) + '" placeholder="<:name:id>" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-emoji-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>';
+    tr.innerHTML = '<td class="py-2 px-3 w-10 align-middle">' + img + '</td><td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1.5 text-sm dark:text-slate-100 dark:placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="' + esc(label) + '" placeholder="e.g. Navi bullet" /></td><td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1.5 text-sm font-mono dark:text-slate-100 dark:placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none" value="' + esc(code) + '" placeholder="<:name:id>" /></td><td class="py-2 px-3 w-20"><button type="button" class="delete-emoji-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>';
     tbody.appendChild(tr);
     tr.querySelector('.delete-emoji-row').addEventListener('click', function() { tr.remove(); markDirty(); });
   }
