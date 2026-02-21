@@ -8,8 +8,20 @@ import { getSessionConfig } from './admin/auth.js';
 import { adminRouter } from './admin/routes.js';
 import { webhookRouter } from './admin/webhookRoutes.js';
 
+const ENFORCE_HTTPS = process.env.ENFORCE_HTTPS === 'true' || process.env.ENFORCE_HTTPS === '1';
+
 export function createApp() {
     const app = express();
+
+    // Redirect all HTTP to HTTPS so the site is only used over HTTPS (no content over HTTP).
+    if (ENFORCE_HTTPS) {
+        app.set('trust proxy', 1);
+        app.use((req, res, next) => {
+            if (req.secure) return next();
+            const host = req.get('Host') || req.hostname || 'localhost';
+            res.redirect(301, 'https://' + host + req.originalUrl);
+        });
+    }
 
     // Raw body parser must be registered before urlencoded/json so the webhook.
     // route receives raw bytes for HMAC signature verification.
