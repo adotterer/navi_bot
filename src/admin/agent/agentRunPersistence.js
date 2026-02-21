@@ -13,6 +13,10 @@ function runToSnapshot(run) {
         runId: run.runId,
         status: run.status,
         cancelled: !!run.cancelled,
+        runMode: run.runMode || 'pr',
+        auditReport: run.auditReport,
+        askResponse: run.askResponse,
+        reviewReport: run.reviewReport,
         prompt: run.prompt,
         model: run.model || '',
         title: run.title || '',
@@ -83,6 +87,7 @@ export async function loadRunMetadataFromS3(runId) {
             prompt: full.prompt || '',
             status: full.status || '',
             createdAt: full.createdAt || 0,
+            runMode: full.runMode || 'pr',
         };
     } catch {
         return { runId };

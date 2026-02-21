@@ -544,13 +544,19 @@ export async function runCoder(step, fileContext, opts = {}) {
                     if (chunk.usageMetadata) lastChunkUsage = chunk.usageMetadata;
                 }
                 const edits = parseCoderEdits(fullText);
-                if (!edits.length) {
-                    console.error('[Coder] Parse failed. Raw response (first 400):', fullText.slice(0, 400));
-                    console.error('[Coder] Raw response (last 200):', fullText.slice(-200));
-                    throw new Error('Could not parse edits from response');
+                const usage = lastChunkUsage ?? response?.usageMetadata;
+                if (edits.length) {
+                    return { ok: true, edits, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0 };
                 }
-                const usage = lastChunkUsage ?? response.usageMetadata;
-                return { ok: true, edits, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0 };
+                const trimmed = fullText.trim();
+                const isEmptyArray = /^\s*\[\s*\]\s*$/.test(trimmed)
+                    || (() => { try { const p = JSON.parse(trimmed); return Array.isArray(p); } catch (_) { return false; } })();
+                if (isEmptyArray) {
+                    return { ok: true, edits: [], inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0 };
+                }
+                console.error('[Coder] Parse failed. Raw response (first 400):', fullText.slice(0, 400));
+                console.error('[Coder] Raw response (last 200):', fullText.slice(-200));
+                throw new Error('Could not parse edits from response');
             })(),
             GEMINI_TIMEOUT_MS,
             'Coder timed out'
@@ -775,6 +781,155 @@ export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
             return { ok: true, feedback: feedback || null, ...tokenCounts };
         }
         return { ok: true, feedback: null, ...tokenCounts };
+    } catch (err) {
+        return { ok: false, error: err.message || String(err) };
+    }
+}
+
+/**
+ * Run the Ask agent: question + codebase context -> markdown answer (no code edits).
+ * Used when run mode is "ask" (Cursor-style Q&A).
+ * @param {string} question - User's question about the codebase.
+ * @param {object} opts
+ * @param {string} [opts.grepContext] - Relevant grep snippets (path:line: content).
+ * @param {string} [opts.treeContext] - File tree or structure summary.
+ * @param {string} [opts.flightPlanSummary] - Optional scope from Researcher.
+ * @param {AbortSignal} [opts.signal]
+ * @param {string} [opts.model]
+ * @returns {Promise<{ ok: true, report: string, inputTokens?: number, outputTokens?: number } | { ok: false, error: string }>}
+ */
+export async function runAsk(question, opts = {}) {
+    const { grepContext = '', treeContext = '', flightPlanSummary = '', signal, model: modelOverride } = opts;
+    const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
+    const systemPrompt = await getAgentPrompt('ask');
+    if (!systemPrompt) {
+        return { ok: false, error: 'Ask prompt not configured' };
+    }
+    const contextParts = [];
+    if (treeContext) contextParts.push('Codebase structure:\n' + treeContext);
+    if (grepContext) contextParts.push('Relevant snippets (path:line: content):\n' + grepContext);
+    if (flightPlanSummary) contextParts.push('Scope from research:\n' + flightPlanSummary);
+    const userContent = `Question:\n${question}\n\n${contextParts.join('\n\n')}\n\nAnswer in markdown now.`;
+    try {
+        const response = await withTimeout(
+            (async () => {
+                const res = await getGenAI().models.generateContent({
+                    model,
+                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
+                    config: { maxOutputTokens: 8192, abortSignal: signal },
+                });
+                return res;
+            })(),
+            GEMINI_TIMEOUT_MS,
+            'Ask timed out'
+        );
+        const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
+        const report = String(raw ?? '').trim();
+        const usage = response?.usageMetadata;
+        return {
+            ok: true,
+            report,
+            inputTokens: usage?.promptTokenCount ?? 0,
+            outputTokens: usage?.candidatesTokenCount ?? 0,
+        };
+    } catch (err) {
+        return { ok: false, error: err.message || String(err) };
+    }
+}
+
+/**
+ * Run the Auditor agent: mission + codebase context -> markdown report (no code edits).
+ * Used when run mode is "audit".
+ * @param {string} missionPrompt - User's audit request (e.g. "audit dark-mode hover and active states").
+ * @param {object} opts
+ * @param {string} [opts.grepContext] - Relevant grep snippets (path:line: content).
+ * @param {string} [opts.treeContext] - File tree or structure summary.
+ * @param {string} [opts.flightPlanSummary] - Optional task list from Researcher (scope).
+ * @param {AbortSignal} [opts.signal]
+ * @param {string} [opts.model]
+ * @returns {Promise<{ ok: true, report: string, inputTokens?: number, outputTokens?: number } | { ok: false, error: string }>}
+ */
+export async function runAuditor(missionPrompt, opts = {}) {
+    const { grepContext = '', treeContext = '', flightPlanSummary = '', signal, model: modelOverride } = opts;
+    const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
+    const systemPrompt = await getAgentPrompt('auditor');
+    if (!systemPrompt) {
+        return { ok: false, error: 'Auditor prompt not configured' };
+    }
+    const contextParts = [];
+    if (treeContext) contextParts.push('Codebase structure:\n' + treeContext);
+    if (grepContext) contextParts.push('Relevant snippets (path:line: content):\n' + grepContext);
+    if (flightPlanSummary) contextParts.push('Scope / tasks from Researcher:\n' + flightPlanSummary);
+    const userContent = `Audit request:\n${missionPrompt}\n\n${contextParts.join('\n\n')}\n\nProduce the markdown report now.`;
+    try {
+        const response = await withTimeout(
+            (async () => {
+                const res = await getGenAI().models.generateContent({
+                    model,
+                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
+                    config: { maxOutputTokens: 8192, abortSignal: signal },
+                });
+                return res;
+            })(),
+            GEMINI_TIMEOUT_MS,
+            'Auditor timed out'
+        );
+        const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
+        const report = String(raw ?? '').trim();
+        const usage = response?.usageMetadata;
+        return {
+            ok: true,
+            report,
+            inputTokens: usage?.promptTokenCount ?? 0,
+            outputTokens: usage?.candidatesTokenCount ?? 0,
+        };
+    } catch (err) {
+        return { ok: false, error: err.message || String(err) };
+    }
+}
+
+/**
+ * Run the Tester agent: branch name + diff -> markdown review report (Merge / Request changes / Reject).
+ * Used when run mode is "review".
+ * @param {string} branchName - Head branch being reviewed (e.g. agent/run-xyz).
+ * @param {object} opts
+ * @param {string} opts.diffText - Full or truncated diff vs base.
+ * @param {string} [opts.baseBranch] - Base branch (e.g. main).
+ * @param {string} [opts.headBranch] - Same as branchName, for clarity.
+ * @param {AbortSignal} [opts.signal]
+ * @param {string} [opts.model]
+ * @returns {Promise<{ ok: true, report: string, inputTokens?: number, outputTokens?: number } | { ok: false, error: string }>}
+ */
+export async function runTester(branchName, opts = {}) {
+    const { diffText = '', baseBranch = 'main', headBranch = branchName, signal, model: modelOverride } = opts;
+    const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
+    const systemPrompt = await getAgentPrompt('tester');
+    if (!systemPrompt) {
+        return { ok: false, error: 'Tester prompt not configured' };
+    }
+    const userContent = `Branch: ${headBranch}\nBase: ${baseBranch}\n\nDiff:\n\`\`\`\n${diffText}\n\`\`\`\n\nProduce the markdown review report now.`;
+    try {
+        const response = await withTimeout(
+            (async () => {
+                const res = await getGenAI().models.generateContent({
+                    model,
+                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
+                    config: { maxOutputTokens: 8192, abortSignal: signal },
+                });
+                return res;
+            })(),
+            GEMINI_TIMEOUT_MS,
+            'Tester timed out'
+        );
+        const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
+        const report = String(raw ?? '').trim();
+        const usage = response?.usageMetadata;
+        return {
+            ok: true,
+            report,
+            inputTokens: usage?.promptTokenCount ?? 0,
+            outputTokens: usage?.candidatesTokenCount ?? 0,
+        };
     } catch (err) {
         return { ok: false, error: err.message || String(err) };
     }

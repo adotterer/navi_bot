@@ -9,8 +9,10 @@ import { getClient } from '../../shared/discordClient.js';
 import { INFO_EMBED_COLOR } from '../../messages/faqAndAliasHandler.js';
 import { appendLog, getRun, updateRun, isRunCancelled, notifyDocsUpdate, registerAbortController, unregisterAbortController } from './runStore.js';
 import { persistRunToS3 } from './agentRunPersistence.js';
-import { runResearcher, runPlanner, runCoder, validateCoderStep, runReviewer } from './agents.js';
+import { runResearcher, runPlanner, runCoder, validateCoderStep, runReviewer, runAuditor, runAsk, runTester } from './agents.js';
 import { callTool } from './toolRegistry.js';
+import { getFileTree } from './codebaseTools.js';
+import { getBranchDiff } from './repoBrowser.js';
 
 /**
  * Run the full pipeline for a given runId.
@@ -114,6 +116,32 @@ async function buildGrepContext(prompt) {
     return { grepText, grepPaths: pathSet };
 }
 
+/** Max lines per file to include in entry-point context for Ask/Audit. */
+const ENTRY_POINT_MAX_LINES = 120;
+
+/** Paths to always include for Ask/Audit so the agent sees entry points and routes (e.g. health check). */
+const ENTRY_POINT_PATHS = ['main.js', 'src/app.js', 'src/admin/routes.js'];
+
+/**
+ * Build a short "entry point" context string for Ask and Audit so they see main.js, app.js, and admin routes.
+ * @returns {Promise<string>}
+ */
+async function getEntryPointContext() {
+    const parts = [];
+    for (const filePath of ENTRY_POINT_PATHS) {
+        try {
+            const r = await callTool('read_file', { path: filePath });
+            if (!r.ok || typeof r.result !== 'string') continue;
+            const lines = r.result.split('\n').slice(0, ENTRY_POINT_MAX_LINES);
+            const excerpt = lines.join('\n');
+            if (excerpt.trim()) parts.push(`=== ${filePath} ===\n${excerpt}`);
+        } catch (_) {
+            // skip missing or unreadable file
+        }
+    }
+    return parts.length ? parts.join('\n\n') : '';
+}
+
 /** Parse file paths from task hints (comma/space separated); return paths that look like source files. */
 function parseHintPaths(task) {
     const hints = task.hints ? String(task.hints).split(/[\s,]+/).map((s) => s.trim()).filter(Boolean) : [];
@@ -215,6 +243,55 @@ export async function runPipeline(runId, opts = {}) {
     try {
         if (checkCancelled(runId, log)) return;
 
+        const currentRunEarly = getRun(runId);
+        if (currentRunEarly?.runMode === 'review') {
+            let branchName = (prompt || '').trim()
+                .replace(/^review\s+branch\s+/i, '')
+                .replace(/^review\s+/i, '')
+                .trim();
+            if (branchName.includes('\n')) branchName = branchName.split('\n')[0].trim();
+            if (!branchName) {
+                updateRun(runId, { status: 'error', error: 'Branch name required. Enter a branch name (e.g. agent/run-xyz or feature/abc).' });
+                log('system', 'error', 'No branch name in prompt.\n');
+                return;
+            }
+            updateRun(runId, { status: 'planning' });
+            log('system', 'planning', 'Getting diff…\n');
+            const diffResult = await getBranchDiff(branchName, 'main');
+            if (!diffResult.ok) {
+                updateRun(runId, { status: 'error', error: diffResult.error || 'Branch not found or not accessible' });
+                log('system', 'error', (diffResult.error || 'Branch not found') + '\n');
+                return;
+            }
+            let diffText = diffResult.diffText || '';
+            const MAX_DIFF_CHARS = 80 * 1024;
+            if (diffText.length > MAX_DIFF_CHARS) {
+                diffText = 'Diff truncated; first ' + MAX_DIFF_CHARS + ' chars shown.\n\n' + diffText.slice(0, MAX_DIFF_CHARS);
+            }
+            log('system', 'planning', 'Running Tester (review report)…\n');
+            const testerResult = await runTester(branchName, {
+                diffText,
+                baseBranch: diffResult.baseBranch || 'main',
+                headBranch: diffResult.headBranch || branchName,
+                signal,
+                model,
+            });
+            if (!testerResult.ok) {
+                updateRun(runId, { status: 'error', error: testerResult.error });
+                log('system', 'error', 'Tester failed: ' + testerResult.error + '\n');
+                return;
+            }
+            updateRun(runId, {
+                status: 'done',
+                reviewReport: testerResult.report,
+                inputTokens: (currentRunEarly.inputTokens || 0) + (testerResult.inputTokens || 0),
+                outputTokens: (currentRunEarly.outputTokens || 0) + (testerResult.outputTokens || 0),
+            });
+            log('system', 'done', 'Review report ready.\n');
+            await persistRunToS3(runId);
+            return;
+        }
+
         const shouldRunResearch = !resume || !flightPlan?.length;
         if (shouldRunResearch) {
             updateRun(runId, { status: 'research' });
@@ -238,6 +315,73 @@ export async function runPipeline(runId, opts = {}) {
         }
 
         if (checkCancelled(runId, log)) return;
+
+        const currentRun = getRun(runId);
+        if (currentRun?.runMode === 'audit') {
+            updateRun(runId, { status: 'planning' });
+            log('system', 'planning', 'Running Auditor (report only)…\n');
+            const { grepText: grepFromMission } = await buildGrepContext(prompt);
+            const entryPointContext = await getEntryPointContext();
+            const grepContext = entryPointContext
+                ? (entryPointContext + '\n\nRelevant snippets from mission:\n' + (grepFromMission || '(none)'))
+                : grepFromMission;
+            let treeContext = '';
+            try {
+                const treeResult = await getFileTree('', 3);
+                if (treeResult.ok && treeResult.tree) {
+                    treeContext = JSON.stringify(treeResult.tree, null, 2);
+                }
+            } catch (_) {}
+            const flightPlanSummary = (flightPlan || []).map((t) => `- ${t.title || t.id}: ${t.description || ''}`).join('\n');
+            const auditResult = await runAuditor(prompt, { grepContext, treeContext, flightPlanSummary, signal, model });
+            if (!auditResult.ok) {
+                updateRun(runId, { status: 'error', error: auditResult.error });
+                log('system', 'error', 'Auditor failed: ' + auditResult.error + '\n');
+                return;
+            }
+            updateRun(runId, {
+                status: 'done',
+                auditReport: auditResult.report,
+                inputTokens: (currentRun.inputTokens || 0) + (auditResult.inputTokens || 0),
+                outputTokens: (currentRun.outputTokens || 0) + (auditResult.outputTokens || 0),
+            });
+            log('system', 'done', 'Audit report ready.\n');
+            await persistRunToS3(runId);
+            return;
+        }
+
+        if (currentRun?.runMode === 'ask') {
+            updateRun(runId, { status: 'planning' });
+            log('system', 'planning', 'Answering question…\n');
+            const { grepText: grepFromMission } = await buildGrepContext(prompt);
+            const entryPointContext = await getEntryPointContext();
+            const grepContext = entryPointContext
+                ? (entryPointContext + '\n\nRelevant snippets from question:\n' + (grepFromMission || '(none)'))
+                : grepFromMission;
+            let treeContext = '';
+            try {
+                const treeResult = await getFileTree('', 3);
+                if (treeResult.ok && treeResult.tree) {
+                    treeContext = JSON.stringify(treeResult.tree, null, 2);
+                }
+            } catch (_) {}
+            const flightPlanSummary = (flightPlan || []).map((t) => `- ${t.title || t.id}: ${t.description || ''}`).join('\n');
+            const askResult = await runAsk(prompt, { grepContext, treeContext, flightPlanSummary, signal, model });
+            if (!askResult.ok) {
+                updateRun(runId, { status: 'error', error: askResult.error });
+                log('system', 'error', 'Ask failed: ' + askResult.error + '\n');
+                return;
+            }
+            updateRun(runId, {
+                status: 'done',
+                askResponse: askResult.report,
+                inputTokens: (currentRun.inputTokens || 0) + (askResult.inputTokens || 0),
+                outputTokens: (currentRun.outputTokens || 0) + (askResult.outputTokens || 0),
+            });
+            log('system', 'done', 'Answer ready.\n');
+            await persistRunToS3(runId);
+            return;
+        }
 
         const { grepText: grepContext, grepPaths } = await buildGrepContext(prompt);
         const allowedPaths = buildAllowedPaths(flightPlan, grepPaths);
@@ -531,9 +675,46 @@ export async function runPipeline(runId, opts = {}) {
 
         const prResult = await createPrIfConfigured(runId, { prompt, edits: editsToReview, title: getRun(runId)?.title || '' });
         if (prResult.ok && prResult.prUrl) {
-            updateRun(runId, { status: 'done', prUrl: prResult.prUrl });
-            log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
             await notifyAuditLog(getRun(runId)?.title, prompt, prResult.prUrl, editsToReview.map((e) => e.path));
+            if (checkCancelled(runId, log)) return;
+            const branchName = 'agent/' + runId.replace(/[^a-z0-9-]/gi, '-').slice(0, 80);
+            updateRun(runId, { status: 'tester' });
+            log('system', 'tester', 'Running Tester (review)…\n');
+            const currentRunForTester = getRun(runId);
+            const testerModel = currentRunForTester?.model || model;
+            const diffResult = await getBranchDiff(branchName, 'main');
+            if (!diffResult.ok) {
+                log('system', 'tester', 'Diff unavailable: ' + (diffResult.error || 'unknown') + '. Skipping review report.\n');
+                updateRun(runId, { status: 'done', prUrl: prResult.prUrl });
+                log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
+            } else {
+                let diffText = diffResult.diffText || '';
+                const MAX_DIFF_CHARS = 80 * 1024;
+                if (diffText.length > MAX_DIFF_CHARS) {
+                    diffText = 'Diff truncated; first ' + MAX_DIFF_CHARS + ' chars shown.\n\n' + diffText.slice(0, MAX_DIFF_CHARS);
+                }
+                const testerResult = await runTester(branchName, {
+                    diffText,
+                    baseBranch: diffResult.baseBranch || 'main',
+                    headBranch: diffResult.headBranch || branchName,
+                    signal,
+                    model: testerModel,
+                });
+                if (!testerResult.ok) {
+                    log('system', 'tester', 'Tester failed: ' + (testerResult.error || 'unknown') + '. PR still created.\n');
+                    updateRun(runId, { status: 'done', prUrl: prResult.prUrl });
+                    log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
+                } else {
+                    updateRun(runId, {
+                        status: 'done',
+                        prUrl: prResult.prUrl,
+                        reviewReport: testerResult.report,
+                        inputTokens: (currentRunForTester?.inputTokens || 0) + (testerResult.inputTokens || 0),
+                        outputTokens: (currentRunForTester?.outputTokens || 0) + (testerResult.outputTokens || 0),
+                    });
+                    log('system', 'done', 'PR: ' + prResult.prUrl + ' — Review report ready.\n');
+                }
+            }
         } else if (prResult.error) {
             updateRun(runId, { status: 'error', error: prResult.error });
             log('system', 'error', 'PR failed: ' + prResult.error + '\n');
@@ -557,15 +738,38 @@ export async function runPipeline(runId, opts = {}) {
     }
 }
 
+/** Normalize channel name for matching (lowercase, spaces/underscores to hyphens). */
+function normalizeChannelName(name) {
+    if (!name || typeof name !== 'string') return '';
+    return name.toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-');
+}
+
 /** Post a Mission PR notification to Discord #audit-logs. Uses getClient() and same channel pattern as webhookRoutes. */
 async function notifyAuditLog(title, prompt, prUrl, files) {
     try {
         const client = getClient();
-        if (!client?.isReady()) return;
+        if (!client) {
+            console.warn('[agent] Discord client not set — Mission PR notification skipped');
+            return;
+        }
+        if (!client.isReady()) {
+            console.warn('[agent] Discord client not ready — Mission PR notification skipped');
+            return;
+        }
         const guild = client.guilds.cache.first();
-        if (!guild) return;
-        const channel = guild.channels.cache.find((ch) => ch.isTextBased() && ch.name === 'audit-logs');
-        if (!channel) return;
+        if (!guild) {
+            console.warn('[agent] No guild in cache — Mission PR notification skipped');
+            return;
+        }
+        const want = 'audit-logs';
+        const channel = guild.channels.cache.find(
+            (ch) => ch.isTextBased() && normalizeChannelName(ch.name) === want
+        );
+        if (!channel) {
+            const names = guild.channels.cache.filter((ch) => ch.isTextBased()).map((ch) => ch.name);
+            console.warn('[agent] #audit-logs channel not found. Text channels:', names?.slice(0, 20) || []);
+            return;
+        }
         const fileList = Array.isArray(files) ? files : [];
         const filesValue = fileList.length
             ? fileList.slice(0, 15).join('\n') + (fileList.length > 15 ? `\n... (+${fileList.length - 15} more)` : '')
@@ -581,8 +785,9 @@ async function notifyAuditLog(title, prompt, prUrl, files) {
             )
             .setTimestamp();
         await channel.send({ embeds: [embed] });
+        console.log('[agent] Mission PR notification sent to #audit-logs');
     } catch (e) {
-        console.error('Audit log notification failed', e);
+        console.error('[agent] Audit log notification failed', e);
     }
 }
 

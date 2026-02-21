@@ -3,7 +3,7 @@
  * Tracks status, logs, flight plan, PR URL, and error per run.
  */
 
-const RUN_STATUSES = ['pending', 'research', 'planning', 'coding', 'reviewing', 'creating_pr', 'done', 'error', 'cancelled'];
+const RUN_STATUSES = ['pending', 'research', 'planning', 'coding', 'reviewing', 'creating_pr', 'tester', 'done', 'error', 'cancelled'];
 const MAX_RUNS_RETAINED = 50;
 
 const DEFAULT_DOCS = { overview: '', requirements: '', architecture: '', decisions: '', notes: '' };
@@ -33,12 +33,20 @@ function generateRunId() {
  * @param {string} [opts.prompt]
  * @returns {string} runId
  */
+/** Run mode: 'pr' = implement and open PR, 'audit' = report only, 'ask' = Q&A about codebase (no code changes), 'review' = branch/PR review. */
+const RUN_MODES = ['pr', 'audit', 'ask', 'review'];
+
 function createRun(opts = {}) {
     const runId = generateRunId();
+    const mode = RUN_MODES.includes(opts.mode) ? opts.mode : 'pr';
     const run = {
         runId,
         status: 'pending',
         cancelled: false,
+        runMode: mode,
+        auditReport: undefined,
+        askResponse: undefined,
+        reviewReport: undefined,
         logs: [],
         flightPlan: undefined,
         steps: undefined,
@@ -135,6 +143,9 @@ function updateRun(runId, updates) {
     if (updates.prompt != null) run.prompt = updates.prompt;
     if (updates.model != null) run.model = updates.model;
     if (updates.title != null) run.title = updates.title;
+    if (updates.auditReport != null) run.auditReport = typeof updates.auditReport === 'string' ? updates.auditReport : undefined;
+    if (updates.askResponse != null) run.askResponse = typeof updates.askResponse === 'string' ? updates.askResponse : undefined;
+    if (updates.reviewReport != null) run.reviewReport = typeof updates.reviewReport === 'string' ? updates.reviewReport : undefined;
     if (updates.inputTokens != null) run.inputTokens = (run.inputTokens || 0) + updates.inputTokens;
     if (updates.outputTokens != null) run.outputTokens = (run.outputTokens || 0) + updates.outputTokens;
 }
@@ -219,10 +230,11 @@ function listRuns(limit = 20) {
         return {
             runId: run.runId,
             status: run.status,
-            createdAt: run.createdAt,
-            prompt: run.prompt ? run.prompt.slice(0, 100) : undefined,
-            title: run.title || undefined,
-        };
+        runMode: run.runMode || 'pr',
+        createdAt: run.createdAt,
+        prompt: run.prompt ? run.prompt.slice(0, 100) : undefined,
+        title: run.title || undefined,
+    };
     }).filter(Boolean);
 }
 
@@ -251,6 +263,10 @@ function hydrateRun(runId, snapshot) {
         prompt: snapshot.prompt ?? '',
         model: snapshot.model ?? '',
         title: snapshot.title ?? '',
+        runMode: RUN_MODES.includes(snapshot.runMode) ? snapshot.runMode : 'pr',
+        auditReport: typeof snapshot.auditReport === 'string' ? snapshot.auditReport : undefined,
+        askResponse: typeof snapshot.askResponse === 'string' ? snapshot.askResponse : undefined,
+        reviewReport: typeof snapshot.reviewReport === 'string' ? snapshot.reviewReport : undefined,
         inputTokens: snapshot.inputTokens ?? 0,
         outputTokens: snapshot.outputTokens ?? 0,
     };
@@ -258,4 +274,4 @@ function hydrateRun(runId, snapshot) {
     if (!runOrder.includes(runId)) runOrder.push(runId);
 }
 
-export { createRun, appendLog, getRun, updateRun, hydrateRun, subscribe, notifyDocsUpdate, listRuns, setRunCancelled, isRunCancelled, deleteRun, registerAbortController, unregisterAbortController, RUN_STATUSES, DEFAULT_DOCS };
+export { createRun, appendLog, getRun, updateRun, hydrateRun, subscribe, notifyDocsUpdate, listRuns, setRunCancelled, isRunCancelled, deleteRun, registerAbortController, unregisterAbortController, RUN_STATUSES, RUN_MODES, DEFAULT_DOCS };

@@ -11,6 +11,8 @@ import { WORKSPACE_ROOT } from './codebaseTools.js';
 
 const EXCLUDED_DIRS = new Set(['.git', 'node_modules']);
 const MAX_FILE_SIZE = 512 * 1024;
+/** Max size of combined diff text returned (chars) to avoid token overflow. */
+const MAX_DIFF_CHARS = 100 * 1024;
 
 /** Resolve directory that actually contains .git so git commands work (cwd can differ from WORKSPACE_ROOT). */
 function resolveRepoRoot() {
@@ -99,6 +101,49 @@ async function getTreeGitHub(ref, dirPath) {
     }
 }
 
+/**
+ * Get diff between base and head branch (GitHub API). Used when no local clone.
+ * @param {string} baseBranch
+ * @param {string} headBranch - Branch to compare (e.g. agent/run-xyz)
+ * @returns {Promise<{ ok: true, diffText: string, baseBranch: string, headBranch: string, fileList: string[] } | { ok: false, error: string }>}
+ */
+async function getBranchDiffGitHub(baseBranch, headBranch) {
+    const repo = getRepoFromEnv();
+    if (!repo) return { ok: false, error: 'Repo not available (need GITHUB_REPO when no local git)' };
+    const base = (baseBranch || 'main').trim();
+    const head = (headBranch || '').trim();
+    if (!head) return { ok: false, error: 'Branch name required' };
+    try {
+        const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+        const { data } = await octokit.repos.compareCommits({
+            owner: repo.owner,
+            repo: repo.repo,
+            base: base,
+            head: head,
+        });
+        const fileList = (data.files || []).map((f) => f.filename || f.previous_filename || '').filter(Boolean);
+        const parts = [];
+        let total = 0;
+        for (const file of data.files || []) {
+            const patch = file.patch;
+            if (!patch || total >= MAX_DIFF_CHARS) continue;
+            const chunk = `--- ${file.filename || file.previous_filename || 'unknown'}\n${patch}`;
+            if (total + chunk.length > MAX_DIFF_CHARS) {
+                parts.push(chunk.slice(0, MAX_DIFF_CHARS - total));
+                total = MAX_DIFF_CHARS;
+                break;
+            }
+            parts.push(chunk);
+            total += chunk.length;
+        }
+        const diffText = parts.join('\n');
+        return { ok: true, diffText, baseBranch: base, headBranch: head, fileList };
+    } catch (err) {
+        if (err.status === 404) return { ok: false, error: 'Branch not found or not accessible' };
+        return { ok: false, error: err.message || String(err) };
+    }
+}
+
 async function getFileContentGitHub(ref, filePath) {
     const repo = getRepoFromEnv();
     if (!repo) return { ok: false, error: 'Repo browser not available (no git in this environment)' };
@@ -129,6 +174,39 @@ async function getFileContentGitHub(ref, filePath) {
 }
 
 // ----- Public API -----
+
+/**
+ * Get diff of headBranch vs baseBranch. Works with local git or GitHub API.
+ * @param {string} headBranch - Branch to review (e.g. agent/run-xyz)
+ * @param {string} [baseBranch='main']
+ * @returns {Promise<{ ok: true, diffText: string, baseBranch: string, headBranch: string, fileList?: string[] } | { ok: false, error: string }>}
+ */
+export async function getBranchDiff(headBranch, baseBranch = 'main') {
+    const base = (baseBranch || 'main').trim();
+    const head = (headBranch || '').trim();
+    if (!head) return { ok: false, error: 'Branch name required' };
+
+    if (GITHUB_REPO_AVAILABLE) return getBranchDiffGitHub(base, head);
+
+    if (!REPO_AVAILABLE) return { ok: false, error: 'Repo not available (need local git clone or GITHUB_TOKEN + GITHUB_REPO)' };
+
+    try {
+        const out = await git.raw(['diff', base + '...' + head, '--no-color']);
+        let diffText = out != null ? String(out) : '';
+        const fileList = [];
+        const fileRe = /^diff --git a\/(.+?) b\//gm;
+        let m;
+        while ((m = fileRe.exec(diffText)) !== null) fileList.push(m[1]);
+        if (diffText.length > MAX_DIFF_CHARS) {
+            diffText = diffText.slice(0, MAX_DIFF_CHARS) + '\n\n[... diff truncated ...]';
+        }
+        return { ok: true, diffText, baseBranch: base, headBranch: head, fileList };
+    } catch (err) {
+        const msg = err.message || String(err);
+        if (msg.includes('unknown revision') || msg.includes('bad revision')) return { ok: false, error: 'Branch not found' };
+        return { ok: false, error: msg };
+    }
+}
 
 /**
  * @returns {Promise<{ ok: true, current: string, branches: string[], repoUnavailable?: boolean } | { ok: false, error: string }>}

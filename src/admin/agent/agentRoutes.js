@@ -39,9 +39,22 @@ router.get('/', (req, res) => {
       <section class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden w-full">
         <div class="border-b border-slate-200 dark:border-slate-700 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300">Mission prompt</div>
         <form id="agent-form" class="flex flex-col p-4 gap-4">
-          <textarea id="prompt" name="prompt" rows="4" placeholder="e.g. Add a health check endpoint at GET /health that returns { status: 'ok' }"
+          <textarea id="prompt" name="prompt" rows="4" placeholder="e.g. Add a health check endpoint at GET /health that returns { status: &#39;ok&#39; }"
+            data-placeholder-pr="e.g. Add a health check endpoint at GET /health that returns { status: &#39;ok&#39; }"
+            data-placeholder-audit="e.g. Audit dark-mode hover and active states"
+            data-placeholder-ask="e.g. How does the export command work?"
+            data-placeholder-review="e.g. agent/run-mlvo0ju4-we6rkc or Review branch feature/xyz"
             class="w-full min-h-[100px] rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none font-mono text-sm resize-y"></textarea>
           <div class="flex flex-wrap gap-4 items-end">
+            <div>
+              <label for="mode" class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Mode</label>
+              <select id="mode" name="mode" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-sm">
+                <option value="pr">PR — implement &amp; open PR</option>
+                <option value="audit">Audit — report only (no code changes)</option>
+                <option value="ask">Ask — Q&amp;A about codebase (no code changes)</option>
+                <option value="review">Review — analyze a branch / PR (no code changes)</option>
+              </select>
+            </div>
             <div>
               <label for="model" class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Model <span class="font-normal text-slate-400">(hover for use-case)</span></label>
               <select id="model" name="model" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-sm min-w-[180px]">
@@ -81,29 +94,55 @@ router.get('/', (req, res) => {
                 </div>
               </section>
               <section class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-3">
-                <div class="flex items-center gap-3 flex-wrap">
+                <div class="flex items-center gap-3 flex-wrap mb-1">
                   <span id="run-status" class="text-sm font-medium text-slate-700 dark:text-slate-300">Running…</span>
                   <span id="run-stage" class="text-sm text-slate-500 dark:text-slate-400"></span>
                 </div>
                 <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Mission</div>
-                <div id="run-mission" class="p-2 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words bg-slate-50 dark:bg-slate-900/50 rounded min-h-[2rem] mb-3"></div>
+                <div id="run-mission" class="run-mission-display p-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 rounded min-h-[2rem] mb-3 prose prose-slate dark:prose-invert max-w-none"></div>
                 <div id="pipeline-area" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-2.5">
-                  <div class="flex flex-wrap items-center gap-2 text-sm">
-                    <span id="phase-researcher" class="phase px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 font-medium transition-all">Researcher</span>
-                    <span class="text-slate-300">\u2192</span>
-                    <span id="phase-planner" class="phase px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 font-medium transition-all">Planner</span>
-                    <span class="text-slate-300">\u2192</span>
-                    <span id="phase-coder" class="phase px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 font-medium transition-all">Coder</span>
-                    <span class="text-slate-300">\u2192</span>
-                    <span id="phase-review" class="phase px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 font-medium transition-all">Review</span>
-                    <span class="text-slate-300">\u2192</span>
-                    <span id="phase-pr" class="phase px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 font-medium transition-all">Create PR</span>
-                  </div>
+                  <div id="pipeline-inner" class="flex flex-wrap items-center gap-2 text-sm"></div>
                 </div>
-                <div id="result-area" class="rounded-lg border border-slate-200 bg-emerald-50/50 p-4 hidden mt-2">
-                  <a id="pr-link" href="#" target="_blank" rel="noopener" class="text-emerald-700 hover:text-emerald-800 font-medium underline">Open PR</a>
-                  <p id="error-msg" class="text-red-600 text-sm mt-2 hidden"></p>
-                  <p id="result-note" class="text-slate-500 text-xs mt-2 hidden"></p>
+                <div id="result-area" class="rounded-lg border border-slate-200 dark:border-slate-600 bg-emerald-50/50 dark:bg-slate-800 dark:border-emerald-800/50 p-4 hidden mt-2">
+                  <a id="pr-link" href="#" target="_blank" rel="noopener" class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-medium underline">Open PR</a>
+                  <p id="error-msg" class="text-red-600 dark:text-red-400 text-sm mt-2 hidden"></p>
+                  <p id="result-note" class="text-slate-600 dark:text-slate-300 text-xs mt-2 hidden"></p>
+                </div>
+                <div id="audit-report-wrap" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 hidden mt-3 max-h-[480px] overflow-y-auto">
+                  <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Audit report</h3>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <button type="button" class="report-copy-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="audit">Copy Markdown</button>
+                      <button type="button" class="report-copy-html text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="audit">Copy HTML</button>
+                      <button type="button" class="report-use-prompt text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="audit">Use in mission prompt</button>
+                      <button type="button" class="report-print text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="audit">Print / PDF</button>
+                    </div>
+                  </div>
+                  <div id="audit-report" class="audit-report-content text-sm text-slate-700 dark:text-slate-300 prose prose-slate dark:prose-invert max-w-none"></div>
+                </div>
+                <div id="ask-report-wrap" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 hidden mt-3 max-h-[480px] overflow-y-auto">
+                  <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Answer</h3>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <button type="button" class="report-copy-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="ask">Copy Markdown</button>
+                      <button type="button" class="report-copy-html text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="ask">Copy HTML</button>
+                      <button type="button" class="report-use-prompt text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="ask">Use in mission prompt</button>
+                      <button type="button" class="report-print text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="ask">Print / PDF</button>
+                    </div>
+                  </div>
+                  <div id="ask-report" class="audit-report-content text-sm text-slate-700 dark:text-slate-300 prose prose-slate dark:prose-invert max-w-none"></div>
+                </div>
+                <div id="review-report-wrap" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 hidden mt-3 max-h-[480px] overflow-y-auto">
+                  <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Review report</h3>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <button type="button" class="report-copy-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="review">Copy Markdown</button>
+                      <button type="button" class="report-copy-html text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="review">Copy HTML</button>
+                      <button type="button" class="report-use-prompt text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="review">Use in mission prompt</button>
+                      <button type="button" class="report-print text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="review">Print / PDF</button>
+                    </div>
+                  </div>
+                  <div id="review-report" class="audit-report-content text-sm text-slate-700 dark:text-slate-300 prose prose-slate dark:prose-invert max-w-none"></div>
                 </div>
               </section>
             </div>
@@ -112,16 +151,36 @@ router.get('/', (req, res) => {
               <div class="p-4 space-y-4 max-h-[320px] overflow-y-auto">
                 <div>
                   <label class="block text-xs font-medium text-slate-500 mb-1">Mission</label>
-                  <div id="docs-mission" class="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 whitespace-pre-wrap min-h-[3rem]"></div>
+                  <div id="docs-mission" class="docs-readonly-display rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 min-h-[3rem] prose prose-slate dark:prose-invert max-w-none"></div>
                 </div>
-                <div><label class="block text-xs font-medium text-slate-500 mb-1">Overview</label><textarea id="docs-overview" data-section="overview" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
-                <div><label class="block text-xs font-medium text-slate-500 mb-1">Requirements</label><textarea id="docs-requirements" data-section="requirements" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
-                <div><label class="block text-xs font-medium text-slate-500 mb-1">Architecture</label><textarea id="docs-architecture" data-section="architecture" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
-                <div><label class="block text-xs font-medium text-slate-500 mb-1">Decisions</label><textarea id="docs-decisions" data-section="decisions" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
-                <div><label class="block text-xs font-medium text-slate-500 mb-1">Notes</label><textarea id="docs-notes" data-section="notes" rows="2" class="docs-textarea w-full rounded-lg border border-slate-300 px-3 py-2 text-sm resize-y"></textarea></div>
                 <div>
-                  <label class="block text-xs font-medium text-slate-500 mb-1">Implementation plan</label>
-                  <div id="docs-implementation" class="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 whitespace-pre-wrap min-h-[2rem]"></div>
+                  <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Overview</label>
+                  <div class="docs-section-view rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 min-h-[2rem] cursor-pointer prose prose-slate dark:prose-invert max-w-none" data-section="overview" title="Click to edit"></div>
+                  <textarea id="docs-overview" data-section="overview" rows="2" class="docs-textarea docs-section-edit hidden w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm resize-y"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Requirements</label>
+                  <div class="docs-section-view rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 min-h-[2rem] cursor-pointer prose prose-slate dark:prose-invert max-w-none" data-section="requirements" title="Click to edit"></div>
+                  <textarea id="docs-requirements" data-section="requirements" rows="2" class="docs-textarea docs-section-edit hidden w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm resize-y"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Architecture</label>
+                  <div class="docs-section-view rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 min-h-[2rem] cursor-pointer prose prose-slate dark:prose-invert max-w-none" data-section="architecture" title="Click to edit"></div>
+                  <textarea id="docs-architecture" data-section="architecture" rows="2" class="docs-textarea docs-section-edit hidden w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm resize-y"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Decisions</label>
+                  <div class="docs-section-view rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 min-h-[2rem] cursor-pointer prose prose-slate dark:prose-invert max-w-none" data-section="decisions" title="Click to edit"></div>
+                  <textarea id="docs-decisions" data-section="decisions" rows="2" class="docs-textarea docs-section-edit hidden w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm resize-y"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Notes</label>
+                  <div class="docs-section-view rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 min-h-[2rem] cursor-pointer prose prose-slate dark:prose-invert max-w-none" data-section="notes" title="Click to edit"></div>
+                  <textarea id="docs-notes" data-section="notes" rows="2" class="docs-textarea docs-section-edit hidden w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm resize-y"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Implementation plan</label>
+                  <div id="docs-implementation" class="docs-readonly-display rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 min-h-[2rem] prose prose-slate dark:prose-invert max-w-none"></div>
                 </div>
                 <button type="button" id="docs-save-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-emerald-700">Save docs</button>
               </div>
@@ -174,6 +233,10 @@ router.get('/', (req, res) => {
   var prLink = document.getElementById('pr-link');
   var errorMsg = document.getElementById('error-msg');
   var currentRunId = null;
+  var currentRunMode = 'pr';
+  var currentAuditReportMarkdown = '';
+  var currentAskReportMarkdown = '';
+  var currentReviewReportMarkdown = '';
   var eventSource = null;
   var runStartedAt = 0;
   var timerInterval = null;
@@ -258,14 +321,26 @@ router.get('/', (req, res) => {
     if (docsPanel) docsPanel.classList.remove('hidden');
   }
 
+  function renderMissionMarkdown(md) {
+    var s = (md || '').trim();
+    return renderAuditMarkdown(s || '(No mission)');
+  }
+
   function populateDocsPanel(data) {
     if (!data) return;
     var missionEl = document.getElementById('docs-mission');
-    if (missionEl) missionEl.textContent = (data.prompt || '').trim() || "(No mission)";
+    if (missionEl) missionEl.innerHTML = renderMissionMarkdown(data.prompt);
     var docs = data.docs || {};
     ['overview', 'requirements', 'architecture', 'decisions', 'notes'].forEach(function(section) {
-      var el = document.getElementById('docs-' + section);
-      if (el && el.tagName === 'TEXTAREA') el.value = docs[section] || '';
+      var raw = docs[section] || '';
+      var ta = document.getElementById('docs-' + section);
+      if (ta && ta.tagName === 'TEXTAREA') ta.value = raw;
+      var viewEl = document.querySelector('.docs-section-view[data-section="' + section + '"]');
+      if (viewEl) {
+        viewEl.innerHTML = raw ? renderAuditMarkdown(raw) : '<span class="text-slate-400 dark:text-slate-500">Click to add ' + section + '</span>';
+        viewEl.classList.remove('hidden');
+      }
+      if (ta) ta.classList.add('hidden');
     });
     var implEl = document.getElementById('docs-implementation');
     if (implEl) {
@@ -281,7 +356,7 @@ router.get('/', (req, res) => {
           parts.push('  - ' + what);
         });
       }
-      implEl.textContent = parts.length ? parts.join(String.fromCharCode(10)) : "(No plan yet)";
+      implEl.innerHTML = parts.length ? renderAuditMarkdown(parts.join(String.fromCharCode(10))) : '<span class="text-slate-400 dark:text-slate-500">(No plan yet)</span>';
     }
     if (docsPanel) docsPanel.classList.remove("hidden");
   }
@@ -305,41 +380,87 @@ router.get('/', (req, res) => {
     }
   }
 
+  var phaseBaseClass = 'phase px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-medium transition-all text-sm ';
+  var arrowHtml = '<span class="text-slate-300 dark:text-slate-500">\u2192</span>';
+  function renderPipelineByMode(mode) {
+    var inner = document.getElementById('pipeline-inner');
+    if (!inner) return;
+    mode = mode || 'pr';
+    var html = '';
+    if (mode === 'audit') {
+      html = '<span id="phase-researcher" class="' + phaseBaseClass + '">Researcher</span>' + arrowHtml + '<span id="phase-auditor" class="' + phaseBaseClass + '">Audit report</span>';
+    } else if (mode === 'ask') {
+      html = '<span id="phase-researcher" class="' + phaseBaseClass + '">Researcher</span>' + arrowHtml + '<span id="phase-ask" class="' + phaseBaseClass + '">Answer</span>';
+    } else if (mode === 'review') {
+      html = '<span id="phase-get_diff" class="' + phaseBaseClass + '">Get diff</span>' + arrowHtml + '<span id="phase-tester" class="' + phaseBaseClass + '">Review report</span>';
+    } else {
+      html = '<span id="phase-researcher" class="' + phaseBaseClass + '">Researcher</span>' + arrowHtml +
+        '<span id="phase-planner" class="' + phaseBaseClass + '">Planner</span>' + arrowHtml +
+        '<span id="phase-coder" class="' + phaseBaseClass + '">Coder</span>' + arrowHtml +
+        '<span id="phase-review" class="' + phaseBaseClass + '">Review</span>' + arrowHtml +
+        '<span id="phase-pr" class="' + phaseBaseClass + '">Create PR</span>' + arrowHtml +
+        '<span id="phase-tester" class="' + phaseBaseClass + '">Tester</span>';
+    }
+    inner.innerHTML = html;
+  }
+
   function updatePipeline(status, runData) {
     runData = runData || {};
-    var statusToPhase = { research: 'researcher', planning: 'planning', coding: 'coding', reviewing: 'reviewing', creating_pr: 'creating_pr', done: 'creating_pr', error: 'creating_pr', cancelled: 'creating_pr' };
+    var runMode = runData.runMode || 'pr';
+    var order, statusToPhase, labels, phaseIdMap;
+    if (runMode === 'audit') {
+      order = ['researcher', 'auditor'];
+      statusToPhase = { research: 'researcher', planning: 'auditor', creating_pr: 'auditor', done: 'auditor', error: 'auditor', cancelled: 'auditor' };
+      labels = { researcher: 'Researcher', auditor: 'Audit report' };
+      phaseIdMap = { researcher: 'researcher', auditor: 'auditor' };
+    } else if (runMode === 'ask') {
+      order = ['researcher', 'ask'];
+      statusToPhase = { research: 'researcher', planning: 'ask', creating_pr: 'ask', done: 'ask', error: 'ask', cancelled: 'ask' };
+      labels = { researcher: 'Researcher', ask: 'Answer' };
+      phaseIdMap = { researcher: 'researcher', ask: 'ask' };
+    } else if (runMode === 'review') {
+      order = ['get_diff', 'tester'];
+      statusToPhase = { pending: 'get_diff', research: 'get_diff', planning: 'tester', done: 'tester', error: 'tester', cancelled: 'tester' };
+      labels = { get_diff: 'Get diff', tester: 'Review report' };
+      phaseIdMap = { get_diff: 'get_diff', tester: 'tester' };
+    } else {
+      order = ['researcher', 'planning', 'coding', 'reviewing', 'creating_pr', 'tester'];
+      statusToPhase = { research: 'researcher', planning: 'planning', coding: 'coding', reviewing: 'reviewing', creating_pr: 'creating_pr', tester: 'tester', done: 'tester', error: 'creating_pr', cancelled: 'creating_pr' };
+      labels = {
+        researcher: 'Researcher',
+        planning: runData.flightPlan && runData.flightPlan.length ? 'Planner (' + runData.flightPlan.length + ' tasks)' : 'Planner',
+        coding: runData.stepResults && runData.stepResults.length ? 'Coder (' + runData.stepResults.length + ' steps)' : 'Coder',
+        reviewing: 'Review',
+        creating_pr: 'Create PR',
+        tester: 'Tester'
+      };
+      phaseIdMap = { researcher: 'researcher', planning: 'planner', coding: 'coder', reviewing: 'review', creating_pr: 'pr', tester: 'tester' };
+    }
     var current = statusToPhase[status] || status;
-    var labels = {
-      researcher: 'Researcher',
-      planning: runData.flightPlan && runData.flightPlan.length ? 'Planner (' + runData.flightPlan.length + ' tasks)' : 'Planner',
-      coding: runData.stepResults && runData.stepResults.length ? 'Coder (' + runData.stepResults.length + ' steps)' : 'Coder',
-      reviewing: 'Review',
-      creating_pr: 'Create PR'
-    };
-    var order = ['researcher', 'planning', 'coding', 'reviewing', 'creating_pr'];
     order.forEach(function(phase, i) {
-      var phaseId = phase === 'planning' ? 'planner' : phase === 'creating_pr' ? 'pr' : phase === 'reviewing' ? 'review' : phase === 'coding' ? 'coder' : phase;
+      var phaseId = phaseIdMap[phase] || phase;
       var el = document.getElementById('phase-' + phaseId);
       if (!el) return;
       el.textContent = labels[phase] || el.textContent;
-      el.className = 'phase px-3 py-1.5 rounded-full border text-sm font-medium transition-all ';
+      el.className = phaseBaseClass;
       var idx = order.indexOf(phase);
       var currentIdx = order.indexOf(current);
       if (status === 'done' || status === 'cancelled') {
-        el.className += 'border-slate-200 text-emerald-600 bg-emerald-50';
-      } else if (status === 'error' && idx < order.length - 1) {
-        el.className += 'border-slate-200 text-emerald-600 bg-emerald-50';
-      } else if (status === 'error' && idx === order.length - 1) {
-        el.className += 'border-red-200 text-red-700 bg-red-50';
+        el.className += 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800';
+      } else if (status === 'error' && idx < currentIdx) {
+        el.className += 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border-slate-200 dark:border-slate-600';
+      } else if (status === 'error' && idx === currentIdx) {
+        el.className += 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
       } else if (idx < currentIdx) {
-        el.className += 'border-emerald-200 text-emerald-700 bg-emerald-50';
+        el.className += 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800';
       } else if (idx === currentIdx) {
-        el.className += 'border-amber-300 text-amber-800 bg-amber-50 animate-pulse';
+        el.className += 'text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 animate-pulse';
       } else {
-        el.className += 'border-slate-200 text-slate-500';
+        el.className += 'border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400';
       }
     });
   }
+  renderPipelineByMode('pr');
 
   function repoCacheKey(branch, path) { return branch + ':' + (path || ''); }
   function fetchTree(branch, path, cb) {
@@ -488,9 +609,11 @@ router.get('/', (req, res) => {
         row.className = 'past-run-row flex items-center gap-3 px-4 py-2 hover:bg-slate-50 group';
         var ts = r.createdAt || r.lastModified || 0;
         var mission = (r.title || r.prompt || '').trim().slice(0, 90) || '(No mission)';
-        var statusBadge = r.status ? '<span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 flex-shrink-0">' + escapeHtml(r.status) + '</span>' : '';
+        var statusBadge = r.status ? '<span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex-shrink-0">' + escapeHtml(r.status) + '</span>' : '';
+        var modeBadge = (r.runMode === 'audit') ? '<span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex-shrink-0">Audit</span>' : (r.runMode === 'ask') ? '<span class="text-xs px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 flex-shrink-0">Ask</span>' : (r.runMode === 'review') ? '<span class="text-xs px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 flex-shrink-0">Review</span>' : '';
         row.innerHTML = '<span class="text-xs text-slate-400 flex-shrink-0 w-20">' + escapeHtml(relativeTime(ts)) + '</span>'
-          + '<span class="text-sm text-slate-700 truncate flex-1">' + escapeHtml(mission) + '</span>'
+          + '<span class="text-sm text-slate-700 dark:text-slate-300 truncate flex-1">' + escapeHtml(mission) + '</span>'
+          + modeBadge
           + statusBadge
           + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="load-run-btn text-xs font-medium text-emerald-600 hover:text-emerald-800 px-2 py-1 rounded hover:bg-emerald-50 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">Load</button>'
           + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="delete-run-btn text-xs font-medium text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete run">✕</button>';
@@ -532,23 +655,25 @@ router.get('/', (req, res) => {
           if (modelEl.selectedIndex < 0 && modelEl.options.length) modelEl.value = modelEl.options[0].value;
         }
         currentRunId = runId;
+        currentRunMode = data.runMode || 'pr';
         docsPopulated = true;
         runArea.classList.remove('hidden');
         var missionEl = document.getElementById('run-mission');
-        if (missionEl) missionEl.textContent = data.prompt || '(No mission)';
+        if (missionEl) missionEl.innerHTML = renderMissionMarkdown(data.prompt);
         runStatus.textContent = data.status || 'loaded';
         runStage.textContent = '';
         var isActive = data.status && !['done', 'error', 'cancelled'].includes(data.status);
         stopBtn.disabled = !isActive;
         stopBtn.textContent = 'Stop run';
         startBtn.disabled = isActive;
-        updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults });
+        renderPipelineByMode(currentRunMode);
+        updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults, runMode: data.runMode });
         updateResumeButton(data.status);
         populateDocsPanel(data);
         if (data.edits && data.edits.length) showFileBrowser(data.edits);
         else filesArea.classList.add('hidden');
-        if (data.prUrl || data.error) {
-          showResult(data.prUrl, data.error);
+        if (data.prUrl || data.error || (data.runMode === 'audit' && data.auditReport) || (data.runMode === 'ask' && data.askResponse) || (data.runMode === 'review' && data.reviewReport)) {
+          showResult(data.prUrl, data.error, data);
         } else {
           resultArea.classList.add('hidden');
         }
@@ -641,14 +766,66 @@ router.get('/', (req, res) => {
     renderCodeBlock(filesContent, e.content, e.path);
   }
 
-  function showResult(prUrl, err) {
+  function renderAuditMarkdown(md) {
+    if (!md || typeof md !== 'string') return '';
+    var s = escapeHtml(md);
+    var d1 = String.fromCharCode(36) + '1', d2 = String.fromCharCode(36) + '2';
+    var bt = String.fromCharCode(92) + 'x60';
+    var bs = String.fromCharCode(92);
+    var star2 = bs + '*' + bs + '*';
+    var numDot = bs + 'd+';
+    var dotEsc = bs + '.';
+    var nl = bs + 'n';
+    s = s.replace(new RegExp('^### (.+)$', 'gm'), '<h3 class="text-base font-semibold mt-3 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h3>');
+    s = s.replace(new RegExp('^## (.+)$', 'gm'), '<h2 class="text-lg font-semibold mt-4 mb-2 text-slate-900 dark:text-slate-100">' + d1 + '</h2>');
+    s = s.replace(new RegExp('^# (.+)$', 'gm'), '<h1 class="text-xl font-semibold mt-4 mb-2 text-slate-900 dark:text-slate-100">' + d1 + '</h1>');
+    s = s.replace(new RegExp(star2 + '([^*]+)' + star2, 'g'), '<strong>' + d1 + '</strong>');
+    s = s.replace(new RegExp(bt + '([^' + bt + ']+)' + bt, 'g'), '<code class="bg-slate-100 dark:bg-slate-700 px-1 rounded text-xs">' + d1 + '</code>');
+    s = s.replace(new RegExp('^- (.+)$', 'gm'), '<li class="ml-4">' + d1 + '</li>');
+    s = s.replace(new RegExp('(' + numDot + ')' + dotEsc + ' (.+)$', 'gm'), '<li class="ml-4">' + d2 + '</li>');
+    s = s.replace(new RegExp(nl + nl, 'g'), '</p><p class="mt-2">');
+    s = s.replace(new RegExp(nl, 'g'), '<br/>');
+    return '<p class="mt-2">' + s + '</p>';
+  }
+
+  function showResult(prUrl, err, data) {
     resultArea.classList.remove('hidden');
     var resultNote = document.getElementById('result-note');
-    if (prUrl) {
+    var auditWrap = document.getElementById('audit-report-wrap');
+    var auditEl = document.getElementById('audit-report');
+    var askWrap = document.getElementById('ask-report-wrap');
+    var askEl = document.getElementById('ask-report');
+    var reviewWrap = document.getElementById('review-report-wrap');
+    var reviewEl = document.getElementById('review-report');
+    if (auditWrap) auditWrap.classList.add('hidden');
+    if (askWrap) askWrap.classList.add('hidden');
+    if (reviewWrap) reviewWrap.classList.add('hidden');
+    prLink.classList.add('hidden');
+    if (data && data.runMode === 'audit' && data.auditReport) {
+      currentAuditReportMarkdown = data.auditReport;
+      auditWrap && auditWrap.classList.remove('hidden');
+      if (auditEl) auditEl.innerHTML = renderAuditMarkdown(data.auditReport);
+      runStatus.textContent = 'Done — Audit report';
+    } else if (data && data.runMode === 'ask' && data.askResponse) {
+      currentAskReportMarkdown = data.askResponse;
+      askWrap && askWrap.classList.remove('hidden');
+      if (askEl) askEl.innerHTML = renderAuditMarkdown(data.askResponse);
+      runStatus.textContent = 'Done — Answer';
+    } else if (data && data.runMode === 'review' && data.reviewReport) {
+      currentReviewReportMarkdown = data.reviewReport;
+      reviewWrap && reviewWrap.classList.remove('hidden');
+      if (reviewEl) reviewEl.innerHTML = renderAuditMarkdown(data.reviewReport);
+      runStatus.textContent = 'Done — Review report';
+    } else if (prUrl) {
       prLink.href = prUrl;
       prLink.textContent = 'Open PR';
       prLink.classList.remove('hidden');
-      runStatus.textContent = 'Done — PR created';
+      runStatus.textContent = data && data.reviewReport ? 'Done — PR created — Review report' : 'Done — PR created';
+      if (data && data.reviewReport) {
+        currentReviewReportMarkdown = data.reviewReport;
+        if (reviewWrap) reviewWrap.classList.remove('hidden');
+        if (reviewEl) reviewEl.innerHTML = renderAuditMarkdown(data.reviewReport);
+      }
       if (err) {
         errorMsg.classList.add('hidden');
         if (resultNote) {
@@ -663,6 +840,11 @@ router.get('/', (req, res) => {
         }
       }
       resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setTimeout(function() {
+        if (document.activeElement && resultArea.contains(document.activeElement)) {
+          document.activeElement.blur();
+        }
+      }, 100);
     } else if (err) {
       prLink.classList.add('hidden');
       errorMsg.textContent = err;
@@ -676,9 +858,14 @@ router.get('/', (req, res) => {
         .then(function(r) { return r.json(); })
         .then(function(data) {
           if (data.error) return;
-          updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults });
+          currentRunMode = data.runMode || 'pr';
+          renderPipelineByMode(currentRunMode);
+          updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults, runMode: data.runMode });
           updateResumeButton(data.status);
           populateDocsPanel(data);
+          if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
+            showResult(data.prUrl, data.error, data);
+          }
           if (data.edits && data.edits.length) showFileBrowser(data.edits);
           if (data.stepResults && data.stepResults.length) {
             var area = document.getElementById('step-results-area');
@@ -730,7 +917,7 @@ router.get('/', (req, res) => {
     var runPlaceholder = document.getElementById('run-placeholder');
     if (runPlaceholder) runPlaceholder.classList.add('hidden');
     var missionEl = document.getElementById('run-mission');
-    if (missionEl) missionEl.textContent = promptEl.value.trim() || '(No mission text)';
+    if (missionEl) missionEl.innerHTML = renderMissionMarkdown(promptEl.value.trim());
     logContainer.textContent = '';
     document.getElementById('step-results-area').classList.add('hidden');
     document.getElementById('step-results-list').innerHTML = '';
@@ -739,11 +926,22 @@ router.get('/', (req, res) => {
     prLink.classList.add('hidden');
     errorMsg.classList.add('hidden');
     document.getElementById('result-note').classList.add('hidden');
+    var auditWrap = document.getElementById('audit-report-wrap');
+    var auditReportEl = document.getElementById('audit-report');
+    var askWrap = document.getElementById('ask-report-wrap');
+    var askReportEl = document.getElementById('ask-report');
+    if (auditWrap) auditWrap.classList.add('hidden');
+    if (auditReportEl) auditReportEl.innerHTML = '';
+    if (askWrap) askWrap.classList.add('hidden');
+    if (askReportEl) askReportEl.innerHTML = '';
     var tokensBar = document.getElementById('run-tokens-bar');
     if (tokensBar) tokensBar.classList.add('hidden');
     runStatus.textContent = 'Starting…';
     runStage.textContent = '';
-    updatePipeline('research');
+    var mode = (document.getElementById('mode') && document.getElementById('mode').value) || 'pr';
+    currentRunMode = mode;
+    renderPipelineByMode(mode);
+    updatePipeline('research', { runMode: mode });
     startTimer();
 
     var seedDocs = {};
@@ -760,6 +958,7 @@ router.get('/', (req, res) => {
       body: JSON.stringify({
         prompt: promptEl.value.trim(),
         model: model,
+        mode: (document.getElementById('mode') && document.getElementById('mode').value) || 'pr',
         maxParallelPlanners: parseInt(maxPlanners, 10) || 2,
         maxParallelCoders: parseInt(maxCoders, 10) || 3,
         seedDocs: seedDocs
@@ -794,12 +993,12 @@ router.get('/', (req, res) => {
                 return;
               }
               if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
-                runStatus.textContent = data.status === 'done' ? 'Done — PR created' : (data.status === 'cancelled' ? 'Cancelled' : 'Error');
+                runStatus.textContent = data.status === 'done' ? (data.runMode === 'audit' ? 'Done — Audit report' : data.runMode === 'ask' ? 'Done — Answer' : data.runMode === 'review' ? 'Done — Review report' : data.reviewReport ? 'Done — PR created — Review report' : 'Done — PR created') : (data.status === 'cancelled' ? 'Cancelled' : 'Error');
                 startBtn.disabled = false;
                 stopBtn.disabled = true;
                 stopTimer();
                 resumeBtn && resumeBtn.classList.add('hidden');
-                showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error);
+                showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error, data);
                 return;
               }
               // Run is still active — keep stop button enabled and try to reconnect
@@ -832,16 +1031,15 @@ router.get('/', (req, res) => {
             var msg = (entry.message || '').trim();
             logContainer.textContent += prefix + msg + String.fromCharCode(10);
             logContainer.scrollTop = logContainer.scrollHeight;
-            if (entry.stage) updatePipeline(entry.stage);
+            if (entry.stage) updatePipeline(entry.stage, { runMode: currentRunMode });
           } else if (entry.type === 'status') {
             runStage.textContent = entry.status || '';
-            updatePipeline(entry.status || '');
+            updatePipeline(entry.status || '', { runMode: currentRunMode });
             maybePopulateDocs();
             updateTokenDisplay(entry.inputTokens, entry.outputTokens);
           } else if (entry.type === 'docs') {
             updateDocsPanelOnly(entry.docs);
           } else if (entry.type === 'done') {
-            runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created';
             runStage.textContent = '';
             closeStream();
             stopTimer();
@@ -849,7 +1047,20 @@ router.get('/', (req, res) => {
             stopBtn.disabled = true;
             resumeBtn && resumeBtn.classList.add('hidden');
             updateTokenDisplay(entry.inputTokens, entry.outputTokens);
-            showResult(entry.prUrl, entry.error);
+            var runId = currentRunId;
+            if (runId) {
+              fetch('/admin/agent/run/' + encodeURIComponent(runId), { credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                  if (data.error) { runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created'; showResult(entry.prUrl, entry.error); return; }
+                  runStatus.textContent = data.status === 'cancelled' ? 'Cancelled' : (data.runMode === 'audit' ? 'Done — Audit report' : data.runMode === 'ask' ? 'Done — Answer' : data.runMode === 'review' ? 'Done — Review report' : data.reviewReport ? 'Done — PR created — Review report' : 'Done — PR created');
+                  showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error, data);
+                })
+                .catch(function() { runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created'; showResult(entry.prUrl, entry.error); });
+            } else {
+              runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created';
+              showResult(entry.prUrl, entry.error);
+            }
           } else if (entry.type === 'error') {
             runStatus.textContent = 'Error';
             closeStream();
@@ -898,10 +1109,79 @@ router.get('/', (req, res) => {
       });
     });
   }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+    } catch (e) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.report-copy-md, .report-copy-html, .report-use-prompt, .report-print');
+    if (!btn || !btn.getAttribute) return;
+    var report = btn.getAttribute('data-report');
+    var md = report === 'audit' ? currentAuditReportMarkdown : report === 'ask' ? currentAskReportMarkdown : report === 'review' ? currentReviewReportMarkdown : '';
+    var reportEl = report === 'audit' ? document.getElementById('audit-report') : report === 'ask' ? document.getElementById('ask-report') : report === 'review' ? document.getElementById('review-report') : null;
+    var title = report === 'audit' ? 'Audit report' : report === 'ask' ? 'Answer' : 'Review report';
+    var originalText = btn.textContent;
+    function restoreBtn() { btn.textContent = originalText; }
+    if (btn.classList.contains('report-copy-md')) {
+      copyToClipboard(md || '').then(function() { btn.textContent = 'Copied'; setTimeout(restoreBtn, 1500); }).catch(function() {});
+    } else if (btn.classList.contains('report-copy-html')) {
+      var html = reportEl ? '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title></head><body><div class="report">' + (reportEl.innerHTML || '') + '</div></body></html>' : '';
+      copyToClipboard(html).then(function() { btn.textContent = 'Copied'; setTimeout(restoreBtn, 1500); }).catch(function() {});
+    } else if (btn.classList.contains('report-use-prompt')) {
+      copyToClipboard(md || '');
+      var promptEl = document.getElementById('prompt');
+      if (promptEl) { promptEl.focus(); promptEl.scrollIntoView({ behavior: 'smooth' }); }
+      btn.textContent = 'Copied';
+      setTimeout(restoreBtn, 1500);
+    } else if (btn.classList.contains('report-print')) {
+      var content = reportEl ? reportEl.innerHTML : '';
+      var w = window.open('', '_blank');
+      if (w) {
+        w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title><style>body{font-family:system-ui,sans-serif;max-width:720px;margin:1rem auto;padding:0 1rem;line-height:1.5}</style></head><body><h1>' + escapeHtml(title) + '</h1><div>' + content + '</div></body></html>');
+        w.document.close();
+        w.focus();
+        setTimeout(function() { w.print(); w.close(); }, 300);
+      }
+    }
+  });
+  document.querySelectorAll('.docs-section-view').forEach(function(viewEl) {
+    viewEl.addEventListener('click', function() {
+      var section = viewEl.getAttribute('data-section');
+      if (!section) return;
+      var ta = document.getElementById('docs-' + section);
+      if (!ta) return;
+      viewEl.classList.add('hidden');
+      ta.classList.remove('hidden');
+      ta.focus();
+    });
+  });
+
   document.querySelectorAll('.docs-textarea').forEach(function(ta) {
     ta.addEventListener('blur', function() {
       var section = ta.getAttribute('data-section');
-      if (section) saveDocSection(section, ta.value);
+      if (section) {
+        saveDocSection(section, ta.value);
+        var viewEl = document.querySelector('.docs-section-view[data-section="' + section + '"]');
+        if (viewEl) {
+          viewEl.innerHTML = ta.value ? renderAuditMarkdown(ta.value) : '<span class="text-slate-400 dark:text-slate-500">Click to add ' + section + '</span>';
+          viewEl.classList.remove('hidden');
+        }
+        ta.classList.add('hidden');
+      }
     });
   });
 
@@ -1020,7 +1300,7 @@ router.get('/models', async (req, res) => {
 });
 
 // ----- GET /admin/agent/prompts – edit Researcher, Planner, Coder, Reviewer system prompts -----
-const AGENT_PROMPT_LABELS = { researcher: 'Researcher', planner: 'Planner', coder: 'Coder', reviewer: 'Reviewer' };
+const AGENT_PROMPT_LABELS = { researcher: 'Researcher', planner: 'Planner', coder: 'Coder', reviewer: 'Reviewer', auditor: 'Auditor', ask: 'Ask', tester: 'Tester' };
 router.get('/prompts', async (req, res) => {
     try {
         const ids = listAgentPromptIds();
@@ -1215,10 +1495,14 @@ router.get('/run/:runId', async (req, res) => {
         run = getRun(req.params.runId);
     }
     if (!run) return res.status(404).json({ error: 'Run not found' });
-    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits, model } = run;
+    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits, model, runMode, auditReport, askResponse, reviewReport } = run;
     res.json({
         runId,
         status,
+        runMode: runMode || 'pr',
+        auditReport: auditReport || '',
+        askResponse: askResponse || '',
+        reviewReport: reviewReport || '',
         logs,
         flightPlan,
         steps: steps || [],
@@ -1252,8 +1536,8 @@ router.patch('/run/:runId/docs', express.json(), (req, res) => {
 
 // ----- POST /admin/agent/run – start run (returns runId, runs orchestrator in background) -----
 router.post('/run', express.json(), (req, res) => {
-    const { prompt = '', model = '', maxParallelPlanners = 2, maxParallelCoders = 3, seedDocs } = req.body || {};
-    const runId = createRun({ prompt, model });
+    const { prompt = '', model = '', mode = 'pr', maxParallelPlanners = 2, maxParallelCoders = 3, seedDocs } = req.body || {};
+    const runId = createRun({ prompt, model, mode });
     if (seedDocs && typeof seedDocs === 'object') {
         updateRun(runId, { docs: seedDocs });
     }
