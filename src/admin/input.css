@@ -20,3 +20,5 @@
         @apply border-slate-200 dark:border-slate-700;
     }
 }
+
+@layer base { body { @apply max-w-full overflow-x-hidden; } }
