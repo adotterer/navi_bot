@@ -934,3 +934,45 @@ export async function runTester(branchName, opts = {}) {
         return { ok: false, error: err.message || String(err) };
     }
 }
+
+/**
+ * Turn a quality review report + diff into concrete patch edits (for "Apply fixes to PR").
+ * @param {string} reviewReport - Markdown from runTester (Quality review).
+ * @param {string} diffText - Full diff of the PR branch vs base.
+ * @param {object} opts
+ * @param {AbortSignal} [opts.signal]
+ * @param {string} [opts.model]
+ * @returns {Promise<{ ok: true, edits: Array<{ path: string, search: string, replace: string }> } | { ok: false, error: string }>}
+ */
+export async function runReviewToEdits(reviewReport, diffText, opts = {}) {
+    const { signal, model: modelOverride } = opts;
+    const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
+    const systemPrompt = await getAgentPrompt('tester_edits');
+    if (!systemPrompt) {
+        return { ok: false, error: 'tester_edits prompt not configured' };
+    }
+    const userContent = `Review report:\n${(reviewReport || '').slice(0, 16000)}\n\nDiff:\n\`\`\`\n${(diffText || '').slice(0, 60000)}\n\`\`\`\n\nOutput a JSON array of edits only.`;
+    try {
+        const response = await withTimeout(
+            (async () => {
+                const res = await getGenAI().models.generateContent({
+                    model,
+                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
+                    config: { maxOutputTokens: 8192, abortSignal: signal },
+                });
+                return res;
+            })(),
+            GEMINI_TIMEOUT_MS,
+            'Review-to-edits timed out'
+        );
+        const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
+        const text = String(raw ?? '').trim();
+        const edits = parseCoderEdits(text);
+        if (!edits.length) {
+            return { ok: false, error: 'No valid edits parsed from model output' };
+        }
+        return { ok: true, edits };
+    } catch (err) {
+        return { ok: false, error: err.message || String(err) };
+    }
+}

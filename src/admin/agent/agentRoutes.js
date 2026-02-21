@@ -5,11 +5,12 @@ import express from 'express';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml } from '../layout.js';
 import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled, hydrateRun, deleteRun, DEFAULT_DOCS } from './runStore.js';
 import { runPipeline } from './orchestrator.js';
-import { listBranches, getTree, getFileContent } from './repoBrowser.js';
+import { listBranches, getTree, getFileContent, getBranchDiff } from './repoBrowser.js';
 import { loadRunFromS3, loadRunMetadataFromS3, persistRunToS3 } from './agentRunPersistence.js';
 import { listS3KeysWithPrefix, deleteFromS3 } from '../../shared/s3Helper.js';
 import { getAgentPrompt, saveAgentPrompt, resetAgentPromptToDefault, listAgentPromptIds } from './agentPromptLoader.js';
-import { listModelsForMissions } from './agents.js';
+import { listModelsForMissions, runReviewToEdits } from './agents.js';
+import { pushEditsToBranch } from './prCreator.js';
 
 const router = express.Router();
 const SSE_HEARTBEAT_MS = 15000;
@@ -64,12 +65,12 @@ router.get('/', (req, res) => {
             <div>
               <label for="maxPlanners" class="block text-xs font-medium text-slate-500 mb-1">Max planners</label>
               <input type="number" id="maxPlanners" name="maxPlanners" min="1" max="5" value="2"
-                class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+                class="w-20 rounded-lg border border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
             </div>
             <div>
               <label for="maxCoders" class="block text-xs font-medium text-slate-500 mb-1">Max coders</label>
               <input type="number" id="maxCoders" name="maxCoders" min="1" max="10" value="3"
-                class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+                class="w-20 rounded-lg border border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
             </div>
             <div class="flex items-center gap-2">
               <button type="button" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:enabled:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed">Start run</button>
@@ -134,9 +135,11 @@ router.get('/', (req, res) => {
                   <div id="ask-report" class="audit-report-content text-sm text-slate-700 dark:text-slate-300 prose prose-slate dark:prose-invert max-w-none"></div>
                 </div>
                 <div id="review-report-wrap" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 hidden mt-3 max-h-[480px] overflow-y-auto">
+                  <p id="review-report-desc" class="text-xs text-slate-500 dark:text-slate-400 mb-2 hidden">Automated quality review of your PR branch (Merge / Request changes / Reject). You can apply suggested fixes to the PR below.</p>
                   <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
                     <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Review report</h3>
                     <div class="flex items-center gap-1.5 flex-wrap">
+                      <button type="button" id="apply-review-btn" class="hidden text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 px-2 py-1 rounded" title="Generate fixes from the review and push them to the PR branch">Apply fixes to PR</button>
                       <button type="button" class="report-copy-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="review">Copy Markdown</button>
                       <button type="button" class="report-copy-html text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="review">Copy HTML</button>
                       <button type="button" class="report-use-prompt text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="review">Use in mission prompt</button>
@@ -708,7 +711,7 @@ router.get('/', (req, res) => {
           data.logs.forEach(function(entry) {
             logContainer.textContent += '[' + (entry.role || 'system') + '] ' + (entry.message || '').trim() + String.fromCharCode(10);
           });
-          logContainer.scrollTop = logContainer.scrollHeight;
+          logContainer.scrollTo({ top: logContainer.scrollHeight, behavior: 'smooth' });
         }
         document.getElementById('agent-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
       })
@@ -813,6 +816,10 @@ router.get('/', (req, res) => {
     if (auditWrap) auditWrap.classList.add('hidden');
     if (askWrap) askWrap.classList.add('hidden');
     if (reviewWrap) reviewWrap.classList.add('hidden');
+    var applyReviewBtn = document.getElementById('apply-review-btn');
+    var reviewReportDesc = document.getElementById('review-report-desc');
+    if (applyReviewBtn) applyReviewBtn.classList.add('hidden');
+    if (reviewReportDesc) reviewReportDesc.classList.add('hidden');
     prLink.classList.add('hidden');
     if (data && data.runMode === 'audit' && data.auditReport) {
       currentAuditReportMarkdown = data.auditReport;
@@ -838,6 +845,8 @@ router.get('/', (req, res) => {
         currentReviewReportMarkdown = data.reviewReport;
         if (reviewWrap) reviewWrap.classList.remove('hidden');
         if (reviewEl) reviewEl.innerHTML = renderAuditMarkdown(data.reviewReport);
+        if (applyReviewBtn) applyReviewBtn.classList.remove('hidden');
+        if (reviewReportDesc) reviewReportDesc.classList.remove('hidden');
       }
       if (err) {
         errorMsg.classList.add('hidden');
@@ -1047,7 +1056,7 @@ router.get('/', (req, res) => {
             var prefix = '[' + (entry.role || 'system') + '] ';
             var msg = (entry.message || '').trim();
             logContainer.textContent += prefix + msg + String.fromCharCode(10);
-            logContainer.scrollTop = logContainer.scrollHeight;
+            logContainer.scrollTo({ top: logContainer.scrollHeight, behavior: 'smooth' });
             if (entry.stage) updatePipeline(entry.stage, { runMode: currentRunMode });
           } else if (entry.type === 'status') {
             runStage.textContent = entry.status || '';
@@ -1228,6 +1237,34 @@ router.get('/', (req, res) => {
         .catch(function() {
           runStatus.textContent = 'Error';
           if (resumeBtn) { resumeBtn.classList.remove('hidden'); resumeBtn.disabled = false; }
+        });
+    });
+  }
+
+  var applyReviewBtnEl = document.getElementById('apply-review-btn');
+  if (applyReviewBtnEl) {
+    applyReviewBtnEl.addEventListener('click', function() {
+      if (!currentRunId) return;
+      var btn = this;
+      var origText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Applying…';
+      fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/apply-review', { method: 'POST', credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          btn.disabled = false;
+          btn.textContent = origText;
+          if (data.ok) {
+            runStatus.textContent = data.message || 'Fixes pushed to PR.';
+            if (data.prUrl && prLink) { prLink.href = data.prUrl; }
+          } else {
+            runStatus.textContent = 'Apply failed: ' + (data.error || 'unknown');
+          }
+        })
+        .catch(function() {
+          btn.disabled = false;
+          btn.textContent = origText;
+          runStatus.textContent = 'Apply failed: network error';
         });
     });
   }
@@ -1500,6 +1537,74 @@ router.post('/run/:runId/cancel', (req, res) => {
     setRunCancelled(runId);
     persistRunToS3(runId).catch(() => {});
     res.json({ ok: true });
+});
+
+// ----- POST /admin/agent/run/:runId/apply-review – generate fixes from Quality Review and push to PR branch -----
+router.post('/run/:runId/apply-review', async (req, res) => {
+    const runId = req.params.runId;
+    let run = getRun(runId);
+    if (!run) {
+        const snapshot = await loadRunFromS3(runId);
+        if (!snapshot) return res.status(404).json({ ok: false, error: 'Run not found' });
+        hydrateRun(runId, snapshot);
+        run = getRun(runId);
+    }
+    if (!run) return res.status(404).json({ ok: false, error: 'Run not found' });
+    if (!run.reviewReport || !run.reviewReport.trim()) {
+        return res.status(400).json({ ok: false, error: 'No review report for this run' });
+    }
+    if (!run.prUrl) return res.status(400).json({ ok: false, error: 'No PR for this run' });
+
+    const branchName = 'agent/' + runId.replace(/[^a-z0-9-]/gi, '-').slice(0, 80);
+    const diffResult = await getBranchDiff(branchName, 'main');
+    if (!diffResult.ok) {
+        return res.status(400).json({ ok: false, error: diffResult.error || 'Could not get branch diff' });
+    }
+    let diffText = diffResult.diffText || '';
+    const MAX_DIFF = 60000;
+    if (diffText.length > MAX_DIFF) diffText = diffText.slice(0, MAX_DIFF);
+
+    const editResult = await runReviewToEdits(run.reviewReport, diffText, { model: run.model });
+    if (!editResult.ok) {
+        return res.json({ ok: false, error: editResult.error || 'Failed to generate edits' });
+    }
+
+    const byPath = new Map();
+    for (const e of editResult.edits) {
+        if (!e.path) continue;
+        if (!byPath.has(e.path)) byPath.set(e.path, []);
+        byPath.get(e.path).push({ search: e.search ?? '', replace: e.replace ?? '' });
+    }
+
+    const resolvedEdits = [];
+    for (const [filePath, patches] of byPath.entries()) {
+        const contentResult = await getFileContent(branchName, filePath);
+        if (!contentResult.ok && !patches.some((p) => p.search === '')) continue;
+        let content = contentResult.ok ? contentResult.content : '';
+        for (const { search, replace } of patches) {
+            if (search === '') {
+                content = replace;
+            } else if (content.includes(search)) {
+                content = content.replace(search, replace);
+            }
+        }
+        resolvedEdits.push({ path: filePath, content });
+    }
+
+    if (!resolvedEdits.length) {
+        return res.json({ ok: false, error: 'No edits could be applied (search strings may not match)' });
+    }
+
+    const pushResult = await pushEditsToBranch(runId, resolvedEdits);
+    if (!pushResult.ok) {
+        return res.json({ ok: false, error: pushResult.error || 'Failed to push to branch' });
+    }
+
+    res.json({
+        ok: true,
+        message: 'Fixes pushed to PR branch.',
+        prUrl: run.prUrl,
+    });
 });
 
 // ----- GET /admin/agent/run/:runId – run summary; falls back to S3 if not in memory -----

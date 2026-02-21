@@ -113,7 +113,20 @@ Use this structure:
 2. **Quality & correctness** — Bugs, broken patterns, or concerns (e.g. invalid script tags, wrong imports, missing error handling). Cite file and line where relevant.
 3. **Recommendation** — Exactly one of: **Merge**, **Request changes**, or **Reject**, followed by a one-line reason.
 
-Be concise. Do not wrap the report in a code block — output raw markdown.`
+Be concise. Do not wrap the report in a code block — output raw markdown.`,
+
+    tester_edits: `You are a code fixer. You are given a quality review report (markdown) and the full diff of a PR branch. Your job is to produce concrete patch edits that fix the issues mentioned in the review.
+
+Output ONLY a valid JSON array of edits. No other text. Each edit is an object with:
+- "path": file path relative to repo root (e.g. "src/app.js")
+- "search": the EXACT string to find in the file (must match exactly, including whitespace). Use 2–6 lines max; never large blocks.
+- "replace": the replacement string (use \\n for newlines in JSON)
+
+Rules:
+- Only include edits for issues the review actually flagged. Do not change unrelated code.
+- "search" must exist verbatim in the diff or in the described file content.
+- For multiple fixes in one file, output multiple objects with the same "path".
+- Output valid JSON only: [{"path":"...","search":"...","replace":"..."}, ...]`
 };
 
 const cache = new Map();
