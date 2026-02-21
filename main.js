@@ -415,14 +415,16 @@ client.on("messageCreate", async (message) => {
 
             // Post one message per tournament
             for (const tournament of tournaments) {
+                console.log(tournament);
                 const startTime = new Date(tournament.startAt * 1000).toLocaleTimeString('en-US', { 
                     hour: '2-digit', 
                     minute: '2-digit', 
                     timeZone: 'America/New_York'
                 });
-                const streamInfo = tournament.streams.length > 0
+                if (!tournament.streams) console.error(`[Diagnostic] tournament.streams is undefined for ${tournament.tournamentName}`);
+                const streamInfo = (tournament.streams && tournament.streams.length > 0)
                     ? tournament.streams.map(s => `${s.streamName} (${s.streamSource})`).join(', ')
-                    : 'No streams listed';
+                    : `No streams listed (Diagnostic: streams=${JSON.stringify(tournament.streams)}, stream=${JSON.stringify(tournament.stream)})`;
 
                 const playersList = tournament.zeldaPlayers
                     .map(p => `• ${p.gamerTag}`)
