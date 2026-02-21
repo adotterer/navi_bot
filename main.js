@@ -69,7 +69,15 @@ client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
     if (message.channel?.type === ChannelType.DM) {
-        await handleDMMessage(message);
+        console.log(`📩 DM from ${message.author.tag}: ${(message.content || '').slice(0, 80)}`);
+        try {
+            await handleDMMessage(message);
+        } catch (err) {
+            console.error('[DM] handleDMMessage error:', err);
+            try {
+                await message.reply('Something went wrong. Try again or use !docs for help.').catch(() => {});
+            } catch (_) {}
+        }
         return;
     }
 
