@@ -68,6 +68,11 @@ client.on("clientReady", () => {
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
+    // Debug: log channel type for non-guild messages (DMs have no guild)
+    if (!message.guild) {
+        console.log(`[DM?] channel=${message.channel?.id} type=${message.channel?.type} (ChannelType.DM=${ChannelType.DM})`);
+    }
+
     if (message.channel?.type === ChannelType.DM) {
         console.log(`📩 DM from ${message.author.tag}: ${(message.content || '').slice(0, 80)}`);
         try {
