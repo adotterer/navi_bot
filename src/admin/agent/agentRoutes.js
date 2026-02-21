@@ -789,13 +789,21 @@ router.get('/', (req, res) => {
     var numDot = bs + 'd+';
     var dotEsc = bs + '.';
     var nl = bs + 'n';
+    // Headings: match most specific first (h6..h1) so #### isn't eaten by ###
+    s = s.replace(new RegExp('^###### (.+)$', 'gm'), '<h6 class="text-sm font-semibold mt-2 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h6>');
+    s = s.replace(new RegExp('^##### (.+)$', 'gm'), '<h5 class="text-sm font-semibold mt-2 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h5>');
+    s = s.replace(new RegExp('^#### (.+)$', 'gm'), '<h4 class="text-sm font-semibold mt-2 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h4>');
     s = s.replace(new RegExp('^### (.+)$', 'gm'), '<h3 class="text-base font-semibold mt-3 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h3>');
     s = s.replace(new RegExp('^## (.+)$', 'gm'), '<h2 class="text-lg font-semibold mt-4 mb-2 text-slate-900 dark:text-slate-100">' + d1 + '</h2>');
     s = s.replace(new RegExp('^# (.+)$', 'gm'), '<h1 class="text-xl font-semibold mt-4 mb-2 text-slate-900 dark:text-slate-100">' + d1 + '</h1>');
     s = s.replace(new RegExp(star2 + '([^*]+)' + star2, 'g'), '<strong>' + d1 + '</strong>');
     s = s.replace(new RegExp(bt + '([^' + bt + ']+)' + bt, 'g'), '<code class="bg-slate-100 dark:bg-slate-700 px-1 rounded text-xs">' + d1 + '</code>');
-    s = s.replace(new RegExp('^- (.+)$', 'gm'), '<li class="ml-4">' + d1 + '</li>');
-    s = s.replace(new RegExp('(' + numDot + ')' + dotEsc + ' (.+)$', 'gm'), '<li class="ml-4">' + d2 + '</li>');
+    s = s.replace(new RegExp('^- (.+)$', 'gm'), '<li class="audit-list-item">' + d1 + '</li>');
+    s = s.replace(new RegExp('(' + numDot + ')' + dotEsc + ' (.+)$', 'gm'), '<li class="audit-list-item">' + d2 + '</li>');
+    // Wrap consecutive <li> in <ul> for valid HTML and indentation
+    s = s.replace(/(?:<li class="audit-list-item">[\s\S]*?<\/li>\s*)+/g, function (run) {
+      return '<ul class="list-disc ml-6 pl-4 my-2 space-y-1">' + run + '</ul>';
+    });
     s = s.replace(new RegExp(nl + nl, 'g'), '</p><p class="mt-2">');
     s = s.replace(new RegExp(nl, 'g'), '<br/>');
     return '<p class="mt-2">' + s + '</p>';
