@@ -1948,3 +1948,22 @@ html {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: rgb(51 65 85);
+  color: rgb(241 245 249);
+  border-color: rgb(71 85 105);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgb(148 163 184);
+}
+
+.dark input,
+.dark textarea {
+  background-color: #334155;
+  color: #f8fafc;
+}
