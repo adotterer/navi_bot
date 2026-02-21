@@ -252,12 +252,19 @@ export function initializeScheduler(client) {
                     });
                     const streamInfo = tournament.streams.length > 0
                         ? tournament.streams.map(s => {
-                            if (s.streamSource === 'TWITCH') {
-                                return `<https://twitch.tv/${s.streamName}>`;
-                            } else if (s.streamSource === 'YOUTUBE') {
-                                return `<https://youtube.com/@${s.streamName}>`;
+                            const source = (s.streamSource || '').toString().toUpperCase();
+                            const label = `${s.streamName} (${source || 'Stream'})`;
+                            let url;
+                            if (source === 'TWITCH') {
+                                url = `https://www.twitch.tv/${encodeURIComponent(s.streamName)}`;
+                            } else if (source === 'YOUTUBE') {
+                                url = `https://www.youtube.com/@${encodeURIComponent(s.streamName)}`;
+                            } else if (s.streamName) {
+                                url = `https://www.twitch.tv/${encodeURIComponent(s.streamName)}`;
+                            } else {
+                                return label;
                             }
-                            return `${s.streamName} (${s.streamSource})`;
+                            return `[${label}](${url})`;
                         }).join(', ')
                         : 'No streams listed';
 
@@ -265,12 +272,13 @@ export function initializeScheduler(client) {
                         .map(p => `• ${p.gamerTag}`)
                         .join('\n');
 
+                    const startggUrl = `https://www.start.gg/${tournament.tournamentSlug}`;
                     const messageContent = `🏆 **${tournament.tournamentName}**\n` +
                         `📅 Start: ${startTime} EST\n` +
                         `🎮 Event: ${tournament.eventName}\n` +
                         `👤 Zelda Player(s):\n${playersList}\n` +
                         `📺 Streams: ${streamInfo}\n` +
-                        `🔗 <https://www.start.gg/${tournament.tournamentSlug}>`;
+                        `🔗 [Tournament page](${startggUrl})`;
 
                     await channel.send(messageContent);
                     postedCount++;

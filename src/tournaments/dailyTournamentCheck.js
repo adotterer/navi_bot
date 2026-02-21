@@ -4,6 +4,14 @@ import { fetchFromS3 } from '../shared/s3Helper.js';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+/** Build clickable stream URL from start.gg stream object (streamName + streamSource). */
+function streamToUrl(s) {
+    if (!s?.streamName) return null;
+    const source = (s.streamSource || '').toString().toUpperCase();
+    if (source === 'YOUTUBE') return `https://www.youtube.com/@${encodeURIComponent(s.streamName)}`;
+    return `https://www.twitch.tv/${encodeURIComponent(s.streamName)}`;
+}
+
 async function executeWithRetry(query, variables, authToken, retries = 3, delayMs = 500) {
     try {
         return await executeQuery(query, variables, authToken);
@@ -259,7 +267,7 @@ export async function checkTodaysTournaments(authToken) {
                     if (foundPlayersInTournament.length > 0 && !tournamentMatches.has(tournament.slug)) {
                         const tourStreams = tourData?.tournament?.streams || [];
                         const firstStream = tourStreams[0];
-                        const streamUrl = firstStream ? `twitch.tv/${firstStream.streamName}` : 'Stream not available in start.gg data';
+                        const streamUrl = (firstStream && streamToUrl(firstStream)) || 'Stream not available in start.gg data';
 
                         tournamentMatches.set(tournament.slug, {
                             tournamentName: tournament.name,

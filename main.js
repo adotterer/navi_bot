@@ -421,21 +421,28 @@ client.on("messageCreate", async (message) => {
                     minute: '2-digit', 
                     timeZone: 'America/New_York'
                 });
-                if (!tournament.streams) console.error(`[Diagnostic] tournament.streams is undefined for ${tournament.tournamentName}`);
                 const streamInfo = (tournament.streams && tournament.streams.length > 0)
-                    ? tournament.streams.map(s => `${s.streamName} (${s.streamSource})`).join(', ')
-                    : `No streams listed (Diagnostic: streams=${JSON.stringify(tournament.streams)}, stream=${JSON.stringify(tournament.stream)})`;
+                    ? tournament.streams.map(s => {
+                        const source = (s.streamSource || '').toString().toUpperCase();
+                        const label = `${s.streamName} (${source || 'Stream'})`;
+                        let url = source === 'YOUTUBE'
+                            ? `https://www.youtube.com/@${encodeURIComponent(s.streamName)}`
+                            : `https://www.twitch.tv/${encodeURIComponent(s.streamName)}`;
+                        return `[${label}](${url})`;
+                    }).join(', ')
+                    : 'No streams listed';
 
                 const playersList = tournament.zeldaPlayers
                     .map(p => `• ${p.gamerTag}`)
                     .join('\n');
 
+                const startggUrl = `https://www.start.gg/${tournament.tournamentSlug}`;
                 const messageContent = `🏆 **${tournament.tournamentName}**\n` +
                     `📅 Start: ${startTime} EST\n` +
                     `🎮 Event: ${tournament.eventName}\n` +
                     `👤 Zelda Player(s):\n${playersList}\n` +
                     `📺 Streams: ${streamInfo}\n` +
-                    `🔗 <https://www.start.gg/${tournament.tournamentSlug}>`;
+                    `🔗 [Tournament page](${startggUrl})`;
 
                 await message.channel.send(messageContent);
             }
