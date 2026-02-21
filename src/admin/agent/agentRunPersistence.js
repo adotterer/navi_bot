@@ -17,6 +17,7 @@ function runToSnapshot(run) {
         auditReport: run.auditReport,
         askResponse: run.askResponse,
         reviewReport: run.reviewReport,
+        reviewReportError: run.reviewReportError,
         prompt: run.prompt,
         model: run.model || '',
         title: run.title || '',

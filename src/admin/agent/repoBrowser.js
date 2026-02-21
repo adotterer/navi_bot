@@ -110,11 +110,14 @@ async function getTreeGitHub(ref, dirPath) {
 async function getBranchDiffGitHub(baseBranch, headBranch) {
     const repo = getRepoFromEnv();
     if (!repo) return { ok: false, error: 'Repo not available (need GITHUB_REPO when no local git)' };
-    const base = (baseBranch || 'main').trim();
+    let base = (baseBranch || 'main').trim();
     const head = (headBranch || '').trim();
     if (!head) return { ok: false, error: 'Branch name required' };
     try {
         const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+        const { data: repoData } = await octokit.repos.get({ owner: repo.owner, repo: repo.repo });
+        const defaultBranch = repoData.default_branch || 'main';
+        if (!base || base === 'main') base = defaultBranch;
         const { data } = await octokit.repos.compareCommits({
             owner: repo.owner,
             repo: repo.repo,
@@ -139,8 +142,52 @@ async function getBranchDiffGitHub(baseBranch, headBranch) {
         const diffText = parts.join('\n');
         return { ok: true, diffText, baseBranch: base, headBranch: head, fileList };
     } catch (err) {
-        if (err.status === 404) return { ok: false, error: 'Branch not found or not accessible' };
+        if (err.status === 404) {
+            const fallback = await getBranchDiffViaPullRequest(repo, base, head);
+            if (fallback.ok) return fallback;
+            return { ok: false, error: 'Branch not found or not accessible' };
+        }
         return { ok: false, error: err.message || String(err) };
+    }
+}
+
+/** Fallback when compareCommits 404s: find open PR for head branch and build diff from PR files. */
+async function getBranchDiffViaPullRequest(repo, baseBranch, headBranch) {
+    try {
+        const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+        const headQualified = repo.owner + ':' + headBranch;
+        const { data: pulls } = await octokit.rest.pulls.list({
+            owner: repo.owner,
+            repo: repo.repo,
+            state: 'open',
+            head: headQualified,
+        });
+        if (!pulls || pulls.length === 0) return { ok: false, error: 'No open PR found for branch' };
+        const pr = pulls[0];
+        const { data: files } = await octokit.rest.pulls.listFiles({
+            owner: repo.owner,
+            repo: repo.repo,
+            pull_number: pr.number,
+        });
+        const fileList = (files || []).map((f) => f.filename || '').filter(Boolean);
+        const parts = [];
+        let total = 0;
+        for (const file of files || []) {
+            const patch = file.patch;
+            if (!patch || total >= MAX_DIFF_CHARS) continue;
+            const chunk = `--- ${file.filename || 'unknown'}\n${patch}`;
+            if (total + chunk.length > MAX_DIFF_CHARS) {
+                parts.push(chunk.slice(0, MAX_DIFF_CHARS - total));
+                total = MAX_DIFF_CHARS;
+                break;
+            }
+            parts.push(chunk);
+            total += chunk.length;
+        }
+        const diffText = parts.join('\n');
+        return { ok: true, diffText, baseBranch: baseBranch, headBranch: headBranch, fileList };
+    } catch (e) {
+        return { ok: false, error: e.message || String(e) };
     }
 }
 
@@ -174,6 +221,57 @@ async function getFileContentGitHub(ref, filePath) {
 }
 
 // ----- Public API -----
+
+/**
+ * Get diff from an existing PR (by URL). Uses the PR's changed files — the branch that backs the PR.
+ * Prefer this for Quality Review when we have the PR URL; avoids compare API 404s.
+ * @param {string} prUrl - e.g. https://github.com/owner/repo/pull/123
+ * @returns {Promise<{ ok: true, diffText: string, baseBranch: string, headBranch: string, fileList: string[] } | { ok: false, error: string }>}
+ */
+export async function getDiffForPullRequest(prUrl) {
+    const repo = getRepoFromEnv();
+    if (!repo) return { ok: false, error: 'Repo not available (need GITHUB_REPO when no local git)' };
+    const match = (prUrl || '').match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/i);
+    if (!match) return { ok: false, error: 'Invalid PR URL' };
+    const [, owner, repoName, pullNumberStr] = match;
+    const pullNumber = parseInt(pullNumberStr, 10);
+    if (!pullNumber) return { ok: false, error: 'Invalid PR number' };
+    try {
+        const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+        const { data: pr } = await octokit.rest.pulls.get({
+            owner,
+            repo: repoName.replace(/\.git$/, ''),
+            pull_number: pullNumber,
+        });
+        const baseBranch = (pr.base && pr.base.ref) || 'main';
+        const headBranch = (pr.head && pr.head.ref) || '';
+        const { data: files } = await octokit.rest.pulls.listFiles({
+            owner,
+            repo: repoName.replace(/\.git$/, ''),
+            pull_number: pullNumber,
+        });
+        const fileList = (files || []).map((f) => f.filename || '').filter(Boolean);
+        const parts = [];
+        let total = 0;
+        for (const file of files || []) {
+            const patch = file.patch;
+            if (!patch || total >= MAX_DIFF_CHARS) continue;
+            const chunk = `--- ${file.filename || 'unknown'}\n${patch}`;
+            if (total + chunk.length > MAX_DIFF_CHARS) {
+                parts.push(chunk.slice(0, MAX_DIFF_CHARS - total));
+                total = MAX_DIFF_CHARS;
+                break;
+            }
+            parts.push(chunk);
+            total += chunk.length;
+        }
+        const diffText = parts.join('\n');
+        return { ok: true, diffText, baseBranch, headBranch, fileList };
+    } catch (err) {
+        if (err.status === 404) return { ok: false, error: 'PR not found or not accessible' };
+        return { ok: false, error: err.message || String(err) };
+    }
+}
 
 /**
  * Get diff of headBranch vs baseBranch. Works with local git or GitHub API.

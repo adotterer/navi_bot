@@ -12,7 +12,7 @@ import { persistRunToS3 } from './agentRunPersistence.js';
 import { runResearcher, runPlanner, runCoder, validateCoderStep, runReviewer, runAuditor, runAsk, runTester } from './agents.js';
 import { callTool } from './toolRegistry.js';
 import { getFileTree } from './codebaseTools.js';
-import { getBranchDiff } from './repoBrowser.js';
+import { getBranchDiff, getDiffForPullRequest } from './repoBrowser.js';
 
 /**
  * Run the full pipeline for a given runId.
@@ -682,10 +682,11 @@ export async function runPipeline(runId, opts = {}) {
             log('system', 'tester', 'Running Tester (review)…\n');
             const currentRunForTester = getRun(runId);
             const testerModel = currentRunForTester?.model || model;
-            const diffResult = await getBranchDiff(branchName, 'main');
+            const diffResult = await getDiffForPullRequest(prResult.prUrl);
             if (!diffResult.ok) {
-                log('system', 'tester', 'Diff unavailable: ' + (diffResult.error || 'unknown') + '. Skipping review report.\n');
-                updateRun(runId, { status: 'done', prUrl: prResult.prUrl });
+                const errMsg = 'Diff unavailable: ' + (diffResult.error || 'unknown');
+                log('system', 'tester', errMsg + '. Skipping review report.\n');
+                updateRun(runId, { status: 'done', prUrl: prResult.prUrl, reviewReportError: errMsg });
                 log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
             } else {
                 let diffText = diffResult.diffText || '';
@@ -701,14 +702,16 @@ export async function runPipeline(runId, opts = {}) {
                     model: testerModel,
                 });
                 if (!testerResult.ok) {
-                    log('system', 'tester', 'Tester failed: ' + (testerResult.error || 'unknown') + '. PR still created.\n');
-                    updateRun(runId, { status: 'done', prUrl: prResult.prUrl });
+                    const errMsg = 'Tester failed: ' + (testerResult.error || 'unknown');
+                    log('system', 'tester', errMsg + '. PR still created.\n');
+                    updateRun(runId, { status: 'done', prUrl: prResult.prUrl, reviewReportError: errMsg });
                     log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
                 } else {
                     updateRun(runId, {
                         status: 'done',
                         prUrl: prResult.prUrl,
                         reviewReport: testerResult.report,
+                        reviewReportError: undefined,
                         inputTokens: (currentRunForTester?.inputTokens || 0) + (testerResult.inputTokens || 0),
                         outputTokens: (currentRunForTester?.outputTokens || 0) + (testerResult.outputTokens || 0),
                     });

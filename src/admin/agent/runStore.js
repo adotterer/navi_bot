@@ -47,6 +47,7 @@ function createRun(opts = {}) {
         auditReport: undefined,
         askResponse: undefined,
         reviewReport: undefined,
+        reviewReportError: undefined,
         logs: [],
         flightPlan: undefined,
         steps: undefined,
@@ -146,6 +147,7 @@ function updateRun(runId, updates) {
     if (updates.auditReport != null) run.auditReport = typeof updates.auditReport === 'string' ? updates.auditReport : undefined;
     if (updates.askResponse != null) run.askResponse = typeof updates.askResponse === 'string' ? updates.askResponse : undefined;
     if (updates.reviewReport != null) run.reviewReport = typeof updates.reviewReport === 'string' ? updates.reviewReport : undefined;
+    if (updates.reviewReportError != null) run.reviewReportError = typeof updates.reviewReportError === 'string' ? updates.reviewReportError : undefined;
     if (updates.inputTokens != null) run.inputTokens = (run.inputTokens || 0) + updates.inputTokens;
     if (updates.outputTokens != null) run.outputTokens = (run.outputTokens || 0) + updates.outputTokens;
 }
@@ -267,6 +269,7 @@ function hydrateRun(runId, snapshot) {
         auditReport: typeof snapshot.auditReport === 'string' ? snapshot.auditReport : undefined,
         askResponse: typeof snapshot.askResponse === 'string' ? snapshot.askResponse : undefined,
         reviewReport: typeof snapshot.reviewReport === 'string' ? snapshot.reviewReport : undefined,
+        reviewReportError: typeof snapshot.reviewReportError === 'string' ? snapshot.reviewReportError : undefined,
         inputTokens: snapshot.inputTokens ?? 0,
         outputTokens: snapshot.outputTokens ?? 0,
     };

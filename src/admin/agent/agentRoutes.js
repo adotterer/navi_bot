@@ -10,6 +10,7 @@ import { loadRunFromS3, loadRunMetadataFromS3, persistRunToS3 } from './agentRun
 import { listS3KeysWithPrefix, deleteFromS3 } from '../../shared/s3Helper.js';
 import { getAgentPrompt, saveAgentPrompt, resetAgentPromptToDefault, listAgentPromptIds } from './agentPromptLoader.js';
 import { listModelsForMissions } from './agents.js';
+import { Octokit } from '@octokit/rest';
 
 const router = express.Router();
 const SSE_HEARTBEAT_MS = 15000;
@@ -106,6 +107,10 @@ router.get('/', (req, res) => {
                 </div>
                 <div id="result-area" class="rounded-lg border border-slate-200 dark:border-slate-600 bg-emerald-50/50 dark:bg-slate-800 dark:border-emerald-800/50 p-4 hidden mt-2">
                   <a id="pr-link" href="#" target="_blank" rel="noopener" class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-medium underline">Open PR</a>
+                  <div id="pr-actions" class="mt-2 flex flex-wrap gap-2 hidden">
+                    <button type="button" id="pr-merge-btn" class="text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 px-2 py-1 rounded">Merge PR</button>
+                    <button type="button" id="pr-close-btn" class="text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-200 hover:bg-slate-300 dark:bg-slate-600 dark:hover:bg-slate-500 px-2 py-1 rounded">Close PR</button>
+                  </div>
                   <p id="error-msg" class="text-red-600 dark:text-red-400 text-sm mt-2 hidden"></p>
                   <p id="result-note" class="text-slate-600 dark:text-slate-300 text-xs mt-2 hidden"></p>
                 </div>
@@ -800,8 +805,8 @@ router.get('/', (req, res) => {
     s = s.replace(new RegExp(bt + '([^' + bt + ']+)' + bt, 'g'), '<code class="bg-slate-100 dark:bg-slate-700 px-1 rounded text-xs">' + d1 + '</code>');
     s = s.replace(new RegExp('^- (.+)$', 'gm'), '<li class="audit-list-item">' + d1 + '</li>');
     s = s.replace(new RegExp('(' + numDot + ')' + dotEsc + ' (.+)$', 'gm'), '<li class="audit-list-item">' + d2 + '</li>');
-    // Wrap consecutive <li> in <ul> for valid HTML and indentation
-    s = s.replace(/(?:<li class="audit-list-item">[\s\S]*?<\/li>\s*)+/g, function (run) {
+    // Wrap consecutive <li> in <ul> for valid HTML and indentation (use RegExp string so \\s survives inline script)
+    s = s.replace(new RegExp('(?:<li class="audit-list-item">[\\s\\S]*?<\\/li>\\s*)+', 'g'), function (run) {
       return '<ul class="list-disc ml-6 pl-4 my-2 space-y-1">' + run + '</ul>';
     });
     s = s.replace(new RegExp(nl + nl, 'g'), '</p><p class="mt-2">');
@@ -821,6 +826,8 @@ router.get('/', (req, res) => {
     if (auditWrap) auditWrap.classList.add('hidden');
     if (askWrap) askWrap.classList.add('hidden');
     if (reviewWrap) reviewWrap.classList.add('hidden');
+    var prActionsEl = document.getElementById('pr-actions');
+    if (prActionsEl) prActionsEl.classList.add('hidden');
     prLink.classList.add('hidden');
     if (data && data.runMode === 'audit' && data.auditReport) {
       currentAuditReportMarkdown = data.auditReport;
@@ -841,11 +848,15 @@ router.get('/', (req, res) => {
       prLink.href = prUrl;
       prLink.textContent = 'Open PR';
       prLink.classList.remove('hidden');
+      if (prActionsEl) prActionsEl.classList.remove('hidden');
       runStatus.textContent = data && data.reviewReport ? 'Done — PR created — Review report' : 'Done — PR created';
+      if (reviewWrap) reviewWrap.classList.remove('hidden');
       if (data && data.reviewReport) {
         currentReviewReportMarkdown = data.reviewReport;
-        if (reviewWrap) reviewWrap.classList.remove('hidden');
         if (reviewEl) reviewEl.innerHTML = renderAuditMarkdown(data.reviewReport);
+      } else {
+        var reason = (data && data.reviewReportError && data.reviewReportError.trim()) ? data.reviewReportError.trim() : '';
+        if (reviewEl) reviewEl.innerHTML = '<p class="text-slate-500 dark:text-slate-400 text-sm">Quality review was skipped or failed for this run.' + (reason ? ' <strong>Reason:</strong> ' + escapeHtml(reason) + '.' : '') + ' Open the PR above to review manually.</p>';
       }
       if (err) {
         errorMsg.classList.add('hidden');
@@ -1239,6 +1250,44 @@ router.get('/', (req, res) => {
         });
     });
   }
+
+  var prMergeBtn = document.getElementById('pr-merge-btn');
+  var prCloseBtn = document.getElementById('pr-close-btn');
+  var resultNoteEl = document.getElementById('result-note');
+  function doPrAction(action) {
+    if (!currentRunId || !prLink || !prLink.href || prLink.href === '#') return;
+    var btn = action === 'merge' ? prMergeBtn : prCloseBtn;
+    var label = action === 'merge' ? 'Merge PR' : 'Close PR';
+    if (btn) { btn.disabled = true; btn.textContent = action === 'merge' ? 'Merging…' : 'Closing…'; }
+    fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/pr-action', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: action }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) {
+          if (prMergeBtn) { prMergeBtn.disabled = true; prMergeBtn.textContent = 'Merge PR'; prMergeBtn.classList.add('hidden'); }
+          if (prCloseBtn) { prCloseBtn.disabled = true; prCloseBtn.textContent = 'Close PR'; prCloseBtn.classList.add('hidden'); }
+          var msg = action === 'merge' ? 'PR merged.' : 'PR closed.';
+          runStatus.textContent = msg;
+          if (resultNoteEl) {
+            resultNoteEl.textContent = msg + ' You can still open the link above to view the PR.';
+            resultNoteEl.classList.remove('hidden');
+          }
+        } else {
+          if (btn) { btn.disabled = false; btn.textContent = label; }
+          runStatus.textContent = data.error || 'Request failed';
+        }
+      })
+      .catch(function() {
+        if (btn) { btn.disabled = false; btn.textContent = label; }
+        runStatus.textContent = 'Request failed';
+      });
+  }
+  if (prMergeBtn) prMergeBtn.addEventListener('click', function() { doPrAction('merge'); });
+  if (prCloseBtn) prCloseBtn.addEventListener('click', function() { doPrAction('close'); });
 })();
     </script>
   `)}
@@ -1510,6 +1559,45 @@ router.post('/run/:runId/cancel', (req, res) => {
     res.json({ ok: true });
 });
 
+// ----- POST /admin/agent/run/:runId/pr-action – merge or close the run's PR via GitHub API -----
+router.post('/run/:runId/pr-action', express.json(), async (req, res) => {
+    const runId = req.params.runId;
+    const action = (req.body && req.body.action) === 'close' ? 'close' : (req.body && req.body.action) === 'merge' ? 'merge' : null;
+    if (!action) return res.status(400).json({ ok: false, error: 'Missing or invalid body.action; use "merge" or "close".' });
+
+    let run = getRun(runId);
+    if (!run) {
+        const snapshot = await loadRunFromS3(runId);
+        if (!snapshot) return res.status(404).json({ ok: false, error: 'Run not found' });
+        hydrateRun(runId, snapshot);
+        run = getRun(runId);
+    }
+    if (!run || !run.prUrl) return res.status(400).json({ ok: false, error: 'Run has no PR.' });
+
+    const repo = (run.prUrl || '').match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/i);
+    if (!repo) return res.status(400).json({ ok: false, error: 'Could not parse PR URL.' });
+    const owner = repo[1];
+    const repoName = repo[2].replace(/\.git$/, '');
+    const pullNumber = parseInt(repo[3], 10);
+
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) return res.status(503).json({ ok: false, error: 'GITHUB_TOKEN not set.' });
+
+    try {
+        const octokit = new Octokit({ auth: token, log: { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} } });
+        if (action === 'merge') {
+            await octokit.rest.pulls.merge({ owner, repo: repoName, pull_number: pullNumber });
+            return res.json({ ok: true, message: 'PR merged.' });
+        }
+        await octokit.rest.pulls.update({ owner, repo: repoName, pull_number: pullNumber, state: 'closed' });
+        return res.json({ ok: true, message: 'PR closed.' });
+    } catch (err) {
+        const msg = err.message || String(err);
+        const status = err.status || err.response?.status;
+        return res.status(status === 404 ? 404 : 502).json({ ok: false, error: msg });
+    }
+});
+
 // ----- GET /admin/agent/run/:runId – run summary; falls back to S3 if not in memory -----
 router.get('/run/:runId', async (req, res) => {
     let run = getRun(req.params.runId);
@@ -1520,7 +1608,7 @@ router.get('/run/:runId', async (req, res) => {
         run = getRun(req.params.runId);
     }
     if (!run) return res.status(404).json({ error: 'Run not found' });
-    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits, model, runMode, auditReport, askResponse, reviewReport } = run;
+    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits, model, runMode, auditReport, askResponse, reviewReport, reviewReportError } = run;
     res.json({
         runId,
         status,
@@ -1528,6 +1616,7 @@ router.get('/run/:runId', async (req, res) => {
         auditReport: auditReport || '',
         askResponse: askResponse || '',
         reviewReport: reviewReport || '',
+        reviewReportError: reviewReportError || '',
         logs,
         flightPlan,
         steps: steps || [],
