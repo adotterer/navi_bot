@@ -64,12 +64,12 @@ router.get('/', (req, res) => {
             <div>
               <label for="maxPlanners" class="block text-xs font-medium text-slate-500 mb-1">Max planners</label>
               <input type="number" id="maxPlanners" name="maxPlanners" min="1" max="5" value="2"
-                class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+                class="w-20 rounded-lg border border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
             </div>
             <div>
               <label for="maxCoders" class="block text-xs font-medium text-slate-500 mb-1">Max coders</label>
               <input type="number" id="maxCoders" name="maxCoders" min="1" max="10" value="3"
-                class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+                class="w-20 rounded-lg border border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
             </div>
             <div class="flex items-center gap-2">
               <button type="button" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:enabled:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed">Start run</button>
@@ -234,6 +234,7 @@ router.get('/', (req, res) => {
   var prLink = document.getElementById('pr-link');
   var errorMsg = document.getElementById('error-msg');
   var currentRunId = null;
+  var scrolledToPrRunId = null;
   var currentRunMode = 'pr';
   var currentAuditReportMarkdown = '';
   var currentAskReportMarkdown = '';
@@ -851,12 +852,15 @@ router.get('/', (req, res) => {
           resultNote.classList.remove('hidden');
         }
       }
-      resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      setTimeout(function() {
-        if (document.activeElement && resultArea.contains(document.activeElement)) {
-          document.activeElement.blur();
-        }
-      }, 100);
+      if (currentRunId !== scrolledToPrRunId) {
+        scrolledToPrRunId = currentRunId;
+        resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(function() {
+          if (document.activeElement && resultArea.contains(document.activeElement)) {
+            document.activeElement.blur();
+          }
+        }, 100);
+      }
     } else if (err) {
       prLink.classList.add('hidden');
       errorMsg.textContent = err;
@@ -917,6 +921,7 @@ router.get('/', (req, res) => {
   }
 
   function startRun() {
+    scrolledToPrRunId = null;
     var promptEl = document.getElementById('prompt');
     var maxPlanners = document.getElementById('maxPlanners').value || '2';
     var maxCoders = document.getElementById('maxCoders').value || '3';
