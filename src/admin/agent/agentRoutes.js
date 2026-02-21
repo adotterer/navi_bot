@@ -1319,12 +1319,13 @@ const MODELS_CACHE_MS = 10 * 60 * 1000; // 10 minutes
 let modelsCache = null;
 let modelsCacheTime = 0;
 
-/** Curated Claude models for Missions (Anthropic has no public list API). Requires ANTHROPIC_SECRET. */
+/** Curated Claude models for Missions (Anthropic has no public list API). Requires ANTHROPIC_SECRET. Use current active model IDs; see https://docs.anthropic.com/en/docs/resources/model-deprecations */
 const CLAUDE_MODELS = [
+    { id: 'claude-sonnet-4-6', displayName: 'Claude Sonnet 4.6' },
     { id: 'claude-sonnet-4-20250514', displayName: 'Claude Sonnet 4' },
-    { id: 'claude-3-5-sonnet-20241022', displayName: 'Claude 3.5 Sonnet' },
-    { id: 'claude-3-5-haiku-20241022', displayName: 'Claude 3.5 Haiku' },
-    { id: 'claude-3-opus-20240229', displayName: 'Claude 3 Opus' },
+    { id: 'claude-haiku-4-5-20251001', displayName: 'Claude Haiku 4.5' },
+    { id: 'claude-opus-4-6', displayName: 'Claude Opus 4.6' },
+    { id: 'claude-opus-4-20250514', displayName: 'Claude Opus 4' },
 ];
 
 /** Assign sort order and short description for Missions dropdown. Lower sortTier = better for this project. */
