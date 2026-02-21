@@ -9,6 +9,7 @@ import { aliasRoutes } from './aliasRoutes.js';
 import { emojiRoutes } from './emojiRoutes.js';
 import { commandRoutes } from './commandRoutes.js';
 import { agentRoutes } from './agent/agentRoutes.js';
+import { costRoutes } from './costRoutes.js';
 import { adminHead, adminNav, adminContainer, escapeHtml, s3Badge } from './layout.js';
 import { headS3Key, hasS3KeysWithPrefix } from '../shared/s3Helper.js';
 
@@ -61,6 +62,7 @@ router.use('/aliases', requireAdmin, aliasRoutes);
 router.use('/emojis', requireAdmin, emojiRoutes);
 router.use('/commands', requireAdmin, commandRoutes);
 router.use('/agent', requireAdmin, agentRoutes);
+router.use('/cost', requireAdmin, costRoutes);
 
 function loginPage(opts = {}) {
     const error = opts.error
@@ -143,6 +145,13 @@ function dashboardPage(s3 = {}) {
           <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Missions</h2>
         </div>
         <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Gemini agents (researcher, planners, coders) produce a flight plan and open a GitHub PR from your mission prompt.</p>
+        <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Open →</span>
+      </a>
+      <a href="/admin/cost" class="block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-md transition-all group">
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Cost</h2>
+        </div>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">View token usage and estimated cost for Missions (Gemini and Anthropic).</p>
         <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Open →</span>
       </a>
     </div>

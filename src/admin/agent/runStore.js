@@ -220,9 +220,9 @@ function notifyDocsUpdate(runId) {
 }
 
 /**
- * List recent runs (newest first), for admin run list.
+ * List recent runs (newest first), for admin run list and cost aggregation.
  * @param {number} [limit]
- * @returns {Array<{ runId: string, status: string, createdAt: number, prompt?: string }>}
+ * @returns {Array<{ runId: string, status: string, runMode: string, createdAt: number, prompt?: string, title?: string, model: string, inputTokens: number, outputTokens: number }>}
  */
 function listRuns(limit = 20) {
     const ids = [...runOrder].reverse().slice(0, limit);
@@ -232,11 +232,14 @@ function listRuns(limit = 20) {
         return {
             runId: run.runId,
             status: run.status,
-        runMode: run.runMode || 'pr',
-        createdAt: run.createdAt,
-        prompt: run.prompt ? run.prompt.slice(0, 100) : undefined,
-        title: run.title || undefined,
-    };
+            runMode: run.runMode || 'pr',
+            createdAt: run.createdAt,
+            prompt: run.prompt ? run.prompt.slice(0, 100) : undefined,
+            title: run.title || undefined,
+            model: run.model || '',
+            inputTokens: run.inputTokens || 0,
+            outputTokens: run.outputTokens || 0,
+        };
     }).filter(Boolean);
 }
 

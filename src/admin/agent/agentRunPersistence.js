@@ -72,9 +72,9 @@ export async function loadRunFromS3(runId) {
 }
 
 /**
- * Load just lightweight metadata fields (title, prompt, status, createdAt) for run listing.
+ * Load lightweight metadata for run listing (including model and token counts for cost).
  * @param {string} runId
- * @returns {Promise<{ runId: string, title?: string, prompt?: string, status?: string, createdAt?: number }|null>}
+ * @returns {Promise<{ runId: string, title?: string, prompt?: string, status?: string, createdAt?: number, runMode?: string, model?: string, inputTokens?: number, outputTokens?: number }|null>}
  */
 export async function loadRunMetadataFromS3(runId) {
     try {
@@ -89,6 +89,9 @@ export async function loadRunMetadataFromS3(runId) {
             status: full.status || '',
             createdAt: full.createdAt || 0,
             runMode: full.runMode || 'pr',
+            model: full.model || '',
+            inputTokens: full.inputTokens || 0,
+            outputTokens: full.outputTokens || 0,
         };
     } catch {
         return { runId };

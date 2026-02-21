@@ -63,14 +63,14 @@ router.get('/', (req, res) => {
               </select>
             </div>
             <div>
-              <label for="maxPlanners" class="block text-xs font-medium text-slate-500 mb-1">Max planners</label>
+              <label for="maxPlanners" class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Max planners</label>
               <input type="number" id="maxPlanners" name="maxPlanners" min="1" max="5" value="2"
-                class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+                class="w-20 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
             </div>
             <div>
-              <label for="maxCoders" class="block text-xs font-medium text-slate-500 mb-1">Max coders</label>
+              <label for="maxCoders" class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Max coders</label>
               <input type="number" id="maxCoders" name="maxCoders" min="1" max="10" value="3"
-                class="w-20 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+                class="w-20 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
             </div>
             <div class="flex items-center gap-2">
               <button type="button" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:enabled:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed">Start run</button>
@@ -307,6 +307,7 @@ router.get('/', (req, res) => {
           opt.value = m.id;
           var label = m.displayName || m.id;
           if (m.sortTier === 0) label = '\u2605 ' + label;
+          if (m.premium) label += ' · Premium';
           opt.textContent = label;
           if (m.hint) opt.title = m.hint;
           sel.appendChild(opt);
@@ -1312,16 +1313,27 @@ router.get('/', (req, res) => {
 </html>`);
 });
 
-// ----- GET /admin/agent/models – list Gemini models that support generateContent (official list via SDK) -----
+// ----- GET /admin/agent/models – list Gemini + Claude models for Missions dropdown -----
 const DEFAULT_MODEL_ID = 'gemini-3-flash-preview';
 const MODELS_CACHE_MS = 10 * 60 * 1000; // 10 minutes
 let modelsCache = null;
 let modelsCacheTime = 0;
 
+/** Curated Claude models for Missions (Anthropic has no public list API). Requires ANTHROPIC_SECRET. */
+const CLAUDE_MODELS = [
+    { id: 'claude-sonnet-4-20250514', displayName: 'Claude Sonnet 4' },
+    { id: 'claude-3-5-sonnet-20241022', displayName: 'Claude 3.5 Sonnet' },
+    { id: 'claude-3-5-haiku-20241022', displayName: 'Claude 3.5 Haiku' },
+    { id: 'claude-3-opus-20240229', displayName: 'Claude 3 Opus' },
+];
+
 /** Assign sort order and short description for Missions dropdown. Lower sortTier = better for this project. */
 function modelMeta(id, displayName) {
     const lower = (id || '').toLowerCase();
     const name = (displayName || id || '').toLowerCase();
+    if (/^claude-/.test(lower)) {
+        return { sortTier: 1, hint: 'Claude model. Requires ANTHROPIC_SECRET in env.', premium: true };
+    }
     if (/image|imagen|generation.*image|image.*generation/.test(lower) || /image\s*gen|image\s*generation/i.test(name)) {
         return { sortTier: 4, hint: 'Image generation. Not used for Missions (text/code).' };
     }
@@ -1349,22 +1361,25 @@ router.get('/models', async (req, res) => {
         return res.json(modelsCache);
     }
     try {
-        const supported = await listModelsForMissions();
-        if (supported.length === 0) {
+        const geminiList = await listModelsForMissions();
+        const combined = [...geminiList, ...CLAUDE_MODELS];
+        if (combined.length === 0) {
             const fallback = [{ id: DEFAULT_MODEL_ID, displayName: DEFAULT_MODEL_ID, hint: 'Best for Missions: fast, strong at code and planning.' }];
             const payload = { models: fallback, default: DEFAULT_MODEL_ID, fromCache: false };
             return res.json(payload);
         }
-        const enriched = supported.map((m) => {
-            const { sortTier, hint } = modelMeta(m.id, m.displayName);
-            return { ...m, sortTier, hint: hint || 'General text/code.' };
+        const enriched = combined.map((m) => {
+            const { sortTier, hint, premium } = modelMeta(m.id, m.displayName);
+            return { ...m, sortTier, hint: hint || 'General text/code.', premium: !!premium };
         });
         enriched.sort((a, b) => {
             if (a.sortTier !== b.sortTier) return a.sortTier - b.sortTier;
             return (a.id || '').localeCompare(b.id || '');
         });
-        const defaultId = enriched.some((m) => m.id === DEFAULT_MODEL_ID) ? DEFAULT_MODEL_ID : enriched[0].id;
-        modelsCache = { models: enriched, default: defaultId, fromCache: false };
+        // Hide tier-0 (starred/recommended) models from the dropdown
+        const visible = enriched.filter((m) => m.sortTier !== 0);
+        const defaultId = visible.length ? (visible.some((m) => m.id === DEFAULT_MODEL_ID) ? DEFAULT_MODEL_ID : visible[0].id) : (enriched[0]?.id || '');
+        modelsCache = { models: visible.length ? visible : enriched, default: defaultId, fromCache: false };
         modelsCacheTime = now;
         res.json(modelsCache);
     } catch (_) {
@@ -1524,6 +1539,9 @@ router.get('/runs/history', async (req, res) => {
                 status: meta?.status || '',
                 createdAt: meta?.createdAt || fallbackTs,
                 lastModified: fallbackTs,
+                model: meta?.model || '',
+                inputTokens: meta?.inputTokens || 0,
+                outputTokens: meta?.outputTokens || 0,
             };
         }));
         res.json({ runs });

@@ -1,9 +1,11 @@
 /**
- * Gemini agent roles: Researcher, Planner, Coder.
- * Each uses generateContentStream and optional onChunk for real-time logs.
+ * Gemini and Claude agent roles: Researcher, Planner, Coder, etc.
+ * Each uses generateContentStream or generateContent with optional onChunk for real-time logs.
  * System prompts are loaded from agentPromptLoader (S3 or built-in defaults).
+ * Model selection routes to Google GenAI or Anthropic (ANTHROPIC_SECRET) by model id.
  */
 import { GoogleGenAI } from '@google/genai';
+import Anthropic from '@anthropic-ai/sdk';
 import { getFileTree } from './codebaseTools.js';
 import { getAgentPrompt } from './agentPromptLoader.js';
 
@@ -20,8 +22,113 @@ function getGenAI() {
     return _genAI;
 }
 
+let _anthropic = null;
+function getAnthropic() {
+    if (!_anthropic) {
+        const apiKey = process.env.ANTHROPIC_SECRET;
+        if (!apiKey) throw new Error('ANTHROPIC_SECRET must be set to use Claude models.');
+        _anthropic = new Anthropic({ apiKey });
+    }
+    return _anthropic;
+}
+
+/** True if model id is a Claude model (e.g. claude-3-5-sonnet-...). */
+function isClaudeModel(modelId) {
+    return typeof modelId === 'string' && modelId.trim().toLowerCase().startsWith('claude-');
+}
+
 const MODEL = process.env.AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
 const GEMINI_TIMEOUT_MS = Number(process.env.AGENT_GEMINI_TIMEOUT_MS) || 180000;
+
+/**
+ * Unified non-streaming generate. Returns Gemini-style { text, usageMetadata }.
+ * Routes to Gemini or Claude based on model id.
+ * Call sites use (response.text === 'function' ? response.text() : response.text); both must be supported.
+ */
+async function generateContent({ model, systemPrompt, userContent, maxOutputTokens, responseMimeType, signal }) {
+    const m = (model || '').trim();
+    if (isClaudeModel(m)) {
+        const client = getAnthropic();
+        const system = responseMimeType === 'application/json'
+            ? (systemPrompt + '\n\nRespond with a single JSON array only, no markdown fences or extra text.')
+            : systemPrompt;
+        const message = await client.messages.create(
+            {
+                model: m,
+                max_tokens: maxOutputTokens || 4096,
+                system: system || undefined,
+                messages: [{ role: 'user', content: userContent || '' }],
+            },
+            signal ? { signal } : undefined
+        );
+        const text = (message.content || [])
+            .filter((b) => b.type === 'text')
+            .map((b) => b.text)
+            .join('');
+        const usage = message.usage || {};
+        return {
+            text: () => text,
+            usageMetadata: {
+                promptTokenCount: usage.input_tokens ?? 0,
+                candidatesTokenCount: usage.output_tokens ?? 0,
+            },
+        };
+    }
+    const response = await getGenAI().models.generateContent({
+        model: m,
+        contents: [{ role: 'user', parts: [{ text: (systemPrompt || '') + '\n\n' + (userContent || '') }] }],
+        config: { maxOutputTokens: maxOutputTokens || 4096, responseMimeType, abortSignal: signal },
+    });
+    return response;
+}
+
+/**
+ * Unified streaming generate. Returns async iterable and normalizes to Gemini-style response with .text and .usageMetadata.
+ * Routes to Gemini or Claude based on model id. Calls onChunk with each text delta.
+ */
+async function generateContentStream({ model, systemPrompt, userContent, maxOutputTokens, responseMimeType, signal, onChunk }) {
+    const m = (model || '').trim();
+    if (isClaudeModel(m)) {
+        const client = getAnthropic();
+        const system = responseMimeType === 'application/json'
+            ? (systemPrompt + '\n\nRespond with a single JSON array only, no markdown fences or extra text.')
+            : systemPrompt;
+        const stream = await client.messages.create(
+            {
+                model: m,
+                max_tokens: maxOutputTokens || 4096,
+                system: system || undefined,
+                messages: [{ role: 'user', content: userContent || '' }],
+                stream: true,
+            },
+            signal ? { signal } : undefined
+        );
+        const result = { usageMetadata: { promptTokenCount: 0, candidatesTokenCount: 0 } };
+        result[Symbol.asyncIterator] = async function* () {
+            for await (const event of stream) {
+                // usage comes from message_delta and may be absent until the end of the stream
+                if (signal?.aborted) break;
+                if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta' && event.delta?.text) {
+                    if (onChunk) onChunk(event.delta.text);
+                    yield { text: event.delta.text };
+                }
+                if (event.type === 'message_delta' && event.usage) {
+                    result.usageMetadata = {
+                        promptTokenCount: event.usage.input_tokens ?? 0,
+                        candidatesTokenCount: event.usage.output_tokens ?? 0,
+                    };
+                }
+            }
+        };
+        return result;
+    }
+    const response = await getGenAI().models.generateContentStream({
+        model: m,
+        contents: [{ role: 'user', parts: [{ text: (systemPrompt || '') + '\n\n' + (userContent || '') }] }],
+        config: { maxOutputTokens: maxOutputTokens || 4096, responseMimeType, abortSignal: signal },
+    });
+    return response;
+}
 
 /**
  * List Gemini models that support generateContent (for Missions model dropdown).
@@ -88,10 +195,14 @@ export async function runResearcher(missionPrompt, opts = {}) {
     try {
         const result = await withTimeout(
             (async () => {
-                const response = await getGenAI().models.generateContentStream({
+                const response = await generateContentStream({
                     model,
-                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 4096, responseMimeType: 'application/json', abortSignal: signal },
+                    systemPrompt,
+                    userContent,
+                    maxOutputTokens: 4096,
+                    responseMimeType: 'application/json',
+                    signal,
+                    onChunk,
                 });
                 let fullText = '';
                 let lastChunkUsage = null;
@@ -344,10 +455,14 @@ export async function runPlanner(task, opts = {}) {
     try {
         const result = await withTimeout(
             (async () => {
-                const response = await getGenAI().models.generateContentStream({
+                const response = await generateContentStream({
                     model,
-                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 8192, responseMimeType: 'application/json', abortSignal: signal },
+                    systemPrompt,
+                    userContent,
+                    maxOutputTokens: 8192,
+                    responseMimeType: 'application/json',
+                    signal,
+                    onChunk,
                 });
                 let fullText = '';
                 let lastChunkUsage = null;
@@ -529,10 +644,14 @@ export async function runCoder(step, fileContext, opts = {}) {
     try {
         const result = await withTimeout(
             (async () => {
-                const response = await getGenAI().models.generateContentStream({
+                const response = await generateContentStream({
                     model,
-                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 16384, responseMimeType: 'application/json', abortSignal: signal },
+                    systemPrompt,
+                    userContent,
+                    maxOutputTokens: 16384,
+                    responseMimeType: 'application/json',
+                    signal,
+                    onChunk,
                 });
                 let fullText = '';
                 let lastChunkUsage = null;
@@ -716,10 +835,12 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
     const editSummary = (edits || []).map((e) => e.path + (e.content ? ` (${e.content.length} chars)` : '')).join(', ') || 'none';
     const prompt = `Step: ${step.what}\n${step.changeDescription || ''}\nMission context: ${(missionSummary || '').slice(0, 500)}\n\nCoder produced edits for: ${editSummary}.\n\nDo these edits satisfy the step and mission? Reply with exactly one word: done or failed. Optionally add a short reason after a colon (e.g. "failed: edits change wrong file").`;
     try {
-        const response = await getGenAI().models.generateContent({
+        const response = await generateContent({
             model,
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            config: { maxOutputTokens: 128, abortSignal: signal },
+            systemPrompt: '',
+            userContent: prompt,
+            maxOutputTokens: 128,
+            signal,
         });
         const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
         const text = String(raw ?? '').trim().toLowerCase();
@@ -734,8 +855,14 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
             inputTokens: usage?.promptTokenCount ?? 0,
             outputTokens: usage?.candidatesTokenCount ?? 0,
         };
-    } catch (_) {
-        return { ok: true, status: 'done' };
+    } catch (err) {
+        return {
+            ok: true,
+            status: 'failed',
+            reason: err.message || String(err),
+            inputTokens: 0,
+            outputTokens: 0,
+        };
     }
 }
 
@@ -761,12 +888,13 @@ export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
     try {
         const response = await withTimeout(
             (async () => {
-                const res = await getGenAI().models.generateContent({
+                return await generateContent({
                     model,
-                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 256, abortSignal: signal },
+                    systemPrompt,
+                    userContent,
+                    maxOutputTokens: 256,
+                    signal,
                 });
-                return res;
             })(),
             GEMINI_TIMEOUT_MS,
             'Reviewer timed out'
@@ -813,12 +941,13 @@ export async function runAsk(question, opts = {}) {
     try {
         const response = await withTimeout(
             (async () => {
-                const res = await getGenAI().models.generateContent({
+                return await generateContent({
                     model,
-                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 8192, abortSignal: signal },
+                    systemPrompt,
+                    userContent,
+                    maxOutputTokens: 8192,
+                    signal,
                 });
-                return res;
             })(),
             GEMINI_TIMEOUT_MS,
             'Ask timed out'
@@ -864,12 +993,13 @@ export async function runAuditor(missionPrompt, opts = {}) {
     try {
         const response = await withTimeout(
             (async () => {
-                const res = await getGenAI().models.generateContent({
+                return await generateContent({
                     model,
-                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 8192, abortSignal: signal },
+                    systemPrompt,
+                    userContent,
+                    maxOutputTokens: 8192,
+                    signal,
                 });
-                return res;
             })(),
             GEMINI_TIMEOUT_MS,
             'Auditor timed out'
@@ -911,12 +1041,13 @@ export async function runTester(branchName, opts = {}) {
     try {
         const response = await withTimeout(
             (async () => {
-                const res = await getGenAI().models.generateContent({
+                return await generateContent({
                     model,
-                    contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-                    config: { maxOutputTokens: 8192, abortSignal: signal },
+                    systemPrompt,
+                    userContent,
+                    maxOutputTokens: 8192,
+                    signal,
                 });
-                return res;
             })(),
             GEMINI_TIMEOUT_MS,
             'Tester timed out'
