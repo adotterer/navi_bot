@@ -68,12 +68,8 @@ client.on("clientReady", () => {
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
-    // Debug: log channel type for non-guild messages (DMs have no guild)
-    if (!message.guild) {
-        console.log(`[DM?] channel=${message.channel?.id} type=${message.channel?.type} (ChannelType.DM=${ChannelType.DM})`);
-    }
-
-    if (message.channel?.type === ChannelType.DM) {
+    // Use isDMBased() so partial DM channels are detected (per discord.js DMChannel docs)
+    if (message.channel?.isDMBased?.()) {
         console.log(`📩 DM from ${message.author.tag}: ${(message.content || '').slice(0, 80)}`);
         try {
             await handleDMMessage(message);
