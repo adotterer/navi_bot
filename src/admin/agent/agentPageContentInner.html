@@ -849,28 +849,19 @@
     containerEl.innerHTML = '<pre class="line-numbers ' + langClass + '" style="margin:0" data-start="1"><code class="' + langClass + '"></code></pre>';
     var codeEl = containerEl.querySelector('code');
     if (!codeEl) return;
+    codeEl.textContent = raw;
     function runHighlight(attempt) {
       attempt = attempt || 0;
-      if (attempt > 25) {
-        codeEl.textContent = raw;
+      if (attempt > 40) return;
+      if (window.Prism && window.Prism.highlightElement) {
+        try {
+          window.Prism.highlightElement(codeEl);
+        } catch (e) {}
         return;
       }
-      if (window.Prism && window.Prism.highlight) {
-        var grammar = window.Prism.languages[lang] || window.Prism.languages.plaintext;
-        if (grammar) {
-          try {
-            codeEl.innerHTML = window.Prism.highlight(raw, grammar, lang);
-          } catch (e) {
-            codeEl.textContent = raw;
-          }
-        } else {
-          codeEl.textContent = raw;
-        }
-        return;
-      }
-      setTimeout(function() { runHighlight(attempt + 1); }, 60);
+      setTimeout(function() { runHighlight(attempt + 1); }, 80);
     }
-    runHighlight(0);
+    setTimeout(function() { runHighlight(0); }, 0);
   }
 
   function showFileBrowser(edits) {

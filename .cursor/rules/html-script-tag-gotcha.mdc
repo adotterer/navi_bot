@@ -1,0 +1,21 @@
+---
+description: When building HTML that includes <script> tags inside JS template literals, avoid closing with <\/script> — use a variable so the client receives literal </script>.
+globs: src/admin/**/*.js,**/*PageContent*.js
+alwaysApply: false
+---
+
+# HTML script closing tag in template literals
+
+When building HTML strings in Node (e.g. for `res.send()` or injected into a page) that include `<script>...</script>` blocks inside a **JavaScript template literal**, the closing tag must not be written literally as `</script>` inside the same template. Doing so ends the *surrounding* script block in the source file. Escaping like `<\\/script>` or `<\/script>` produces a **literal backslash** in the output, so the browser never sees the sequence `</script>` and does not close the script — the rest of the page is parsed as script content, breaking layout and preventing later scripts from running.
+
+**Fix:** close script tags via a variable (or concatenation) so the string sent to the client contains the exact characters `</script>`:
+
+```javascript
+const S = '</script>';
+// In template:
+`<script>...</script>${S}
+...
+<script>...</script>${S}`
+```
+
+Or: `` `...` + '</script>' + `...` ``. See `src/admin/agent/agentPageContent.js` (e.g. `PRISM_TAIL`, `S`) for the pattern used in this repo.

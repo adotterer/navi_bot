@@ -190,6 +190,13 @@ eb deploy
 
 ---
 
+## Documentation
+
+- **[CODE_STRUCTURE.md](CODE_STRUCTURE.md)** – Module layout and how to add features.
+- **[docs/gotchas.md](docs/gotchas.md)** – Known pitfalls (e.g. HTML `<script>` in template literals) so edits and agent runs avoid reintroducing them.
+
+---
+
 ## Notes
 
 - Messages are fetched in batches of 100 to handle large channels

@@ -18,15 +18,14 @@ const SSE_HEARTBEAT_MS = 15000;
 
 // ----- GET /admin/agent – main page (template in agentPageContent.js + agentPageContentInner.html) -----
 router.get('/', (req, res) => {
-    const { content, prismFooter } = getAgentPageContent({ adminNav, adminContainer, breadcrumb });
-    // Same <head> as other admin pages (no Prism in head) so nav styles match. Re-run theme at start of body.
+    const { content, prismTail } = getAgentPageContent({ adminNav, adminContainer, breadcrumb });
     const themeScript = '<script>(function(){var t=localStorage.getItem("theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark");})();<\/script>';
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Missions')}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${themeScript}
 ${content}
-${prismFooter}
+${prismTail}
 </body>
 </html>`);
 });
