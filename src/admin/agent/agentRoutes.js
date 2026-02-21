@@ -234,6 +234,7 @@ router.get('/', (req, res) => {
   var prLink = document.getElementById('pr-link');
   var errorMsg = document.getElementById('error-msg');
   var currentRunId = null;
+  var scrolledToPrRunId = null;
   var currentRunMode = 'pr';
   var currentAuditReportMarkdown = '';
   var currentAskReportMarkdown = '';
@@ -851,12 +852,15 @@ router.get('/', (req, res) => {
           resultNote.classList.remove('hidden');
         }
       }
-      resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      setTimeout(function() {
-        if (document.activeElement && resultArea.contains(document.activeElement)) {
-          document.activeElement.blur();
-        }
-      }, 100);
+      if (currentRunId !== scrolledToPrRunId) {
+        scrolledToPrRunId = currentRunId;
+        resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(function() {
+          if (document.activeElement && resultArea.contains(document.activeElement)) {
+            document.activeElement.blur();
+          }
+        }, 100);
+      }
     } else if (err) {
       prLink.classList.add('hidden');
       errorMsg.textContent = err;
@@ -917,6 +921,7 @@ router.get('/', (req, res) => {
   }
 
   function startRun() {
+    scrolledToPrRunId = null;
     var promptEl = document.getElementById('prompt');
     var maxPlanners = document.getElementById('maxPlanners').value || '2';
     var maxCoders = document.getElementById('maxCoders').value || '3';
