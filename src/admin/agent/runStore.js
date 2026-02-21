@@ -45,9 +45,12 @@ function createRun(opts = {}) {
         cancelled: false,
         runMode: mode,
         auditReport: undefined,
+        auditReportImageKey: undefined,
         askResponse: undefined,
+        askResponseImageKey: undefined,
         reviewReport: undefined,
         reviewReportError: undefined,
+        diagramKeys: [],
         logs: [],
         flightPlan: undefined,
         steps: undefined,
@@ -145,9 +148,14 @@ function updateRun(runId, updates) {
     if (updates.model != null) run.model = updates.model;
     if (updates.title != null) run.title = updates.title;
     if (updates.auditReport != null) run.auditReport = typeof updates.auditReport === 'string' ? updates.auditReport : undefined;
+    if (updates.auditReportImageKey != null) run.auditReportImageKey = typeof updates.auditReportImageKey === 'string' ? updates.auditReportImageKey : undefined;
     if (updates.askResponse != null) run.askResponse = typeof updates.askResponse === 'string' ? updates.askResponse : undefined;
+    if (updates.askResponseImageKey != null) run.askResponseImageKey = typeof updates.askResponseImageKey === 'string' ? updates.askResponseImageKey : undefined;
     if (updates.reviewReport != null) run.reviewReport = typeof updates.reviewReport === 'string' ? updates.reviewReport : undefined;
     if (updates.reviewReportError != null) run.reviewReportError = typeof updates.reviewReportError === 'string' ? updates.reviewReportError : undefined;
+    if (Array.isArray(updates.diagramKeys)) {
+        run.diagramKeys = [...(run.diagramKeys || []), ...updates.diagramKeys];
+    }
     if (updates.inputTokens != null) run.inputTokens = (run.inputTokens || 0) + updates.inputTokens;
     if (updates.outputTokens != null) run.outputTokens = (run.outputTokens || 0) + updates.outputTokens;
 }
@@ -270,9 +278,12 @@ function hydrateRun(runId, snapshot) {
         title: snapshot.title ?? '',
         runMode: RUN_MODES.includes(snapshot.runMode) ? snapshot.runMode : 'pr',
         auditReport: typeof snapshot.auditReport === 'string' ? snapshot.auditReport : undefined,
+        auditReportImageKey: typeof snapshot.auditReportImageKey === 'string' ? snapshot.auditReportImageKey : undefined,
         askResponse: typeof snapshot.askResponse === 'string' ? snapshot.askResponse : undefined,
+        askResponseImageKey: typeof snapshot.askResponseImageKey === 'string' ? snapshot.askResponseImageKey : undefined,
         reviewReport: typeof snapshot.reviewReport === 'string' ? snapshot.reviewReport : undefined,
         reviewReportError: typeof snapshot.reviewReportError === 'string' ? snapshot.reviewReportError : undefined,
+        diagramKeys: Array.isArray(snapshot.diagramKeys) ? snapshot.diagramKeys : [],
         inputTokens: snapshot.inputTokens ?? 0,
         outputTokens: snapshot.outputTokens ?? 0,
     };

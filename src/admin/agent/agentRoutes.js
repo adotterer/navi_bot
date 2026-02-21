@@ -8,7 +8,7 @@ import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled, hyd
 import { runPipeline } from './orchestrator.js';
 import { listBranches, getTree, getFileContent } from './repoBrowser.js';
 import { loadRunFromS3, loadRunMetadataFromS3, persistRunToS3 } from './agentRunPersistence.js';
-import { listS3KeysWithPrefix, deleteFromS3 } from '../../shared/s3Helper.js';
+import { listS3KeysWithPrefix, deleteFromS3, fetchFromS3Buffer } from '../../shared/s3Helper.js';
 import { getAgentPrompt, saveAgentPrompt, resetAgentPromptToDefault, listAgentPromptIds } from './agentPromptLoader.js';
 import { listModelsForMissions } from './agents.js';
 import { Octokit } from '@octokit/rest';
@@ -54,10 +54,10 @@ function modelMeta(id, displayName) {
         return { sortTier: 1, hint: 'Claude model. Requires ANTHROPIC_SECRET in env.', premium: true, icon: '💻' };
     }
     if (/image|imagen|generation.*image|image.*generation/.test(lower) || /image\s*gen|image\s*generation/i.test(name)) {
-        return { sortTier: 4, hint: 'Image generation. Not used for Missions (text/code).', icon: '🖼️' };
+        return { sortTier: 5, hint: 'Image-only model. Not recommended for text Missions.', icon: '🖼️' };
     }
-    if (/computer.use|computeruse|nano\s*banana|veo|audio|tts|speech/.test(lower)) {
-        return { sortTier: 4, hint: 'Specialized (computer use, audio, video). Not for Missions.', icon: '🎬' };
+    if (/computer.use|computeruse|veo|audio|tts|speech/.test(lower)) {
+        return { sortTier: 5, hint: 'Multimedia/special model. Not recommended for text Missions.', icon: '🔇' };
     }
     if (/lite|nano|8b|small/.test(lower) && !/flash-lite.*001/.test(lower)) {
         return { sortTier: 2, hint: 'Lightweight & fast. Good for simple Missions; may miss nuance on complex tasks.', icon: '⚡' };
@@ -76,35 +76,32 @@ function modelMeta(id, displayName) {
 
 router.get('/models', async (req, res) => {
     const now = Date.now();
-    if (modelsCache && now - modelsCacheTime < MODELS_CACHE_MS) {
-        return res.json(modelsCache);
-    }
-    try {
-        const geminiList = await listModelsForMissions();
-        const combined = [...geminiList, ...CLAUDE_MODELS];
-        if (combined.length === 0) {
+    if (!modelsCache || now - modelsCacheTime >= MODELS_CACHE_MS) {
+        try {
+            const geminiList = await listModelsForMissions();
+            const combined = [...geminiList, ...CLAUDE_MODELS];
+            if (combined.length === 0) {
+                const fallback = [{ id: DEFAULT_MODEL_ID, displayName: DEFAULT_MODEL_ID, hint: 'Best for Missions: fast, strong at code and planning.' }];
+                return res.json({ models: fallback, default: DEFAULT_MODEL_ID, fromCache: false });
+            }
+            const enriched = combined.map((m) => {
+                const meta = modelMeta(m.id, m.displayName);
+                return { ...m, ...meta, hint: meta.hint || 'General text/code.', premium: !!meta.premium, icon: meta.icon || '📝' };
+            });
+            enriched.sort((a, b) => {
+                if (a.sortTier !== b.sortTier) return a.sortTier - b.sortTier;
+                return (a.id || '').localeCompare(b.id || '');
+            });
+            modelsCache = enriched;
+            modelsCacheTime = now;
+        } catch (_) {
             const fallback = [{ id: DEFAULT_MODEL_ID, displayName: DEFAULT_MODEL_ID, hint: 'Best for Missions: fast, strong at code and planning.' }];
-            const payload = { models: fallback, default: DEFAULT_MODEL_ID, fromCache: false };
-            return res.json(payload);
+            return res.json({ models: fallback, default: DEFAULT_MODEL_ID, fromCache: false });
         }
-        const enriched = combined.map((m) => {
-            const { sortTier, hint, premium, icon } = modelMeta(m.id, m.displayName);
-            return { ...m, sortTier, hint: hint || 'General text/code.', premium: !!premium, icon: icon || '📝' };
-        });
-        enriched.sort((a, b) => {
-            if (a.sortTier !== b.sortTier) return a.sortTier - b.sortTier;
-            return (a.id || '').localeCompare(b.id || '');
-        });
-        // Hide tier-0 (starred/recommended) models from the dropdown
-        const visible = enriched.filter((m) => m.sortTier !== 0);
-        const defaultId = visible.length ? (visible.some((m) => m.id === DEFAULT_MODEL_ID) ? DEFAULT_MODEL_ID : visible[0].id) : (enriched[0]?.id || '');
-        modelsCache = { models: visible.length ? visible : enriched, default: defaultId, fromCache: false };
-        modelsCacheTime = now;
-        res.json(modelsCache);
-    } catch (_) {
-        const fallback = [{ id: DEFAULT_MODEL_ID, displayName: DEFAULT_MODEL_ID, hint: 'Best for Missions: fast, strong at code and planning.' }];
-        res.json({ models: fallback, default: DEFAULT_MODEL_ID, fromCache: false });
     }
+    let visible = modelsCache.filter((m) => m.sortTier !== 0 && m.sortTier < 5);
+    const defaultId = visible.length ? (visible.some((m) => m.id === DEFAULT_MODEL_ID) ? DEFAULT_MODEL_ID : visible[0].id) : (modelsCache[0]?.id || '');
+    res.json({ models: visible.length ? visible : modelsCache.filter((m) => m.sortTier !== 0 && m.sortTier < 5), default: defaultId, fromCache: true });
 });
 
 // ----- GET /admin/agent/prompts – edit Researcher, Planner, Coder, Reviewer system prompts -----
@@ -345,15 +342,18 @@ router.get('/run/:runId', async (req, res) => {
         run = getRun(req.params.runId);
     }
     if (!run) return res.status(404).json({ error: 'Run not found' });
-    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits, model, runMode, auditReport, askResponse, reviewReport, reviewReportError } = run;
+    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits, model, runMode, auditReport, auditReportImageKey, askResponse, askResponseImageKey, reviewReport, reviewReportError, diagramKeys } = run;
     res.json({
         runId,
         status,
         runMode: runMode || 'pr',
         auditReport: auditReport || '',
+        auditReportImageKey: auditReportImageKey || '',
         askResponse: askResponse || '',
+        askResponseImageKey: askResponseImageKey || '',
         reviewReport: reviewReport || '',
         reviewReportError: reviewReportError || '',
+        diagramKeys: diagramKeys || [],
         logs,
         flightPlan,
         steps: steps || [],
@@ -367,6 +367,65 @@ router.get('/run/:runId', async (req, res) => {
         edits: edits || [],
         model: model || '',
     });
+});
+
+// ----- GET /admin/agent/run/:runId/audit-image – serve audit diagram image from S3 -----
+router.get('/run/:runId/audit-image', async (req, res) => {
+    let run = getRun(req.params.runId);
+    if (!run) {
+        const snapshot = await loadRunFromS3(req.params.runId);
+        if (!snapshot) return res.status(404).send('Run not found');
+        hydrateRun(req.params.runId, snapshot);
+        run = getRun(req.params.runId);
+    }
+    const key = run?.auditReportImageKey;
+    if (!key) return res.status(404).send('No audit image');
+    const result = await fetchFromS3Buffer(key);
+    if (!result) return res.status(404).send('Image not found');
+    res.set('Content-Type', result.contentType);
+    res.send(result.body);
+});
+
+// ----- GET /admin/agent/run/:runId/ask-image – serve ask diagram image from S3 -----
+router.get('/run/:runId/ask-image', async (req, res) => {
+    let run = getRun(req.params.runId);
+    if (!run) {
+        const snapshot = await loadRunFromS3(req.params.runId);
+        if (!snapshot) return res.status(404).send('Run not found');
+        hydrateRun(req.params.runId, snapshot);
+        run = getRun(req.params.runId);
+    }
+    const key = run?.askResponseImageKey;
+    if (!key) return res.status(404).send('No ask image');
+    const result = await fetchFromS3Buffer(key);
+    if (!result) return res.status(404).send('Image not found');
+    res.set('Content-Type', result.contentType);
+    res.send(result.body);
+});
+
+// ----- GET /admin/agent/run/:runId/diagram/:index – serve inline diagram image from S3 -----
+router.get('/run/:runId/diagram/:index', async (req, res) => {
+    const idx = parseInt(req.params.index, 10);
+    if (isNaN(idx) || idx < 0) return res.status(400).send('Invalid index');
+    let run = getRun(req.params.runId);
+    if (!run) {
+        const snapshot = await loadRunFromS3(req.params.runId);
+        if (!snapshot) return res.status(404).send('Run not found');
+        hydrateRun(req.params.runId, snapshot);
+        run = getRun(req.params.runId);
+    }
+    const keys = run?.diagramKeys;
+    if (!Array.isArray(keys) || idx >= keys.length) return res.status(404).send('Diagram not found');
+    try {
+        const result = await fetchFromS3Buffer(keys[idx]);
+        if (!result) return res.status(404).send('Image not found in S3');
+        res.set('Content-Type', result.contentType);
+        res.set('Cache-Control', 'public, max-age=86400');
+        res.send(result.body);
+    } catch (e) {
+        console.warn('[diagram route]', e.message || e);
+        res.status(500).send('Failed to load diagram');
+    }
 });
 
 const DOC_SECTIONS = ['overview', 'requirements', 'architecture', 'decisions', 'notes'];

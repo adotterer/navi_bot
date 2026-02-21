@@ -275,6 +275,7 @@ export async function runPipeline(runId, opts = {}) {
                 headBranch: diffResult.headBranch || branchName,
                 signal,
                 model,
+                runId,
             });
             if (!testerResult.ok) {
                 updateRun(runId, { status: 'error', error: testerResult.error });
@@ -284,9 +285,13 @@ export async function runPipeline(runId, opts = {}) {
             updateRun(runId, {
                 status: 'done',
                 reviewReport: testerResult.report,
+                ...(testerResult.diagramKeys?.length && { diagramKeys: testerResult.diagramKeys }),
                 inputTokens: (currentRunEarly.inputTokens || 0) + (testerResult.inputTokens || 0),
                 outputTokens: (currentRunEarly.outputTokens || 0) + (testerResult.outputTokens || 0),
             });
+            if (testerResult.warnings?.length) {
+                for (const w of testerResult.warnings) log('system', 'error', w + '\n');
+            }
             log('system', 'done', 'Review report ready.\n');
             await persistRunToS3(runId);
             return;
@@ -333,7 +338,7 @@ export async function runPipeline(runId, opts = {}) {
                 }
             } catch (_) {}
             const flightPlanSummary = (flightPlan || []).map((t) => `- ${t.title || t.id}: ${t.description || ''}`).join('\n');
-            const auditResult = await runAuditor(prompt, { grepContext, treeContext, flightPlanSummary, signal, model });
+            const auditResult = await runAuditor(prompt, { grepContext, treeContext, flightPlanSummary, signal, model, runId });
             if (!auditResult.ok) {
                 updateRun(runId, { status: 'error', error: auditResult.error });
                 log('system', 'error', 'Auditor failed: ' + auditResult.error + '\n');
@@ -342,9 +347,13 @@ export async function runPipeline(runId, opts = {}) {
             updateRun(runId, {
                 status: 'done',
                 auditReport: auditResult.report,
+                ...(auditResult.diagramKeys?.length && { diagramKeys: auditResult.diagramKeys }),
                 inputTokens: (currentRun.inputTokens || 0) + (auditResult.inputTokens || 0),
                 outputTokens: (currentRun.outputTokens || 0) + (auditResult.outputTokens || 0),
             });
+            if (auditResult.warnings?.length) {
+                for (const w of auditResult.warnings) log('system', 'error', w + '\n');
+            }
             log('system', 'done', 'Audit report ready.\n');
             await persistRunToS3(runId);
             return;
@@ -366,7 +375,7 @@ export async function runPipeline(runId, opts = {}) {
                 }
             } catch (_) {}
             const flightPlanSummary = (flightPlan || []).map((t) => `- ${t.title || t.id}: ${t.description || ''}`).join('\n');
-            const askResult = await runAsk(prompt, { grepContext, treeContext, flightPlanSummary, signal, model });
+            const askResult = await runAsk(prompt, { grepContext, treeContext, flightPlanSummary, signal, model, runId });
             if (!askResult.ok) {
                 updateRun(runId, { status: 'error', error: askResult.error });
                 log('system', 'error', 'Ask failed: ' + askResult.error + '\n');
@@ -375,9 +384,13 @@ export async function runPipeline(runId, opts = {}) {
             updateRun(runId, {
                 status: 'done',
                 askResponse: askResult.report,
+                ...(askResult.diagramKeys?.length && { diagramKeys: askResult.diagramKeys }),
                 inputTokens: (currentRun.inputTokens || 0) + (askResult.inputTokens || 0),
                 outputTokens: (currentRun.outputTokens || 0) + (askResult.outputTokens || 0),
             });
+            if (askResult.warnings?.length) {
+                for (const w of askResult.warnings) log('system', 'error', w + '\n');
+            }
             log('system', 'done', 'Answer ready.\n');
             await persistRunToS3(runId);
             return;

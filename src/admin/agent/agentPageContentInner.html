@@ -102,6 +102,7 @@
                       <button type="button" class="report-print text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="audit">Print / PDF</button>
                     </div>
                   </div>
+                  <div id="audit-report-image-wrap" class="mb-3 hidden"><img id="audit-report-image" alt="Audit diagram" class="max-w-full rounded border border-slate-200 dark:border-slate-600" /></div>
                   <div id="audit-report" class="audit-report-content text-sm text-slate-700 dark:text-slate-300 prose prose-slate dark:prose-invert max-w-none"></div>
                 </div>
                 <div id="ask-report-wrap" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 hidden mt-3 max-h-[480px] overflow-y-auto">
@@ -114,6 +115,7 @@
                       <button type="button" class="report-print text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700" data-report="ask">Print / PDF</button>
                     </div>
                   </div>
+                  <div id="ask-report-image-wrap" class="mb-3 hidden"><img id="ask-report-image" alt="Answer diagram" class="max-w-full rounded border border-slate-200 dark:border-slate-600" /></div>
                   <div id="ask-report" class="audit-report-content text-sm text-slate-700 dark:text-slate-300 prose prose-slate dark:prose-invert max-w-none"></div>
                 </div>
                 <div id="review-report-wrap" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 hidden mt-3 max-h-[480px] overflow-y-auto">
@@ -325,7 +327,7 @@
   var repoExpanded = {};
   var repoTreeCache = {};
 
-  (function loadModels() {
+  function loadModels() {
     var sel = document.getElementById('model');
     if (!sel) return;
     fetch('/admin/agent/models', { credentials: 'same-origin' })
@@ -333,6 +335,7 @@
       .then(function(data) {
         var models = data.models || [];
         var defaultId = data.default || (models[0] && models[0].id) || '';
+        var currentVal = sel.value;
         sel.innerHTML = '';
         models.forEach(function(m) {
           var opt = document.createElement('option');
@@ -345,12 +348,16 @@
           if (m.hint) opt.title = m.hint;
           sel.appendChild(opt);
         });
-        if (defaultId) sel.value = defaultId;
+        if (models.some(function(m) { return m.id === currentVal; })) sel.value = currentVal;
+        else if (defaultId) sel.value = defaultId;
       })
       .catch(function() {
         sel.innerHTML = '<option value="gemini-3-flash-preview" title="Best for Missions: fast, strong at code and planning.">\u2605 \uD83D\uDCBB gemini-3-flash-preview</option>';
         sel.value = 'gemini-3-flash-preview';
       });
+  }
+  (function() {
+    loadModels();
   })();
 
   function updateDocsPanelOnly(docs) {
@@ -855,6 +862,7 @@
     s = s.replace(new RegExp('(?:<li class="audit-list-item">[\\s\\S]*?<\\/li>\\s*)+', 'g'), function (run) {
       return '<ul class="list-disc ml-6 pl-4 my-2 space-y-1">' + run + '</ul>';
     });
+    s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="my-3 max-w-full rounded border border-slate-200 dark:border-slate-600" />');
     s = s.replace(new RegExp(nl + nl, 'g'), '</p><p class="mt-2">');
     s = s.replace(new RegExp(nl, 'g'), '<br/>');
     return '<p class="mt-2">' + s + '</p>';
@@ -878,11 +886,23 @@
     if (data && data.runMode === 'audit' && data.auditReport) {
       currentAuditReportMarkdown = data.auditReport;
       auditWrap && auditWrap.classList.remove('hidden');
+      var auditImgWrap = document.getElementById('audit-report-image-wrap');
+      var auditImg = document.getElementById('audit-report-image');
+      if (data.auditReportImageKey && data.runId && auditImgWrap && auditImg) {
+        auditImg.src = '/admin/agent/run/' + encodeURIComponent(data.runId) + '/audit-image';
+        auditImgWrap.classList.remove('hidden');
+      } else if (auditImgWrap) auditImgWrap.classList.add('hidden');
       if (auditEl) auditEl.innerHTML = renderAuditMarkdown(data.auditReport);
       runStatus.textContent = 'Done — Audit report';
     } else if (data && data.runMode === 'ask' && data.askResponse) {
       currentAskReportMarkdown = data.askResponse;
       askWrap && askWrap.classList.remove('hidden');
+      var askImgWrap = document.getElementById('ask-report-image-wrap');
+      var askImg = document.getElementById('ask-report-image');
+      if (data.askResponseImageKey && data.runId && askImgWrap && askImg) {
+        askImg.src = '/admin/agent/run/' + encodeURIComponent(data.runId) + '/ask-image';
+        askImgWrap.classList.remove('hidden');
+      } else if (askImgWrap) askImgWrap.classList.add('hidden');
       if (askEl) askEl.innerHTML = renderAuditMarkdown(data.askResponse);
       runStatus.textContent = 'Done — Answer';
     } else if (data && data.runMode === 'review' && data.reviewReport) {
@@ -1063,8 +1083,12 @@
     var askReportEl = document.getElementById('ask-report');
     if (auditWrap) auditWrap.classList.add('hidden');
     if (auditReportEl) auditReportEl.innerHTML = '';
+    var auditImgWrap = document.getElementById('audit-report-image-wrap');
+    if (auditImgWrap) { auditImgWrap.classList.add('hidden'); var i = document.getElementById('audit-report-image'); if (i) i.removeAttribute('src'); }
     if (askWrap) askWrap.classList.add('hidden');
     if (askReportEl) askReportEl.innerHTML = '';
+    var askImgWrap = document.getElementById('ask-report-image-wrap');
+    if (askImgWrap) { askImgWrap.classList.add('hidden'); var j = document.getElementById('ask-report-image'); if (j) j.removeAttribute('src'); }
     var tokensBar = document.getElementById('run-tokens-bar');
     if (tokensBar) tokensBar.classList.add('hidden');
     runStatus.textContent = 'Starting…';

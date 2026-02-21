@@ -8,6 +8,7 @@ import { GoogleGenAI } from '@google/genai';
 import Anthropic from '@anthropic-ai/sdk';
 import { getFileTree } from './codebaseTools.js';
 import { getAgentPrompt } from './agentPromptLoader.js';
+import { putToS3 } from '../../shared/s3Helper.js';
 
 let _genAI = null;
 function getGenAI() {
@@ -37,8 +38,84 @@ function isClaudeModel(modelId) {
     return typeof modelId === 'string' && modelId.trim().toLowerCase().startsWith('claude-');
 }
 
+
 const MODEL = process.env.AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
+const DIAGRAM_MODEL = process.env.AGENT_DIAGRAM_MODEL || 'gemini-2.5-flash-image';
 const GEMINI_TIMEOUT_MS = Number(process.env.AGENT_GEMINI_TIMEOUT_MS) || 180000;
+
+/** Regex for [DIAGRAM: description] placeholder in agent output (global). */
+const DIAGRAM_PLACEHOLDER_RE = /\[DIAGRAM:\s*([^\]]+)\]/g;
+
+/**
+ * Generate a single explanatory diagram image via an image-capable Gemini model.
+ * @param {string} description - What the diagram should depict.
+ * @param {string} runId - Run ID (for S3 key).
+ * @param {'audit'|'ask'|'review'} type - Determines S3 key and serving route.
+ * @param {AbortSignal} [signal]
+ * @returns {Promise<{ ok: true, key: string } | { ok: false, warning: string }>}
+ */
+async function generateDiagramImage(description, runId, type, signal) {
+    try {
+        const response = await getGenAI().models.generateContent({
+            model: DIAGRAM_MODEL,
+            contents: [{ role: 'user', parts: [{ text: `Generate a single clear, explanatory diagram image: ${description}\n\nThe diagram should be clean, easy to read, and use labels. Do not include any text outside the image.` }] }],
+            config: { responseModalities: ['IMAGE', 'TEXT'], maxOutputTokens: 4096, abortSignal: signal },
+        });
+        const parts = response?.candidates?.[0]?.content?.parts;
+        let imageBase64, imageMimeType;
+        if (Array.isArray(parts)) {
+            for (const part of parts) {
+                if (part?.inlineData?.data) {
+                    imageBase64 = part.inlineData.data;
+                    imageMimeType = part.inlineData.mimeType || 'image/png';
+                    break;
+                }
+            }
+        }
+        if (!imageBase64) {
+            return { ok: false, warning: 'Diagram model returned no image for: ' + description };
+        }
+        const ext = imageMimeType === 'image/jpeg' || imageMimeType === 'image/jpg' ? 'jpg' : 'png';
+        const key = `admin/agent-runs/${runId}/${type}-diagram-${Date.now()}.${ext}`;
+        await putToS3(key, Buffer.from(imageBase64, 'base64'), imageMimeType);
+        return { ok: true, key };
+    } catch (e) {
+        console.warn(`[generateDiagramImage] Failed for ${type}/${runId}:`, e.message || e);
+        return { ok: false, warning: 'Diagram could not be generated: ' + (e.message || String(e)) };
+    }
+}
+
+/**
+ * Scan report text for [DIAGRAM: description] placeholders, generate each diagram,
+ * and replace with inline markdown images.
+ * @param {string} report - Raw report text from the agent.
+ * @param {string} runId
+ * @param {'audit'|'ask'|'review'} type
+ * @param {AbortSignal} [signal]
+ * @returns {Promise<{ processedReport: string, diagramKeys: string[], warnings: string[] }>}
+ */
+async function processDiagramPlaceholders(report, runId, type, signal) {
+    const diagramKeys = [];
+    const warnings = [];
+    const matches = [...report.matchAll(DIAGRAM_PLACEHOLDER_RE)];
+    if (matches.length === 0) return { processedReport: report, diagramKeys, warnings };
+
+    let processedReport = report;
+    for (let i = 0; i < matches.length; i++) {
+        const m = matches[i];
+        const description = m[1].trim();
+        const result = await generateDiagramImage(description, runId, `${type}-${i}`, signal);
+        if (result.ok) {
+            diagramKeys.push(result.key);
+            const imgUrl = `/admin/agent/run/${encodeURIComponent(runId)}/diagram/${diagramKeys.length - 1}`;
+            processedReport = processedReport.replace(m[0], `![${description}](${imgUrl})`);
+        } else {
+            warnings.push(result.warning);
+            processedReport = processedReport.replace(m[0], `*(Diagram unavailable: ${result.warning})*`);
+        }
+    }
+    return { processedReport, diagramKeys, warnings };
+}
 
 /** Anthropic rate limit: wait 65s then retry (per-minute limits). */
 const ANTHROPIC_429_DELAY_MS = 65000;
@@ -956,7 +1033,8 @@ export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
 
 /**
  * Run the Ask agent: question + codebase context -> markdown answer (no code edits).
- * Used when run mode is "ask" (Cursor-style Q&A).
+ * Used when run mode is "ask". The agent may embed [DIAGRAM: ...] placeholders which
+ * are resolved into inline images via the diagram generation tool.
  * @param {string} question - User's question about the codebase.
  * @param {object} opts
  * @param {string} [opts.grepContext] - Relevant grep snippets (path:line: content).
@@ -964,10 +1042,11 @@ export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
  * @param {string} [opts.flightPlanSummary] - Optional scope from Researcher.
  * @param {AbortSignal} [opts.signal]
  * @param {string} [opts.model]
- * @returns {Promise<{ ok: true, report: string, inputTokens?: number, outputTokens?: number } | { ok: false, error: string }>}
+ * @param {string} [opts.runId] - When set, [DIAGRAM:] placeholders are resolved into images stored in S3.
+ * @returns {Promise<{ ok: true, report: string, diagramKeys?: string[], warnings?: string[], inputTokens?: number, outputTokens?: number } | { ok: false, error: string }>}
  */
 export async function runAsk(question, opts = {}) {
-    const { grepContext = '', treeContext = '', flightPlanSummary = '', signal, model: modelOverride } = opts;
+    const { grepContext = '', treeContext = '', flightPlanSummary = '', signal, model: modelOverride, runId } = opts;
     const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     const systemPrompt = await getAgentPrompt('ask');
     if (!systemPrompt) {
@@ -993,11 +1072,21 @@ export async function runAsk(question, opts = {}) {
             'Ask timed out'
         );
         const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
-        const report = String(raw ?? '').trim();
+        let report = String(raw ?? '').trim();
+        const diagramKeys = [];
+        const diagramWarnings = [];
+        if (runId) {
+            const diagramResult = await processDiagramPlaceholders(report, runId, 'ask', signal);
+            report = diagramResult.processedReport;
+            diagramKeys.push(...diagramResult.diagramKeys);
+            diagramWarnings.push(...diagramResult.warnings);
+        }
         const usage = response?.usageMetadata;
         return {
             ok: true,
             report,
+            ...(diagramKeys.length && { diagramKeys }),
+            ...(diagramWarnings.length && { warnings: diagramWarnings }),
             inputTokens: usage?.promptTokenCount ?? 0,
             outputTokens: usage?.candidatesTokenCount ?? 0,
         };
@@ -1008,7 +1097,8 @@ export async function runAsk(question, opts = {}) {
 
 /**
  * Run the Auditor agent: mission + codebase context -> markdown report (no code edits).
- * Used when run mode is "audit".
+ * Used when run mode is "audit". The agent may embed [DIAGRAM: ...] placeholders which
+ * are resolved into inline images via the diagram generation tool.
  * @param {string} missionPrompt - User's audit request (e.g. "audit dark-mode hover and active states").
  * @param {object} opts
  * @param {string} [opts.grepContext] - Relevant grep snippets (path:line: content).
@@ -1016,10 +1106,11 @@ export async function runAsk(question, opts = {}) {
  * @param {string} [opts.flightPlanSummary] - Optional task list from Researcher (scope).
  * @param {AbortSignal} [opts.signal]
  * @param {string} [opts.model]
- * @returns {Promise<{ ok: true, report: string, inputTokens?: number, outputTokens?: number } | { ok: false, error: string }>}
+ * @param {string} [opts.runId] - When set, [DIAGRAM:] placeholders are resolved into images stored in S3.
+ * @returns {Promise<{ ok: true, report: string, diagramKeys?: string[], warnings?: string[], inputTokens?: number, outputTokens?: number } | { ok: false, error: string }>}
  */
 export async function runAuditor(missionPrompt, opts = {}) {
-    const { grepContext = '', treeContext = '', flightPlanSummary = '', signal, model: modelOverride } = opts;
+    const { grepContext = '', treeContext = '', flightPlanSummary = '', signal, model: modelOverride, runId } = opts;
     const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     const systemPrompt = await getAgentPrompt('auditor');
     if (!systemPrompt) {
@@ -1045,11 +1136,21 @@ export async function runAuditor(missionPrompt, opts = {}) {
             'Auditor timed out'
         );
         const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
-        const report = String(raw ?? '').trim();
+        let report = String(raw ?? '').trim();
+        const diagramKeys = [];
+        const diagramWarnings = [];
+        if (runId) {
+            const diagramResult = await processDiagramPlaceholders(report, runId, 'audit', signal);
+            report = diagramResult.processedReport;
+            diagramKeys.push(...diagramResult.diagramKeys);
+            diagramWarnings.push(...diagramResult.warnings);
+        }
         const usage = response?.usageMetadata;
         return {
             ok: true,
             report,
+            ...(diagramKeys.length && { diagramKeys }),
+            ...(diagramWarnings.length && { warnings: diagramWarnings }),
             inputTokens: usage?.promptTokenCount ?? 0,
             outputTokens: usage?.candidatesTokenCount ?? 0,
         };
@@ -1068,10 +1169,11 @@ export async function runAuditor(missionPrompt, opts = {}) {
  * @param {string} [opts.headBranch] - Same as branchName, for clarity.
  * @param {AbortSignal} [opts.signal]
  * @param {string} [opts.model]
- * @returns {Promise<{ ok: true, report: string, inputTokens?: number, outputTokens?: number } | { ok: false, error: string }>}
+ * @param {string} [opts.runId] - When set, [DIAGRAM:] placeholders are resolved into images stored in S3.
+ * @returns {Promise<{ ok: true, report: string, diagramKeys?: string[], warnings?: string[], inputTokens?: number, outputTokens?: number } | { ok: false, error: string }>}
  */
 export async function runTester(branchName, opts = {}) {
-    const { diffText = '', baseBranch = 'main', headBranch = branchName, signal, model: modelOverride } = opts;
+    const { diffText = '', baseBranch = 'main', headBranch = branchName, signal, model: modelOverride, runId } = opts;
     const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     const systemPrompt = await getAgentPrompt('tester');
     if (!systemPrompt) {
@@ -1093,11 +1195,21 @@ export async function runTester(branchName, opts = {}) {
             'Tester timed out'
         );
         const raw = response && (typeof response.text === 'function' ? response.text() : response.text);
-        const report = String(raw ?? '').trim();
+        let report = String(raw ?? '').trim();
+        const diagramKeys = [];
+        const diagramWarnings = [];
+        if (runId) {
+            const diagramResult = await processDiagramPlaceholders(report, runId, 'review', signal);
+            report = diagramResult.processedReport;
+            diagramKeys.push(...diagramResult.diagramKeys);
+            diagramWarnings.push(...diagramResult.warnings);
+        }
         const usage = response?.usageMetadata;
         return {
             ok: true,
             report,
+            ...(diagramKeys.length && { diagramKeys }),
+            ...(diagramWarnings.length && { warnings: diagramWarnings }),
             inputTokens: usage?.promptTokenCount ?? 0,
             outputTokens: usage?.candidatesTokenCount ?? 0,
         };

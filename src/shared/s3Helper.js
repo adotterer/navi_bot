@@ -53,6 +53,23 @@ export async function fetchFromS3Raw(key) {
     }
 }
 
+/** Fetch object from S3 as Buffer (e.g. for images). Returns null if key not found. */
+export async function fetchFromS3Buffer(key) {
+    try {
+        const command = new GetObjectCommand({
+            Bucket: S3_BUCKET_NAME,
+            Key: key
+        });
+        const response = await s3Client.send(command);
+        const bytes = await response.Body.transformToByteArray();
+        const contentType = response.ContentType || 'application/octet-stream';
+        return { body: Buffer.from(bytes), contentType };
+    } catch (error) {
+        if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') return null;
+        throw error;
+    }
+}
+
 /** Returns true if the key exists in S3, false if not found or on error (e.g. no creds). */
 export async function headS3Key(key) {
     try {
