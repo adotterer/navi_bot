@@ -69,10 +69,6 @@ export async function getTournament(slug, authToken) {
                     id
                     name
                     slug
-                    streams {
-                        streamName
-                        streamSource
-                    }
                     videogame {
                         id
                         name
@@ -122,10 +118,6 @@ export async function getActiveTournaments(videogameId, authToken) {
                     events {
                         id
                         name
-                        streams {
-                            streamName
-                            streamSource
-                        }
                         videogame {
                             id
                             name

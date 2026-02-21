@@ -204,10 +204,6 @@ export async function checkTodaysTournaments(authToken) {
                         events {
                             id
                             name
-                            streams {
-                                streamName
-                                streamSource
-                            }
                         }
                     }
                 }
@@ -218,11 +214,15 @@ export async function checkTodaysTournaments(authToken) {
                 tourData = await executeWithRetry(tourQuery, { slug: tournament.slug }, authToken);
             } catch (e) {
                 console.error(`[TournamentCheck] Error fetching data for ${tournament.slug}:`, e.message);
+                await sleep(400);
                 continue;
             }
             const events = tourData?.tournament?.events || [];
 
-            if (events.length === 0) continue;
+            if (events.length === 0) {
+                await sleep(400);
+                continue;
+            }
 
             // Check each event for participants (Ultimate Singles only)
             for (const event of events) {
@@ -275,7 +275,7 @@ export async function checkTodaysTournaments(authToken) {
                     console.warn(`\n⚠️ Skipping event ${event.name}: ${e.message}`);
                 }
             }
-            await sleep(150);
+            await sleep(400);
         }
 
         // Convert map to array and return
