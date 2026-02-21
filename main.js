@@ -68,6 +68,12 @@ client.on("clientReady", () => {
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
+    // Diagnostic: log when message has no guild (DM) so we can see if Discord sends the event at all
+    if (!message.guild) {
+        const ch = message.channel;
+        console.log(`[messageCreate] no guild | channelId=${ch?.id} type=${ch?.type} isDMBased=${typeof ch?.isDMBased === 'function' ? ch.isDMBased() : 'N/A'} content=${(message.content || '').slice(0, 40)}`);
+    }
+
     // DMs: isDMBased() for full/partial DM channels, or no guild (fallback)
     const isDM = message.channel?.isDMBased?.() || !message.guild;
     if (isDM) {
