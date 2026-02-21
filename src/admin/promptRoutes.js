@@ -151,11 +151,11 @@ function promptsListPage(list) {
   ${adminNav('prompts')}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Prompts' }])}
-    <h1 class="text-2xl font-semibold text-slate-800 mb-2">Edit prompts</h1>
+    <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-2">Edit prompts</h1>
     <p class="text-slate-600 text-sm mb-6">Variables use <code class="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">&#123;&#123;name&#125;&#125;</code>. Don't remove or rename variables.</p>
-    <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
       <table class="w-full">
-        <thead><tr class="bg-slate-50 border-b border-slate-200"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Prompt ID</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700">Description</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 w-16"></th></tr></thead>
+        <thead><tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700"><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Prompt ID</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Description</th><th class="text-left py-3 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 w-16"></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
@@ -226,7 +226,7 @@ function promptEditPage(id, meta, body, opts = {}) {
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/prompts', label: 'Prompts' }, { label: id }])}
     <div class="flex items-center gap-2 mb-1 flex-wrap">
-      <h1 class="text-2xl font-semibold text-slate-800">${escapeHtml(id)}</h1>
+      <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(id)}</h1>
       ${opts.s3InUse ? s3Badge() : ''}
       <button type="button" class="prompt-version-history-open prompt-header-btn text-slate-600 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700">Version history</button>
     </div>
