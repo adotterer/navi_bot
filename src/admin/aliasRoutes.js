@@ -34,8 +34,8 @@ router.get('/', async (req, res) => {
     const rowsHtml = entries
         .map(([alias, canonical]) => `
         <tr class="alias-row border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-          <td class="py-2 px-3"><input type="text" class="alias-input w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1.5 text-sm" value="${escapeHtml(alias)}" placeholder="e.g. palu" /></td>
-          <td class="py-2 px-3"><input type="text" class="canonical-input w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1.5 text-sm" value="${escapeHtml(canonical)}" placeholder="e.g. palutena" /></td>
+          <td class="py-2 px-3"><input type="text" class="alias-input w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" value="${escapeHtml(alias)}" placeholder="e.g. palu" /></td>
+          <td class="py-2 px-3"><input type="text" class="canonical-input w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" value="${escapeHtml(canonical)}" placeholder="e.g. palutena" /></td>
           <td class="py-2 px-3 w-20"><button type="button" class="delete-row text-sm text-slate-500 dark:text-slate-400 hover:text-red-600 font-medium">Remove</button></td>
         </tr>`)
         .join('');
