@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { fetchAllMessages, uploadToS3 } from './s3Helper.js';
 import { checkTodaysTournaments } from '../tournaments/dailyTournamentCheck.js';
+import { buildTournamentEmbed } from '../tournaments/tournamentEmbed.js';
 
 export function initializeScheduler(client) {
     // Weekly export every Sunday at 2 AM UTC
@@ -241,46 +242,12 @@ export function initializeScheduler(client) {
                 return;
             }
 
-            // Post one message per tournament
+            // Post one embed per tournament
             let postedCount = 0;
             for (const tournament of tournaments) {
                 try {
-                    const startTime = new Date(tournament.startAt * 1000).toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
-                        minute: '2-digit', 
-                        timeZone: 'America/New_York'
-                    });
-                    const streamInfo = tournament.streams.length > 0
-                        ? tournament.streams.map(s => {
-                            const source = (s.streamSource || '').toString().toUpperCase();
-                            const label = `${s.streamName} (${source || 'Stream'})`;
-                            let url;
-                            if (source === 'TWITCH') {
-                                url = `https://www.twitch.tv/${encodeURIComponent(s.streamName)}`;
-                            } else if (source === 'YOUTUBE') {
-                                url = `https://www.youtube.com/@${encodeURIComponent(s.streamName)}`;
-                            } else if (s.streamName) {
-                                url = `https://www.twitch.tv/${encodeURIComponent(s.streamName)}`;
-                            } else {
-                                return label;
-                            }
-                            return `[${label}](${url})`;
-                        }).join(', ')
-                        : 'No streams listed';
-
-                    const playersList = tournament.zeldaPlayers
-                        .map(p => `• ${p.gamerTag}`)
-                        .join('\n');
-
-                    const startggUrl = `https://www.start.gg/${tournament.tournamentSlug}`;
-                    const messageContent = `🏆 **${tournament.tournamentName}**\n` +
-                        `📅 Start: ${startTime} EST\n` +
-                        `🎮 Event: ${tournament.eventName}\n` +
-                        `👤 Zelda Player(s):\n${playersList}\n` +
-                        `📺 Streams: ${streamInfo}\n` +
-                        `🔗 [Tournament page](${startggUrl})`;
-
-                    await channel.send(messageContent);
+                    const embed = buildTournamentEmbed(tournament);
+                    await channel.send({ embeds: [embed] });
                     postedCount++;
                 } catch (error) {
                     console.error(`❌ Error posting tournament message:`, error.message);

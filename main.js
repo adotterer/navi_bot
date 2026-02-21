@@ -9,6 +9,7 @@ import { handleQuestion } from './src/messages/questionHandler.js';
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
 import { initializeScheduler } from './src/shared/scheduler.js';
 import { checkTodaysTournaments } from './src/tournaments/dailyTournamentCheck.js';
+import { buildTournamentEmbed } from './src/tournaments/tournamentEmbed.js';
 import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaCommand.js';
 import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler.js';
 import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
@@ -413,38 +414,10 @@ client.on("messageCreate", async (message) => {
                 return;
             }
 
-            // Post one message per tournament
+            // Post one embed per tournament
             for (const tournament of tournaments) {
-                console.log(tournament);
-                const startTime = new Date(tournament.startAt * 1000).toLocaleTimeString('en-US', { 
-                    hour: '2-digit', 
-                    minute: '2-digit', 
-                    timeZone: 'America/New_York'
-                });
-                const streamInfo = (tournament.streams && tournament.streams.length > 0)
-                    ? tournament.streams.map(s => {
-                        const source = (s.streamSource || '').toString().toUpperCase();
-                        const label = `${s.streamName} (${source || 'Stream'})`;
-                        let url = source === 'YOUTUBE'
-                            ? `https://www.youtube.com/@${encodeURIComponent(s.streamName)}`
-                            : `https://www.twitch.tv/${encodeURIComponent(s.streamName)}`;
-                        return `[${label}](${url})`;
-                    }).join(', ')
-                    : 'No streams listed';
-
-                const playersList = tournament.zeldaPlayers
-                    .map(p => `• ${p.gamerTag}`)
-                    .join('\n');
-
-                const startggUrl = `https://www.start.gg/${tournament.tournamentSlug}`;
-                const messageContent = `🏆 **${tournament.tournamentName}**\n` +
-                    `📅 Start: ${startTime} EST\n` +
-                    `🎮 Event: ${tournament.eventName}\n` +
-                    `👤 Zelda Player(s):\n${playersList}\n` +
-                    `📺 Streams: ${streamInfo}\n` +
-                    `🔗 [Tournament page](${startggUrl})`;
-
-                await message.channel.send(messageContent);
+                const embed = buildTournamentEmbed(tournament);
+                await message.channel.send({ embeds: [embed] });
             }
         } catch (error) {
             console.error("Error checking tournaments:", error);
