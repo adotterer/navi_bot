@@ -68,8 +68,9 @@ client.on("clientReady", () => {
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
-    // Use isDMBased() so partial DM channels are detected (per discord.js DMChannel docs)
-    if (message.channel?.isDMBased?.()) {
+    // DMs: isDMBased() for full/partial DM channels, or no guild (fallback)
+    const isDM = message.channel?.isDMBased?.() || !message.guild;
+    if (isDM) {
         console.log(`📩 DM from ${message.author.tag}: ${(message.content || '').slice(0, 80)}`);
         try {
             await handleDMMessage(message);

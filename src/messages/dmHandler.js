@@ -1,11 +1,10 @@
-import { ChannelType } from 'discord.js';
 import { handleQuestion } from './questionHandler.js';
 import { handleFrameDataQuestion } from '../stats/frameDataHelper.js';
 import { handleDocs, handleFaq, handleAliases } from './faqAndAliasHandler.js';
 
 export async function handleDMMessage(message) {
-    if (message.channel?.type !== ChannelType.DM) return;
     if (message.author.bot) return;
+    // Caller (main.js) already verified this is a DM; don't re-check channel.type (PartialDMChannel may not have type set)
 
     const content = (message.content || '').trim().toLowerCase();
 
