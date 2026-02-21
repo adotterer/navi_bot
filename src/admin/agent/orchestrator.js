@@ -391,8 +391,12 @@ export async function runPipeline(runId, opts = {}) {
         }
 
         const allEdits = [];
-        const limitPlanners = pLimit(Math.max(1, Math.min(5, maxParallelPlanners)));
-        const limitCoders = pLimit(Math.max(1, Math.min(10, maxParallelCoders)));
+        const isClaude = typeof model === 'string' && model.trim().toLowerCase().startsWith('claude-');
+        // Claude org limit 30k input tokens/min: run planners and coders one at a time to avoid 429s.
+        const plannersConcurrency = isClaude ? 1 : Math.max(1, Math.min(5, maxParallelPlanners));
+        const codersConcurrency = isClaude ? 1 : Math.max(1, Math.min(10, maxParallelCoders));
+        const limitPlanners = pLimit(plannersConcurrency);
+        const limitCoders = pLimit(codersConcurrency);
 
         const shouldRunPlanning = !resume || !allSteps?.length;
         if (shouldRunPlanning) {

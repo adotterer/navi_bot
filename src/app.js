@@ -35,11 +35,21 @@ export function createApp() {
 
     app.use(express.static('public'));
     app.use('/exports', express.static('.'));
+
+    // Ask crawlers not to index the site (admin/internal use).
+    app.get('/robots.txt', (req, res) => {
+        res.type('text/plain');
+        res.send('User-agent: *\nDisallow: /\n');
+    });
+
     app.get('/', (req, res) => {
         res.send(`
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
     <title>Navi Bot</title>
     <style>
         :root {

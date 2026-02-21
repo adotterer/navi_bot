@@ -89,7 +89,7 @@ router.get('/', (req, res) => {
                   <span>Audit log</span>
                   <span id="run-timer" class="ml-auto text-xs font-mono text-slate-400 tabular-nums hidden">0:00</span>
                 </div>
-                <div id="log-container" class="bg-slate-900 text-slate-100 p-4 font-mono text-sm flex-1 overflow-y-auto whitespace-pre-wrap break-words"></div>
+                <div id="log-container" class="bg-slate-900 text-slate-100 p-4 font-mono text-sm flex-1 min-h-0 max-h-[420px] overflow-y-auto whitespace-pre-wrap break-words"></div>
                 <div id="run-tokens-bar" class="hidden border-t border-slate-100 dark:border-slate-700 px-4 py-1.5 text-xs text-slate-400 flex items-center gap-1">
                   <span id="run-tokens"></span>
                 </div>
@@ -191,9 +191,9 @@ router.get('/', (req, res) => {
                 <button type="button" id="docs-save-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-1.5 px-4 text-sm hover:bg-emerald-700">Save docs</button>
               </div>
             </section>
-            <section id="step-results-area" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden hidden flex-shrink-0">
-              <div class="border-b border-slate-200 dark:border-slate-700 px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300">Step results</div>
-              <ul id="step-results-list" class="p-4 list-disc list-inside text-sm text-slate-600 space-y-1"></ul>
+            <section id="step-results-area" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden hidden flex-shrink-0 flex flex-col max-h-[280px]">
+              <div class="border-b border-slate-200 dark:border-slate-700 px-3 py-1.5 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300 flex-shrink-0">Step results</div>
+              <ul id="step-results-list" class="p-2 space-y-0.5 overflow-y-auto min-h-0 text-sm text-slate-600 dark:text-slate-400 list-none"></ul>
             </section>
           </div>
           <div id="files-area" class="mx-4 mb-4 hidden border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 overflow-hidden flex-shrink-0">
@@ -239,6 +239,7 @@ router.get('/', (req, res) => {
   var prLink = document.getElementById('pr-link');
   var errorMsg = document.getElementById('error-msg');
   var currentRunId = null;
+  var currentModel = '';
   var scrolledToPrRunId = null;
   var currentRunMode = 'pr';
   var currentAuditReportMarkdown = '';
@@ -247,6 +248,59 @@ router.get('/', (req, res) => {
   var eventSource = null;
   var runStartedAt = 0;
   var timerInterval = null;
+  var pipelineThrottleTimer = null;
+  var pipelinePendingStatus = null;
+  var pipelinePendingRunData = null;
+  var PIPELINE_THROTTLE_MS = 120;
+  var logBuffer = [];
+  var logFlushTimer = null;
+  var LOG_FLUSH_MS = 120;
+
+  function abbreviateModel(id) {
+    if (!id || typeof id !== 'string') return 'system';
+    var parts = id.trim().toLowerCase().split('-').filter(function(p) { return !/^\d{8,}$/.test(p); });
+    return parts.slice(0, 3).map(function(p) {
+      if (/^\d/.test(p)) return p;
+      return p.charAt(0).toUpperCase() + p.slice(1);
+    }).join(' ') || 'system';
+  }
+
+  var logStageConfig = {
+    research: { label: 'Researcher', tip: 'Breaks down the mission into a high-level flight plan (list of tasks).', class: 'bg-sky-500/20 text-sky-300 border border-sky-500/40' },
+    planning: { label: 'Planner', tip: 'Turns each task into concrete implementation steps with files.', class: 'bg-amber-500/20 text-amber-300 border border-amber-500/40' },
+    coding: { label: 'Coder', tip: 'Implements each step as code edits (patches).', class: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' },
+    reviewing: { label: 'Review', tip: 'Reviews edits and can request fixes before PR.', class: 'bg-violet-500/20 text-violet-300 border border-violet-500/40' },
+    creating_pr: { label: 'PR', tip: 'Creates the pull request with collected edits.', class: 'bg-slate-500/20 text-slate-300 border border-slate-500/40' },
+    tester: { label: 'Quality', tip: 'Reviews the branch diff and produces a Merge / Request changes report.', class: 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' },
+    done: { label: 'Done', tip: 'Run completed.', class: 'bg-green-500/20 text-green-300 border border-green-500/40' },
+    error: { label: 'Error', tip: 'Run failed or encountered an error.', class: 'bg-red-500/20 text-red-300 border border-red-500/40' },
+    cancelled: { label: 'Cancelled', tip: 'Run was stopped by user.', class: 'bg-slate-500/20 text-slate-400 border border-slate-500/40' }
+  };
+  function getStageConfig(stage) {
+    return logStageConfig[stage] || { label: stage || 'System', tip: 'Mission control log.', class: 'bg-slate-600/30 text-slate-400 border border-slate-500/40' };
+  }
+  function appendLogLine(container, stage, message, modelLabel) {
+    var line = document.createElement('div');
+    line.className = 'log-line flex items-center gap-2 py-0.5 flex-wrap';
+    var cfg = getStageConfig(stage);
+    if (modelLabel) {
+      var modelSpan = document.createElement('span');
+      modelSpan.className = 'text-slate-500 text-xs flex-shrink-0';
+      modelSpan.textContent = '[' + modelLabel + '] ';
+      line.appendChild(modelSpan);
+    }
+    var pill = document.createElement('span');
+    pill.className = 'log-pill px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0 ' + cfg.class;
+    pill.textContent = cfg.label;
+    pill.title = cfg.tip;
+    line.appendChild(pill);
+    var msgSpan = document.createElement('span');
+    msgSpan.className = 'text-slate-100 break-words';
+    msgSpan.textContent = (message || '').trim();
+    line.appendChild(msgSpan);
+    container.appendChild(line);
+    container.scrollTop = container.scrollHeight;
+  }
 
   function startTimer(startTs) {
     runStartedAt = startTs || Date.now();
@@ -390,6 +444,12 @@ router.get('/', (req, res) => {
 
   var phaseBaseClass = 'phase px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-medium transition-all text-sm ';
   var arrowHtml = '<span class="text-slate-300 dark:text-slate-500">\u2192</span>';
+  var lastRenderedPipelineMode = null;
+  function ensurePipelineRenderedForMode(mode) {
+    if (mode === lastRenderedPipelineMode) return;
+    lastRenderedPipelineMode = mode;
+    renderPipelineByMode(mode);
+  }
   function renderPipelineByMode(mode) {
     var inner = document.getElementById('pipeline-inner');
     if (!inner) return;
@@ -479,7 +539,7 @@ router.get('/', (req, res) => {
       }
     });
   }
-  renderPipelineByMode('pr');
+  ensurePipelineRenderedForMode('pr');
 
   function repoCacheKey(branch, path) { return branch + ':' + (path || ''); }
   function fetchTree(branch, path, cb) {
@@ -662,6 +722,8 @@ router.get('/', (req, res) => {
   }
 
   function loadPastRun(runId) {
+    closeStream();
+    stopTimer();
     fetch('/admin/agent/run/' + encodeURIComponent(runId), { credentials: 'same-origin' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
@@ -674,6 +736,7 @@ router.get('/', (req, res) => {
           if (modelEl.selectedIndex < 0 && modelEl.options.length) modelEl.value = modelEl.options[0].value;
         }
         currentRunId = runId;
+        currentModel = data.model || '';
         currentRunMode = data.runMode || 'pr';
         docsPopulated = true;
         runArea.classList.remove('hidden');
@@ -685,7 +748,7 @@ router.get('/', (req, res) => {
         stopBtn.disabled = !isActive;
         stopBtn.textContent = 'Stop run';
         startBtn.disabled = isActive;
-        renderPipelineByMode(currentRunMode);
+        ensurePipelineRenderedForMode(currentRunMode);
         updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults, runMode: data.runMode });
         updateResumeButton(data.status);
         populateDocsPanel(data);
@@ -702,19 +765,22 @@ router.get('/', (req, res) => {
           stepList.innerHTML = data.stepResults.map(function(sr) {
             var what = sr.step && sr.step.what ? sr.step.what : 'Step';
             var ok = sr.status === 'done';
-            var reason = sr.reason ? ': ' + escapeHtml(sr.reason) : '';
-            return '<li class="' + (ok ? 'text-emerald-600' : 'text-red-600') + '">' + escapeHtml(what) + ' — ' + sr.status + reason + '</li>';
+            var reason = sr.reason ? ': ' + sr.reason : '';
+            var title = what + (reason ? ' — ' + sr.status + reason : ' — ' + sr.status);
+            var pillClass = ok ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-red-500/20 text-red-600 dark:text-red-400';
+            var pillLabel = ok ? 'Done' : 'Failed';
+            return '<li class="flex items-center gap-2 py-1 px-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700/50" title="' + escapeHtml(title) + '"><span class="step-pill px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0 ' + pillClass + '">' + pillLabel + '</span><span class="truncate min-w-0">' + escapeHtml(what) + '</span></li>';
           }).join('');
           stepArea.classList.remove('hidden');
         } else {
           stepArea.classList.add('hidden');
         }
-        logContainer.textContent = '';
+        logContainer.innerHTML = '';
         if (data.logs && data.logs.length) {
+          var modelLabel = abbreviateModel(currentModel);
           data.logs.forEach(function(entry) {
-            logContainer.textContent += '[' + (entry.role || 'system') + '] ' + (entry.message || '').trim() + String.fromCharCode(10);
+            appendLogLine(logContainer, entry.stage, entry.message, modelLabel);
           });
-          logContainer.scrollTop = logContainer.scrollHeight;
         }
         document.getElementById('agent-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
       })
@@ -815,7 +881,7 @@ router.get('/', (req, res) => {
     return '<p class="mt-2">' + s + '</p>';
   }
 
-  function showResult(prUrl, err, data) {
+  function applyResultArea(prUrl, err, data) {
     resultArea.classList.remove('hidden');
     var resultNote = document.getElementById('result-note');
     var auditWrap = document.getElementById('audit-report-wrap');
@@ -889,32 +955,39 @@ router.get('/', (req, res) => {
     } else {
       if (resultNote) resultNote.classList.add('hidden');
     }
+  }
+
+  function showResult(prUrl, err, data) {
+    applyResultArea(prUrl, err, data);
     if (currentRunId) {
       fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
         .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (data.error) return;
-          currentRunMode = data.runMode || 'pr';
-          renderPipelineByMode(currentRunMode);
-          updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults, runMode: data.runMode });
-          updateResumeButton(data.status);
-          populateDocsPanel(data);
-          if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
-            showResult(data.prUrl, data.error, data);
-          }
-          if (data.edits && data.edits.length) showFileBrowser(data.edits);
-          if (data.stepResults && data.stepResults.length) {
+        .then(function(fetched) {
+          if (fetched.error) return;
+          currentRunMode = fetched.runMode || 'pr';
+          ensurePipelineRenderedForMode(currentRunMode);
+          updatePipeline(fetched.status || 'done', { flightPlan: fetched.flightPlan, stepResults: fetched.stepResults, runMode: fetched.runMode });
+          updateResumeButton(fetched.status);
+          populateDocsPanel(fetched);
+          if (fetched.edits && fetched.edits.length) showFileBrowser(fetched.edits);
+          if (fetched.stepResults && fetched.stepResults.length) {
             var area = document.getElementById('step-results-area');
             var list = document.getElementById('step-results-list');
-            list.innerHTML = data.stepResults.map(function(sr) {
+            list.innerHTML = fetched.stepResults.map(function(sr) {
               var what = sr.step && sr.step.what ? sr.step.what : 'Step';
-              var status = sr.status === 'done' ? 'done' : 'failed';
-              var reason = sr.reason ? ': ' + escapeHtml(sr.reason) : '';
-              return '<li class="' + (status === 'done' ? 'text-emerald-600' : 'text-red-600') + '">' + escapeHtml(what) + ' — ' + status + reason + '</li>';
+              var ok = sr.status === 'done';
+              var reason = sr.reason ? ': ' + sr.reason : '';
+              var title = what + (reason ? ' — ' + (ok ? 'done' : 'failed') + reason : ' — ' + (ok ? 'done' : 'failed'));
+              var pillClass = ok ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-red-500/20 text-red-600 dark:text-red-400';
+              var pillLabel = ok ? 'Done' : 'Failed';
+              return '<li class="flex items-center gap-2 py-1 px-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700/50" title="' + escapeHtml(title) + '"><span class="step-pill px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0 ' + pillClass + '">' + pillLabel + '</span><span class="truncate min-w-0">' + escapeHtml(what) + '</span></li>';
             }).join('');
             area.classList.remove('hidden');
           } else {
             document.getElementById('step-results-area').classList.add('hidden');
+          }
+          if (fetched.status === 'done' || fetched.status === 'error' || fetched.status === 'cancelled') {
+            applyResultArea(fetched.prUrl, fetched.error, fetched);
           }
         })
         .catch(function() {});
@@ -933,7 +1006,49 @@ router.get('/', (req, res) => {
       .catch(function() {});
   }
 
+  function flushPipelineThrottle() {
+    if (pipelineThrottleTimer) {
+      clearTimeout(pipelineThrottleTimer);
+      pipelineThrottleTimer = null;
+    }
+    if (pipelinePendingStatus != null) {
+      updatePipeline(pipelinePendingStatus, pipelinePendingRunData || {});
+      pipelinePendingStatus = null;
+      pipelinePendingRunData = null;
+    }
+  }
+
+  function throttleUpdatePipeline(status, runData) {
+    pipelinePendingStatus = status;
+    pipelinePendingRunData = runData || {};
+    if (pipelineThrottleTimer) return;
+    pipelineThrottleTimer = setTimeout(function() {
+      pipelineThrottleTimer = null;
+      if (pipelinePendingStatus != null) {
+        updatePipeline(pipelinePendingStatus, pipelinePendingRunData);
+        pipelinePendingStatus = null;
+        pipelinePendingRunData = null;
+      }
+    }, PIPELINE_THROTTLE_MS);
+  }
+
+  function flushLogBuffer() {
+    if (logFlushTimer) {
+      clearTimeout(logFlushTimer);
+      logFlushTimer = null;
+    }
+    if (logBuffer.length) {
+      var modelLabel = abbreviateModel(currentModel);
+      logBuffer.forEach(function(item) {
+        appendLogLine(logContainer, item.stage, item.message, modelLabel);
+      });
+      logBuffer = [];
+    }
+  }
+
   function closeStream() {
+    flushPipelineThrottle();
+    flushLogBuffer();
     if (eventSource) {
       eventSource.close();
       eventSource = null;
@@ -955,7 +1070,7 @@ router.get('/', (req, res) => {
     if (runPlaceholder) runPlaceholder.classList.add('hidden');
     var missionEl = document.getElementById('run-mission');
     if (missionEl) missionEl.innerHTML = renderMissionMarkdown(promptEl.value.trim());
-    logContainer.textContent = '';
+    logContainer.innerHTML = '';
     document.getElementById('step-results-area').classList.add('hidden');
     document.getElementById('step-results-list').innerHTML = '';
     resultArea.classList.add('hidden');
@@ -977,7 +1092,7 @@ router.get('/', (req, res) => {
     runStage.textContent = '';
     var mode = (document.getElementById('mode') && document.getElementById('mode').value) || 'pr';
     currentRunMode = mode;
-    renderPipelineByMode(mode);
+    ensurePipelineRenderedForMode(mode);
     updatePipeline('research', { runMode: mode });
     startTimer();
 
@@ -1005,6 +1120,7 @@ router.get('/', (req, res) => {
     .then(function(data) {
       if (!data.runId) throw new Error(data.error || 'No runId');
       currentRunId = data.runId;
+      currentModel = model || '';
       runStatus.textContent = 'Running…';
       stopBtn.disabled = false;
       stopBtn.textContent = 'Stop run';
@@ -1064,14 +1180,23 @@ router.get('/', (req, res) => {
         try {
           var entry = JSON.parse(ev.data);
           if (entry.type === 'log') {
-            var prefix = '[' + (entry.role || 'system') + '] ';
-            var msg = (entry.message || '').trim();
-            logContainer.textContent += prefix + msg + String.fromCharCode(10);
-            logContainer.scrollTop = logContainer.scrollHeight;
-            if (entry.stage) updatePipeline(entry.stage, { runMode: currentRunMode });
+            logBuffer.push({ stage: entry.stage || 'system', message: entry.message || '' });
+            if (!logFlushTimer) {
+              logFlushTimer = setTimeout(function() {
+                logFlushTimer = null;
+                if (logBuffer.length) {
+                  var modelLabel = abbreviateModel(currentModel);
+                  logBuffer.forEach(function(item) {
+                    appendLogLine(logContainer, item.stage, item.message, modelLabel);
+                  });
+                  logBuffer = [];
+                }
+              }, LOG_FLUSH_MS);
+            }
+            if (entry.stage) throttleUpdatePipeline(entry.stage, { runMode: currentRunMode });
           } else if (entry.type === 'status') {
             runStage.textContent = entry.status || '';
-            updatePipeline(entry.status || '', { runMode: currentRunMode });
+            throttleUpdatePipeline(entry.status || '', { runMode: currentRunMode });
             maybePopulateDocs();
             updateTokenDisplay(entry.inputTokens, entry.outputTokens);
           } else if (entry.type === 'docs') {

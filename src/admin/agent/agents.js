@@ -40,6 +40,37 @@ function isClaudeModel(modelId) {
 const MODEL = process.env.AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
 const GEMINI_TIMEOUT_MS = Number(process.env.AGENT_GEMINI_TIMEOUT_MS) || 180000;
 
+/** Anthropic rate limit: wait 65s then retry (per-minute limits). */
+const ANTHROPIC_429_DELAY_MS = 65000;
+const ANTHROPIC_429_MAX_RETRIES = 2;
+
+function isRateLimitError(err) {
+    if (!err) return false;
+    if (typeof Anthropic?.RateLimitError !== 'undefined' && err instanceof Anthropic.RateLimitError) return true;
+    if (err.status === 429) return true;
+    const msg = err.message && String(err.message);
+    if (msg && (msg.includes('rate_limit') || msg.includes('30,000 input tokens per minute'))) return true;
+    if (err.error && (err.error.type === 'rate_limit_error' || err.error.type === 'rate_limit')) return true;
+    return false;
+}
+
+async function withRetry429(fn) {
+    let lastErr;
+    for (let attempt = 0; attempt <= ANTHROPIC_429_MAX_RETRIES; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            lastErr = err;
+            if (isRateLimitError(err) && attempt < ANTHROPIC_429_MAX_RETRIES) {
+                await new Promise((r) => setTimeout(r, ANTHROPIC_429_DELAY_MS));
+                continue;
+            }
+            throw err;
+        }
+    }
+    throw lastErr;
+}
+
 /**
  * Unified non-streaming generate. Returns Gemini-style { text, usageMetadata }.
  * Routes to Gemini or Claude based on model id.
@@ -52,14 +83,16 @@ async function generateContent({ model, systemPrompt, userContent, maxOutputToke
         const system = responseMimeType === 'application/json'
             ? (systemPrompt + '\n\nRespond with a single JSON array only, no markdown fences or extra text.')
             : systemPrompt;
-        const message = await client.messages.create(
-            {
-                model: m,
-                max_tokens: maxOutputTokens || 4096,
-                system: system || undefined,
-                messages: [{ role: 'user', content: userContent || '' }],
-            },
-            signal ? { signal } : undefined
+        const message = await withRetry429(() =>
+            client.messages.create(
+                {
+                    model: m,
+                    max_tokens: maxOutputTokens || 4096,
+                    system: system || undefined,
+                    messages: [{ role: 'user', content: userContent || '' }],
+                },
+                signal ? { signal } : undefined
+            )
         );
         const text = (message.content || [])
             .filter((b) => b.type === 'text')
@@ -93,15 +126,17 @@ async function generateContentStream({ model, systemPrompt, userContent, maxOutp
         const system = responseMimeType === 'application/json'
             ? (systemPrompt + '\n\nRespond with a single JSON array only, no markdown fences or extra text.')
             : systemPrompt;
-        const stream = await client.messages.create(
-            {
-                model: m,
-                max_tokens: maxOutputTokens || 4096,
-                system: system || undefined,
-                messages: [{ role: 'user', content: userContent || '' }],
-                stream: true,
-            },
-            signal ? { signal } : undefined
+        const stream = await withRetry429(() =>
+            client.messages.create(
+                {
+                    model: m,
+                    max_tokens: maxOutputTokens || 4096,
+                    system: system || undefined,
+                    messages: [{ role: 'user', content: userContent || '' }],
+                    stream: true,
+                },
+                signal ? { signal } : undefined
+            )
         );
         const result = { usageMetadata: { promptTokenCount: 0, candidatesTokenCount: 0 } };
         result[Symbol.asyncIterator] = async function* () {
