@@ -7,7 +7,7 @@ const FONTS =
     '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">';
 
 function adminHead(title) {
-    return `<meta charset="utf-8"><title>${escapeHtml(title)} – Navi Admin</title>${FONTS}${STYLESHEET}<script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>`;
+    return `<meta charset="utf-8"><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');}catch(_){}})();</script><title>${escapeHtml(title)} – Navi Admin</title>${FONTS}${STYLESHEET}`;
 }
 
 function adminNav(active = 'dashboard') {
@@ -64,7 +64,7 @@ function adminNav(active = 'dashboard') {
 }
 
 function adminContainer(innerHtml) {
-    return `<main class="max-w-5xl mx-auto px-4 py-8 font-sans">${innerHtml}</main>`;
+    return `<main class="max-w-5xl mx-auto px-4 py-8 font-sans bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 transition-colors">${innerHtml}</main>`;
 }
 
 function breadcrumb(items) {

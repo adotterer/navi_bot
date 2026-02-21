@@ -47,8 +47,8 @@ router.get('/', async (req, res) => {
             return `
         <tr class="emoji-row border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
           <td class="py-2 px-3 w-10 align-middle">${img}</td>
-          <td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value="${escapeHtml(label)}" placeholder="e.g. Navi bullet" /></td>
-          <td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" value="${escapeHtml(code)}" placeholder="<:name:id>" /></td>
+          <td class="py-2 px-3"><input type="text" class="label-input w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-200 px-2 py-1.5 text-sm" value="${escapeHtml(label)}" placeholder="e.g. Navi bullet" /></td>
+          <td class="py-2 px-3"><input type="text" class="code-input w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-200 px-2 py-1.5 text-sm font-mono" value="${escapeHtml(code)}" placeholder="<:name:id>" /></td>
           <td class="py-2 px-3 w-20"><button type="button" class="delete-emoji-row text-sm text-slate-500 hover:text-red-600 font-medium">Remove</button></td>
         </tr>`;
         })
@@ -175,7 +175,7 @@ router.get('/', async (req, res) => {
   `)}
 `;
     res.send(`<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>${adminHead('Emojis')}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
@@ -328,7 +328,7 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
   `)}
 `;
         res.status(200).send(`<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>${adminHead('Emojis')}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
