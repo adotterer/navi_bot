@@ -511,7 +511,7 @@ router.get('/', (req, res) => {
         li.dataset.name = entryName;
         if (entryType === 'dir') {
           li.className = 'repo-dir cursor-pointer px-3 py-1 hover:bg-slate-200 flex items-center gap-1';
-          li.innerHTML = '<span class="repo-dir-icon text-slate-500">\u25B6</span><span class="truncate">' + escapeHtml(entryName) + '</span>';
+          li.innerHTML = '<span class="repo-dir-icon text-slate-500">\u25B6</span><span class="truncate text-zinc-900 dark:text-zinc-100">' + escapeHtml(entryName) + '</span>';
           li.addEventListener('click', function(ev) {
             ev.stopPropagation();
             var key = repoCacheKey(branch, entryPath);
@@ -532,7 +532,7 @@ router.get('/', (req, res) => {
           });
         } else {
           li.className = 'repo-file cursor-pointer px-3 py-1 hover:bg-slate-200 flex items-center gap-1 pl-6';
-          li.innerHTML = '<span class="truncate text-slate-700">' + escapeHtml(entryName) + '</span>';
+          li.innerHTML = '<span class="truncate text-zinc-900 dark:text-zinc-100">' + escapeHtml(entryName) + '</span>';
           li.addEventListener('click', function(ev) {
             ev.stopPropagation();
             repoContentHeader.textContent = entryPath;
