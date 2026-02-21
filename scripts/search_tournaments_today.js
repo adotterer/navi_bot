@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { executeQuery } from './src/tournaments/startggClient.js';
+import { executeQuery } from '../src/tournaments/startggClient.js';
 
 dotenv.config();
 

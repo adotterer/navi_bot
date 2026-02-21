@@ -83,7 +83,7 @@ async function showTodaysParticipants() {
 
         console.log('='.repeat(70));
         console.log(`\nTotal shown: ${totalParticipants} participants\n`);
-        console.log('💡 Tip: Add any player with: node src/tournaments/addZeldaPlayer.js "Gamer Tag"\n');
+        console.log('💡 Tip: Add any player with: node scripts/addZeldaPlayer.js "Gamer Tag"\n');
 
     } catch (error) {
         console.error('❌ Error:', error.message);

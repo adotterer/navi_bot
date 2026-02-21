@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import fs from 'fs/promises';
-import { getActiveTournaments, executeQuery } from './startggClient.js';
+import { getActiveTournaments, executeQuery } from '../src/tournaments/startggClient.js';
 
 dotenv.config();
 
@@ -29,7 +29,7 @@ async function findZeldaPlayersQuick() {
         }
 
         const playerIdMap = new Map(zeldaPlayers.map(p => [p.playerId, p]));
-        
+
         console.log(`\n📋 Monitoring ${zeldaPlayers.length} Zelda player(s):`);
         zeldaPlayers.forEach(p => {
             console.log(`   • ${p.gamerTag} (ID: ${p.playerId})`);
@@ -101,7 +101,7 @@ async function findZeldaPlayersQuick() {
 
                             entrant.participants.forEach(participant => {
                                 const playerId = participant.player?.id;
-                                
+
                                 if (playerIdMap.has(playerId)) {
                                     const zeldaPlayer = playerIdMap.get(playerId);
                                     foundMatches.push({

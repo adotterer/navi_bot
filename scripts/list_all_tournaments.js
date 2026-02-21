@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { getActiveTournaments } from './src/tournaments/startggClient.js';
+import { getActiveTournaments } from '../src/tournaments/startggClient.js';
 
 dotenv.config();
 
@@ -23,7 +23,6 @@ async function listAllTournaments() {
             console.log('');
         });
 
-        // Check if any mention NEPA or SHOWTIME
         const nepa = tournaments.filter(t => t.name.toLowerCase().includes('nepa'));
         const showtime = tournaments.filter(t => t.name.toLowerCase().includes('showtime'));
         const sd = tournaments.filter(t => t.name.toLowerCase().includes('sd sundays'));

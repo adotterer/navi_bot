@@ -6,26 +6,30 @@
 navi_bot2/
 ├── main.js                          # Bot setup & handler imports (clean entry point)
 ├── src/
-│   ├── shared/
-│   │   └── s3Helper.js             # S3 operations, message fetching utilities
-│   ├── export/
-│   │   └── exportHandler.js        # !export falco, !export matchups commands
-│   ├── matchups/
-│   │   ├── characterAliases.js     # Nickname aliases, character resolution
-│   │   └── matchupHandler.js       # !match-up-notes, !mu-question, refinement logic
-│   └── messages/
-│       └── messageHandlers.js      # "should have" trigger, arena LAN warning
+│   ├── admin/                       # Admin UI (Express routes, auth, prompts, data, agent/Missions)
+│   ├── app.js                       # Express app (mounts admin, webhooks, static)
+│   ├── shared/                      # S3, scheduler, messageSplitter, aliasSync, etc.
+│   ├── export/                      # !export falco, !export matchups
+│   ├── matchups/                    # characterAliases, matchupHandler (!mu, !mq)
+│   ├── messages/                    # messageHandlers, questionHandler, faqAndAliasHandler, dmHandler
+│   ├── stats/                       # statsHandler, frameDataHelper
+│   └── tournaments/                 # dailyTournamentCheck, tournamentEmbed, addZeldaCommand, startggClient
+├── scripts/                         # CLI tools (tournaments, Zelda list); not used at bot runtime
+├── local_app_only/                  # Ad-hoc dev/test scripts; not a formal test suite
 ├── package.json
 └── README.md
 ```
 
 ## Module Breakdown
 
-### `main.js` (Entry Point - ~75 lines)
+### `main.js` (Entry Point)
 - Express server setup
 - Discord bot initialization
 - Message event listeners that delegate to handlers
 - No business logic - just routing
+
+### `src/admin/`
+Admin web UI (login, prompts, data CSV/framedata, aliases, emoji, cost, and the **Missions** agent pipeline). Mounted under `/admin` by `src/app.js`. Agent logic lives in `src/admin/agent/` (orchestrator, runStore, repoBrowser, prompts, PR creation).
 
 ### `src/shared/s3Helper.js`
 **Exported Functions:**
