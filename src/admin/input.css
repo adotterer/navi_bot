@@ -27,6 +27,9 @@
     flex-wrap: nowrap;
     gap: 0.5rem;
     min-height: 0;
+    max-height: 200px;
+    opacity: 1;
+    overflow: hidden;
   }
   .save-bar-toggle {
     flex-shrink: 0;
@@ -40,21 +43,38 @@
     border: none;
     background: transparent;
     color: inherit;
+    position: relative;
+    transition: opacity 0.2s ease-in-out;
+  }
+  .save-bar-toggle svg {
+    position: absolute;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  .save-bar-animated .save-bar-toggle svg {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out;
   }
   .save-bar-toggle:hover {
     opacity: 0.85;
   }
   .save-bar-toggle .save-bar-icon-up {
-    display: none;
+    opacity: 0;
+    transform: scale(0.5) rotate(-180deg);
+  }
+  .save-bar-animated .save-bar-content {
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out;
   }
   .save-bar-minimized .save-bar-content {
-    display: none;
+    max-height: 0;
+    opacity: 0;
   }
   .save-bar-minimized .save-bar-toggle .save-bar-icon-down {
-    display: none;
+    opacity: 0;
+    transform: scale(0.5) rotate(180deg);
   }
   .save-bar-minimized .save-bar-toggle .save-bar-icon-up {
-    display: block;
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
   }
 }
 
