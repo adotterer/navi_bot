@@ -1,24 +1,24 @@
     __BREADCRUMB__
     <style id="agent-prism-override">
-      /* Force Prism Tomorrow token colors in repo/files panels (override parent text-slate-100) */
+      /* Vibrant rainbow Prism theme for repo/files panels (dark background) */
       #repo-content pre[class*="language-"],
-      #files-content pre[class*="language-"] { color: #ccc; background: #2d2d2d !important; padding: 1rem; margin: 0; }
-      #repo-content pre[class*="language-"] .token.comment, #repo-content pre[class*="language-"] .token.block-comment,
-      #files-content pre[class*="language-"] .token.comment, #files-content pre[class*="language-"] .token.block-comment { color: #999; }
-      #repo-content pre[class*="language-"] .token.punctuation, #files-content pre[class*="language-"] .token.punctuation { color: #ccc; }
-      #repo-content pre[class*="language-"] .token.tag, #repo-content pre[class*="language-"] .token.attr-name,
-      #files-content pre[class*="language-"] .token.tag, #files-content pre[class*="language-"] .token.attr-name { color: #e2777a; }
-      #repo-content pre[class*="language-"] .token.function-name, #files-content pre[class*="language-"] .token.function-name { color: #6196cc; }
-      #repo-content pre[class*="language-"] .token.boolean, #repo-content pre[class*="language-"] .token.number, #repo-content pre[class*="language-"] .token.function,
-      #files-content pre[class*="language-"] .token.boolean, #files-content pre[class*="language-"] .token.number, #files-content pre[class*="language-"] .token.function { color: #f08d49; }
-      #repo-content pre[class*="language-"] .token.property, #repo-content pre[class*="language-"] .token.class-name, #repo-content pre[class*="language-"] .token.constant,
-      #files-content pre[class*="language-"] .token.property, #files-content pre[class*="language-"] .token.class-name, #files-content pre[class*="language-"] .token.constant { color: #f8c555; }
-      #repo-content pre[class*="language-"] .token.selector, #repo-content pre[class*="language-"] .token.keyword, #repo-content pre[class*="language-"] .token.builtin,
-      #files-content pre[class*="language-"] .token.selector, #files-content pre[class*="language-"] .token.keyword, #files-content pre[class*="language-"] .token.builtin { color: #cc99cd; }
-      #repo-content pre[class*="language-"] .token.string, #repo-content pre[class*="language-"] .token.attr-value, #repo-content pre[class*="language-"] .token.regex, #repo-content pre[class*="language-"] .token.variable,
-      #files-content pre[class*="language-"] .token.string, #files-content pre[class*="language-"] .token.attr-value, #files-content pre[class*="language-"] .token.regex, #files-content pre[class*="language-"] .token.variable { color: #7ec699; }
-      #repo-content pre[class*="language-"] .token.operator, #repo-content pre[class*="language-"] .token.entity,
-      #files-content pre[class*="language-"] .token.operator, #files-content pre[class*="language-"] .token.entity { color: #67cdcc; }
+      #files-content pre[class*="language-"] { color: #e2e8f0; background: #1e1e2e !important; padding: 1rem; margin: 0; }
+      .token.comment, .token.block-comment, #repo-content pre[class*="language-"] .token.comment, #repo-content pre[class*="language-"] .token.block-comment,
+      #files-content pre[class*="language-"] .token.comment, #files-content pre[class*="language-"] .token.block-comment { color: #a78bfa; }
+      .token.punctuation, #repo-content pre[class*="language-"] .token.punctuation, #files-content pre[class*="language-"] .token.punctuation { color: #94a3b8; }
+      .token.tag, .token.attr-name, #repo-content pre[class*="language-"] .token.tag, #repo-content pre[class*="language-"] .token.attr-name,
+      #files-content pre[class*="language-"] .token.tag, #files-content pre[class*="language-"] .token.attr-name { color: #c084fc; }
+      .token.function-name, #repo-content pre[class*="language-"] .token.function-name, #files-content pre[class*="language-"] .token.function-name { color: #60a5fa; }
+      .token.boolean, .token.number, .token.function, #repo-content pre[class*="language-"] .token.boolean, #repo-content pre[class*="language-"] .token.number, #repo-content pre[class*="language-"] .token.function,
+      #files-content pre[class*="language-"] .token.boolean, #files-content pre[class*="language-"] .token.number, #files-content pre[class*="language-"] .token.function { color: #fb923c; }
+      .token.property, .token.class-name, .token.constant, #repo-content pre[class*="language-"] .token.property, #repo-content pre[class*="language-"] .token.class-name, #repo-content pre[class*="language-"] .token.constant,
+      #files-content pre[class*="language-"] .token.property, #files-content pre[class*="language-"] .token.class-name, #files-content pre[class*="language-"] .token.constant { color: #facc15; }
+      .token.selector, .token.keyword, .token.builtin, #repo-content pre[class*="language-"] .token.selector, #repo-content pre[class*="language-"] .token.keyword, #repo-content pre[class*="language-"] .token.builtin,
+      #files-content pre[class*="language-"] .token.selector, #files-content pre[class*="language-"] .token.keyword, #files-content pre[class*="language-"] .token.builtin { color: #f87171; }
+      .token.string, .token.attr-value, .token.regex, .token.variable, #repo-content pre[class*="language-"] .token.string, #repo-content pre[class*="language-"] .token.attr-value, #repo-content pre[class*="language-"] .token.regex, #repo-content pre[class*="language-"] .token.variable,
+      #files-content pre[class*="language-"] .token.string, #files-content pre[class*="language-"] .token.attr-value, #files-content pre[class*="language-"] .token.regex, #files-content pre[class*="language-"] .token.variable { color: #4ade80; }
+      .token.operator, .token.entity, #repo-content pre[class*="language-"] .token.operator, #repo-content pre[class*="language-"] .token.entity,
+      #files-content pre[class*="language-"] .token.operator, #files-content pre[class*="language-"] .token.entity { color: #22d3d4; }
     </style>
     <div class="flex items-center justify-between mb-8">
       <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Missions</h1>
