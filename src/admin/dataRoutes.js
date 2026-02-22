@@ -317,7 +317,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
       .csv-grid .cell-gif .gif-filename { font-size: 0.7rem; color: #64748b; margin-top: 2px; }
       .csv-grid .cell-move-name span { padding: 0.125rem 0; }
       .csv-grid tbody tr:first-child td span { padding: 0.25rem 0.375rem; padding-left: calc(0.375rem + 1px); }
-      #csv-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
+      #csv-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
       .dark #csv-spreadsheet-wrap .csv-grid td { border-color: #475569; }
       .dark #csv-spreadsheet-wrap .csv-grid .cell-input, .dark #csv-spreadsheet-wrap .csv-grid .cell-textarea { border-color: #475569; background: #334155; color: #f1f5f9; }
       .dark #csv-spreadsheet-wrap .csv-grid .cell-input:focus, .dark #csv-spreadsheet-wrap .csv-grid .cell-textarea:focus { border-color: #10b981; box-shadow: 0 0 0 1px #10b981; }
@@ -566,7 +566,20 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
       ${saveBarToggleButton()}
     </div>
   </div>
-  ${saveBarMinimizeScript('csv-action-bar', 'csv')}
+  <script>
+    (function() {
+      var bar = document.getElementById('csv-action-bar');
+      var toggle = bar.querySelector('.save-bar-toggle');
+      var key = 'save-bar-minimized-csv';
+      if (localStorage.getItem(key) !== 'true') bar.classList.add('visible');
+      if (toggle) {
+        toggle.addEventListener('click', function() {
+          var isVisible = bar.classList.toggle('visible');
+          localStorage.setItem(key, !isVisible);
+        });
+      }
+    })();
+  </script>
 `;
     return `<!DOCTYPE html>
 <html lang="en">
