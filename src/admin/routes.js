@@ -12,7 +12,7 @@ import { emojiRoutes } from './emojiRoutes.js';
 import { commandRoutes } from './commandRoutes.js';
 import { agentRoutes } from './agent/agentRoutes.js';
 import { costRoutes } from './costRoutes.js';
-import { adminHead, adminNav, adminContainer, escapeHtml, s3Badge } from './layout.js';
+import { adminHead, adminNav, adminContainer, renderAdminPage, escapeHtml, s3Badge } from './layout.js';
 import { headS3Key, hasS3KeysWithPrefix } from '../shared/s3Helper.js';
 
 const router = express.Router();
@@ -129,8 +129,11 @@ router.post('/logout', (req, res) => {
     });
 });
 
-// ----- Dashboard (protected) -----
-router.get('/', requireAdmin, async (req, res) => {
+// ----- Home & Dashboard -----
+router.get('/', async (req, res) => {
+    if (!req.session || !req.session.admin) {
+        return res.send(homePage());
+    }
     let s3 = { prompts: false, data: false, aliases: false, emojis: false };
     try {
         const [prompts, data, aliases, emojis] = await Promise.all([
@@ -230,7 +233,7 @@ function twoFAPage(opts = {}) {
 function dashboardPage(s3 = {}, csrfToken = '') {
     const badge = (on) => (on ? s3Badge() : '');
     const logoutCsrf = csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">` : '';
-    const content = `
+    return renderAdminPage('Dashboard', `
   ${adminNav('dashboard')}
   ${adminContainer(`
     <div class="flex items-center justify-between mb-8">
@@ -286,11 +289,24 @@ function dashboardPage(s3 = {}, csrfToken = '') {
       </a>
     </div>
   `)}
-`;
+`);
+}
+
+function homePage() {
     return `<!DOCTYPE html>
-<html lang="en">
-<head>${adminHead('Dashboard')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
+<html lang="en" class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+<head>${adminHead('Home')}</head>
+<body class="min-h-screen font-sans antialiased bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+  <div class="min-h-screen flex flex-col items-center justify-center px-4">
+    <div class="w-full max-w-sm">
+      <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-8 text-center">
+        <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-2">Navi Admin</h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Personal Assistant Bot</p>
+        <a href="/admin/login" class="inline-block w-full rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-4 hover:bg-emerald-700 transition-colors shadow-sm">Enter Dashboard</a>
+      </div>
+    </div>
+  </div>
+</body>
 </html>`;
 }
 

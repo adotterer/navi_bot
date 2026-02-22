@@ -74,6 +74,16 @@ function adminContainerWide(innerHtml) {
     return `<main class="w-full mx-8 px-5 sm:px-8 py-8 font-sans">${innerHtml}</main>`;
 }
 
+function renderAdminPage(title, content, active) {
+    return `<!DOCTYPE html>
+<html lang="en" class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+<head>${adminHead(title)}</head>
+<body class="font-sans antialiased bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">${adminNav(active)}
+  ${adminContainer(content)}
+</body>
+</html>`;
+}
+
 function breadcrumb(items) {
     const parts = items
         .map((item, i) => {
@@ -139,4 +149,4 @@ function saveBarMinimizeScript(barId, storageKey) {
 </script>`;
 }
 
-export { adminHead, adminNav, adminContainer, adminContainerWide, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript };
+export { adminHead, adminNav, adminContainer, adminContainerWide, renderAdminPage, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript };
