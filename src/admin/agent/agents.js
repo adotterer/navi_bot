@@ -5,7 +5,6 @@
  * Model selection routes to Google GenAI or Anthropic (ANTHROPIC_SECRET) by model id.
  */
 import { GoogleGenAI } from '@google/genai';
-import Anthropic from '@anthropic-ai/sdk';
 import { getFileTree } from './codebaseTools.js';
 import { getAgentPrompt, getDepthModifier } from './agentPromptLoader.js';
 import { putToS3 } from '../../shared/s3Helper.js';
@@ -23,20 +22,7 @@ function getGenAI() {
     return _genAI;
 }
 
-let _anthropic = null;
-function getAnthropic() {
-    if (!_anthropic) {
-        const apiKey = process.env.ANTHROPIC_SECRET;
-        if (!apiKey) throw new Error('ANTHROPIC_SECRET must be set to use Claude models.');
-        _anthropic = new Anthropic({ apiKey });
-    }
-    return _anthropic;
-}
 
-/** True if model id is a Claude model (e.g. claude-3-5-sonnet-...). */
-function isClaudeModel(modelId) {
-    return typeof modelId === 'string' && modelId.trim().toLowerCase().startsWith('claude-');
-}
 
 
 const MODEL = process.env.AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
@@ -200,6 +186,7 @@ async function generateContent({ model, systemPrompt, userContent, maxOutputToke
             usageMetadata: {
                 promptTokenCount: usage.input_tokens ?? 0,
                 candidatesTokenCount: usage.output_tokens ?? 0,
+                cachedTokens: 0,
             },
         };
     }
@@ -208,7 +195,14 @@ async function generateContent({ model, systemPrompt, userContent, maxOutputToke
         contents: [{ role: 'user', parts: [{ text: (systemPrompt || '') + '\n\n' + (userContent || '') }] }],
         config: { maxOutputTokens: maxOutputTokens || 4096, responseMimeType, abortSignal: signal },
     });
-    return response;
+    const usage = response.usageMetadata || {};
+    return {
+        text: () => response.text,
+        usageMetadata: {
+            promptTokenCount: usage.promptTokenCount ?? 0,
+            candidatesTokenCount: usage.candidatesTokenCount ?? 0,
+        },
+    };
 }
 
 /**
@@ -253,12 +247,33 @@ async function generateContentStream({ model, systemPrompt, userContent, maxOutp
         };
         return result;
     }
-    const response = await getGenAI().models.generateContentStream({
+    const stream = await getGenAI().models.generateContentStream({
         model: m,
         contents: [{ role: 'user', parts: [{ text: (systemPrompt || '') + '\n\n' + (userContent || '') }] }],
         config: { maxOutputTokens: maxOutputTokens || 4096, responseMimeType, abortSignal: signal },
     });
-    return response;
+    const result = { usageMetadata: { promptTokenCount: 0, candidatesTokenCount: 0 } };
+    result[Symbol.asyncIterator] = async function* () {
+        for await (const chunk of stream) {
+            if (signal?.aborted) break;
+            const text = chunk.text ?? '';
+            if (onChunk && text) onChunk(text);
+            yield { text };
+            if (chunk.usageMetadata) {
+                result.usageMetadata = {
+                    promptTokenCount: chunk.usageMetadata.promptTokenCount ?? 0,
+                    candidatesTokenCount: chunk.usageMetadata.candidatesTokenCount ?? 0,
+                };
+            }
+        }
+        if (stream.usageMetadata) {
+            result.usageMetadata = {
+                promptTokenCount: stream.usageMetadata.promptTokenCount ?? 0,
+                candidatesTokenCount: stream.usageMetadata.candidatesTokenCount ?? 0,
+            };
+        }
+    };
+    return result;
 }
 
 /**
