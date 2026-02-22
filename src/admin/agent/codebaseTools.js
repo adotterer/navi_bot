@@ -74,10 +74,11 @@ function resolvePath(relativePath) {
         return { ok: false, error: 'Path is outside workspace' };
     }
     const absolute = path.resolve(WORKSPACE_ROOT, normalized);
-    if (!absolute.startsWith(WORKSPACE_ROOT)) {
+    const relativeFromRoot = path.relative(WORKSPACE_ROOT, absolute);
+    if (relativeFromRoot.startsWith('..') || path.isAbsolute(relativeFromRoot)) {
         return { ok: false, error: 'Path is outside workspace' };
     }
-    const segments = path.relative(WORKSPACE_ROOT, absolute).split(path.sep).filter(Boolean);
+    const segments = relativeFromRoot.split(path.sep).filter(Boolean);
     for (const seg of segments) {
         if (EXCLUDED_DIRS.has(seg)) {
             return { ok: false, error: 'Path may not include ' + seg };
@@ -92,11 +93,11 @@ function validateRelativePath(relativePath) {
     if (raw === '' || raw === '.') return { ok: true, relative: '' };
     const normalized = path.normalize(raw).replace(/^\.[/\\]/, '');
     if (normalized.includes('..') || path.isAbsolute(normalized)) return { ok: false, error: 'Invalid path' };
-    const segments = normalized.split(path.sep).filter(Boolean);
+    const segments = relativeFromRoot.split(path.sep).filter(Boolean);
     for (const seg of segments) {
         if (EXCLUDED_DIRS.has(seg)) return { ok: false, error: 'Path may not include ' + seg };
     }
-    return { ok: true, relative: normalized };
+    return { ok: true, relative: relativeFromRoot };
 }
 
 /**
