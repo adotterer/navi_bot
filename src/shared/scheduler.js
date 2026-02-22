@@ -2,7 +2,6 @@ import { EmbedBuilder } from 'discord.js';
 import cron from 'node-cron';
 import { fetchAllMessages, uploadToS3 } from './s3Helper.js';
 import { checkTodaysTournaments } from '../tournaments/dailyTournamentCheck.js';
-import { buildTournamentEmbed } from '../tournaments/tournamentEmbed.js';
 import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 
 export function initializeScheduler(client) {
@@ -214,38 +213,9 @@ export function initializeScheduler(client) {
         console.log('🎮 Starting daily tournament check for Zelda players...');
         
         try {
-            const guild = client.guilds.cache.first();
-            if (!guild) {
-                console.error('❌ No guild found for daily tournament check');
-                return;
-            }
+            await checkTodaysTournaments(client);
 
-            const STARTGG_TOKEN = process.env.STARTGG_AUTH_TOKEN || '';
-            if (!STARTGG_TOKEN) {
-                console.error('❌ Start.gg API token not configured');
-                return;
-            }
 
-            // Find the #daily-tournaments-streams channel
-            const channel = guild.channels.cache.find(
-                ch => ch.isTextBased() && ch.name === 'audit-logs'
-            );
-
-            if (!channel) {
-                console.warn('⚠️ #audit-logs channel not found');
-                return;
-            }
-
-            // Check today's tournaments
-            const tournaments = await checkTodaysTournaments(STARTGG_TOKEN);
-
-            if (tournaments.length === 0) {
-                const embed = new EmbedBuilder()
-                    .setColor(INFO_EMBED_COLOR)
-                    .setDescription('❌ No Zelda players found in today\'s tournaments with Ultimate Singles.');
-                await channel.send({ embeds: [embed] });
-                return;
-            }
 
             // Post one embed per tournament
             let postedCount = 0;
