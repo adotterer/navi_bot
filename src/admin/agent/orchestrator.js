@@ -431,7 +431,7 @@ export async function runPipeline(runId, opts = {}) {
         // Missions control panel: main page HTML+script in agentPageContentInner.html; models API in agentRoutes.js.
         const AGENT_ROUTES_PATH = 'src/admin/agent/agentRoutes.js';
         const AGENT_PAGE_INNER_PATH = 'src/admin/agent/agentPageContentInner.html';
-        if (/\/admin\/agent|missions control panel|model dropdown|model menu|agent page|model selector/i.test(prompt || '')) {
+        if (/\/admin\/agent|missions control panel|model dropdown|model menu|agent page|model selector|mission prompt form|mode selection|mode pill|pill.*mode|mobile.*ux|ux.*mobile/i.test(prompt || '')) {
             allowedPaths.add(AGENT_ROUTES_PATH);
             allowedPaths.add(AGENT_PAGE_INNER_PATH);
         }
@@ -539,7 +539,7 @@ export async function runPipeline(runId, opts = {}) {
                         }
                     }
                     // Missions UI: main page form + script live in agentPageContentInner.html; model API in agentRoutes.js.
-                    const isMissionsUiStep = /\/admin\/agent|missions control panel|model dropdown|model menu|agent page|model selector|modelmeta|model meta/i.test(stepText);
+                    const isMissionsUiStep = /\/admin\/agent|missions control panel|model dropdown|model menu|agent page|model selector|modelmeta|model meta|mission prompt form|mode selection|mode pill|pill.*mode|mobile.*ux|ux.*mobile/i.test(stepText);
                     const isFormTextareaStep = /textarea|tip|help line|help text|mission prompt/i.test(stepText)
                         && !/model dropdown|model selector|model menu|modelmeta|model meta/i.test(stepText);
                     if (isMissionsUiStep && !fileContext[AGENT_PAGE_INNER_PATH]) {

@@ -22,6 +22,17 @@
       #files-content pre[class*="language-"] .token.string, #files-content pre[class*="language-"] .token.attr-value, #files-content pre[class*="language-"] .token.regex, #files-content pre[class*="language-"] .token.variable { color: #4ade80; }
       .token.operator, .token.entity, #repo-content pre[class*="language-"] .token.operator, #repo-content pre[class*="language-"] .token.entity,
       #files-content pre[class*="language-"] .token.operator, #files-content pre[class*="language-"] .token.entity { color: #22d3d4; }
+      /* High-contrast active state for mode pills on touch/mobile (persistent visible selection) */
+      @media (pointer: coarse), (max-width: 768px) {
+        #mode-pills .mode-pill.mode-pill-active {
+          box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.45);
+          outline: 2px solid currentColor;
+          outline-offset: 2px;
+        }
+        .dark #mode-pills .mode-pill.mode-pill-active {
+          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
+        }
+      }
     </style>
     <div class="flex items-center justify-between mb-8">
       <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Missions</h1>
@@ -54,24 +65,24 @@
           <div class="flex flex-wrap gap-4 items-end">
             <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-4">
               <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Mode <span class="font-normal text-slate-500 dark:text-slate-400">(choose one)</span></label>
-              <input type="hidden" id="mode" name="mode" value="">
+              <input type="hidden" id="mode" name="mode" value="pr">
               <div id="mode-pills" class="flex flex-wrap gap-2" role="group" aria-label="Run mode">
-                <button type="button" data-mode="pr" title="PR — Implement changes and open a pull request"
+                <button type="button" data-mode="pr" aria-pressed="true" title="PR — Implement changes and open a pull request"
                   class="mode-pill mode-pill-pr inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:!text-[#56d364] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
                   <span class="inline-flex items-center justify-center w-6 h-6 flex-shrink-0"><svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" preserveAspectRatio="xMidYMid meet"><path fill-rule="evenodd" d="M3.25 3A2.25 2.25 0 001 5.25v9.5A2.25 2.25 0 003.25 17h13.5A2.25 2.25 0 0019 14.75v-9.5A2.25 2.25 0 0016.75 3H3.25zm.943 8.752a.75.75 0 01.055-1.06L6.128 9 4.248 7.307a.75.75 0 111.004-1.114l2.5 2.25a.75.75 0 010 1.114l-2.5 2.25a.75.75 0 01-1.06-.055zM9.75 10.25a.75.75 0 000 1.5h2.5a.75.75 0 000-1.5h-2.5z" clip-rule="evenodd"/></svg></span>
                   <span>PR</span>
                 </button>
-                <button type="button" data-mode="audit" title="Audit — Report only, no code changes"
+                <button type="button" data-mode="audit" aria-pressed="false" title="Audit — Report only, no code changes"
                   class="mode-pill mode-pill-audit inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2">
                   <span class="inline-flex items-center justify-center w-6 h-6 flex-shrink-0"><svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" preserveAspectRatio="xMidYMid meet"><path fill-rule="evenodd" d="M9.661 2.237a.531.531 0 01.678 0 11.947 11.947 0 007.078 2.749.5.5 0 01.479.425c.069.52.104 1.05.104 1.589 0 5.162-3.26 9.563-7.834 11.256a.48.48 0 01-.332 0C5.26 16.563 2 12.162 2 7c0-.54.035-1.07.104-1.589a.5.5 0 01.48-.425 11.947 11.947 0 007.077-2.75zm4.196 5.954a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg></span>
                   <span>Audit</span>
                 </button>
-                <button type="button" data-mode="ask" title="Ask — Q&amp;A about the codebase, no code changes"
+                <button type="button" data-mode="ask" aria-pressed="false" title="Ask — Q&amp;A about the codebase, no code changes"
                   class="mode-pill mode-pill-ask inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer border-violet-300 dark:border-violet-500 bg-violet-50 dark:bg-violet-900/40 text-violet-800 dark:text-violet-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
                   <span class="inline-flex items-center justify-center w-6 h-6 flex-shrink-0"><svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" preserveAspectRatio="xMidYMid meet"><path fill-rule="evenodd" d="M10 2c-2.236 0-4.43.18-6.57.524C1.993 2.755 1 3.925 1 5.261v2.478c0 1.336.993 2.506 2.43 2.737.236.038.474.065.713.084a.75.75 0 01.627.498l.78 2.145a.75.75 0 001.327.132L8.71 10.9a.75.75 0 01.582-.281H10c2.236 0 4.43-.18 6.57-.524C18.007 9.864 19 8.694 19 7.358V5.261c0-1.336-.993-2.506-2.43-2.737A33.558 33.558 0 0010 2zM8 6.5a1 1 0 11-2 0 1 1 0 012 0zm3 1a1 1 0 100-2 1 1 0 000 2zm4-1a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"/></svg></span>
                   <span>Ask</span>
                 </button>
-                <button type="button" data-mode="review" title="Review — Analyze a branch or PR, no code changes"
+                <button type="button" data-mode="review" aria-pressed="false" title="Review — Analyze a branch or PR, no code changes"
                   class="mode-pill mode-pill-review inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer border-cyan-300 dark:border-cyan-500 bg-cyan-50 dark:bg-cyan-900/40 text-cyan-800 dark:text-cyan-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
                   <span class="inline-flex items-center justify-center w-6 h-6 flex-shrink-0"><svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" preserveAspectRatio="xMidYMid meet"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg></span>
                   <span>Review</span>
@@ -306,9 +317,13 @@
     var pills = document.querySelectorAll('#mode-pills .mode-pill');
     pills.forEach(function(pill) {
       var m = pill.getAttribute('data-mode');
+      var isSelected = (m === mode);
       var allClasses = MODE_PILL_INACTIVE + ' ' + Object.values(MODE_PILL_ACTIVE).join(' ');
       allClasses.split(/\s+/).forEach(function(c) { if (c) pill.classList.remove(c); });
-      var classes = (m === mode) ? MODE_PILL_ACTIVE[m] : MODE_PILL_INACTIVE;
+      if (isSelected) pill.classList.add('mode-pill-active');
+      else pill.classList.remove('mode-pill-active');
+      pill.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+      var classes = isSelected ? MODE_PILL_ACTIVE[m] : MODE_PILL_INACTIVE;
       classes.split(/\s+/).forEach(function(c) { if (c) pill.classList.add(c); });
     });
     var promptEl = document.getElementById('prompt');
@@ -323,6 +338,7 @@
       selectMode(pill.getAttribute('data-mode'));
     });
   });
+  selectMode('pr');
 
   function abbreviateModel(id) {
     if (!id || typeof id !== 'string') return 'system';
