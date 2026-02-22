@@ -96,7 +96,7 @@ router.get('/', async (req, res) => {
       </section>
     </form>
     </div>
-    <style>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
+    <style>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; transition: transform 0.3s ease, opacity 0.3s ease; } #emojis-action-bar.minimized { transform: translateY(calc(100% - 40px)); }</style>
     <div id="emojis-action-bar" class="save-bar border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" data-save-bar-key="emojis">
       <div class="save-bar-inner max-w-5xl mx-auto px-4">
         <div class="save-bar-content">
@@ -110,7 +110,20 @@ router.get('/', async (req, res) => {
         ${saveBarToggleButton()}
       </div>
     </div>
-    ${saveBarMinimizeScript('emojis-action-bar', 'emojis')}
+    <script>
+(function() {
+  var bar = document.getElementById('emojis-action-bar');
+  var toggle = bar ? bar.querySelector('.save-bar-toggle') : null;
+  if (bar && toggle) {
+    var key = 'save-bar-minimized-emojis';
+    toggle.addEventListener('click', function() {
+      bar.classList.toggle('minimized');
+      localStorage.setItem(key, bar.classList.contains('minimized'));
+    });
+    if (localStorage.getItem(key) === 'true') bar.classList.add('minimized');
+  }
+})();
+</script>
     <script>
 (function(){
   var form = document.getElementById('emojis-form');
@@ -249,7 +262,7 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
       </div>
     </form>
     </div>
-    <style>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
+    <style>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; transition: transform 0.3s ease, opacity 0.3s ease; } #emojis-action-bar.minimized { transform: translateY(calc(100% - 40px)); }</style>
     <div id="emojis-action-bar" class="save-bar border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" data-save-bar-key="emojis">
       <div class="save-bar-inner max-w-5xl mx-auto px-4">
         <div class="save-bar-content">
