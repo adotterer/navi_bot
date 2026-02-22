@@ -14,6 +14,16 @@ import { callTool } from './toolRegistry.js';
 import { getFileTree } from './codebaseTools.js';
 import { getBranchDiff, getDiffForPullRequest } from './repoBrowser.js';
 
+/** Parse Quality (Tester) report recommendation. Returns 'merge' | 'request_changes' | 'reject' (or 'merge' if unclear). */
+function parseQualityRecommendation(report) {
+    if (!report || typeof report !== 'string') return 'merge';
+    const s = report.toLowerCase();
+    if (/\*\*reject\*\*|recommendation.*reject/i.test(report) || (s.includes('reject') && s.includes('recommendation'))) return 'reject';
+    if (/\*\*request changes\*\*|recommendation.*request\s+changes/i.test(report) || (s.includes('request') && s.includes('change'))) return 'request_changes';
+    if (/\*\*merge\*\*|recommendation.*merge/i.test(report)) return 'merge';
+    return 'merge';
+}
+
 /**
  * Run the full pipeline for a given runId.
  * @param {string} runId
@@ -753,8 +763,8 @@ export async function runPipeline(runId, opts = {}) {
                     updateRun(runId, { status: 'done', prUrl: prResult.prUrl, reviewReportError: errMsg });
                     log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
                 } else {
+                    const recommendation = parseQualityRecommendation(testerResult.report);
                     updateRun(runId, {
-                        status: 'done',
                         prUrl: prResult.prUrl,
                         reviewReport: testerResult.report,
                         reviewReportError: undefined,
@@ -762,7 +772,113 @@ export async function runPipeline(runId, opts = {}) {
                         inputTokens: (currentRunForTester?.inputTokens || 0) + (testerResult.inputTokens || 0),
                         outputTokens: (currentRunForTester?.outputTokens || 0) + (testerResult.outputTokens || 0),
                     });
-                    log('system', 'done', 'PR: ' + prResult.prUrl + ' — Review report ready.\n');
+
+                    if (recommendation === 'reject') {
+                        updateRun(runId, { status: 'quality_failed' });
+                        log('system', 'quality_failed', 'Quality review rejected. Stopping.\n');
+                    } else if (recommendation === 'merge') {
+                        updateRun(runId, { status: 'done' });
+                        log('system', 'done', 'PR: ' + prResult.prUrl + ' — Review report ready.\n');
+                    } else {
+                        // request_changes: one quality-fix round (Reviewer + Coder → push → re-run Tester)
+                        if (checkCancelled(runId, log)) return;
+                        updateRun(runId, { status: 'quality_fix' });
+                        log('system', 'quality_fix', 'Quality requested changes. Reviewer assigning fixes to Coder…\n');
+
+                        const reviewResult = await runReviewer(editsToReview, prompt, {
+                            qualityReport: testerResult.report,
+                            model: testerModel,
+                            signal,
+                        });
+                        updateRun(runId, { inputTokens: (currentRunForTester?.inputTokens || 0) + (reviewResult.inputTokens || 0), outputTokens: (currentRunForTester?.outputTokens || 0) + (reviewResult.outputTokens || 0) });
+
+                        if (!reviewResult.ok || !reviewResult.feedback?.trim()) {
+                            updateRun(runId, { status: 'done' });
+                            log('system', 'done', 'PR: ' + prResult.prUrl + ' — Review report ready (no fix round).\n');
+                        } else {
+                            log('system', 'quality_fix', `Reviewer: ${reviewResult.feedback}\n`);
+                            const syntheticStep = {
+                                what: 'Address quality review feedback',
+                                changeDescription: reviewResult.feedback,
+                                files: editsToReview.map((e) => e.path).filter(Boolean),
+                            };
+                            const fileContext = {};
+                            for (const e of editsToReview) {
+                                if (e.path && e.content != null) fileContext[e.path] = e.content;
+                            }
+                            const fixResult = await runCoder(syntheticStep, fileContext, { reviewFeedback: reviewResult.feedback, signal, missionPrompt: prompt, model: testerModel });
+                            updateRun(runId, { inputTokens: (getRun(runId)?.inputTokens || 0) + (fixResult.inputTokens || 0), outputTokens: (getRun(runId)?.outputTokens || 0) + (fixResult.outputTokens || 0) });
+
+                            if (!fixResult.ok || !fixResult.edits?.length) {
+                                updateRun(runId, { status: 'quality_failed' });
+                                log('system', 'quality_failed', `Coder fix pass failed or no edits: ${fixResult.error || 'no edits'}. Stopping.\n`);
+                            } else {
+                                const byPath = new Map(editsToReview.map((e) => [e.path, e.content ?? '']));
+                                for (const e of fixResult.edits) {
+                                    if (!e.path || !allowedPaths.has(e.path)) continue;
+                                    if (e.search !== undefined) {
+                                        const current = byPath.get(e.path) ?? '';
+                                        if (e.search === '') {
+                                            byPath.set(e.path, e.replace ?? '');
+                                        } else if (current.includes(e.search)) {
+                                            byPath.set(e.path, current.replace(e.search, e.replace ?? ''));
+                                        }
+                                    } else if (e.content != null) {
+                                        byPath.set(e.path, e.content);
+                                    }
+                                }
+                                const updatedEdits = Array.from(byPath.entries())
+                                    .filter(([, content]) => content != null)
+                                    .map(([path, content]) => ({ path, content }));
+                                const runRef = getRun(runId);
+                                if (runRef) runRef.edits = updatedEdits;
+                                updateRun(runId, { edits: updatedEdits });
+
+                                const pushResult = await pushToExistingBranchIfConfigured(runId, branchName, updatedEdits);
+                                if (!pushResult.ok) {
+                                    updateRun(runId, { status: 'quality_failed' });
+                                    log('system', 'quality_failed', 'Failed to push fix to PR: ' + (pushResult.error || '') + '\n');
+                                } else {
+                                    log('system', 'quality_fix', 'Pushed fix. Re-running Quality…\n');
+                                    const diffResult2 = await getDiffForPullRequest(prResult.prUrl);
+                                    if (!diffResult2.ok) {
+                                        updateRun(runId, { status: 'done' });
+                                        log('system', 'done', 'PR: ' + prResult.prUrl + ' — Fix pushed; diff unavailable for second review.\n');
+                                    } else {
+                                        let diffText2 = diffResult2.diffText || '';
+                                        if (diffText2.length > MAX_DIFF_CHARS) {
+                                            diffText2 = 'Diff truncated; first ' + MAX_DIFF_CHARS + ' chars shown.\n\n' + diffText2.slice(0, MAX_DIFF_CHARS);
+                                        }
+                                        const testerResult2 = await runTester(branchName, {
+                                            diffText: diffText2,
+                                            baseBranch: diffResult2.baseBranch || 'main',
+                                            headBranch: diffResult2.headBranch || branchName,
+                                            signal,
+                                            model: testerModel,
+                                            runId,
+                                        });
+                                        const runAfterTester2 = getRun(runId);
+                                        updateRun(runId, {
+                                            reviewReport: testerResult2.ok ? testerResult2.report : (runAfterTester2?.reviewReport || ''),
+                                            reviewReportError: testerResult2.ok ? undefined : (testerResult2.error || ''),
+                                            ...(testerResult2.ok && testerResult2.diagramKeys?.length && { diagramKeys: testerResult2.diagramKeys }),
+                                            inputTokens: (runAfterTester2?.inputTokens || 0) + (testerResult2.inputTokens || 0),
+                                            outputTokens: (runAfterTester2?.outputTokens || 0) + (testerResult2.outputTokens || 0),
+                                        });
+
+                                        const recommendation2 = testerResult2.ok ? parseQualityRecommendation(testerResult2.report) : 'request_changes';
+                                        if (recommendation2 === 'merge') {
+                                            updateRun(runId, { status: 'done' });
+                                            log('system', 'done', 'PR: ' + prResult.prUrl + ' — Review report ready after fix.\n');
+                                        } else {
+                                            updateRun(runId, { status: 'quality_failed' });
+                                            log('system', 'quality_failed', 'Quality still requested changes or rejected after one fix round. Stopping.\n');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         } else if (prResult.error) {
@@ -854,6 +970,16 @@ async function createPrIfConfigured(runId, opts = {}) {
         const creator = await import('./prCreator.js').then((m) => m.createPr).catch(() => null);
         if (!creator) return { ok: true };
         return await creator(runId, opts);
+    } catch (e) {
+        return { ok: false, error: e.message || String(e) };
+    }
+}
+
+async function pushToExistingBranchIfConfigured(runId, branchName, edits) {
+    try {
+        const pushFn = await import('./prCreator.js').then((m) => m.pushEditsToExistingBranch).catch(() => null);
+        if (!pushFn) return { ok: true };
+        return await pushFn(runId, branchName, edits);
     } catch (e) {
         return { ok: false, error: e.message || String(e) };
     }

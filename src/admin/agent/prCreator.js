@@ -125,6 +125,113 @@ export async function createPr(runId, opts = {}) {
 }
 
 /**
+ * Push additional edits to an existing PR branch (quality-fix round). Creates a new commit on the branch.
+ * @param {string} runId
+ * @param {string} branchName - e.g. agent/run-xyz
+ * @param {Array<{ path: string, content: string }>} edits
+ * @returns {Promise<{ ok: boolean, error?: string }>}
+ */
+export async function pushEditsToExistingBranch(runId, branchName, edits) {
+    if (!edits?.length) return { ok: false, error: 'No edits to push' };
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) return { ok: true };
+
+    const useApiOnly = process.env.AGENT_NO_LOCAL_GIT === 'true' || process.env.AGENT_NO_LOCAL_GIT === '1';
+    if (useApiOnly || !hasGitClone()) {
+        return pushEditsToExistingBranchViaApi(runId, branchName, edits);
+    }
+
+    const git = simpleGit({ baseDir: WORKSPACE_ROOT });
+    let originalBranch = null;
+
+    try {
+        const resolvedEdits = [];
+        for (const e of edits) {
+            const r = resolvePath(e.path);
+            if (!r.ok) return { ok: false, error: `Invalid path ${e.path}: ${r.error}` };
+            resolvedEdits.push({ absolute: r.absolute, relative: e.path, content: e.content });
+        }
+
+        const branchResult = await git.branch();
+        originalBranch = branchResult.current;
+
+        await git.fetch('origin');
+        const branchExistsLocal = branchResult.all.includes(branchName);
+        if (branchExistsLocal) {
+            await git.checkout(branchName);
+            await git.pull('origin', branchName);
+        } else {
+            await git.checkoutBranch(branchName, 'origin/' + branchName);
+        }
+
+        for (const { absolute, content } of resolvedEdits) {
+            if (content == null) continue;
+            const dir = path.dirname(absolute);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            fs.writeFileSync(absolute, content, 'utf8');
+        }
+
+        const relPaths = resolvedEdits.map((e) => e.relative);
+        await git.add(relPaths);
+        await git.commit('Quality fix: address review feedback');
+        await git.push('origin', branchName);
+
+        return { ok: true };
+    } catch (err) {
+        return { ok: false, error: err.message || String(err) };
+    } finally {
+        if (originalBranch) {
+            try { await git.checkout(originalBranch); } catch (_) {}
+        }
+    }
+}
+
+async function pushEditsToExistingBranchViaApi(runId, branchName, edits) {
+    const repo = getRepoFromEnv();
+    if (!repo) return { ok: false, error: 'GITHUB_REPO required' };
+
+    const validated = [];
+    for (const e of edits) {
+        const v = validateEditPath(e.path);
+        if (!v.ok) return { ok: false, error: `${e.path}: ${v.error}` };
+        if (e.content == null) continue;
+        validated.push({ path: v.relative, content: e.content });
+    }
+
+    try {
+        const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN, log: { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} } });
+        for (const { path: filePath, content } of validated) {
+            let sha = null;
+            try {
+                const { data } = await octokit.repos.getContent({
+                    owner: repo.owner,
+                    repo: repo.repo,
+                    path: filePath,
+                    ref: branchName,
+                });
+                if (!Array.isArray(data) && data.sha) sha = data.sha;
+            } catch (e) {
+                if (e.status !== 404) throw e;
+            }
+            await octokit.repos.createOrUpdateFileContents({
+                owner: repo.owner,
+                repo: repo.repo,
+                path: filePath,
+                message: 'Quality fix: ' + filePath,
+                content: Buffer.from(content, 'utf8').toString('base64'),
+                branch: branchName,
+                ...(sha ? { sha } : {}),
+            });
+        }
+        return { ok: true };
+    } catch (err) {
+        return { ok: false, error: err.message || String(err) };
+    }
+}
+
+/**
  * Create PR using only GitHub API (no local git). Used when deployed without a clone.
  */
 async function createPrViaApi(runId, opts) {

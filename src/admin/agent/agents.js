@@ -1004,14 +1004,17 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
 
 /**
  * Run the Reviewer agent: inspect aggregated edits and return OK or actionable feedback for the Coder.
+ * When qualityReport is provided (e.g. from the Quality/Tester step), the reviewer assigns fixes from that report to the coder.
  * @param {Array<{ path: string, content: string }>} aggregatedEdits - Proposed file edits
  * @param {string} prompt - Mission prompt
  * @param {object} opts
+ * @param {string} [opts.qualityReport] - Markdown report from Quality step; reviewer translates it into FIX: for the coder
+ * @param {string[]} [opts.importWarnings]
  * @param {(chunk: string) => void} [opts.onChunk]
  * @returns {Promise<{ ok: true, feedback: string|null } | { ok: false, error: string }>}
  */
 export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
-    const { importWarnings = [], signal, model: modelOverride } = opts;
+    const { importWarnings = [], qualityReport, signal, model: modelOverride } = opts;
     const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     const editSummary = (aggregatedEdits || [])
         .map((e) => `--- ${e.path} ---\n${(e.content || '').slice(0, 8000)}${(e.content || '').length > 8000 ? '\n... (truncated)' : ''}`)
@@ -1020,7 +1023,10 @@ export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
     const warningsSection = importWarnings.length > 0
         ? `\n\nSTATIC ANALYSIS WARNINGS (pre-detected issues you must address):\n${importWarnings.map((w) => '- ' + w).join('\n')}`
         : '';
-    const userContent = `Mission: ${(prompt || '').slice(0, 1000)}${warningsSection}\n\nProposed changes:\n${editSummary}`;
+    let userContent = `Mission: ${(prompt || '').slice(0, 1000)}${warningsSection}\n\nProposed changes:\n${editSummary}`;
+    if (qualityReport && qualityReport.trim()) {
+        userContent += `\n\nQUALITY REPORT (from the PR review — translate into one FIX: instruction for the coder):\n${qualityReport.slice(0, 12000)}${qualityReport.length > 12000 ? '\n... (truncated)' : ''}`;
+    }
     try {
         const response = await withTimeout(
             (async () => {

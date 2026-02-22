@@ -3,7 +3,7 @@
  * Tracks status, logs, flight plan, PR URL, and error per run.
  */
 
-const RUN_STATUSES = ['pending', 'research', 'planning', 'coding', 'reviewing', 'creating_pr', 'tester', 'done', 'error', 'cancelled'];
+const RUN_STATUSES = ['pending', 'research', 'planning', 'coding', 'reviewing', 'creating_pr', 'tester', 'quality_fix', 'done', 'error', 'cancelled', 'quality_failed'];
 const MAX_RUNS_RETAINED = 50;
 
 const DEFAULT_DOCS = { overview: '', requirements: '', architecture: '', decisions: '', notes: '' };

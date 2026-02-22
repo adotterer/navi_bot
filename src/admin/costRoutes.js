@@ -128,15 +128,22 @@ router.get('/usage', async (req, res) => {
 
 // GET /admin/cost – Cost page
 router.get('/', async (req, res) => {
-    let usage = { byProvider: { gemini: { cost: 0, runs: 0 }, anthropic: { cost: 0, runs: 0 } }, byModel: {}, byDate: {}, byMission: {}, runs: [] };
+    let usage = { byProvider: { gemini: { cost: 0, runs: 0, inputTokens: 0, outputTokens: 0 }, anthropic: { cost: 0, runs: 0, inputTokens: 0, outputTokens: 0 } }, byModel: {}, byDate: {}, byMission: {}, runs: [] };
     try { usage = await getAggregatedUsage(); } catch (_) {}
     const { byProvider, byModel, byDate, byMission, runs } = usage;
-        byProvider = data.byProvider;
-        runs = data.runs;
-    } catch (_) {}
 
     const fmt = (n) => (n || 0).toLocaleString();
-    const costFmt = (c) => '
+    const costFmt = (c) => '$' + (Number(c) || 0).toFixed(4);
+    const dailyMap = {};
+    runs.forEach((r) => {
+      const d = new Date(r.createdAt || Date.now()).toISOString().split('T')[0];
+      dailyMap[d] = (dailyMap[d] || 0) + (r.cost || 0);
+    });
+    const sortedDates = Object.keys(dailyMap).sort().slice(-14);
+    const chartLabels = JSON.stringify(sortedDates);
+    const chartValues = JSON.stringify(sortedDates.map((d) => dailyMap[d]));
+
+    const content = `
   ${adminNav('cost')}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Cost' }])}
@@ -229,79 +236,6 @@ router.get('/', async (req, res) => {
     }
   </script>
 </body>
-</html>`);
-});
-
-export { router as costRoutes };
- + (c || 0).toFixed(4);
-
-    const dailyMap = {};
-    runs.forEach(r => {
-      const d = new Date(r.createdAt || Date.now()).toISOString().split('T')[0];
-      dailyMap[d] = (dailyMap[d] || 0) + (r.cost || 0);
-    });
-    const sortedDates = Object.keys(dailyMap).sort().slice(-14);
-    const chartLabels = JSON.stringify(sortedDates);
-    const chartValues = JSON.stringify(sortedDates.map(d => dailyMap[d]));
-
-    const content = `
-  ${adminNav('cost')}
-  ${adminContainer(`
-    ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Cost' }])}
-    <div class="flex items-center justify-between mb-8">
-      <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Cost</h1>
-      <a href="/admin" class="text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Dashboard</a>
-    </div>
-    <p class="text-slate-600 dark:text-slate-400 mb-6">Token usage and estimated cost for Missions. Estimates are based on list price and may differ from actual billing.</p>
-    <div class="grid gap-4 sm:grid-cols-2 mb-8">
-      <section class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
-        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">Gemini</h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-2">${fmt(byProvider.gemini.runs)} run(s)</p>
-        <p class="text-sm text-slate-700 dark:text-slate-300">Input: ${fmt(byProvider.gemini.inputTokens)} tokens</p>
-        <p class="text-sm text-slate-700 dark:text-slate-300">Output: ${fmt(byProvider.gemini.outputTokens)} tokens</p>
-        <p class="text-sm font-medium text-slate-800 dark:text-slate-100 mt-2">Est. ${costFmt(byProvider.gemini.cost)}</p>
-      </section>
-      <section class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
-        <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">Anthropic</h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-2">${fmt(byProvider.anthropic.runs)} run(s)</p>
-        <p class="text-sm text-slate-700 dark:text-slate-300">Input: ${fmt(byProvider.anthropic.inputTokens)} tokens</p>
-        <p class="text-sm text-slate-700 dark:text-slate-300">Output: ${fmt(byProvider.anthropic.outputTokens)} tokens</p>
-        <p class="text-sm font-medium text-slate-800 dark:text-slate-100 mt-2">Est. ${costFmt(byProvider.anthropic.cost)}</p>
-      </section>
-    </div>
-    <section class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
-      <div class="border-b border-slate-200 dark:border-slate-700 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300">Recent runs</div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b border-slate-200 dark:border-slate-700 text-left text-slate-500 dark:text-slate-400">
-              <th class="py-2 px-4">Run</th>
-              <th class="py-2 px-4">Model</th>
-              <th class="py-2 px-4">Mode</th>
-              <th class="py-2 px-4">In / Out tokens</th>
-              <th class="py-2 px-4">Est. cost</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${runs.length ? runs.slice(0, 30).map((r) => `
-            <tr class="border-b border-slate-100 dark:border-slate-700">
-              <td class="py-2 px-4"><a href="/admin/agent" class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">${escapeHtml(r.runId)}</a></td>
-              <td class="py-2 px-4">${escapeHtml(r.model || '—')}</td>
-              <td class="py-2 px-4">${escapeHtml(r.runMode || 'pr')}</td>
-              <td class="py-2 px-4">${fmt(r.inputTokens)} / ${fmt(r.outputTokens)}</td>
-              <td class="py-2 px-4">${costFmt(r.cost)}</td>
-            </tr>
-            `).join('') : '<tr><td colspan="5" class="py-4 px-4 text-slate-500 dark:text-slate-400">No runs yet.</td></tr>'}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `)}
-`;
-    res.send(`<!DOCTYPE html>
-<html lang="en">
-<head>${adminHead('Cost')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
