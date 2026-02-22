@@ -241,12 +241,12 @@ export function initializeScheduler(client) {
     return weeklyExportTask;
 }
 
-// Helper function to send success notification to audit-logs
+// Helper function to send success notification to audit-log
 async function notifyModerators(guild, channelsExported, messagesExported, duration, extraExports = {}) {
     try {
-        // Find the audit-logs channel
+        // Find the audit-log channel
         const auditLogsChannel = guild.channels.cache.find(
-            ch => ch.isTextBased() && ch.name === 'audit-logs'
+            ch => ch.isTextBased() && ch.name === 'audit-log'
         );
         
         if (!auditLogsChannel) {
@@ -282,17 +282,17 @@ async function notifyModerators(guild, channelsExported, messagesExported, durat
             .setDescription('🤖 Navi now has the latest community insights!');
 
         await auditLogsChannel.send({ embeds: [embed] });
-        console.log('📢 Notification sent to audit-logs');
+        console.log('📢 Notification sent to audit-log');
     } catch (error) {
         console.error('❌ Failed to send notification:', error.message);
     }
 }
 
-// Helper function to send failure notification to audit-logs
+// Helper function to send failure notification to audit-log
 async function notifyModeratorsOfFailure(guild, errorMessage) {
     try {
         const auditLogsChannel = guild.channels.cache.find(
-            ch => ch.isTextBased() && ch.name === 'audit-logs'
+            ch => ch.isTextBased() && ch.name === 'audit-log'
         );
         
         if (!auditLogsChannel) return;
