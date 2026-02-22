@@ -46,5 +46,7 @@ export function verify2fa(session, code) {
 }
 
 export function generate2FACode() {
-    return crypto.randomInt(100000, 999999).toString();
+    const code = crypto.randomInt(100000, 999999).toString();
+    console.log('[2FA] 2FA code successfully generated and flow triggered.');
+    return code;
 }
