@@ -51,6 +51,7 @@ router.get('/', async (req, res) => {
     ${saved ? '<div class="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 text-sm px-4 py-3 mb-6">Saved to S3.</div>' : ''}
     <div class="admin-save-bar-spacer">
     <form id="aliases-form" method="post" action="/admin/aliases" class="space-y-6">
+      <input type="hidden" name="_csrf" value="${req.csrfToken ? req.csrfToken() : ''}">
       <textarea id="aliases-body" name="body" class="hidden" aria-hidden="true"></textarea>
       <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
         <table class="w-full text-sm">
@@ -200,10 +201,10 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
     try {
         data = JSON.parse(raw);
     } catch (_) {
-        return res.status(400).send(renderAliasesTablePage({}, 'Invalid JSON.'));
+        return res.status(400).send(renderAliasesTablePage(req, {}, 'Invalid JSON.'));
     }
     if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-        return res.status(400).send(renderAliasesTablePage({}, 'JSON must be an object (alias → canonical).'));
+        return res.status(400).send(renderAliasesTablePage(req, {}, 'JSON must be an object (alias → canonical).'));
     }
     const normalized = {};
     for (const [k, v] of Object.entries(data)) {
