@@ -494,6 +494,7 @@ router.post('/run', express.json(), (req, res) => {
     if (seedDocs && typeof seedDocs === 'object') {
         updateRun(runId, { docs: seedDocs });
     }
+    persistRunToS3(runId).catch(() => {});
     res.json({ runId });
 
     setImmediate(() => {

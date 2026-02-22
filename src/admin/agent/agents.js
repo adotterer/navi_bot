@@ -5,6 +5,7 @@
  * Model selection routes to Google GenAI or Anthropic (ANTHROPIC_SECRET) by model id.
  */
 import { GoogleGenAI } from '@google/genai';
+import Anthropic from '@anthropic-ai/sdk';
 import { getFileTree } from './codebaseTools.js';
 import { getAgentPrompt, getDepthModifier } from './agentPromptLoader.js';
 import { putToS3 } from '../../shared/s3Helper.js';
@@ -28,6 +29,20 @@ function getGenAI() {
 const MODEL = process.env.AGENT_MODEL || process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
 const DIAGRAM_MODEL = process.env.AGENT_DIAGRAM_MODEL || 'gemini-2.5-flash-image';
 const GEMINI_TIMEOUT_MS = Number(process.env.AGENT_GEMINI_TIMEOUT_MS) || 180000;
+
+function isClaudeModel(modelId) {
+    return /^claude-/.test((modelId || '').trim().toLowerCase());
+}
+
+let _anthropic = null;
+function getAnthropic() {
+    if (!_anthropic) {
+        const apiKey = process.env.ANTHROPIC_SECRET || process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) throw new Error('ANTHROPIC_SECRET (or ANTHROPIC_API_KEY) must be set for Claude models.');
+        _anthropic = new Anthropic({ apiKey });
+    }
+    return _anthropic;
+}
 
 /** Regex for [DIAGRAM: description] placeholder in agent output (global). */
 const DIAGRAM_PLACEHOLDER_RE = /\[DIAGRAM:\s*([^\]]+)\]/g;

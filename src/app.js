@@ -66,7 +66,7 @@ export function createApp() {
                 styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
                 fontSrc: ["'self'", "https://fonts.gstatic.com"],
                 imgSrc: ["'self'", "data:", "https://cdn.discordapp.com", "https://ultimateframedata.com", "https://*.ultimateframedata.com"],
-                connectSrc: ["'self'"],
+                connectSrc: ["'self'", "https://cdn.jsdelivr.net"],
                 objectSrc: ["'none'"],
                 frameAncestors: ["'none'"],
                 baseUri: ["'self'"],
