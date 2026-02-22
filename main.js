@@ -150,11 +150,13 @@ client.on("messageCreate", async (message) => {
 
     // ===== TEST SCHEDULER =====
     if (message.content.toLowerCase() === '!ts') {
-        const isMod = message.member?.roles?.cache?.some(r => r.name === 'Moderator');
+        const hasAuthorizedRole = message.member?.roles?.cache?.some(
+            r => r.name === 'Moderators' || r.name === 'Legend'
+        );
         const isAdmin = message.author.id === (process.env.ADMIN_DISCORD_ID || '596207448935628812');
 
-        if (!isMod && !isAdmin) {
-            return message.reply("❌ This command is restricted to Moderators.");
+        if (!hasAuthorizedRole && !isAdmin) {
+            return message.reply("❌ Only Moderators or Legend members can run this command.");
         }
 
         try {
