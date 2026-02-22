@@ -20,7 +20,7 @@ router.get('/login', (req, res) => {
     if (req.session && req.session.admin) {
         return res.redirect('/admin');
     }
-    res.send(loginPage());
+    res.send(loginPage({ csrfToken: req.csrfToken() }));
 });
 
 router.post('/login', express.urlencoded({ extended: true }), (req, res) => {
@@ -29,7 +29,7 @@ router.post('/login', express.urlencoded({ extended: true }), (req, res) => {
         req.session.admin = true;
         return res.redirect('/admin');
     }
-    res.status(401).send(loginPage({ error: 'Invalid username or password.' }));
+    res.status(401).send(loginPage({ error: 'Invalid username or password.', csrfToken: req.csrfToken() }));
 });
 
 router.post('/logout', (req, res) => {
@@ -52,7 +52,7 @@ router.get('/', requireAdmin, async (req, res) => {
     } catch (_) {
         // S3 not configured or error: show no badges
     }
-    res.send(dashboardPage(s3));
+    res.send(dashboardPage(s3, req.csrfToken()));
 });
 
 // Mount sub-routers (all protected)
@@ -65,6 +65,7 @@ router.use('/agent', requireAdmin, agentRoutes);
 router.use('/cost', requireAdmin, costRoutes);
 
 function loginPage(opts = {}) {
+    const csrfToken = opts.csrfToken || '';
     const error = opts.error
         ? `<div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">${escapeHtml(opts.error)}</div>`
         : '';
@@ -80,6 +81,7 @@ function loginPage(opts = {}) {
       </div>
       ${error}
       <form method="post" action="/admin/login" class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-5">
+        <input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">
         <div>
           <label for="username" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Username</label>
           <input id="username" type="text" name="username" value="" autocomplete="username"
@@ -98,14 +100,17 @@ function loginPage(opts = {}) {
 </html>`;
 }
 
-function dashboardPage(s3 = {}) {
+function dashboardPage(s3 = {}, csrfToken = '') {
     const badge = (on) => (on ? s3Badge() : '');
     const content = `
   ${adminNav('dashboard')}
   ${adminContainer(`
     <div class="flex items-center justify-between mb-8">
       <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Dashboard</h1>
-      <form method="post" action="/admin/logout"><button type="submit" class="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium">Log out</button></form>
+      <form method="post" action="/admin/logout">
+        <input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">
+        <button type="submit" class="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium">Log out</button>
+      </form>
     </div>
     <div class="grid gap-4 sm:grid-cols-2">
       <a href="/admin/prompts" class="block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-md transition-all group">
