@@ -4,6 +4,7 @@
  */
 import express from 'express';
 import session from 'express-session';
+import helmet from 'helmet';
 import { getSessionConfig } from './admin/auth.js';
 import { adminRouter } from './admin/routes.js';
 import { webhookRouter } from './admin/webhookRoutes.js';
@@ -12,6 +13,15 @@ const ENFORCE_HTTPS = process.env.ENFORCE_HTTPS === 'true' || process.env.ENFORC
 
 export function createApp() {
     const app = express();
+
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+                "script-src": ["'self'", "'unsafe-inline'"],
+            },
+        },
+    }));
 
     // Redirect all HTTP to HTTPS so the site is only used over HTTPS (no content over HTTP).
     if (ENFORCE_HTTPS) {
@@ -31,10 +41,11 @@ export function createApp() {
     app.use(express.urlencoded({ extended: true }));
     app.use(express.json());
     app.use(session(getSessionConfig()));
+    app.use(csrf());
     app.use('/admin', adminRouter);
 
     app.use(express.static('public'));
-    app.use('/exports', express.static('.'));
+    app.use('/exports', express.static('./data/exports'));
 
     // Ask crawlers not to index the site (admin/internal use).
     app.get('/robots.txt', (req, res) => {
@@ -129,6 +140,14 @@ export function createApp() {
     });
 
     app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+    app.use((err, req, res, next) => {
+        if (err.code === 'EBADCSRFTOKEN') {
+            res.status(403).send('Invalid CSRF token');
+            return;
+        }
+        next(err);
+    });
 
     return app;
 }
