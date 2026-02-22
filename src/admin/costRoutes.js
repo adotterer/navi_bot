@@ -10,8 +10,10 @@ import { listS3KeysWithPrefix } from '../shared/s3Helper.js';
 const router = express.Router();
 
 // Pricing per 1M tokens (approximate list price; actual billing may differ)
-const GEMINI_INPUT_PER_1M = 0.075;
-const GEMINI_OUTPUT_PER_1M = 0.3;
+const GEMINI_FLASH_INPUT_PER_1M = 0.075;
+const GEMINI_FLASH_OUTPUT_PER_1M = 0.3;
+const GEMINI_PRO_INPUT_PER_1M = 3.5;
+const GEMINI_PRO_OUTPUT_PER_1M = 10.5;
 const ANTHROPIC_INPUT_PER_1M = 3;
 const ANTHROPIC_OUTPUT_PER_1M = 15;
 
@@ -19,13 +21,22 @@ function isAnthropic(model) {
     return typeof model === 'string' && model.trim().toLowerCase().startsWith('claude-');
 }
 
-function costForRun(model, inputTokens, outputTokens) {
+function isGeminiPro(model) {
+    return typeof model === 'string' && model.toLowerCase().includes('pro');
+}
+
+function costForRun(model, inputTokens, outputTokens, cachedTokens = 0) {
     const inT = Number(inputTokens) || 0;
     const outT = Number(outputTokens) || 0;
+    const cacheT = Number(cachedTokens) || 0;
     if (isAnthropic(model)) {
         return (inT / 1e6) * ANTHROPIC_INPUT_PER_1M + (outT / 1e6) * ANTHROPIC_OUTPUT_PER_1M;
     }
-    return (inT / 1e6) * GEMINI_INPUT_PER_1M + (outT / 1e6) * GEMINI_OUTPUT_PER_1M;
+    const isPro = typeof model === 'string' && model.toLowerCase().includes('pro');
+    const inputRate = isPro ? GEMINI_PRO_INPUT_PER_1M : GEMINI_FLASH_INPUT_PER_1M;
+    const outputRate = isPro ? GEMINI_PRO_OUTPUT_PER_1M : GEMINI_FLASH_OUTPUT_PER_1M;
+    const multiplier = inT > 128000 ? 2 : 1;
+    return ((inT / 1e6) * inputRate + (outT / 1e6) * outputRate) * multiplier;
 }
 
 async function getAggregatedUsage() {
