@@ -55,6 +55,10 @@ const PROMPT_META = {
             { name: 'frameDataContext', description: 'Frame data context for the question' },
             { name: 'question', description: "The user's question" }
         ]
+    },
+    ts: {
+        description: '!ts – manually trigger tournament notification (Moderators only)',
+        variables: []
     }
 };
 
