@@ -148,6 +148,26 @@ client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
     if (message.channel?.type === ChannelType.DM) return;
 
+    // ===== TEST SCHEDULER =====
+    if (message.content.toLowerCase() === '!ts') {
+        const isMod = message.member?.roles?.cache?.some(r => r.name === 'Moderator');
+        const isAdmin = message.author.id === (process.env.ADMIN_DISCORD_ID || '596207448935628812');
+
+        if (!isMod && !isAdmin) {
+            return message.reply("❌ This command is restricted to Moderators.");
+        }
+
+        try {
+            await message.reply("Testing notifications...");
+            await checkTodaysTournaments(client);
+            await message.channel.send("✅ Test notification sent to audit-log.");
+        } catch (err) {
+            console.error('[!ts] Error:', err);
+            await message.reply("❌ Failed to run test: " + err.message);
+        }
+        return;
+    }
+
     const channelName = message.channel?.name?.toLowerCase() || '';
     const normalizedChannelName = channelName.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
     const isAskNaviChannel = normalizedChannelName.includes('ask') && normalizedChannelName.includes('navi');
