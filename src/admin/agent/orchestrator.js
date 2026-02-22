@@ -239,6 +239,7 @@ export async function runPipeline(runId, opts = {}) {
     const resume = !!opts.resume;
     const prompt = (opts.prompt ?? run?.prompt ?? '').trim();
     const model = opts.model ?? run?.model ?? '';
+    const depth = opts.depth ?? run?.depth ?? 'medium';
     const log = (role, stage, message) => appendLog(runId, { role, stage, message });
 
     const abortCtrl = new AbortController();
@@ -312,7 +313,7 @@ export async function runPipeline(runId, opts = {}) {
             updateRun(runId, { status: 'research' });
             log('system', 'research', resume ? 'Resuming: re-running Researcher…\n' : 'Running Researcher…\n');
 
-            const researchResult = await runResearcher(prompt, { docs: getRun(runId)?.docs, signal, model });
+            const researchResult = await runResearcher(prompt, { docs: getRun(runId)?.docs, signal, model, depth });
             if (!researchResult.ok) {
                 updateRun(runId, { status: 'error', error: researchResult.error });
                 log('system', 'error', 'Researcher failed: ' + researchResult.error + '\n');
@@ -439,7 +440,7 @@ export async function runPipeline(runId, opts = {}) {
                     limitPlanners(async () => {
                         log('system', 'planning', `Planner: ${task.title}\n`);
                         const fileContext = await buildFileContextForTask(task, grepPaths);
-                        const planResult = await runPlanner(task, { fileContext, grepContext, docs: getRun(runId)?.docs, flightPlan, steps: getRun(runId)?.steps, signal, model });
+                        const planResult = await runPlanner(task, { fileContext, grepContext, docs: getRun(runId)?.docs, flightPlan, steps: getRun(runId)?.steps, signal, model, depth });
                         if (planResult.ok) {
                             const n = (planResult.steps && planResult.steps.length) || 0;
                             log('system', 'planning', `Planner: ${task.title} — ${n} step(s)\n`);

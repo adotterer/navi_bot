@@ -134,6 +134,21 @@ Be concise. Do not wrap the report in a code block — output raw markdown.
 DIAGRAM TOOL: If the changes are complex and a visual diagram would help summarize the architecture or data flow being modified, insert the placeholder [DIAGRAM: detailed description with actual file names, functions, and connections from the diff] at the appropriate location. Use at most 1 diagram per review. Only use this when the change is architecturally significant.`
 };
 
+const DEPTH_MODIFIERS = {
+    researcher: {
+        light: '\n\nDEPTH: LIGHT — This is a narrow, targeted request. Produce a minimal flight plan — ideally a single task. Focus only on the specific files and changes mentioned in the mission. Do not explore broadly or suggest tangential improvements.',
+        'deep-dive': '\n\nDEPTH: DEEP-DIVE — This is a complex feature request requiring thorough analysis. Produce a comprehensive flight plan covering architecture, edge cases, UI/UX, and integration points. Break the mission into multiple well-defined tasks. Be generous with file hints — include related files the Coder may need for context even if they won\'t be directly edited.'
+    },
+    planner: {
+        light: '\n\nDEPTH: LIGHT — Produce the minimum number of steps (1–3). Each step should be small and focused on a specific, targeted edit. Do not add extra validation, refactoring, or exploratory steps.',
+        'deep-dive': '\n\nDEPTH: DEEP-DIVE — Produce a thorough implementation plan. Consider edge cases, error handling, UI/UX polish, and consistency with the rest of the codebase. Steps should have detailed changeDescriptions. Aim for completeness over minimalism.'
+    }
+};
+
+export function getDepthModifier(agentId, depth) {
+    return DEPTH_MODIFIERS[agentId]?.[depth] || '';
+}
+
 const cache = new Map();
 
 export function listAgentPromptIds() {

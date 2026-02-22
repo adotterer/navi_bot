@@ -489,15 +489,15 @@ router.patch('/run/:runId/docs', express.json(), (req, res) => {
 
 // ----- POST /admin/agent/run – start run (returns runId, runs orchestrator in background) -----
 router.post('/run', express.json(), (req, res) => {
-    const { prompt = '', model = '', mode = 'pr', maxParallelPlanners = 2, maxParallelCoders = 3, seedDocs } = req.body || {};
-    const runId = createRun({ prompt, model, mode });
+    const { prompt = '', model = '', mode = 'pr', depth = 'medium', maxParallelPlanners = 2, maxParallelCoders = 3, seedDocs } = req.body || {};
+    const runId = createRun({ prompt, model, mode, depth });
     if (seedDocs && typeof seedDocs === 'object') {
         updateRun(runId, { docs: seedDocs });
     }
     res.json({ runId });
 
     setImmediate(() => {
-        runPipeline(runId, { prompt, model, maxParallelPlanners, maxParallelCoders });
+        runPipeline(runId, { prompt, model, depth, maxParallelPlanners, maxParallelCoders });
     });
 });
 

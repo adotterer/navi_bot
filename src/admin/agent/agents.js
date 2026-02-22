@@ -7,7 +7,7 @@
 import { GoogleGenAI } from '@google/genai';
 import Anthropic from '@anthropic-ai/sdk';
 import { getFileTree } from './codebaseTools.js';
-import { getAgentPrompt } from './agentPromptLoader.js';
+import { getAgentPrompt, getDepthModifier } from './agentPromptLoader.js';
 import { putToS3 } from '../../shared/s3Helper.js';
 
 let _genAI = null;
@@ -300,7 +300,7 @@ function withTimeout(promise, ms, message = 'Request timed out') {
  * @returns {Promise<{ ok: true, flightPlan: Array<{ id: string, title: string, description: string, hints?: string }> } | { ok: false, error: string }>}
  */
 export async function runResearcher(missionPrompt, opts = {}) {
-    const { onChunk, docs, signal, model: modelOverride } = opts;
+    const { onChunk, docs, signal, model: modelOverride, depth } = opts;
     const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     let treeInfo = '';
     try {
@@ -310,7 +310,7 @@ export async function runResearcher(missionPrompt, opts = {}) {
         }
     } catch (_) {}
 
-    const systemPrompt = await getAgentPrompt('researcher');
+    const systemPrompt = await getAgentPrompt('researcher') + getDepthModifier('researcher', depth);
     let docsBlock = '';
     if (docs && typeof docs === 'object') {
         const parts = [];
@@ -564,9 +564,9 @@ function tryParseJsonObject(str) {
  * @returns {Promise<{ ok: true, steps: Array<{ what: string, files: string[], changeDescription?: string }> } | { ok: false, error: string }>}
  */
 export async function runPlanner(task, opts = {}) {
-    const { onChunk, fileContext = '', grepContext = '', docs, flightPlan, steps, signal, model: modelOverride } = opts;
+    const { onChunk, fileContext = '', grepContext = '', docs, flightPlan, steps, signal, model: modelOverride, depth } = opts;
     const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
-    const systemPrompt = await getAgentPrompt('planner');
+    const systemPrompt = await getAgentPrompt('planner') + getDepthModifier('planner', depth);
     let userContent = `Task: ${task.title}\n${task.description}${task.hints ? '\nHints: ' + task.hints : ''}`;
     if (docs && typeof docs === 'object') {
         const parts = [];

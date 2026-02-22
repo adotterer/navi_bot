@@ -64,29 +64,36 @@ router.get('/', async (req, res) => {
       <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Discord emoji library</h1>
       ${s3InUse ? s3Badge() : ''}
     </div>
-    <p class="text-slate-600 text-sm mb-6">Custom emojis you can insert in prompts (e.g. <code class="font-mono text-xs bg-slate-100 px-1 rounded">&lt;:6symbolnavi:1341400385709019138&gt;</code>). Used in the prompt editor. Save to S3 to persist.</p>
-    ${saved ? '<div class="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm px-4 py-3 mb-6">Saved to S3.</div>' : ''}
+    <p class="text-slate-600 dark:text-slate-400 text-sm mb-6">Custom emojis you can insert in prompts (e.g. <code class="font-mono text-xs bg-slate-100 dark:bg-slate-700 px-1 rounded">&lt;:6symbolnavi:1341400385709019138&gt;</code>). Used in the prompt editor. Save to S3 to persist.</p>
+    ${saved ? '<div class="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm px-4 py-3 mb-6">Saved to S3.</div>' : ''}
     <div class="admin-save-bar-spacer pb-32">
     <form id="emojis-form" method="post" action="/admin/emojis" class="space-y-6">
       ${csrfInput}
       <textarea id="emojis-body" name="body" class="hidden" aria-hidden="true"></textarea>
-      <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
-        <table class="w-full text-sm">
-          <thead><tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700"><th class="text-left py-3 px-3 w-10"></th><th class="text-left py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">Label</th><th class="text-left py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">Code</th><th class="w-20"></th></tr></thead>
-          <tbody id="emojis-tbody">${rowsHtml}</tbody>
-        </table>
-      </div>
-      <div class="add-row-section p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
-        <div class="min-w-0 flex-1">
-          <label for="new-label" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New label</label>
-          <input type="text" id="new-label" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 max-w-[10rem] sm:max-w-none sm:w-40" placeholder="e.g. Navi bullet" />
+      <section class="add-row-section rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-900/10 p-4 shadow-sm" aria-label="Add emoji">
+        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Add emoji</h2>
+        <p class="text-slate-600 dark:text-slate-400 text-xs mb-4">New entries appear in the table below. Use the save bar at the bottom to persist to S3.</p>
+        <div class="flex flex-wrap items-end gap-4">
+          <div class="min-w-0 flex-1 min-w-[140px]">
+            <label for="new-label" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Label</label>
+            <input type="text" id="new-label" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm w-full max-w-xs focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" placeholder="e.g. Navi bullet" />
+          </div>
+          <div class="min-w-0 flex-1 min-w-[200px]">
+            <label for="new-code" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Code</label>
+            <input type="text" id="new-code" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm w-full max-w-md font-mono focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" placeholder="<:name:id> or <a:name:id>" />
+          </div>
+          <button type="button" id="add-emoji-row-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 text-sm hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors shrink-0">Add to list</button>
         </div>
-        <div class="min-w-0 flex-1">
-          <label for="new-code" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Code</label>
-          <input type="text" id="new-code" class="rounded border border-slate-300 px-3 py-2 text-sm w-full min-w-0 font-mono max-w-[18rem] sm:max-w-none sm:w-72" placeholder="<:name:id> or <a:name:id>" />
+      </section>
+      <section aria-label="Current emojis">
+        <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Current emojis</h2>
+        <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+          <table class="w-full text-sm">
+            <thead><tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700"><th class="text-left py-3 px-3 w-10"></th><th class="text-left py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">Label</th><th class="text-left py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">Code</th><th class="w-20"></th></tr></thead>
+            <tbody id="emojis-tbody">${rowsHtml}</tbody>
+          </table>
         </div>
-        <button type="button" id="add-emoji-row-btn" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-medium py-2 px-4 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 self-end">Add row</button>
-      </div>
+      </section>
     </form>
     </div>
     <style>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
