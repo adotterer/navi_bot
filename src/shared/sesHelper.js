@@ -17,13 +17,13 @@ export async function send2FACode(email, code) {
     const codeStr = String(code ?? '').trim();
     const htmlBody = `<!DOCTYPE html>
 <html>
-<body style="font-family: sans-serif; background-color: #f4f4f4; padding: 20px;">
-    <div style="max-width: 400px; margin: auto; background: #ffffff; padding: 30px; border-radius: 10px; text-align: center; border: 1px solid #eeeeee;">
-        <h2 style="color: #222; margin-bottom: 20px;">Navi Admin</h2>
-        <p style="font-size: 16px; color: #444;">Your verification code is:</p>
-        <p style="font-size: 28px; font-weight: bold; color: #111; letter-spacing: 6px; margin: 20px 0;">${codeStr}</p>
-        <table cellpadding="0" cellspacing="0" style="margin: 20px auto; border-collapse: collapse;"><tr><td style="font-size: 32px; font-weight: bold; background: #111; color: #fff; padding: 12px 24px; letter-spacing: 4px;">${codeStr}</td></tr></table>
-        <p style="font-size: 14px; color: #777; margin-top: 20px;">It expires in 10 minutes.</p>
+<body style="font-family: sans-serif; background-color: #0f172a; padding: 20px;">
+    <div style="max-width: 400px; margin: auto; background: #1e293b; padding: 30px; border-radius: 10px; text-align: center; border: 1px solid #334155;">
+        <h2 style="color: #f8fafc; margin-bottom: 20px;">Navi Admin</h2>
+        <p style="font-size: 16px; color: #f1f5f9;">Your verification code is:</p>
+        <p style="font-size: 28px; font-weight: bold; color: #10b981; letter-spacing: 6px; margin: 20px 0;">${codeStr}</p>
+        <table cellpadding="0" cellspacing="0" style="margin: 20px auto; border-collapse: collapse;"><tr><td style="font-size: 32px; font-weight: bold; background: #10b981; color: #0f172a; padding: 12px 24px; letter-spacing: 4px;">${codeStr}</td></tr></table>
+        <p style="font-size: 14px; color: #f1f5f9; margin-top: 20px;">It expires in 10 minutes.</p>
     </div>
 </body>
 </html>`;
