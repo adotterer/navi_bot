@@ -2,7 +2,8 @@ import { EmbedBuilder } from 'discord.js';
 import cron from 'node-cron';
 import { fetchAllMessages, uploadToS3 } from './s3Helper.js';
 import { checkTodaysTournaments } from '../tournaments/dailyTournamentCheck.js';
-import { buildTournamentEmbed, INFO_EMBED_COLOR } from '../tournaments/tournamentEmbed.js';
+import { buildTournamentEmbed } from '../tournaments/tournamentEmbed.js';
+import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 
 export function initializeScheduler(client) {
     // Weekly export every Sunday at 2 AM UTC
