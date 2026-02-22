@@ -702,14 +702,14 @@ function promptEditPage(id, meta, body, opts = {}) {
     </script>
   `)}
   <div id="prompt-action-bar" class="save-bar border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" data-save-bar-key="prompts">
-    <div class="save-bar-inner max-w-4xl mx-auto px-4">
+    <div class="save-bar-inner max-w-4xl mx-auto">
       <div class="save-bar-content">
         <div id="prompt-unsaved-placeholder" class="text-slate-400 text-sm"></div>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-nowrap gap-2 p-2 w-full justify-between items-center">
           <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
-          <button type="submit" form="prompt-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2 px-4 text-sm hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-          <button type="button" class="prompt-version-history-open rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 font-medium py-2 px-4 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Version history</button>
-          <a href="/admin/prompts" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 font-medium py-2 px-4 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 inline-block">Cancel</a>
+          <button type="submit" form="prompt-form" class="rounded-lg bg-emerald-600 text-white font-medium text-sm px-3 py-2 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+          <button type="button" class="prompt-version-history-open rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 font-medium text-sm px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Version history</button>
+          <a href="/admin/prompts" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 font-medium text-sm px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 inline-block">Cancel</a>
         </div>
       </div>
       ${saveBarToggleButton()}
