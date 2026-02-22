@@ -5,6 +5,7 @@ import { GoogleGenAI } from '@google/genai';
 import { EmbedBuilder } from 'discord.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
+import { getPrompt } from '../shared/promptLoader.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
 import { loadCharacterFrameData, findMove, parseCharacterAndMove } from './frameDataHelper.js';
 
@@ -302,27 +303,9 @@ export async function handleStatsQuestion(message, question) {
         // Build context for AI - only include relevant stats based on question
         const relevantStats = getRelevantStats(question);
         const statsContext = buildStatsContext(allStatsData, relevantStats);
-        
-        const prompt = `You are a Super Smash Bros. Ultimate stats expert. Answer the following question using ONLY the provided stats data. Be concise and specific.
 
-STATS DATA:
-${statsContext}
+        const prompt = await getPrompt('stats_question', { statsContext, question });
 
-QUESTION: ${question}
-
-Provide a clear, factual answer based on the data. If comparing characters, show the relevant numbers. If asking about superlatives (fastest, heaviest, etc.), identify the character and their value.
-
-Format your answer using Discord markdown, similar to this:
-
-**Sonic** is faster than **Zelda** in every speed category:
-
-<:6symbolnavi:1341400385709019138> **Run Speed: **Sonic (3.85) vs. Zelda (1.43)
-<:6symbolnavi:1341400385709019138>**Dash Speed:** Sonic (2.31) vs. Zelda (1.958)
-<:6symbolnavi:1341400385709019138>**Walk Speed: **Sonic (1.444) vs. Zelda (0.914)
-<:6symbolnavi:1341400385709019138>**Air Speed: **Sonic (1.208) vs. Zelda (1.092)
-
-Provide your answer here:`;
-        
         const response = await genAI.models.generateContent({
             model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp',
             contents: prompt

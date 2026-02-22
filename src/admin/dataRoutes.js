@@ -487,11 +487,11 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
 })();
     </script>
   `)}
-  <div id="csv-action-bar" class="save-bar bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="csv">
-    <div class="save-bar-inner max-w-[85rem] mx-auto px-4 py-3">
+  <div id="csv-action-bar" class="save-bar border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" data-save-bar-key="csv">
+    <div class="save-bar-inner max-w-[85rem] mx-auto px-4">
       <div class="save-bar-content">
         <div id="csv-unsaved-reminder-placeholder" class="text-slate-400 text-sm"></div>
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="flex flex-wrap items-center gap-2">
           <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
           <button type="submit" form="csv-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
           <a href="${backUrl}" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-medium py-2.5 px-5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 inline-block">Cancel</a>

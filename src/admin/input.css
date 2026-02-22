@@ -2,6 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Save bar: slim height, slight transparency, one row of buttons */
+@layer components {
+  .save-bar {
+    padding-top: 0.25rem;
+    padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
+  }
+  .dark .save-bar {
+    background-color: rgba(30, 41, 59, 0.92);
+  }
+  .save-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+  .save-bar-content {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 0;
+  }
+  .save-bar-toggle {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: inherit;
+  }
+  .save-bar-toggle:hover {
+    opacity: 0.85;
+  }
+  .save-bar-toggle .save-bar-icon-up {
+    display: none;
+  }
+  .save-bar-minimized .save-bar-content {
+    display: none;
+  }
+  .save-bar-minimized .save-bar-toggle .save-bar-icon-down {
+    display: none;
+  }
+  .save-bar-minimized .save-bar-toggle .save-bar-icon-up {
+    display: block;
+  }
+}
+
 @layer base {
     html { @apply antialiased bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50; }
     input, select, textarea {

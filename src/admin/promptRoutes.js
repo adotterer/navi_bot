@@ -694,8 +694,8 @@ function promptEditPage(id, meta, body, opts = {}) {
     })();
     </script>
   `)}
-  <div id="prompt-action-bar" class="save-bar bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="prompts">
-    <div class="save-bar-inner max-w-4xl mx-auto px-4 py-2">
+  <div id="prompt-action-bar" class="save-bar border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" data-save-bar-key="prompts">
+    <div class="save-bar-inner max-w-4xl mx-auto px-4">
       <div class="save-bar-content">
         <div id="prompt-unsaved-placeholder" class="text-slate-400 text-sm"></div>
         <div class="flex flex-wrap items-center gap-2">

@@ -86,11 +86,11 @@ router.get('/', async (req, res) => {
     </form>
     </div>
     <style>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
-    <div id="emojis-action-bar" class="save-bar bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="emojis">
-      <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
+    <div id="emojis-action-bar" class="save-bar border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" data-save-bar-key="emojis">
+      <div class="save-bar-inner max-w-5xl mx-auto px-4">
         <div class="save-bar-content">
           <div class="text-slate-400 text-sm"></div>
-          <div class="flex flex-wrap items-center gap-3">
+          <div class="flex flex-wrap items-center gap-2">
             <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
             <button type="submit" form="emojis-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
             <a href="/admin" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-medium py-2.5 px-5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 inline-block">Back to dashboard</a>
@@ -239,11 +239,11 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
     </form>
     </div>
     <style>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
-    <div id="emojis-action-bar" class="save-bar bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] pb-[env(safe-area-inset-bottom)]" data-save-bar-key="emojis">
-      <div class="save-bar-inner max-w-5xl mx-auto px-4 py-3">
+    <div id="emojis-action-bar" class="save-bar border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" data-save-bar-key="emojis">
+      <div class="save-bar-inner max-w-5xl mx-auto px-4">
         <div class="save-bar-content">
           <div class="text-slate-400 text-sm"></div>
-          <div class="flex flex-wrap items-center gap-3">
+          <div class="flex flex-wrap items-center gap-2">
             <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
             <button type="submit" form="emojis-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
             <a href="/admin" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-medium py-2.5 px-5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 inline-block">Back to dashboard</a>
