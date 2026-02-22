@@ -435,6 +435,13 @@ export async function runPipeline(runId, opts = {}) {
             allowedPaths.add(AGENT_ROUTES_PATH);
             allowedPaths.add(AGENT_PAGE_INNER_PATH);
         }
+        // Home page (route "/"): restyle to match admin — root route is in app.js; admin look is in layout.js.
+        const APP_JS_PATH = 'src/app.js';
+        const LAYOUT_JS_PATH = 'src/admin/layout.js';
+        if (/home page|root page|landing page|route ["']\/["']|match admin|theme disconnect|look and feel/i.test(prompt || '')) {
+            allowedPaths.add(APP_JS_PATH);
+            allowedPaths.add(LAYOUT_JS_PATH);
+        }
 
         const allEdits = [];
         const isClaude = typeof model === 'string' && model.trim().toLowerCase().startsWith('claude-');
@@ -558,6 +565,16 @@ export async function runPipeline(runId, opts = {}) {
                     if (isMissionsUiStep && !fileContext[AGENT_ROUTES_PATH] && /model dropdown|model selector|modelmeta|model meta/i.test(stepText)) {
                         const r = await callTool('read_file', { path: AGENT_ROUTES_PATH });
                         if (r.ok && typeof r.result === 'string') fileContext[AGENT_ROUTES_PATH] = r.result;
+                    }
+                    // Home page (route "/"): ensure Coder sees app.js and optionally layout.js for "match admin" styling.
+                    const isHomePageStep = /home page|root page|landing page|route ["']\/["']|match admin|theme disconnect|look and feel/i.test(stepText);
+                    if (isHomePageStep && !fileContext[APP_JS_PATH]) {
+                        const r = await callTool('read_file', { path: APP_JS_PATH });
+                        if (r.ok && typeof r.result === 'string') fileContext[APP_JS_PATH] = r.result;
+                    }
+                    if (isHomePageStep && !fileContext[LAYOUT_JS_PATH]) {
+                        const r = await callTool('read_file', { path: LAYOUT_JS_PATH });
+                        if (r.ok && typeof r.result === 'string') fileContext[LAYOUT_JS_PATH] = r.result;
                     }
                     const coderResult = await runCoder(step, fileContext, { signal, missionPrompt: prompt, model });
                     return { step, task, coderResult, stepIndex: j, useExisting: false };
