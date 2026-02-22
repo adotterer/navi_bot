@@ -116,19 +116,19 @@ function saveBarMinimizeScript(barId, storageKey) {
   var toggle = bar.querySelector('.save-bar-toggle');
   var storageKey = ${JSON.stringify(key)};
   function setMinimized(minimized) {
-    if (minimized) {
-      bar.classList.add('save-bar-minimized');
-      if (toggle) { toggle.setAttribute('aria-label', 'Expand save bar'); toggle.setAttribute('title', 'Expand save bar'); }
-      try { localStorage.setItem(storageKey, '1'); } catch (_) {}
-    } else {
-      bar.classList.remove('save-bar-minimized');
-      if (toggle) { toggle.setAttribute('aria-label', 'Minimize save bar'); toggle.setAttribute('title', 'Minimize save bar'); }
-      try { localStorage.setItem(storageKey, '0'); } catch (_) {}
+    bar.classList.toggle('save-bar-minimized', minimized);
+    if (toggle) {
+      var text = minimized ? 'Expand save bar' : 'Minimize save bar';
+      toggle.setAttribute('aria-label', text);
+      toggle.setAttribute('title', text);
     }
+    try { localStorage.setItem(storageKey, minimized ? '1' : '0'); } catch (_) {}
   }
+
   try {
     if (localStorage.getItem(storageKey) === '1') setMinimized(true);
   } catch (_) {}
+  setTimeout(function() { bar.classList.add('save-bar-animated'); }, 10);
   if (toggle) toggle.addEventListener('click', function() { setMinimized(!bar.classList.contains('save-bar-minimized')); });
 })();
 </script>`;
