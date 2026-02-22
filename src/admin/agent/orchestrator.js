@@ -745,6 +745,7 @@ export async function runPipeline(runId, opts = {}) {
                     headBranch: diffResult.headBranch || branchName,
                     signal,
                     model: testerModel,
+                    runId,
                 });
                 if (!testerResult.ok) {
                     const errMsg = 'Tester failed: ' + (testerResult.error || 'unknown');
@@ -757,6 +758,7 @@ export async function runPipeline(runId, opts = {}) {
                         prUrl: prResult.prUrl,
                         reviewReport: testerResult.report,
                         reviewReportError: undefined,
+                        ...(testerResult.diagramKeys?.length && { diagramKeys: testerResult.diagramKeys }),
                         inputTokens: (currentRunForTester?.inputTokens || 0) + (testerResult.inputTokens || 0),
                         outputTokens: (currentRunForTester?.outputTokens || 0) + (testerResult.outputTokens || 0),
                     });

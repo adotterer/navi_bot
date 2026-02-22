@@ -2,7 +2,7 @@
  * Admin routes: login, logout, dashboard. All except login require auth.
  */
 import express from 'express';
-import { requireAdmin, checkLogin, verify2fa, generate2FACode } from './auth.js';
+import { requireAdmin, checkLogin, verify2fa, generate2FACode, is2faBypassed } from './auth.js';
 import { send2FACode } from '../shared/sesHelper.js';
 import { doubleCsrfProtection, generateCsrfToken } from './csrf.js';
 import { promptRoutes } from './promptRoutes.js';
@@ -55,6 +55,10 @@ router.post('/login', express.urlencoded({ extended: true }), async (req, res) =
         const csrfToken = generateCsrfToken(req, res);
         return res.status(401).send(loginPage({ error: 'Invalid username or password.', csrfToken }));
     }
+    if (is2faBypassed()) {
+        req.session.admin = true;
+        return res.redirect('/admin');
+    }
     const adminEmail = process.env.ADMIN_EMAIL;
     if (adminEmail && process.env.SES_SENDER_EMAIL) {
         const code = generate2FACode();
@@ -75,6 +79,10 @@ router.post('/login', express.urlencoded({ extended: true }), async (req, res) =
 
 router.get('/2fa', (req, res) => {
     if (req.session && req.session.admin) return res.redirect('/admin');
+    if (is2faBypassed()) {
+        req.session.admin = true;
+        return res.redirect('/admin');
+    }
     if (!req.session || !req.session.twoFactorCode || !req.session.twoFactorExpires) {
         return res.redirect('/admin/login');
     }
@@ -89,6 +97,10 @@ router.get('/2fa', (req, res) => {
 });
 
 router.post('/2fa', express.urlencoded({ extended: true }), (req, res) => {
+    if (is2faBypassed()) {
+        req.session.admin = true;
+        return res.redirect('/admin');
+    }
     const code = (req.body && req.body.code) ? String(req.body.code).trim() : '';
     if (!req.session || !req.session.twoFactorCode || !req.session.twoFactorExpires) {
         return res.redirect('/admin/login');
@@ -100,6 +112,7 @@ router.post('/2fa', express.urlencoded({ extended: true }), (req, res) => {
     }
     if (verify2fa(req.session, code)) {
         req.session.admin = true;
+        req.session.twoFactorVerified = true;
         req.session.twoFactorCode = undefined;
         req.session.twoFactorExpires = undefined;
         return res.redirect('/admin');
