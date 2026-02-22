@@ -300,6 +300,7 @@ export async function runPipeline(runId, opts = {}) {
                 ...(testerResult.diagramKeys?.length && { diagramKeys: testerResult.diagramKeys }),
                 inputTokens: (currentRunEarly.inputTokens || 0) + (testerResult.inputTokens || 0),
                 outputTokens: (currentRunEarly.outputTokens || 0) + (testerResult.outputTokens || 0),
+                cachedTokens: (currentRunEarly.cachedTokens || 0) + (testerResult.cachedTokens || 0),
             });
             if (testerResult.warnings?.length) {
                 for (const w of testerResult.warnings) log('system', 'error', w + '\n');
@@ -325,7 +326,13 @@ export async function runPipeline(runId, opts = {}) {
             const overview = [prompt.trim()].concat(flightPlan.map((t) => `- ${t.title || t.id}`)).join('\n\nTasks:\n');
             const requirements = flightPlan.map((t) => (t.title ? `**${t.title}**: ` : '') + (t.description || '')).join('\n\n');
             const title = deriveRunTitle(flightPlan);
-            updateRun(runId, { flightPlan, title, docs: { overview, requirements }, inputTokens: researchResult.inputTokens || 0, outputTokens: researchResult.outputTokens || 0 });
+            const runBeforeRes = getRun(runId);
+            updateRun(runId, {
+                flightPlan, title, docs: { overview, requirements },
+                inputTokens: (runBeforeRes?.inputTokens || 0) + (researchResult.inputTokens || 0),
+                outputTokens: (runBeforeRes?.outputTokens || 0) + (researchResult.outputTokens || 0),
+                cachedTokens: (runBeforeRes?.cachedTokens || 0) + (researchResult.cachedTokens || 0),
+            });
             notifyDocsUpdate(runId);
             log('system', 'research', `Flight plan: ${flightPlan.length} task(s).\n`);
             await persistRunToS3(runId);
@@ -362,6 +369,7 @@ export async function runPipeline(runId, opts = {}) {
                 ...(auditResult.diagramKeys?.length && { diagramKeys: auditResult.diagramKeys }),
                 inputTokens: (currentRun.inputTokens || 0) + (auditResult.inputTokens || 0),
                 outputTokens: (currentRun.outputTokens || 0) + (auditResult.outputTokens || 0),
+                cachedTokens: (currentRun.cachedTokens || 0) + (auditResult.cachedTokens || 0),
             });
             if (auditResult.warnings?.length) {
                 for (const w of auditResult.warnings) log('system', 'error', w + '\n');
