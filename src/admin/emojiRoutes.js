@@ -66,7 +66,7 @@ router.get('/', async (req, res) => {
     </div>
     <p class="text-slate-600 text-sm mb-6">Custom emojis you can insert in prompts (e.g. <code class="font-mono text-xs bg-slate-100 px-1 rounded">&lt;:6symbolnavi:1341400385709019138&gt;</code>). Used in the prompt editor. Save to S3 to persist.</p>
     ${saved ? '<div class="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm px-4 py-3 mb-6">Saved to S3.</div>' : ''}
-    <div class="admin-save-bar-spacer">
+    <div class="admin-save-bar-spacer pb-32">
     <form id="emojis-form" method="post" action="/admin/emojis" class="space-y-6">
       ${csrfInput}
       <textarea id="emojis-body" name="body" class="hidden" aria-hidden="true"></textarea>
@@ -220,7 +220,7 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
     </div>
     <p class="text-slate-600 text-sm mb-6">Custom emojis you can insert in prompts. Save to S3 to persist.</p>
     <div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">${escapeHtml(saveError)}</div>
-    <div class="admin-save-bar-spacer">
+    <div class="admin-save-bar-spacer pb-32">
     <form id="emojis-form" method="post" action="/admin/emojis" class="space-y-6">
       <textarea id="emojis-body" name="body" class="hidden" aria-hidden="true">${escapeHtml(raw)}</textarea>
       <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
