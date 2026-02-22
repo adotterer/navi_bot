@@ -7,6 +7,7 @@ import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/ch
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { getPrompt } from '../shared/promptLoader.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
+import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 import { loadCharacterFrameData, findMove, parseCharacterAndMove } from './frameDataHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,8 +16,7 @@ const __dirname = path.dirname(__filename);
 const STATS_DIR = path.join(__dirname, '../../data/stats');
 
 const genAI = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
-    defaultModel: process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp'
+    apiKey: process.env.GEMINI_API_KEY
 });
 
 // Cache for CSV data
@@ -134,7 +134,7 @@ export async function handleStatsLookup(message, args) {
         
         if (args.length < 2) {
             const availableStats = Object.keys(statDisplayNames).join(', ');
-            return message.reply(`❌ Usage: \`!stats <stat-name> <character>\` or \`!stats <character> <stat-name>\`\nExample: \`!stats air-acceleration falco\` or \`!stats peach gravity\`. For full docs, see https://discord.com/channels/1010002260786430052/1471283194706788362/1471283541357756590`);
+            return message.reply(`❌ Usage: \`!stats <stat-name> <character>\` or \`!stats <character> <stat-name>\`\nExample: \`!stats air-acceleration falco\` or \`!stats peach gravity\`. For full docs, see <https://discord.com/channels/1010002260786430052/1471283194706788362/1471283541357756590>`);
         }
         
         // Try to detect if this is a frame data query (character + move)
@@ -157,7 +157,7 @@ export async function handleStatsLookup(message, args) {
                         .join(' ');
                     
                     const embed = new EmbedBuilder()
-                        .setColor('#36AAD4')
+                        .setColor(INFO_EMBED_COLOR)
                         .setTitle(`${displayName} - ${found.move['Move Name'] || 'Move'}`)
                         .setDescription(`*${found.moveType.replace(/_/g, ' ').toUpperCase()}*`)
                         .addFields(
