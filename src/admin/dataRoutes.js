@@ -209,7 +209,7 @@ router.post('/framedata/:character/:section', express.urlencoded({ extended: tru
     }
 });
 
-function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) {
+function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, csrfToken = '') {
     const backUrl =
         type === 'stats' ? '/admin/data/stats' : '/admin/data/framedata' + (param1 ? '/' + encodeURIComponent(param1) : '');
     const saveAction =
@@ -262,13 +262,15 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
       #csv-body { display: none !important; }
       #csv-spreadsheet-wrap { min-height: 12rem; overflow-x: auto; overflow-y: auto; }
       .csv-grid { font-size: 0.8125rem; width: max-content; min-width: 100%; }
-      .csv-grid td { border: 1px solid #cbd5e1; padding: 0.25rem 0.375rem; }
-      .csv-grid .cell-input, .csv-grid .cell-textarea { border: 1px solid #e2e8f0; border-radius: 3px; padding: 0.25rem 0.375rem; }
+      .csv-grid td { border: 1px solid #cbd5e1; padding: 0.2rem 0.3rem; max-width: 9rem; }
+      .csv-grid td.cell-narrow { max-width: 4.25rem; min-width: 3rem; }
+      .csv-grid .cell-move-name { max-width: 10rem; }
+      .csv-grid .cell-input, .csv-grid .cell-textarea { border: 1px solid #e2e8f0; border-radius: 3px; padding: 0.2rem 0.3rem; }
       .csv-grid .cell-input:focus, .csv-grid .cell-textarea:focus { border-color: #10b981; box-shadow: 0 0 0 1px #10b981; outline: none; }
       .csv-grid .cell-textarea { resize: vertical; min-height: 2.25rem; word-wrap: break-word; white-space: pre-wrap; }
       .csv-grid td .cell-input, .csv-grid td .cell-textarea { min-height: 1.5rem; }
-      .csv-grid td.cell-notes { min-width: 200px; max-width: 320px; }
-      .csv-grid .cell-gif { min-width: 100px; }
+      .csv-grid td.cell-notes { min-width: 180px; max-width: 280px; }
+      .csv-grid .cell-gif { min-width: 90px; max-width: 120px; }
       .csv-grid .cell-gif img { max-width: 80px; height: auto; display: block; border-radius: 3px; border: 1px solid #e2e8f0; }
       .csv-grid .cell-gif .gif-url-input { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.7rem; padding: 0.2rem 0.3rem; }
       .csv-grid .cell-gif .gif-filename { font-size: 0.7rem; color: #64748b; margin-top: 2px; }
@@ -295,6 +297,12 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
     'Shield Lag': 'Sh Lag', 'Shield Stun': 'Sh Stun', 'Active Frames': 'Active', 'Property 1': 'Prop 1',
     'On Shield': 'On Sh', 'GIF URL': 'GIF', 'End Lag': 'End Lag'
   };
+  var narrowHeaders = { 'Total Frames': 1, 'Landing Lag': 1, 'Startup': 1, 'Base Damage': 1, 'Shield Lag': 1, 'Shield Stun': 1, 'Active Frames': 1, 'Property 1': 1, 'Property 2': 1, 'On Shield': 1, 'End Lag': 1 };
+  function isNarrowColumn(header) {
+    if (!header) return false;
+    var h = header.trim();
+    return narrowHeaders[h] || (h.length <= 4 && /^[A-Za-z0-9\\s]+$/.test(h));
+  }
   function abbrevHeader(t) {
     if (!t) return '';
     var s = (headerAbbrev[t] != null) ? headerAbbrev[t] : t;
@@ -401,6 +409,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
         var isMoveName = header.indexOf('move') !== -1 && header.indexOf('name') !== -1;
 
         if (r === 0) {
+          if (isNarrowColumn(headers[c])) td.classList.add('cell-narrow');
           var label = document.createElement('span');
           label.className = 'font-semibold text-slate-700 dark:text-slate-200 block';
           label.textContent = abbrevHeader(headers[c]);
@@ -461,10 +470,11 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
           continue;
         }
 
+        if (isNarrowColumn(headers[c])) td.classList.add('cell-narrow');
         var single = document.createElement('input');
         single.type = 'text';
         single.value = rawVal;
-        single.className = 'cell-input w-full min-w-[52px] bg-transparent';
+        single.className = 'cell-input w-full min-w-0 bg-transparent';
         single.addEventListener('input', markDirty);
         td.appendChild(single);
       }
