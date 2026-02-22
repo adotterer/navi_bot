@@ -1,6 +1,9 @@
 import fs from 'fs/promises';
+import { EmbedBuilder } from 'discord.js';
 import { executeQuery } from './startggClient.js';
 import { fetchFromS3 } from '../shared/s3Helper.js';
+import { buildTournamentEmbed } from './tournamentEmbed.js';
+import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -160,10 +163,16 @@ async function fetchEntrantsForEvent(eventId, authToken) {
  * Check today's tournaments for Zelda players
  * Returns structured data grouped by tournament (one entry per tournament with all Zelda players found)
  * 
- * @param {string} authToken - Start.gg API auth token
+ * @param {import('discord.js').Client} client - Discord client
+ * @param {import('discord.js').TextChannel} [targetChannel=null] - Optional specific channel to send to
  * @returns {Promise<Array>} Array of tournament match objects
  */
-export async function checkTodaysTournaments(authToken) {
+export async function checkTodaysTournaments(client, targetChannel = null) {
+    const authToken = process.env.STARTGG_AUTH_TOKEN;
+    if (!authToken) {
+        console.error('❌ STARTGG_AUTH_TOKEN not configured in environment');
+        return [];
+    }
     console.log('🎮 Checking today\'s SSBU tournaments for Zelda players...');
     
     try {
@@ -290,6 +299,24 @@ export async function checkTodaysTournaments(authToken) {
         const results = Array.from(tournamentMatches.values());
         console.log('\n');
         console.log(`✅ Found Zelda players in ${results.length} tournament(s)`);
+
+        if (results.length > 0 && client) {
+            let channel = targetChannel;
+            if (!channel) {
+                for (const guild of client.guilds.cache.values()) {
+                    channel = guild.channels.cache.find(c => c.name === 'audit-log');
+                    if (channel) break;
+                }
+            }
+
+            if (channel) {
+                for (const tournament of results) {
+                    const embed = buildTournamentEmbed(tournament);
+                    await channel.send({ embeds: [embed] });
+                }
+            }
+        }
+
         return results;
 
     } catch (error) {
