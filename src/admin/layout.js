@@ -71,7 +71,7 @@ function adminContainer(innerHtml) {
 
 /** Full-width main for content-heavy pages (e.g. Missions). No max-width so content can use horizontal space. */
 function adminContainerWide(innerHtml) {
-    return `<main class="w-full mx-auto px-4 sm:px-6 py-8 font-sans">${innerHtml}</main>`;
+    return `<main class="w-full mx-8 px-5 sm:px-8 py-8 font-sans">${innerHtml}</main>`;
 }
 
 function breadcrumb(items) {
