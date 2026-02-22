@@ -3,6 +3,7 @@
  */
 import express from 'express';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml } from '../layout.js';
+import { generateCsrfToken } from '../csrf.js';
 import { getAgentPageContent } from './agentPageContent.js';
 import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled, hydrateRun, deleteRun, DEFAULT_DOCS } from './runStore.js';
 import { runPipeline } from './orchestrator.js';
@@ -18,12 +19,14 @@ const SSE_HEARTBEAT_MS = 15000;
 
 // ----- GET /admin/agent – main page (template in agentPageContent.js + agentPageContentInner.html) -----
 router.get('/', (req, res) => {
+    const csrfToken = generateCsrfToken(req, res);
     const { content, prismTail } = getAgentPageContent({ adminNav, adminContainer, breadcrumb });
     const themeScript = '<script>(function(){var t=localStorage.getItem("theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark");})();<\/script>';
+    const csrfScript = `<script>window.__ADMIN_CSRF_TOKEN=${JSON.stringify(csrfToken || '')};window._adminFetch=function(u,o){o=o||{};o.credentials=o.credentials||'same-origin';if(window.__ADMIN_CSRF_TOKEN&&(o.method==='POST'||o.method==='DELETE'||o.method==='PUT'||o.method==='PATCH')){o.headers=Object.assign({},o.headers||{},{'x-csrf-token':window.__ADMIN_CSRF_TOKEN});}return fetch(u,o);};<\/script>`;
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Missions')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${themeScript}
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${themeScript}${csrfScript}
 ${content}
 ${prismTail}
 </body>
@@ -107,6 +110,8 @@ router.get('/models', async (req, res) => {
 const AGENT_PROMPT_LABELS = { researcher: 'Researcher', planner: 'Planner', coder: 'Coder', reviewer: 'Reviewer', auditor: 'Auditor', ask: 'Ask', tester: 'Tester' };
 router.get('/prompts', async (req, res) => {
     try {
+        const csrfToken = generateCsrfToken(req, res);
+        const csrfScript = `<script>window.__ADMIN_CSRF_TOKEN=${JSON.stringify(csrfToken || '')};window._adminFetch=function(u,o){o=o||{};o.credentials=o.credentials||'same-origin';if(window.__ADMIN_CSRF_TOKEN&&(o.method==='POST'||o.method==='DELETE'||o.method==='PUT'||o.method==='PATCH')){o.headers=Object.assign({},o.headers||{},{'x-csrf-token':window.__ADMIN_CSRF_TOKEN});}return fetch(u,o);};<\/script>`;
         const ids = listAgentPromptIds();
         const prompts = await Promise.all(ids.map(async (id) => ({ id, body: await getAgentPrompt(id), label: AGENT_PROMPT_LABELS[id] || id })));
         const sections = prompts.map(({ id, body, label }) => `
@@ -141,7 +146,7 @@ router.get('/prompts', async (req, res) => {
           status.classList.remove('hidden');
           status.textContent = 'Saving…';
           status.className = 'agent-prompt-status border-t border-slate-100 px-4 py-1.5 text-xs text-slate-400';
-          fetch('/admin/agent/prompts/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, body: textarea.value }) })
+          (window._adminFetch||fetch)('/admin/agent/prompts/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, body: textarea.value }) })
             .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
             .then(function(o) {
               status.textContent = o.ok ? 'Saved.' : (o.data && o.data.error ? o.data.error : 'Save failed');
@@ -159,7 +164,7 @@ router.get('/prompts', async (req, res) => {
           status.classList.remove('hidden');
           status.textContent = 'Resetting…';
           status.className = 'agent-prompt-status border-t border-slate-100 px-4 py-1.5 text-xs text-slate-400';
-          fetch('/admin/agent/prompts/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id }) })
+          (window._adminFetch||fetch)('/admin/agent/prompts/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id }) })
             .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
             .then(function(o) {
               if (o.ok) { window.location.reload(); return; }
@@ -175,7 +180,7 @@ router.get('/prompts', async (req, res) => {
         res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Agent prompts')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${csrfScript}${content}</body>
 </html>`);
     } catch (err) {
         console.error('Agent prompts page:', err);

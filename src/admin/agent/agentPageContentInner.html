@@ -369,7 +369,7 @@
   function loadModels() {
     var sel = document.getElementById('model');
     if (!sel) return;
-    fetch('/admin/agent/models', { credentials: 'same-origin' })
+    _adminFetch('/admin/agent/models', { credentials: 'same-origin' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         var models = data.models || [];
@@ -450,7 +450,7 @@
 
   function saveDocSection(section, content) {
     if (!currentRunId || !section) return;
-    fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/docs', {
+    _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/docs', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
@@ -570,7 +570,7 @@
   function fetchTree(branch, path, cb) {
     var key = repoCacheKey(branch, path);
     if (repoTreeCache[key]) return cb(null, repoTreeCache[key]);
-    fetch('/admin/agent/repo/tree?branch=' + encodeURIComponent(branch) + '&path=' + encodeURIComponent(path || ''), { credentials: 'same-origin' })
+    _adminFetch('/admin/agent/repo/tree?branch=' + encodeURIComponent(branch) + '&path=' + encodeURIComponent(path || ''), { credentials: 'same-origin' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.ok) { repoTreeCache[key] = data.entries; cb(null, data.entries); }
@@ -579,7 +579,7 @@
       .catch(function(e) { cb(e.message); });
   }
   function fetchFile(branch, path, cb) {
-    fetch('/admin/agent/repo/file?branch=' + encodeURIComponent(branch) + '&path=' + encodeURIComponent(path), { credentials: 'same-origin' })
+    _adminFetch('/admin/agent/repo/file?branch=' + encodeURIComponent(branch) + '&path=' + encodeURIComponent(path), { credentials: 'same-origin' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.ok) cb(null, data.content);
@@ -646,7 +646,7 @@
     repoContentHeader.textContent = '';
     repoContent.textContent = 'Select a file';
   }
-  fetch('/admin/agent/repo/branches', { credentials: 'same-origin' })
+  _adminFetch('/admin/agent/repo/branches', { credentials: 'same-origin' })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (!data.ok) return;
@@ -689,8 +689,8 @@
     var countEl = document.getElementById('past-runs-count');
     if (!listEl) return;
     Promise.all([
-      fetch('/admin/agent/runs', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; }),
-      fetch('/admin/agent/runs/history', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; })
+      _adminFetch('/admin/agent/runs', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; }),
+      _adminFetch('/admin/agent/runs/history', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; })
     ]).then(function(results) {
       var memory = results[0].runs || [];
       var history = results[1].runs || [];
@@ -730,7 +730,7 @@
         btn.addEventListener('click', function() {
           var runId = btn.getAttribute('data-run-id');
           if (!confirm('Delete this run? This cannot be undone.')) return;
-          fetch('/admin/agent/run/' + encodeURIComponent(runId), { method: 'DELETE', credentials: 'same-origin' })
+          _adminFetch('/admin/agent/run/' + encodeURIComponent(runId), { method: 'DELETE', credentials: 'same-origin' })
             .then(function(r) { return r.json(); })
             .then(function(data) {
               if (!data.ok) { alert('Delete failed: ' + (data.error || 'unknown error')); return; }
@@ -749,7 +749,7 @@
   function loadPastRun(runId) {
     closeStream();
     stopTimer();
-    fetch('/admin/agent/run/' + encodeURIComponent(runId), { credentials: 'same-origin' })
+    _adminFetch('/admin/agent/run/' + encodeURIComponent(runId), { credentials: 'same-origin' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.error) { alert('Could not load run: ' + data.error); return; }
@@ -1017,7 +1017,7 @@
   function showResult(prUrl, err, data) {
     applyResultArea(prUrl, err, data);
     if (currentRunId) {
-      fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+      _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
         .then(function(r) { return r.json(); })
         .then(function(fetched) {
           if (fetched.error) return;
@@ -1055,7 +1055,7 @@
   function maybePopulateDocs() {
     if (docsPopulated || !currentRunId) return;
     docsPopulated = true;
-    fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+    _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (!data.error && (data.prompt || (data.docs && Object.keys(data.docs).some(function(k) { return data.docs[k]; })))) populateDocsPanel(data);
@@ -1164,7 +1164,7 @@
     });
     var modelEl = document.getElementById('model');
     var model = (modelEl && modelEl.value) ? modelEl.value.trim() : '';
-    fetch('/admin/agent/run', {
+    _adminFetch('/admin/agent/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
@@ -1195,7 +1195,7 @@
         var maxPolls = 5;
         var poll = function() {
           pollCount++;
-          fetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+          _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
             .then(function(r) { return r.json(); })
             .then(function(data) {
               if (data.error) {
@@ -1272,7 +1272,7 @@
             updateTokenDisplay(entry.inputTokens, entry.outputTokens);
             var runId = currentRunId;
             if (runId) {
-              fetch('/admin/agent/run/' + encodeURIComponent(runId), { credentials: 'same-origin' })
+              _adminFetch('/admin/agent/run/' + encodeURIComponent(runId), { credentials: 'same-origin' })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                   if (data.error) { runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created'; showResult(entry.prUrl, entry.error); return; }
@@ -1318,7 +1318,7 @@
     if (!currentRunId || stopBtn.disabled) return;
     stopBtn.disabled = true;
     stopBtn.textContent = 'Stopping…';
-    fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/cancel', {
+    _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/cancel', {
       method: 'POST',
       credentials: 'same-origin'
     }).catch(function() {});
@@ -1429,7 +1429,7 @@
       stopBtn.textContent = 'Stop run';
       closeStream();
       startTimer();
-      fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/resume', { method: 'POST', credentials: 'same-origin' })
+      _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/resume', { method: 'POST', credentials: 'same-origin' })
         .then(function(r) { return r.json(); })
         .then(function(data) {
           if (!data.ok) {
@@ -1457,7 +1457,7 @@
     var btn = action === 'merge' ? prMergeBtn : prCloseBtn;
     var label = action === 'merge' ? 'Merge PR' : 'Close PR';
     if (btn) { btn.disabled = true; btn.textContent = action === 'merge' ? 'Merging…' : 'Closing…'; }
-    fetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/pr-action', {
+    _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/pr-action', {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },

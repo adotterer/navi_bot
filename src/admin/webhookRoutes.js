@@ -17,11 +17,14 @@ import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 export const webhookRouter = express.Router();
 
 function verifySignature(rawBody, signatureHeader) {
-    const secret = process.env.WEBHOOK_SECRET;
-    if (!secret || !signatureHeader) return false;
+    const secret = process.env.GITHUB_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET;
+    if (!secret || !signatureHeader || typeof signatureHeader !== 'string') return false;
     const expected = 'sha256=' + createHmac('sha256', secret).update(rawBody).digest('hex');
+    const a = Buffer.from(signatureHeader, 'utf8');
+    const b = Buffer.from(expected, 'utf8');
+    if (a.length !== b.length) return false;
     try {
-        return timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expected));
+        return timingSafeEqual(a, b);
     } catch {
         return false;
     }

@@ -33,8 +33,8 @@ const PORT = process.env.PORT || 8080;
         const { syncEmojisFromS3 } = await import('./src/shared/emojiSync.js');
         await syncAliasesFromS3();
         await syncEmojisFromS3();
-    } catch (_) {
-        // S3 optional at startup (e.g. no creds or key not yet created)
+    } catch (err) {
+        console.warn('[startup] S3 sync skipped or failed:', err?.message || err);
     }
 })();
 
@@ -102,8 +102,8 @@ client.on("messageCreate", async (message) => {
     const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
 
     if (isAskNaviChannel) {
-        // Always allow katyparry messages
-        if (message.author.id === "596207448935628812") return;
+        const adminId = process.env.ADMIN_DISCORD_ID || '596207448935628812';
+        if (message.author.id === adminId) return;
 
         // Allow replies to the bot
         if (message.reference?.messageId) {

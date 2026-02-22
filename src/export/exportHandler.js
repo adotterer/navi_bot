@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import { EmbedBuilder } from "discord.js";
 import { fetchAllMessages, fetchFromS3, uploadToS3 } from '../shared/s3Helper.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
@@ -6,6 +7,15 @@ import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 
 const ERROR_EMBED_COLOR = '#FF4444';
+
+/** Isolated directory for export files; served under /exports. */
+const EXPORTS_DIR = path.join(process.cwd(), 'data', 'exports');
+
+function ensureExportsDir() {
+    if (!fs.existsSync(EXPORTS_DIR)) {
+        fs.mkdirSync(EXPORTS_DIR, { recursive: true });
+    }
+}
 
 function buildEmbed(description, color = INFO_EMBED_COLOR) {
     return new EmbedBuilder().setColor(color).setDescription(description);
@@ -26,7 +36,8 @@ export async function handleExportFalco(message) {
         const messages = await fetchAllMessages(channel);
         
         const jsonData = JSON.stringify(messages, null, 2);
-        fs.writeFileSync('falco_messages.json', jsonData);
+        ensureExportsDir();
+        fs.writeFileSync(path.join(EXPORTS_DIR, 'falco_messages.json'), jsonData);
         
         await message.reply({ embeds: [buildEmbed(`✅ Exported ${messages.length} messages to falco_messages.json`)] });
         console.log(`✅ Exported ${messages.length} messages from #falco`);
@@ -104,7 +115,8 @@ export async function handleExportCharacter(message) {
         const messages = await fetchAllMessages(channel);
         const jsonData = JSON.stringify(messages, null, 2);
         const filename = `${channel.name}.json`;
-        fs.writeFileSync(filename, jsonData);
+        ensureExportsDir();
+        fs.writeFileSync(path.join(EXPORTS_DIR, filename), jsonData);
 
         const s3Url = await uploadToS3(filename, jsonData);
         await message.reply({ embeds: [buildEmbed(`✅ Exported **#${channel.name}**: ${messages.length} messages → \`${filename}\`\n☁️ ${s3Url}`)] });
@@ -143,7 +155,8 @@ export async function handleExportMatchups(message) {
                     
                     const jsonData = JSON.stringify(messages, null, 2);
                     const filename = `${channel.name}.json`;
-                    fs.writeFileSync(filename, jsonData);
+                    ensureExportsDir();
+                    fs.writeFileSync(path.join(EXPORTS_DIR, filename), jsonData);
                     
                     const s3Url = await uploadToS3(filename, jsonData);
                     console.log(`☁️  Uploaded to S3: ${s3Url}`);

@@ -15,6 +15,7 @@ import {
 } from '../shared/dataReader.js';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript } from './layout.js';
 import { headS3Key } from '../shared/s3Helper.js';
+import { generateCsrfToken } from './csrf.js';
 
 const S3_STATS_PREFIX = 'admin/data/stats/';
 const S3_FRAMEDATA_PREFIX = 'admin/data/framedata/';
@@ -91,7 +92,8 @@ router.get('/stats/:filename', async (req, res) => {
         ]);
         if (raw == null) return res.status(404).send('File not found.');
         const saved = req.query.saved === '1';
-        res.send(csvEditPage('stats', raw, saved, 'Stats – ' + filename, filename, null, s3InUse));
+        const csrfToken = generateCsrfToken(req, res);
+        res.send(csvEditPage('stats', raw, saved, 'Stats – ' + filename, filename, null, s3InUse, csrfToken));
     } catch (err) {
         console.error('Admin stats get:', err);
         res.status(500).send('Error loading file.');
@@ -185,7 +187,8 @@ router.get('/framedata/:character/:section', async (req, res) => {
         ]);
         if (raw == null) return res.status(404).send('File not found.');
         const saved = req.query.saved === '1';
-        res.send(csvEditPage('framedata', raw, saved, `Framedata: ${character} / ${sectionClean}`, character, sectionClean, s3InUse));
+        const csrfToken = generateCsrfToken(req, res);
+        res.send(csvEditPage('framedata', raw, saved, `Framedata: ${character} / ${sectionClean}`, character, sectionClean, s3InUse, csrfToken));
     } catch (err) {
         console.error('Admin framedata get:', err);
         res.status(500).send('Error loading file.');
@@ -231,6 +234,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
     const savedBanner = saved
         ? '<div class="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 text-sm px-4 py-3 mb-6">Saved. Bot will use this content (S3 override).</div>'
         : '';
+    const csrfInput = csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">` : '';
     const content = `
   ${adminNav('data')}
   ${adminContainer(`
@@ -245,6 +249,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false) 
         ${savedBanner}
       </div>
       <form id="csv-form" method="post" action="${saveAction}" class="flex flex-1 flex-col min-h-0 flex-shrink-0 admin-save-bar-spacer">
+        ${csrfInput}
         <textarea id="csv-body" name="body" hidden aria-hidden="true"></textarea>
         <div id="csv-spreadsheet-wrap" class="flex-1 min-h-0 min-w-0 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm ring-1 ring-slate-200/50 dark:ring-slate-600/50">
           <table id="csv-grid" class="csv-grid border-collapse"></table>

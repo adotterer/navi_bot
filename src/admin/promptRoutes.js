@@ -7,6 +7,7 @@ import { getEmojiLibrary } from '../shared/emojiSync.js';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript } from './layout.js';
 import { headS3Key } from '../shared/s3Helper.js';
 import { PRISM_TAIL } from './prismTail.js';
+import { generateCsrfToken } from './csrf.js';
 
 const S3_PROMPTS_PREFIX = 'admin/prompts/';
 
@@ -91,7 +92,8 @@ router.get('/:id', async (req, res) => {
         const saved = req.query.saved === '1';
         const reset = req.query.reset === '1';
         const emojiLibrary = getEmojiLibrary();
-        res.send(promptEditPage(id, meta, body, { saved, reset, s3InUse, emojiLibrary, error: req.query.error }));
+        const csrfToken = generateCsrfToken(req, res);
+        res.send(promptEditPage(id, meta, body, { saved, reset, s3InUse, emojiLibrary, error: req.query.error, csrfToken }));
     } catch (err) {
         console.error('Admin prompt get:', err);
         res.status(500).send('Error loading prompt.');
@@ -222,6 +224,7 @@ function promptEditPage(id, meta, body, opts = {}) {
     const revertErrorBanner = opts.error === 'revert'
         ? '<div class="rounded-lg prompt-banner-error text-sm px-4 py-3 mb-6">Could not revert. Version may have been deleted or invalid.</div>'
         : '';
+    const csrfInput = opts.csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(opts.csrfToken)}">` : '';
     const content = `
   ${adminNav('prompts')}
   ${adminContainer(`
@@ -242,6 +245,7 @@ function promptEditPage(id, meta, body, opts = {}) {
       <div id="prompt-split" class="prompt-split flex w-full gap-0 min-h-[280px] sm:min-h-[380px]">
         <div id="prompt-editor-column" class="prompt-editor-column flex flex-col min-w-0 flex-1 bg-white dark:bg-slate-800 rounded-tl-xl rounded-tr-xl sm:rounded-tr-none sm:rounded-bl-xl">
           <form id="prompt-form" method="post" action="/admin/prompts/${escapeHtml(id)}" class="flex flex-col flex-1 min-h-0 px-3">
+            ${csrfInput}
             <div class="prompt-editor-header flex items-center justify-between gap-2 px-3 py-2.5">
               <label for="prompt-body" class="text-sm font-medium text-slate-700 dark:text-slate-300">Template body</label>
               <button type="button" id="prompt-show-preview-btn" class="prompt-header-btn hidden text-slate-600 dark:text-slate-300 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 dark:hover:border-emerald-600" title="Show preview panel">Show preview</button>
@@ -262,6 +266,7 @@ function promptEditPage(id, meta, body, opts = {}) {
         </div>
       </div>
       <form method="post" action="/admin/prompts/${escapeHtml(id)}/reset" class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+        ${csrfInput}
         <button type="submit" class="text-sm text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 font-medium" onclick="return confirm('Restore the built-in default for this prompt?');">Reset to default</button>
       </form>
     </div>
@@ -271,7 +276,7 @@ function promptEditPage(id, meta, body, opts = {}) {
           <span class="font-semibold text-slate-800 dark:text-slate-100">Version history</span>
           <button type="button" id="prompt-version-history-close" class="prompt-history-close-btn" aria-label="Close">×</button>
         </div>
-        <div id="prompt-version-history-list" class="prompt-history-sidecar-body text-sm text-slate-600 dark:text-slate-400" data-prompt-id="${escapeHtml(id)}"></div>
+        <div id="prompt-version-history-list" class="prompt-history-sidecar-body text-sm text-slate-600 dark:text-slate-400" data-prompt-id="${escapeHtml(id)}" data-csrf="${opts.csrfToken ? escapeHtml(opts.csrfToken) : ''}"></div>
       </div>
     </div>
     <style>
@@ -666,7 +671,9 @@ function promptEditPage(id, meta, body, opts = {}) {
               html += '<li>';
               html += '<span class="text-slate-600 dark:text-slate-400">' + esc(date) + '</span>';
               html += '<a href="' + esc(viewUrl) + '" target="_blank" rel="noopener" class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">View</a>';
+              var csrf = listEl.getAttribute('data-csrf');
               html += '<form method="post" action="/admin/prompts/' + encodeURIComponent(id) + '/revert" class="inline">';
+              if (csrf) html += '<input type="hidden" name="_csrf" value="' + esc(csrf) + '">';
               html += '<input type="hidden" name="versionKey" value="' + esc(item.key) + '">';
               html += '<button type="submit" class="text-amber-600 hover:text-amber-700 dark:text-amber-400" onclick="return confirm(&quot;Replace current prompt with this version?&quot;);">Revert</button>';
               html += '</form>';

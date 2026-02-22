@@ -3,6 +3,8 @@
  * No Discord code – safe to run without touching the Discord token.
  */
 import express from 'express';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import { getSessionConfig } from './admin/auth.js';
 import { adminRouter } from './admin/routes.js';
@@ -28,13 +30,18 @@ export function createApp() {
     app.use('/github/webhook', express.raw({ type: 'application/json' }));
     app.use(webhookRouter);
 
+    // Security headers (CSP disabled so admin inline scripts and existing pages work).
+    app.use(helmet({ contentSecurityPolicy: false }));
+
     app.use(express.urlencoded({ extended: true }));
     app.use(express.json());
     app.use(session(getSessionConfig()));
+    app.use(cookieParser());
     app.use('/admin', adminRouter);
 
     app.use(express.static('public'));
-    app.use('/exports', express.static('.'));
+    // Serve only exported data from an isolated dir (audit: do not serve project root).
+    app.use('/exports', express.static('data/exports', { index: false }));
 
     // Ask crawlers not to index the site (admin/internal use).
     app.get('/robots.txt', (req, res) => {

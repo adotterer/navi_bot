@@ -11,6 +11,7 @@ import {
 } from '../shared/emojiSync.js';
 import fs from 'fs';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript } from './layout.js';
+import { generateCsrfToken } from './csrf.js';
 
 const router = express.Router();
 
@@ -38,6 +39,8 @@ router.get('/', async (req, res) => {
         // fall back to local
     }
     const saved = req.query.saved === '1';
+    const csrfToken = generateCsrfToken(req, res);
+    const csrfInput = `<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">`;
     const rowsHtml = list
         .map(({ label, code }) => {
             const url = emojiCodeToUrl(code);
@@ -65,6 +68,7 @@ router.get('/', async (req, res) => {
     ${saved ? '<div class="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm px-4 py-3 mb-6">Saved to S3.</div>' : ''}
     <div class="admin-save-bar-spacer">
     <form id="emojis-form" method="post" action="/admin/emojis" class="space-y-6">
+      ${csrfInput}
       <textarea id="emojis-body" name="body" class="hidden" aria-hidden="true"></textarea>
       <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
         <table class="w-full text-sm">
