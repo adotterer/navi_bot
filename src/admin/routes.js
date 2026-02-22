@@ -292,4 +292,22 @@ function dashboardPage(s3 = {}, csrfToken = '') {
 `);
 }
 
+function homePage() {
+    return `<!DOCTYPE html>
+<html lang="en" class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+<head>${adminHead('Home')}</head>
+<body class="min-h-screen font-sans antialiased bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+  <div class="min-h-screen flex flex-col items-center justify-center px-4">
+    <div class="w-full max-w-sm">
+      <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-8 text-center">
+        <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-2">Navi Admin</h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Personal Assistant Bot</p>
+        <a href="/admin/login" class="inline-block w-full rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-4 hover:bg-emerald-700 transition-colors shadow-sm">Enter Dashboard</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 export { router as adminRouter };
