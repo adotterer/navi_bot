@@ -1198,13 +1198,16 @@ export async function runAuditor(missionPrompt, opts = {}) {
  * @returns {Promise<{ ok: true, report: string, diagramKeys?: string[], warnings?: string[], inputTokens?: number, outputTokens?: number } | { ok: false, error: string }>}
  */
 export async function runTester(branchName, opts = {}) {
-    const { diffText = '', baseBranch = 'main', headBranch = branchName, signal, model: modelOverride, runId } = opts;
+    const { diffText = '', baseBranch = 'main', headBranch = branchName, signal, model: modelOverride, runId, adminCssInDiff } = opts;
     const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     const systemPrompt = await getAgentPrompt('tester');
     if (!systemPrompt) {
         return { ok: false, error: 'Tester prompt not configured' };
     }
-    const userContent = `Branch: ${headBranch}\nBase: ${baseBranch}\n\nDiff:\n\`\`\`\n${diffText}\n\`\`\`\n\nProduce the markdown review report now.`;
+    let userContent = `Branch: ${headBranch}\nBase: ${baseBranch}\n\nDiff:\n\`\`\`\n${diffText}\n\`\`\`\n\nProduce the markdown review report now.`;
+    if (adminCssInDiff) {
+        userContent += '\n\nNote: This diff touches public/admin.css, which is built from src/admin/input.css; verify CSS class names match those in layout.js (e.g. save-bar-minimized).';
+    }
     try {
         const response = await withTimeout(
             (async () => {

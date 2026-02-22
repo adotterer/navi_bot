@@ -287,6 +287,7 @@ export async function runPipeline(runId, opts = {}) {
                 signal,
                 model,
                 runId,
+                adminCssInDiff: diffText.includes('public/admin.css'),
             });
             if (!testerResult.ok) {
                 updateRun(runId, { status: 'error', error: testerResult.error });
@@ -757,6 +758,7 @@ export async function runPipeline(runId, opts = {}) {
                     signal,
                     model: testerModel,
                     runId,
+                    adminCssInDiff: diffText.includes('public/admin.css'),
                 });
                 if (!testerResult.ok) {
                     const errMsg = 'Tester failed: ' + (testerResult.error || 'unknown');
@@ -857,6 +859,7 @@ export async function runPipeline(runId, opts = {}) {
                                             signal,
                                             model: testerModel,
                                             runId,
+                                            adminCssInDiff: diffText2.includes('public/admin.css'),
                                         });
                                         const runAfterTester2 = getRun(runId);
                                         updateRun(runId, {

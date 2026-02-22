@@ -28,6 +28,7 @@ FILE MAPPING RULES — use these to select the correct hint paths:
 - Discord commands (!mu, !mq, !export, !fd, etc.): src/export/exportHandler.js, src/matchups/matchupHandler.js, src/messages/questionHandler.js, src/shared/messageSplitter.js, src/shared/promptLoader.js (contains one-line descriptions for every command)
 - Discord DM handling: message routing lives in main.js (messageCreate). For missions about DMs or "direct message", add a dedicated handler under src/messages/ (e.g. src/messages/dmHandler.js) and wire it from main.js; include main.js and src/messages/ (and existing handlers like questionHandler.js, faqAndAliasHandler.js) in hints.
 - Admin panel UI pages: each admin page is rendered server-side in its own routes file. The file that renders the page HTML AND its inline <script> JS is the SAME file. For the Agent PR page: src/admin/agent/agentRoutes.js. For aliases: src/admin/aliasRoutes.js. For prompts: src/admin/promptRoutes.js. For the main dashboard/nav: src/admin/routes.js and src/admin/layout.js.
+- Shared admin UI (save bar): The save bar (toggle, minimize/expand) is implemented in src/admin/layout.js (saveBarToggleButton, saveBarMinimizeScript) and src/admin/input.css (classes .save-bar, .save-bar-minimized, .save-bar-toggle, etc.). It is reused on Data, Aliases, Prompts, and Emojis pages. For changes that affect the save bar on multiple or all of these pages, include layout.js and input.css in hints; do not only change individual route files or the built CSS file. Built assets: public/admin.css is generated from src/admin/input.css (see package.json build:admin-css). Prefer editing the source (input.css) and running the build; do not only edit public/admin.css.
 - Missions control panel (/admin/agent): the main page form and inline script live in src/admin/agent/agentPageContentInner.html; the models API and modelMeta live in src/admin/agent/agentRoutes.js. For missions about "Missions", "model dropdown", "model menu", "agent page", or changing the form (e.g. tip under textarea, icons in model selector) include in hints: src/admin/agent/agentPageContentInner.html and, if touching the model list or API, src/admin/agent/agentRoutes.js.
 - Agent pipeline logic: src/admin/agent/orchestrator.js, src/admin/agent/agents.js
 - Agent run state: src/admin/agent/runStore.js
@@ -53,6 +54,8 @@ Output format: Your response is parsed by the pipeline; output only a valid JSON
 3. WIRING: If a step introduces a new flag or function (e.g. setAborted()), include a step that wires it into the running process that should check it (e.g. the orchestrator loop). A flag that is set but never read is dead code.
 4. EXPORTS: If a step adds a new function that other files will call, include updating the export statement of that file in the same step's changeDescription.
 5. DM / NEW HANDLERS: When the mission involves DMs or "direct message", (a) use one new module (e.g. src/messages/dmHandler.js) that exports a single entry (e.g. handleDMMessage) and delegates to existing handlers; (b) in main.js add an early branch in the first messageCreate listener (e.g. if DM, call that handler and return); do not add a second messageCreate listener for DMs; (c) the wiring step's "files" must include main.js and the new handler path.
+6. SHARED UI / CSS: If the mission affects behavior or styling of a shared component (e.g. save bar used on Data, Aliases, Prompts, Emojis), the implementation must touch the shared definition (e.g. layout.js and/or input.css), not duplicate logic or styles in each route file. If the mission lists multiple pages, all listed pages must be updated or the shared component must be updated so all pages benefit.
+7. BUILT VS SOURCE: Do not add steps that edit built/generated output (e.g. public/admin.css) without also updating the source (e.g. src/admin/input.css) and noting that the build script must be run. Prefer steps that only edit the source.
 
 Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (array of file paths, e.g. ["src/app.js"]), "changeDescription" (optional, ONE sentence max — do not write multi-line prose). Example:
 [{"what":"Add GET /health handler","files":["src/app.js"],"changeDescription":"Add app.get('/health', ...) returning { status: 'ok' }"}]`,
@@ -84,6 +87,8 @@ IMPORT PATH RULES — incorrect imports will break the app:
 - Only import named exports that are explicitly listed in the export statement of the source file shown in "Current file contents".
 - When you add a new exported function to a file that uses a named export list (e.g. "export { foo, bar }"), you MUST also patch that export line to include the new function name.
 - When adding a new message or event handler (e.g. a DM handler), it MUST be invoked where existing handlers are registered (e.g. in main.js inside the appropriate messageCreate block). Do not leave new handler functions uncalled.
+- CSS AND JS CLASS NAMES: When adding or changing CSS class names that are toggled or set from JavaScript, use the exact same class name in both CSS selectors and in JS (e.g. classList.add/remove, className). Mismatches (e.g. JS uses save-bar-minimized but CSS uses .save-bar.minimized) will break behavior.
+- BUILT FILES: Do not edit built/generated files (e.g. public/admin.css) when a source file exists (e.g. src/admin/input.css). Edit the source and run the project's build command if needed.
 ${PROJECT_PACKAGE_RULES}
 
 Example (imports change + function change in one file, two separate patches):
@@ -97,8 +102,10 @@ Example (imports change + function change in one file, two separate patches):
 2. MISSING MODULES — For every new import added, verify the module either (a) already exists in the codebase at the stated path, or (b) is being created in these same edits. If an import references a file that is not shown in the proposed changes and likely does not exist (e.g. a utility file with a novel name), report FIX.
 3. MISSING EXPORTS — If a function or value is imported by name (e.g. "import { abortRun } from ..."), verify that the source file in these edits actually exports it. If the function exists in the file but is not in the export statement, report FIX.
 4. UI COMPLETENESS — If the mission requires a visible UI change (adding a button, replacing a link, showing new data), verify that the file containing the rendered HTML or inline JavaScript was actually modified in these edits. Backend-only changes are incomplete if the mission required a frontend change. Report FIX if the UI file is missing.
-5. WIRING — If a new flag or function is introduced (e.g. "abortRun"), verify it is actually called somewhere in the pipeline (e.g. the orchestrator or equivalent loop checks it). A flag that is set but never read is a FIX.
-6. HANDLER WIRING — If the mission or the diff introduces a new handler (e.g. for DMs), verify it is called from the appropriate place (e.g. main.js messageCreate). If the new handler is never invoked, report FIX.
+5. JS/CSS CLASS CONSISTENCY — If the diff adds or changes CSS selectors that target classes which are toggled or set in JavaScript, verify the class name in the CSS matches exactly the class name used in JS (e.g. classList.add("save-bar-minimized") must pair with .save-bar-minimized, not .save-bar.minimized). If they differ, report FIX.
+6. SCOPE VS MISSION — If the mission explicitly lists multiple pages or components (e.g. "Data, Aliases, Prompts, Emojis") and the diff only changes one of them, report FIX unless the change is in a shared file that affects all.
+7. WIRING — If a new flag or function is introduced (e.g. "abortRun"), verify it is actually called somewhere in the pipeline (e.g. the orchestrator or equivalent loop checks it). A flag that is set but never read is a FIX.
+8. HANDLER WIRING — If the mission or the diff introduces a new handler (e.g. for DMs), verify it is called from the appropriate place (e.g. main.js messageCreate). If the new handler is never invoked, report FIX.
 
 If ALL checks pass, reply with exactly: OK
 If any check fails, reply with FIX: followed by ONE short, actionable sentence describing the most critical issue (e.g. "Fix: import path in routes.js should be './agent/runStore.js' not '../agent/runStore.js'").
@@ -126,7 +133,7 @@ DIAGRAM TOOL: When a visual diagram would help the reader understand architectur
 
 Use this structure:
 1. **Summary** — Brief overview of what changed (files and main intent).
-2. **Quality & correctness** — Bugs, broken patterns, or concerns (e.g. invalid script tags, wrong imports, missing error handling). Cite file and line where relevant.
+2. **Quality & correctness** — Bugs, broken patterns, or concerns (e.g. invalid script tags, wrong imports, missing error handling). Cite file and line where relevant. Check that any CSS class names used in selectors match the class names used in JavaScript (e.g. in classList or setAttribute); mismatches cause broken behavior. If the mission mentions multiple pages or "save bar on Data, Aliases, …", confirm the change applies to all or is in a shared file.
 3. **Recommendation** — Exactly one of: **Merge**, **Request changes**, or **Reject**, followed by a one-line reason. Use these exact words so the pipeline can parse your decision.
 
 Be concise. Do not wrap the report in a code block — output raw markdown.
