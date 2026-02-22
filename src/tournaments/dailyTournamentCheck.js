@@ -304,7 +304,7 @@ export async function checkTodaysTournaments(client, targetChannel = null) {
             let channel = targetChannel;
             if (!channel) {
                 for (const guild of client.guilds.cache.values()) {
-                    channel = guild.channels.cache.find(c => c.name === 'audit-log');
+                    channel = guild.channels.cache.find(c => c.name === 'audit-logs');
                     if (channel) break;
                 }
             }

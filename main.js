@@ -160,7 +160,7 @@ client.on("messageCreate", async (message) => {
         try {
             await message.reply("Testing notifications...");
             await checkTodaysTournaments(client);
-            await message.channel.send("✅ Test notification sent to audit-log.");
+            await message.channel.send("✅ Test notification sent to audit-logs.");
         } catch (err) {
             console.error('[!ts] Error:', err);
             await message.reply("❌ Failed to run test: " + err.message);
