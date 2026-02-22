@@ -1,29 +1,43 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { fetchFromS3 } from '../shared/s3Helper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ALIASES_PATH = path.join(__dirname, '../../data/character-aliases.json');
 const CANONICAL_THREADS_PATH = path.join(__dirname, '../../data/canonical-character-threads.json');
 
-/** Path to the canonical character threads file (for reference). */
+/** S3 key for canonical character threads (same as in exportHandler). Source of truth across redeploys. */
+export const CANONICAL_THREADS_S3_KEY = 'admin/canonical-character-threads.json';
+
+/** Path to the local canonical character threads file (for reference; may be ephemeral on deploy). */
 export const canonicalCharacterThreadsPath = CANONICAL_THREADS_PATH;
+
+function parseCanonicalList(data) {
+    if (!Array.isArray(data)) return [];
+    return data.filter(s => typeof s === 'string');
+}
 
 /**
  * Read the canonical list of character thread names (Discord channel names from Match Ups (B-L) and (M-Z)).
  * Same format as the values in character-aliases.json (e.g. "mr-game-and-watch", "peach | daisy").
- * Refreshed when !export matchups or the weekly export runs. Returns [] if file is missing or invalid.
+ * Loads from S3 first (persists across redeploys); falls back to local file if S3 key missing or unconfigured.
+ * Refreshed when !export matchups or the weekly export runs. Returns [] if both S3 and local are missing/invalid.
  */
-export function getCanonicalCharacterThreads() {
+export async function getCanonicalCharacterThreads() {
+    try {
+        const data = await fetchFromS3(CANONICAL_THREADS_S3_KEY);
+        return parseCanonicalList(data);
+    } catch (_) {
+        // S3 key missing or credentials not configured
+    }
     try {
         const raw = fs.readFileSync(CANONICAL_THREADS_PATH, 'utf8');
         const data = JSON.parse(raw);
-        if (Array.isArray(data)) {
-            return data.filter(s => typeof s === 'string');
-        }
+        return parseCanonicalList(data);
     } catch (_) {
-        // File missing or invalid
+        // Local file missing or invalid
     }
     return [];
 }

@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, ChannelType } from "discord.js";
+import { Client, GatewayIntentBits, ChannelType, EmbedBuilder } from "discord.js";
 import dotenv from 'dotenv';
 
 // Import handlers
@@ -14,7 +14,8 @@ import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaComma
 import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler.js';
 import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
 import { handleCleanup } from './src/messages/cleanupHandler.js';
-import { handleDocs, handleFaq, handleAliases } from './src/messages/faqAndAliasHandler.js';
+import { handleDocs, handleFaq, handleAliases, INFO_EMBED_COLOR } from './src/messages/faqAndAliasHandler.js';
+import { getCanonicalCharacterThreads } from './src/matchups/characterAliases.js';
 import { setClient } from './src/shared/discordClient.js';
 
 dotenv.config();
@@ -188,6 +189,7 @@ client.on("messageCreate", async (message) => {
     const isDocsCommand = message.content.toLowerCase() === "!docs";
     const isFaqCommand = message.content.toLowerCase() === "!faq";
     const isAliasesCommand = message.content.toLowerCase() === "!aliases";
+    const isCanonicalCommand = message.content.toLowerCase() === "!canonical";
 
     const hasAuthorizedRole = message.member?.roles?.cache?.some(
         role => role.name === "Moderators" || role.name === "Legend"
@@ -203,6 +205,12 @@ client.on("messageCreate", async (message) => {
     // Cleanup commands: Moderators + Legend only, any channel
     if (isCleanupCommand && !hasAuthorizedRole) {
         await message.reply("❌ Only Moderators or Legend members can run cleanup commands.");
+        return;
+    }
+
+    // Canonical list: Moderators + Legend only
+    if (isCanonicalCommand && !hasAuthorizedRole) {
+        await message.reply("❌ Only Moderators or Legend members can run this command.");
         return;
     }
 
@@ -243,6 +251,30 @@ client.on("messageCreate", async (message) => {
 
     if (isAliasesCommand) {
         await handleAliases(message);
+        return;
+    }
+
+    // ===== CANONICAL CHARACTER THREADS (Moderators + Legend) =====
+    if (isCanonicalCommand) {
+        try {
+            const list = await getCanonicalCharacterThreads();
+            const title = "Canonical character threads";
+            const body = list.length
+                ? list.map(s => `• ${s}`).join("\n")
+                : "_No list yet. Run `!export matchups` to populate from Discord._";
+            const description = body.length > 4096
+                ? body.slice(0, 4080) + "\n\n_…truncated_"
+                : body;
+            const embed = new EmbedBuilder()
+                .setColor(INFO_EMBED_COLOR)
+                .setTitle(title)
+                .setDescription(description)
+                .setFooter({ text: `Source: S3 (${list.length} threads). Refreshed by !export matchups.` });
+            await message.reply({ embeds: [embed] });
+        } catch (err) {
+            console.error("[!canonical]", err);
+            await message.reply("❌ Failed to load canonical list: " + (err.message || String(err)));
+        }
         return;
     }
 

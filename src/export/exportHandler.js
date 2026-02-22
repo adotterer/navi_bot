@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { EmbedBuilder } from "discord.js";
-import { fetchAllMessages, fetchFromS3, uploadToS3 } from '../shared/s3Helper.js';
+import { fetchAllMessages, fetchFromS3, uploadToS3, putToS3 } from '../shared/s3Helper.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
@@ -11,7 +11,8 @@ const ERROR_EMBED_COLOR = '#FF4444';
 /** Isolated directory for export files; served under /exports. */
 const EXPORTS_DIR = path.join(process.cwd(), 'data', 'exports');
 
-/** Source-of-truth list of matchup channel names (same format as values in character-aliases.json). */
+/** Source-of-truth list of matchup channel names (same format as values in character-aliases.json). Persisted in S3 for redeploys. */
+const CANONICAL_THREADS_S3_KEY = 'admin/canonical-character-threads.json';
 const CANONICAL_THREADS_PATH = path.join(process.cwd(), 'data', 'canonical-character-threads.json');
 
 const MATCHUP_CATEGORY_NAMES = ['Match Ups (B-L)', 'Match Ups (M-Z)'];
@@ -35,15 +36,22 @@ export function getMatchupChannelSlugs(guild) {
 }
 
 /**
- * Refresh the canonical character threads file from the guild's Match Ups categories.
+ * Refresh the canonical character threads list from the guild's Match Ups categories.
+ * Writes to S3 (source of truth across redeploys) and optionally to local data/ for dev.
  * Call after exporting matchup channels (e.g. from handleExportMatchups or the weekly scheduler).
  */
-export function writeCanonicalCharacterThreads(guild) {
+export async function writeCanonicalCharacterThreads(guild) {
     const slugs = getMatchupChannelSlugs(guild);
+    const json = JSON.stringify(slugs, null, 2);
+    try {
+        await putToS3(CANONICAL_THREADS_S3_KEY, json, 'application/json');
+        console.log(`📋 Wrote ${slugs.length} canonical character threads to S3 (${CANONICAL_THREADS_S3_KEY})`);
+    } catch (err) {
+        console.error('Failed to write canonical character threads to S3:', err?.message || err);
+    }
     const dir = path.dirname(CANONICAL_THREADS_PATH);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(CANONICAL_THREADS_PATH, JSON.stringify(slugs, null, 2), 'utf8');
-    console.log(`📋 Wrote ${slugs.length} canonical character threads to ${path.basename(CANONICAL_THREADS_PATH)}`);
+    fs.writeFileSync(CANONICAL_THREADS_PATH, json, 'utf8');
 }
 
 function ensureExportsDir() {
@@ -205,7 +213,7 @@ export async function handleExportMatchups(message) {
             }
         }
 
-        writeCanonicalCharacterThreads(guild);
+        await writeCanonicalCharacterThreads(guild);
 
         // Export glossary
         try {

@@ -59,7 +59,7 @@ export function initializeScheduler(client) {
                 }
             }
 
-            writeCanonicalCharacterThreads(guild);
+            await writeCanonicalCharacterThreads(guild);
 
             // Export glossary
             try {
