@@ -2,7 +2,8 @@
  * Admin routes: login, logout, dashboard. All except login require auth.
  */
 import express from 'express';
-import { requireAdmin, checkLogin } from './auth.js';
+import { requireAdmin, checkLogin, verify2fa, generate2FACode } from './auth.js';
+import { send2FACode } from '../shared/sesHelper.js';
 import { doubleCsrfProtection, generateCsrfToken } from './csrf.js';
 import { promptRoutes } from './promptRoutes.js';
 import { dataRoutes } from './dataRoutes.js';
@@ -19,7 +20,7 @@ const router = express.Router();
 // Session-based CSRF fallback for login only: when the double-submit cookie isn't sent
 // (e.g. behind some load balancers), accept the token from session so login still works securely.
 router.use((req, res, next) => {
-    if (req.method !== 'POST' || req.path !== '/login') return next();
+    if (req.method !== 'POST' || (req.path !== '/login' && req.path !== '/2fa')) return next();
     const bodyToken = req.body && typeof req.body._csrf === 'string' ? req.body._csrf : null;
     const cookieToken = req.cookies && req.cookies.navi_admin_csrf;
     if (cookieToken && bodyToken && cookieToken === bodyToken) return next();
@@ -42,17 +43,70 @@ router.get('/login', (req, res) => {
     let error = null;
     if (req.query.error === 'csrf') error = 'Your session or security token expired. Please try again.';
     else if (req.query.error === 'ratelimit') error = 'Too many login attempts. Please wait a few minutes and try again.';
+    else if (req.query.error === '2fa_expired') error = 'Verification code expired. Please log in again.';
     res.send(loginPage({ csrfToken, error: error || undefined }));
 });
 
-router.post('/login', express.urlencoded({ extended: true }), (req, res) => {
+const TWO_FA_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+
+router.post('/login', express.urlencoded({ extended: true }), async (req, res) => {
     const { username, password } = req.body || {};
-    if (checkLogin(username, password)) {
+    if (!checkLogin(username, password)) {
+        const csrfToken = generateCsrfToken(req, res);
+        return res.status(401).send(loginPage({ error: 'Invalid username or password.', csrfToken }));
+    }
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail && process.env.SES_SENDER_EMAIL) {
+        const code = generate2FACode();
+        req.session.twoFactorCode = code;
+        req.session.twoFactorExpires = Date.now() + TWO_FA_EXPIRY_MS;
+        try {
+            await send2FACode(adminEmail, code);
+        } catch (err) {
+            console.error('2FA email send failed:', err);
+            const csrfToken = generateCsrfToken(req, res);
+            return res.status(500).send(loginPage({ error: 'Could not send verification email. Check SES configuration.', csrfToken }));
+        }
+        return res.redirect('/admin/2fa');
+    }
+    req.session.admin = true;
+    return res.redirect('/admin');
+});
+
+router.get('/2fa', (req, res) => {
+    if (req.session && req.session.admin) return res.redirect('/admin');
+    if (!req.session || !req.session.twoFactorCode || !req.session.twoFactorExpires) {
+        return res.redirect('/admin/login');
+    }
+    if (Date.now() > req.session.twoFactorExpires) {
+        req.session.twoFactorCode = undefined;
+        req.session.twoFactorExpires = undefined;
+        return res.redirect('/admin/login?error=2fa_expired');
+    }
+    const csrfToken = generateCsrfToken(req, res);
+    req.session.pendingLoginCsrf = csrfToken;
+    res.send(twoFAPage({ csrfToken }));
+});
+
+router.post('/2fa', express.urlencoded({ extended: true }), (req, res) => {
+    const code = (req.body && req.body.code) ? String(req.body.code).trim() : '';
+    if (!req.session || !req.session.twoFactorCode || !req.session.twoFactorExpires) {
+        return res.redirect('/admin/login');
+    }
+    if (Date.now() > req.session.twoFactorExpires) {
+        req.session.twoFactorCode = undefined;
+        req.session.twoFactorExpires = undefined;
+        return res.redirect('/admin/login?error=2fa_expired');
+    }
+    if (verify2fa(req.session, code)) {
         req.session.admin = true;
+        req.session.twoFactorCode = undefined;
+        req.session.twoFactorExpires = undefined;
         return res.redirect('/admin');
     }
     const csrfToken = generateCsrfToken(req, res);
-    res.status(401).send(loginPage({ error: 'Invalid username or password.', csrfToken }));
+    req.session.pendingLoginCsrf = csrfToken;
+    res.status(401).send(twoFAPage({ error: 'Invalid or expired code.', csrfToken }));
 });
 
 router.post('/logout', (req, res) => {
@@ -121,6 +175,37 @@ function loginPage(opts = {}) {
             class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
         </div>
         <button type="submit" class="w-full rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-4 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Log in</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function twoFAPage(opts = {}) {
+    const error = opts.error
+        ? `<div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">${escapeHtml(opts.error)}</div>`
+        : '';
+    const csrfInput = opts.csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(opts.csrfToken)}">` : '';
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>${adminHead('Verify')}</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+  <div class="min-h-screen flex flex-col items-center justify-center px-4">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Verify your email</h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Enter the 6-digit code we sent you</p>
+      </div>
+      ${error}
+      <form method="post" action="/admin/2fa" class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-5">
+        ${csrfInput}
+        <div>
+          <label for="code" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Code</label>
+          <input id="code" type="text" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="000000"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 text-center text-lg tracking-widest placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+        </div>
+        <button type="submit" class="w-full rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-4 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Verify</button>
       </form>
     </div>
   </div>

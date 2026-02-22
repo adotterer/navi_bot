@@ -14,7 +14,7 @@ import {
     clearFramedataCache
 } from '../shared/dataReader.js';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript } from './layout.js';
-import { headS3Key } from '../shared/s3Helper.js';
+import { headS3Key, deleteFromS3 } from '../shared/s3Helper.js';
 import { generateCsrfToken } from './csrf.js';
 
 const S3_STATS_PREFIX = 'admin/data/stats/';
@@ -92,8 +92,10 @@ router.get('/stats/:filename', async (req, res) => {
         ]);
         if (raw == null) return res.status(404).send('File not found.');
         const saved = req.query.saved === '1';
+        const reverted = req.query.reverted === '1';
+        const revertError = req.query.revert_error === '1';
         const csrfToken = generateCsrfToken(req, res);
-        res.send(csvEditPage('stats', raw, saved, 'Stats – ' + filename, filename, null, s3InUse, csrfToken));
+        res.send(csvEditPage('stats', raw, saved, 'Stats – ' + filename, filename, null, s3InUse, csrfToken, reverted, revertError));
     } catch (err) {
         console.error('Admin stats get:', err);
         res.status(500).send('Error loading file.');
@@ -110,6 +112,20 @@ router.post('/stats/:filename', express.urlencoded({ extended: true }), async (r
     } catch (err) {
         console.error('Admin stats save:', err);
         res.status(500).send('Error saving file.');
+    }
+});
+
+router.post('/stats/:filename/revert-to-disk', express.urlencoded({ extended: true }), async (req, res) => {
+    const filename = req.params.filename.replace(/\.csv$/i, '');
+    const redirectUrl = `/admin/data/stats/${encodeURIComponent(filename)}`;
+    try {
+        const key = S3_STATS_PREFIX + filename + '.csv';
+        await deleteFromS3(key);
+        clearStatsCache(filename);
+        res.redirect(redirectUrl + '?reverted=1');
+    } catch (err) {
+        console.error('Admin stats revert-to-disk:', err);
+        res.redirect(redirectUrl + '?revert_error=1');
     }
 });
 
@@ -187,8 +203,10 @@ router.get('/framedata/:character/:section', async (req, res) => {
         ]);
         if (raw == null) return res.status(404).send('File not found.');
         const saved = req.query.saved === '1';
+        const reverted = req.query.reverted === '1';
+        const revertError = req.query.revert_error === '1';
         const csrfToken = generateCsrfToken(req, res);
-        res.send(csvEditPage('framedata', raw, saved, `Framedata: ${character} / ${sectionClean}`, character, sectionClean, s3InUse, csrfToken));
+        res.send(csvEditPage('framedata', raw, saved, `Framedata: ${character} / ${sectionClean}`, character, sectionClean, s3InUse, csrfToken, reverted, revertError));
     } catch (err) {
         console.error('Admin framedata get:', err);
         res.status(500).send('Error loading file.');
@@ -209,7 +227,22 @@ router.post('/framedata/:character/:section', express.urlencoded({ extended: tru
     }
 });
 
-function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, csrfToken = '') {
+router.post('/framedata/:character/:section/revert-to-disk', express.urlencoded({ extended: true }), async (req, res) => {
+    const { character, section } = req.params;
+    const sectionClean = section.replace(/\.csv$/i, '');
+    const redirectUrl = `/admin/data/framedata/${encodeURIComponent(character)}/${encodeURIComponent(sectionClean)}`;
+    try {
+        const key = S3_FRAMEDATA_PREFIX + character + '/' + sectionClean + '.csv';
+        await deleteFromS3(key);
+        clearFramedataCache(character);
+        res.redirect(redirectUrl + '?reverted=1');
+    } catch (err) {
+        console.error('Admin framedata revert-to-disk:', err);
+        res.redirect(redirectUrl + '?revert_error=1');
+    }
+});
+
+function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, csrfToken = '', reverted = false, revertError = false) {
     const backUrl =
         type === 'stats' ? '/admin/data/stats' : '/admin/data/framedata' + (param1 ? '/' + encodeURIComponent(param1) : '');
     const saveAction =
@@ -234,6 +267,12 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
     const savedBanner = saved
         ? '<div class="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 text-sm px-4 py-3 mb-6">Saved. Bot will use this content (S3 override).</div>'
         : '';
+    const revertedBanner = reverted
+        ? '<div class="rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-400 text-sm px-4 py-3 mb-6">Reverted to disk. S3 override removed; content below is from local file.</div>'
+        : '';
+    const revertErrorBanner = revertError
+        ? '<div class="rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-400 text-sm px-4 py-3 mb-6">Could not revert (delete from S3 failed). Check AWS credentials and try again.</div>'
+        : '';
     const csrfInput = csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">` : '';
     const content = `
   ${adminNav('data')}
@@ -247,6 +286,8 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
     </div>
         <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">Edit cells below; click <strong>Save to S3</strong> to upload.</p>
         ${savedBanner}
+        ${revertedBanner}
+        ${revertErrorBanner}
       </div>
       <form id="csv-form" method="post" action="${saveAction}" class="flex flex-1 flex-col min-h-0 flex-shrink-0 admin-save-bar-spacer">
         ${csrfInput}
@@ -361,15 +402,20 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
   }
 
   function gridToCSV() {
-    var rows = [];
     var trs = gridEl.querySelectorAll('tbody tr');
-    for (var r = 0; r < trs.length; r++) {
+    if (!trs.length) return '';
+    var maxCols = trs[1] ? trs[1].querySelectorAll('td').length : (rows[0] || []).length;
+    var headerRow = (rows[0] || []).slice();
+    while (headerRow.length < maxCols) headerRow.push('');
+    var result = [];
+    result.push(headerRow.map(escapeCSV).join(','));
+    for (var r = 1; r < trs.length; r++) {
       var cells = trs[r].querySelectorAll('td');
       var row = [];
       for (var c = 0; c < cells.length; c++) row.push(getCellValue(cells[c]));
-      rows.push(row.map(escapeCSV).join(','));
+      result.push(row.map(escapeCSV).join(','));
     }
-    return rows.join('\\n');
+    return result.join('\\n');
   }
 
   function isUrlLike(s) {
@@ -510,6 +556,11 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
           <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
           <button type="submit" form="csv-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
           <a href="${backUrl}" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-medium py-2.5 px-5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 inline-block">Cancel</a>
+          ${s3InUse ? `
+          <form method="post" action="${saveAction}/revert-to-disk" class="inline-block" onsubmit="return confirm('Remove S3 override and load content from disk?');">
+            ${csrfInput}
+            <button type="submit" class="rounded-lg border border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/40 font-medium py-2.5 px-5 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 inline-block">Revert to disk</button>
+          </form>` : ''}
         </div>
       </div>
       ${saveBarToggleButton()}

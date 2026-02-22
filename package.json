@@ -30,7 +30,8 @@
     "helmet": "^8.1.0",
     "node-cron": "^4.2.1",
     "p-limit": "^7.3.0",
-    "simple-git": "^3.31.1"
+    "simple-git": "^3.31.1",
+    "@aws-sdk/client-ses": "^3.490.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11",

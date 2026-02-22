@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 /**
  * Admin auth: session-based login. Requires ADMIN_PASSWORD and SESSION_SECRET in env.
  */
@@ -27,4 +29,14 @@ export function checkLogin(username, password) {
     const expectedPass = process.env.ADMIN_PASSWORD;
     if (!expectedPass) return false;
     return username === expectedUser && password === expectedPass;
+}
+
+export function verify2fa(session, code) {
+    if (!session.twoFactorCode || !session.twoFactorExpires) return false;
+    if (Date.now() > session.twoFactorExpires) return false;
+    return session.twoFactorCode === code;
+}
+
+export function generate2FACode() {
+    return crypto.randomInt(100000, 999999).toString();
 }

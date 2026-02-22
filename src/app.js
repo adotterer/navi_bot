@@ -48,6 +48,7 @@ export function createApp() {
 
     // Rate limiting on sensitive endpoints (before body parsing to reject early).
     app.post('/admin/login', loginLimiter);
+    app.post('/admin/2fa', loginLimiter);
     app.post('/github/webhook', webhookLimiter);
 
     // Raw body parser must be registered before urlencoded/json so the webhook
