@@ -14,7 +14,7 @@ function streamUrl(s) {
 
 /**
  * Format streams for embed: bold label + angle-bracketed URL so Discord does not unfurl/embed the link.
- * Keeps markdown formatting (bold) while preventing link previews.
+ * Keeps markdown formatting (bold) while preventing link previews..
  */
 function formatStreams(streams) {
     if (!streams?.length) return 'No streams listed';
