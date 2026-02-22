@@ -5,6 +5,28 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ALIASES_PATH = path.join(__dirname, '../../data/character-aliases.json');
+const CANONICAL_THREADS_PATH = path.join(__dirname, '../../data/canonical-character-threads.json');
+
+/** Path to the canonical character threads file (for reference). */
+export const canonicalCharacterThreadsPath = CANONICAL_THREADS_PATH;
+
+/**
+ * Read the canonical list of character thread names (Discord channel names from Match Ups (B-L) and (M-Z)).
+ * Same format as the values in character-aliases.json (e.g. "mr-game-and-watch", "peach | daisy").
+ * Refreshed when !export matchups or the weekly export runs. Returns [] if file is missing or invalid.
+ */
+export function getCanonicalCharacterThreads() {
+    try {
+        const raw = fs.readFileSync(CANONICAL_THREADS_PATH, 'utf8');
+        const data = JSON.parse(raw);
+        if (Array.isArray(data)) {
+            return data.filter(s => typeof s === 'string');
+        }
+    } catch (_) {
+        // File missing or invalid
+    }
+    return [];
+}
 
 // Related characters that should be fetched together
 export const relatedCharacters = {

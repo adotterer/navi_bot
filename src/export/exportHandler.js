@@ -11,6 +11,41 @@ const ERROR_EMBED_COLOR = '#FF4444';
 /** Isolated directory for export files; served under /exports. */
 const EXPORTS_DIR = path.join(process.cwd(), 'data', 'exports');
 
+/** Source-of-truth list of matchup channel names (same format as values in character-aliases.json). */
+const CANONICAL_THREADS_PATH = path.join(process.cwd(), 'data', 'canonical-character-threads.json');
+
+const MATCHUP_CATEGORY_NAMES = ['Match Ups (B-L)', 'Match Ups (M-Z)'];
+
+/**
+ * Collect all text channel names from the Match Ups (B-L) and (M-Z) categories.
+ * Returns a sorted array of slugs (channel names), e.g. ["banjo-and-kazooie", "mr-game-and-watch", "peach | daisy"].
+ * Use this for a canonical list of character threads; also written to data/canonical-character-threads.json when exports run.
+ */
+export function getMatchupChannelSlugs(guild) {
+    if (!guild || !guild.channels?.cache) return [];
+    const slugs = [];
+    for (const categoryName of MATCHUP_CATEGORY_NAMES) {
+        const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
+        if (!category) continue;
+        for (const [, ch] of category.children.cache.filter(ch => ch.isTextBased())) {
+            slugs.push(ch.name);
+        }
+    }
+    return [...new Set(slugs)].sort((a, b) => a.localeCompare(b, 'en'));
+}
+
+/**
+ * Refresh the canonical character threads file from the guild's Match Ups categories.
+ * Call after exporting matchup channels (e.g. from handleExportMatchups or the weekly scheduler).
+ */
+export function writeCanonicalCharacterThreads(guild) {
+    const slugs = getMatchupChannelSlugs(guild);
+    const dir = path.dirname(CANONICAL_THREADS_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(CANONICAL_THREADS_PATH, JSON.stringify(slugs, null, 2), 'utf8');
+    console.log(`📋 Wrote ${slugs.length} canonical character threads to ${path.basename(CANONICAL_THREADS_PATH)}`);
+}
+
 function ensureExportsDir() {
     if (!fs.existsSync(EXPORTS_DIR)) {
         fs.mkdirSync(EXPORTS_DIR, { recursive: true });
@@ -48,8 +83,7 @@ export async function handleExportFalco(message) {
 }
 
 function findMatchupChannel(guild, slug) {
-    const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
-    for (const categoryName of categoryNames) {
+    for (const categoryName of MATCHUP_CATEGORY_NAMES) {
         const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
         if (!category) continue;
         const channel = category.children.cache.find(
@@ -129,7 +163,6 @@ export async function handleExportCharacter(message) {
 
 export async function handleExportMatchups(message) {
     const guild = message.guild;
-    const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
     
     try {
         await message.reply({ embeds: [buildEmbed("⏳ Exporting all Match Ups channels, glossary, fundies, and game state channels...")] });
@@ -138,7 +171,7 @@ export async function handleExportMatchups(message) {
         let totalMessages = 0;
         const exportedFiles = [];
         
-        for (const categoryName of categoryNames) {
+        for (const categoryName of MATCHUP_CATEGORY_NAMES) {
             const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
             
             if (!category) {
@@ -171,6 +204,8 @@ export async function handleExportMatchups(message) {
                 }
             }
         }
+
+        writeCanonicalCharacterThreads(guild);
 
         // Export glossary
         try {
@@ -290,13 +325,12 @@ export async function handleListThreadCounts(message) {
         return;
     }
 
-    const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
     const counts = [];
 
     try {
         await message.reply({ embeds: [buildEmbed("⏳ Counting messages in each character thread...")] });
 
-        for (const categoryName of categoryNames) {
+        for (const categoryName of MATCHUP_CATEGORY_NAMES) {
             const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
             if (!category) continue;
 
