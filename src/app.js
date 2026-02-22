@@ -11,13 +11,18 @@ import { adminRouter } from './admin/routes.js';
 import { webhookRouter } from './admin/webhookRoutes.js';
 
 const ENFORCE_HTTPS = process.env.ENFORCE_HTTPS === 'true' || process.env.ENFORCE_HTTPS === '1';
+const isProduction = process.env.NODE_ENV === 'production';
 
 export function createApp() {
     const app = express();
 
+    // Trust proxy in production so req.secure and cookies work behind Heroku/Railway/etc.
+    if (isProduction || ENFORCE_HTTPS) {
+        app.set('trust proxy', 1);
+    }
+
     // Redirect all HTTP to HTTPS so the site is only used over HTTPS (no content over HTTP).
     if (ENFORCE_HTTPS) {
-        app.set('trust proxy', 1);
         app.use((req, res, next) => {
             if (req.secure) return next();
             const host = req.get('Host') || req.hostname || 'localhost';
@@ -38,6 +43,14 @@ export function createApp() {
     app.use(session(getSessionConfig()));
     app.use(cookieParser());
     app.use('/admin', adminRouter);
+
+    // CSRF 403 → redirect to login with message instead of white "Forbidden" page
+    app.use((err, req, res, next) => {
+        if (err.status === 403 && (err.code === 'EBADCSRFTOKEN' || err.message === 'invalid csrf token')) {
+            return res.redirect('/admin/login?error=csrf');
+        }
+        next(err);
+    });
 
     app.use(express.static('public'));
     // Serve only exported data from an isolated dir (audit: do not serve project root).

@@ -23,7 +23,10 @@ router.get('/login', (req, res) => {
         return res.redirect('/admin');
     }
     const csrfToken = generateCsrfToken(req, res);
-    res.send(loginPage({ csrfToken }));
+    const error = req.query.error === 'csrf'
+        ? 'Your session or security token expired. Please try again.'
+        : null;
+    res.send(loginPage({ csrfToken, error: error || undefined }));
 });
 
 router.post('/login', express.urlencoded({ extended: true }), (req, res) => {
