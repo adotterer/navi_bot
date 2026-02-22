@@ -47,14 +47,6 @@ export async function send2FACode(email, code) {
                     Data: `Your verification code is: ${code}\n\nIt expires in 10 minutes.`,
                     Charset: "UTF-8",
                 },
-                Html: {
-                    Data: `<!DOCTYPE html><html><body style="font-family:sans-serif;font-size:16px;">
-<p>Your Navi Admin verification code is:</p>
-<p style="font-size:28px;font-weight:bold;letter-spacing:0.2em;">${code}</p>
-<p style="color:#666;">It expires in 10 minutes.</p>
-</body></html>`,
-                    Charset: "UTF-8",
-                },
             },
         },
     });
