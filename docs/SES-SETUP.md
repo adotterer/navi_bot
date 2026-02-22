@@ -6,7 +6,7 @@ Admin 2FA sends a 6-digit code by email using **Amazon SES** and the **AWS SDK**
 
 ### Region
 
-Use the same region as the rest of your AWS resources (e.g. `us-east-1`). The app uses `AWS_REGION` or defaults to `us-east-1`.
+SES is regional. The app uses **SES_REGION** if set, otherwise **AWS_REGION**, otherwise `us-east-1`. If your app runs in one region (e.g. Beanstalk in `us-west-1`) and SES is in another (e.g. `us-east-1`), set **SES_REGION=us-east-1** in the environment so the SES client calls the correct region.
 
 ### Verify the subdomain (or reuse main domain)
 
@@ -72,7 +72,8 @@ Environment variables:
 |---------------------|----------|-------------|
 | `SES_SENDER_EMAIL`  | For 2FA  | Verified “From” address in SES (e.g. `no-reply@your-subdomain.example.com`). |
 | `ADMIN_EMAIL`       | For 2FA  | Email that receives the 2FA code (e.g. your Gmail). |
-| `AWS_REGION`        | Optional | SES region (default `us-east-1`). |
+| `SES_REGION`        | Optional | Region where SES is (e.g. `us-east-1`). Use when SES is in a different region than the app (e.g. Beanstalk in us-west-1). Defaults to `AWS_REGION` or `us-east-1`. |
+| `AWS_REGION`        | Optional | Default AWS region for the app (S3, etc.). SES uses `SES_REGION` if set, else this, else `us-east-1`. |
 | `AWS_ACCESS_KEY_ID` | In AWS   | Not needed if the app runs with an IAM role. |
 | `AWS_SECRET_ACCESS_KEY` | In AWS | Not needed if the app runs with an IAM role. |
 

@@ -1,6 +1,8 @@
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 
-const sesClient = new SESClient({ region: process.env.AWS_REGION || "us-east-1" });
+// SES can be in a different region than the app (e.g. Beanstalk in us-west-1, SES in us-east-1).
+const sesRegion = process.env.SES_REGION || process.env.AWS_REGION || "us-east-1";
+const sesClient = new SESClient({ region: sesRegion });
 
 /**
  * Sends a 2FA verification code to the specified email address using Amazon SES.
