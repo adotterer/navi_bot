@@ -33,8 +33,8 @@ function generateRunId() {
  * @param {string} [opts.prompt]
  * @returns {string} runId
  */
-/** Run mode: 'pr' = implement and open PR, 'audit' = report only, 'ask' = Q&A about codebase (no code changes), 'review' = branch/PR review. */
-const RUN_MODES = ['pr', 'audit', 'ask', 'review'];
+/** Run mode: 'pr' = implement and open PR, 'audit' = report only, 'ask' = Q&A about codebase (no code changes), 'review' = branch/PR review, 'command' = bot command usage. */
+const RUN_MODES = ['pr', 'audit', 'ask', 'review', 'command'];
 
 function createRun(opts = {}) {
     const runId = generateRunId();
@@ -65,6 +65,7 @@ function createRun(opts = {}) {
         title: '',
         inputTokens: 0,
         outputTokens: 0,
+        cached_tokens: 0,
     };
     runs.set(runId, run);
     runOrder.push(runId);
@@ -158,6 +159,7 @@ function updateRun(runId, updates) {
     }
     if (updates.inputTokens != null) run.inputTokens = (run.inputTokens || 0) + updates.inputTokens;
     if (updates.outputTokens != null) run.outputTokens = (run.outputTokens || 0) + updates.outputTokens;
+    if (updates.cached_tokens != null) run.cached_tokens = (run.cached_tokens || 0) + updates.cached_tokens;
 }
 
 function setRunCancelled(runId) {
@@ -247,6 +249,7 @@ function listRuns(limit = 20) {
             model: run.model || '',
             inputTokens: run.inputTokens || 0,
             outputTokens: run.outputTokens || 0,
+            cached_tokens: run.cached_tokens || 0,
         };
     }).filter(Boolean);
 }
@@ -287,6 +290,7 @@ function hydrateRun(runId, snapshot, opts = {}) {
         diagramKeys: Array.isArray(snapshot.diagramKeys) ? snapshot.diagramKeys : [],
         inputTokens: snapshot.inputTokens ?? 0,
         outputTokens: snapshot.outputTokens ?? 0,
+        cached_tokens: snapshot.cached_tokens ?? 0,
     };
     if (opts.assetsBucket) run._assetsBucket = opts.assetsBucket;
     runs.set(runId, run);
