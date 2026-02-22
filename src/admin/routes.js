@@ -15,6 +15,21 @@ import { adminHead, adminNav, adminContainer, escapeHtml, s3Badge } from './layo
 import { headS3Key, hasS3KeysWithPrefix } from '../shared/s3Helper.js';
 
 const router = express.Router();
+
+// Session-based CSRF fallback for login only: when the double-submit cookie isn't sent
+// (e.g. behind some load balancers), accept the token from session so login still works securely.
+router.use((req, res, next) => {
+    if (req.method !== 'POST' || req.path !== '/login') return next();
+    const bodyToken = req.body && typeof req.body._csrf === 'string' ? req.body._csrf : null;
+    const cookieToken = req.cookies && req.cookies.navi_admin_csrf;
+    if (cookieToken && bodyToken && cookieToken === bodyToken) return next();
+    if (req.session && req.session.pendingLoginCsrf && bodyToken && req.session.pendingLoginCsrf === bodyToken) {
+        if (!req.cookies) req.cookies = {};
+        req.cookies.navi_admin_csrf = bodyToken;
+        delete req.session.pendingLoginCsrf;
+    }
+    next();
+});
 router.use(doubleCsrfProtection);
 
 // ----- Login (public) -----
@@ -23,6 +38,7 @@ router.get('/login', (req, res) => {
         return res.redirect('/admin');
     }
     const csrfToken = generateCsrfToken(req, res);
+    req.session.pendingLoginCsrf = csrfToken; // fallback when cookie isn't sent (e.g. behind ALB)
     const error = req.query.error === 'csrf'
         ? 'Your session or security token expired. Please try again.'
         : null;

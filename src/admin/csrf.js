@@ -25,8 +25,9 @@ const {
         if (req.body && typeof req.body._csrf === 'string') return req.body._csrf;
         return req.headers['x-csrf-token'];
     },
-    // Skip CSRF validation in development so login works on localhost without cookie/session quirks.
-    skipCsrfProtection: () => !isProduction,
+    // Skip CSRF in development only. In production, login is protected via double-submit cookie;
+    // routes.js adds a session fallback for POST /admin/login when the cookie isn't sent (e.g. behind ALB).
+    skipCsrfProtection: (req) => !isProduction,
 });
 
 export { doubleCsrfProtection, generateCsrfToken };
