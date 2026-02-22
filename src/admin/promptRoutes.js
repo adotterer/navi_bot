@@ -91,7 +91,7 @@ router.get('/:id', async (req, res) => {
         const saved = req.query.saved === '1';
         const reset = req.query.reset === '1';
         const emojiLibrary = getEmojiLibrary();
-        res.send(promptEditPage(id, meta, body, { saved, reset, s3InUse, emojiLibrary, error: req.query.error }));
+        res.send(promptEditPage(id, meta, body, { saved, reset, s3InUse, emojiLibrary, error: req.query.error, csrfToken: req.csrfToken() }));
     } catch (err) {
         console.error('Admin prompt get:', err);
         res.status(500).send('Error loading prompt.');
@@ -116,7 +116,7 @@ router.post('/:id', express.urlencoded({ extended: true }), async (req, res) => 
             : 'Could not save to S3. Check your .env (AWS_*, S3_BUCKET_NAME) and try again.';
         try {
             const emojiLibrary = getEmojiLibrary();
-            res.status(200).send(promptEditPage(id, meta, body, { saveError, emojiLibrary }));
+            res.status(200).send(promptEditPage(id, meta, body, { saveError, emojiLibrary, csrfToken: req.csrfToken() }));
         } catch (e) {
             res.status(500).send('Error saving prompt.');
         }
@@ -170,6 +170,8 @@ function promptsListPage(list) {
 }
 
 function promptEditPage(id, meta, body, opts = {}) {
+    const csrfToken = opts.csrfToken || '';
+    const csrfInput = `<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">`;
     const variables = meta.variables || [];
     const pillColors = ['#8b5cf6', 'coral', 'darkcyan', 'mediumseagreen', 'darkorange', 'mediumpurple', 'steelblue', 'indianred', 'teal', 'chocolate'];
     const varNames = variables.map((v) => (typeof v === 'string' ? v : v.name));
@@ -242,6 +244,7 @@ function promptEditPage(id, meta, body, opts = {}) {
       <div id="prompt-split" class="prompt-split flex w-full gap-0 min-h-[280px] sm:min-h-[380px]">
         <div id="prompt-editor-column" class="prompt-editor-column flex flex-col min-w-0 flex-1 bg-white dark:bg-slate-800 rounded-tl-xl rounded-tr-xl sm:rounded-tr-none sm:rounded-bl-xl">
           <form id="prompt-form" method="post" action="/admin/prompts/${escapeHtml(id)}" class="flex flex-col flex-1 min-h-0 px-3">
+            ${csrfInput}
             <div class="prompt-editor-header flex items-center justify-between gap-2 px-3 py-2.5">
               <label for="prompt-body" class="text-sm font-medium text-slate-700 dark:text-slate-300">Template body</label>
               <button type="button" id="prompt-show-preview-btn" class="prompt-header-btn hidden text-slate-600 dark:text-slate-300 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-slate-800 dark:hover:text-emerald-400 dark:hover:border-emerald-600" title="Show preview panel">Show preview</button>
@@ -262,6 +265,7 @@ function promptEditPage(id, meta, body, opts = {}) {
         </div>
       </div>
       <form method="post" action="/admin/prompts/${escapeHtml(id)}/reset" class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+        ${csrfInput}
         <button type="submit" class="text-sm text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 font-medium" onclick="return confirm('Restore the built-in default for this prompt?');">Reset to default</button>
       </form>
     </div>
@@ -634,6 +638,7 @@ function promptEditPage(id, meta, body, opts = {}) {
       if (!id) return;
       var loaded = false;
       var revertConfirmMsg = 'Replace current prompt with this version?';
+      var csrfToken = ${JSON.stringify(csrfToken)};
       function esc(s) {
         var div = document.createElement('div');
         div.textContent = s == null ? '' : s;
@@ -667,6 +672,7 @@ function promptEditPage(id, meta, body, opts = {}) {
               html += '<span class="text-slate-600 dark:text-slate-400">' + esc(date) + '</span>';
               html += '<a href="' + esc(viewUrl) + '" target="_blank" rel="noopener" class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">View</a>';
               html += '<form method="post" action="/admin/prompts/' + encodeURIComponent(id) + '/revert" class="inline">';
+              html += '<input type="hidden" name="_csrf" value="' + esc(csrfToken) + '">';
               html += '<input type="hidden" name="versionKey" value="' + esc(item.key) + '">';
               html += '<button type="submit" class="text-amber-600 hover:text-amber-700 dark:text-amber-400" onclick="return confirm(&quot;Replace current prompt with this version?&quot;);">Revert</button>';
               html += '</form>';

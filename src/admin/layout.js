@@ -134,4 +134,8 @@ function saveBarMinimizeScript(barId, storageKey) {
 </script>`;
 }
 
-export { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript };
+function csrfHiddenInput(token) {
+    return `<input type="hidden" name="_csrf" value="${escapeHtml(token)}">`;
+}
+
+export { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript, csrfHiddenInput };
