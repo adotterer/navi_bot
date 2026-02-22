@@ -57,7 +57,7 @@ router.post('/login', express.urlencoded({ extended: true }), async (req, res) =
     }
     if (is2faBypassed()) {
         req.session.admin = true;
-        return res.redirect('/admin');
+        return req.session.save(() => res.redirect('/admin'));
     }
     const adminEmail = process.env.ADMIN_EMAIL;
     if (adminEmail && process.env.SES_SENDER_EMAIL) {
@@ -65,16 +65,17 @@ router.post('/login', express.urlencoded({ extended: true }), async (req, res) =
         req.session.twoFactorCode = code;
         req.session.twoFactorExpires = Date.now() + TWO_FA_EXPIRY_MS;
         try {
+            // Send the 6-digit verification code via SES using the HTML template
             await send2FACode(adminEmail, code);
         } catch (err) {
             console.error('2FA email send failed:', err);
             const csrfToken = generateCsrfToken(req, res);
             return res.status(500).send(loginPage({ error: 'Could not send verification email. Check SES configuration.', csrfToken }));
         }
-        return res.redirect('/admin/2fa');
+        return req.session.save(() => res.redirect('/admin/2fa'));
     }
     req.session.admin = true;
-    return res.redirect('/admin');
+    return req.session.save(() => res.redirect('/admin'));
 });
 
 router.get('/2fa', (req, res) => {
@@ -115,7 +116,7 @@ router.post('/2fa', express.urlencoded({ extended: true }), (req, res) => {
         req.session.twoFactorVerified = true;
         req.session.twoFactorCode = undefined;
         req.session.twoFactorExpires = undefined;
-        return res.redirect('/admin');
+        return req.session.save(() => res.redirect('/admin'));
     }
     const csrfToken = generateCsrfToken(req, res);
     req.session.pendingLoginCsrf = csrfToken;
