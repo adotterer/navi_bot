@@ -1,7 +1,8 @@
+import { EmbedBuilder } from 'discord.js';
 import cron from 'node-cron';
 import { fetchAllMessages, uploadToS3 } from './s3Helper.js';
 import { checkTodaysTournaments } from '../tournaments/dailyTournamentCheck.js';
-import { buildTournamentEmbed } from '../tournaments/tournamentEmbed.js';
+import { buildTournamentEmbed, INFO_EMBED_COLOR } from '../tournaments/tournamentEmbed.js';
 
 export function initializeScheduler(client) {
     // Weekly export every Sunday at 2 AM UTC
@@ -238,7 +239,10 @@ export function initializeScheduler(client) {
             const tournaments = await checkTodaysTournaments(STARTGG_TOKEN);
 
             if (tournaments.length === 0) {
-                await channel.send('❌ No Zelda players found in today\'s tournaments with Ultimate Singles.');
+                const embed = new EmbedBuilder()
+                    .setColor(INFO_EMBED_COLOR)
+                    .setDescription('❌ No Zelda players found in today\'s tournaments with Ultimate Singles.');
+                await channel.send({ embeds: [embed] });
                 return;
             }
 
@@ -296,9 +300,17 @@ async function notifyModerators(guild, channelsExported, messagesExported, durat
             ? `• **Neutral:** ${extraExports.neutralMessages.toLocaleString()} messages`
             : `• **Neutral:** Not found`;
 
-        const message = `✅ **Daily Export Complete**\n\n📊 Summary:\n• **Channels Exported:** ${channelsExported}\n• **Total Messages:** ${messagesExported.toLocaleString()}\n• **Duration:** ${duration}s\n${glossaryLine}\n${fundiesLine}\n${disadvantageLine}\n${advantageLine}\n${neutralLine}\n• **Status:** All data synced to S3 for AI analysis\n\n🤖 Navi now has the latest community insights!`;
+        const embed = new EmbedBuilder()
+            .setTitle('✅ Daily Export Complete')
+            .setColor(INFO_EMBED_COLOR)
+            .addFields(
+                { name: '📊 Summary', value: `• **Channels Exported:** ${channelsExported}\n• **Total Messages:** ${messagesExported.toLocaleString()}\n• **Duration:** ${duration}s` },
+                { name: '📂 Additional Exports', value: `${glossaryLine}\n${fundiesLine}\n${disadvantageLine}\n${advantageLine}\n${neutralLine}` },
+                { name: '✨ Status', value: 'All data synced to S3 for AI analysis' }
+            )
+            .setDescription('🤖 Navi now has the latest community insights!');
 
-        await auditLogsChannel.send(message);
+        await auditLogsChannel.send({ embeds: [embed] });
         console.log('📢 Notification sent to audit-logs');
     } catch (error) {
         console.error('❌ Failed to send notification:', error.message);
@@ -314,9 +326,12 @@ async function notifyModeratorsOfFailure(guild, errorMessage) {
         
         if (!auditLogsChannel) return;
 
-        const message = `❌ **Daily Matchup Export Failed**\n\n⚠️ Error: ${errorMessage}\n\nPlease check the bot logs or try running \`!export matchups\` manually.`;
+        const embed = new EmbedBuilder()
+            .setTitle('❌ Daily Matchup Export Failed')
+            .setColor('#FF0000')
+            .setDescription(`⚠️ Error: ${errorMessage}\n\nPlease check the bot logs or try running \`!export matchups\` manually.`);
 
-        await auditLogsChannel.send(message);
+        await auditLogsChannel.send({ embeds: [embed] });
         console.log('📢 Failure notification sent to audit-logs');
     } catch (error) {
         console.error('❌ Failed to send failure notification:', error.message);
