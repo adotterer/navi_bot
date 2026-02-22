@@ -17,6 +17,20 @@ import { Octokit } from '@octokit/rest';
 const router = express.Router();
 const SSE_HEARTBEAT_MS = 15000;
 
+/** Optional: when set (e.g. to production bucket), list and load runs from this bucket read-only so local can see production runs. */
+const AGENT_RUNS_READ_BUCKET = process.env.AGENT_RUNS_READ_BUCKET || '';
+
+/** Load run from primary S3, then from AGENT_RUNS_READ_BUCKET if set. Returns { snapshot, assetsBucket } where assetsBucket is set when loaded from read bucket. */
+async function loadRunFromS3WithFallback(runId) {
+    let snapshot = await loadRunFromS3(runId);
+    if (snapshot) return { snapshot, assetsBucket: null };
+    if (AGENT_RUNS_READ_BUCKET) {
+        snapshot = await loadRunFromS3(runId, AGENT_RUNS_READ_BUCKET);
+        if (snapshot) return { snapshot, assetsBucket: AGENT_RUNS_READ_BUCKET };
+    }
+    return { snapshot: null, assetsBucket: null };
+}
+
 // ----- GET /admin/agent – main page (template in agentPageContent.js + agentPageContentInner.html) -----
 router.get('/', (req, res) => {
     const csrfToken = generateCsrfToken(req, res);
@@ -241,29 +255,51 @@ router.get('/runs', (req, res) => {
     res.json({ runs: listRuns(limit) });
 });
 
-// ----- GET /admin/agent/runs/history – list runs persisted to S3 (survives server restart) -----
+// ----- GET /admin/agent/runs/history – list runs persisted to S3 (primary + optional AGENT_RUNS_READ_BUCKET) -----
 router.get('/runs/history', async (req, res) => {
     try {
-        const keys = await listS3KeysWithPrefix('admin/agent-runs/', 50);
-        const sorted = keys
+        const prefix = 'admin/agent-runs/';
+        const keysPrimary = await listS3KeysWithPrefix(prefix, 50);
+        const withBucket = keysPrimary.map((k) => ({
+            runId: k.Key.replace(prefix, '').replace('.json', ''),
+            LastModified: k.LastModified,
+            bucket: null,
+        }));
+        if (AGENT_RUNS_READ_BUCKET) {
+            const keysRead = await listS3KeysWithPrefix(prefix, 50, AGENT_RUNS_READ_BUCKET);
+            for (const k of keysRead) {
+                const runId = k.Key.replace(prefix, '').replace('.json', '');
+                const existing = withBucket.find((e) => e.runId === runId);
+                const ts = k.LastModified ? new Date(k.LastModified).getTime() : 0;
+                if (!existing) {
+                    withBucket.push({ runId, LastModified: k.LastModified, bucket: AGENT_RUNS_READ_BUCKET });
+                } else if (ts > (existing.LastModified ? new Date(existing.LastModified).getTime() : 0)) {
+                    existing.LastModified = k.LastModified;
+                    existing.bucket = AGENT_RUNS_READ_BUCKET;
+                }
+            }
+        }
+        const sorted = withBucket
             .sort((a, b) => new Date(b.LastModified || 0) - new Date(a.LastModified || 0))
             .slice(0, 20);
-        const runs = await Promise.all(sorted.map(async (k) => {
-            const runId = k.Key.replace('admin/agent-runs/', '').replace('.json', '');
-            const fallbackTs = k.LastModified ? new Date(k.LastModified).getTime() : 0;
-            const meta = await loadRunMetadataFromS3(runId);
-            return {
-                runId,
-                title: meta?.title || '',
-                prompt: meta?.prompt || '',
-                status: meta?.status || '',
-                createdAt: meta?.createdAt || fallbackTs,
-                lastModified: fallbackTs,
-                model: meta?.model || '',
-                inputTokens: meta?.inputTokens || 0,
-                outputTokens: meta?.outputTokens || 0,
-            };
-        }));
+        const runs = await Promise.all(
+            sorted.map(async (e) => {
+                const fallbackTs = e.LastModified ? new Date(e.LastModified).getTime() : 0;
+                const meta = await loadRunMetadataFromS3(e.runId, e.bucket || undefined);
+                return {
+                    runId: e.runId,
+                    title: meta?.title || '',
+                    prompt: meta?.prompt || '',
+                    status: meta?.status || '',
+                    createdAt: meta?.createdAt || fallbackTs,
+                    lastModified: fallbackTs,
+                    model: meta?.model || '',
+                    runMode: meta?.runMode || 'pr',
+                    inputTokens: meta?.inputTokens || 0,
+                    outputTokens: meta?.outputTokens || 0,
+                };
+            })
+        );
         res.json({ runs });
     } catch (_) {
         res.json({ runs: [] });
@@ -305,9 +341,9 @@ router.post('/run/:runId/pr-action', express.json(), async (req, res) => {
 
     let run = getRun(runId);
     if (!run) {
-        const snapshot = await loadRunFromS3(runId);
+        const { snapshot, assetsBucket } = await loadRunFromS3WithFallback(runId);
         if (!snapshot) return res.status(404).json({ ok: false, error: 'Run not found' });
-        hydrateRun(runId, snapshot);
+        hydrateRun(runId, snapshot, assetsBucket ? { assetsBucket } : {});
         run = getRun(runId);
     }
     if (!run || !run.prUrl) return res.status(400).json({ ok: false, error: 'Run has no PR.' });
@@ -336,13 +372,13 @@ router.post('/run/:runId/pr-action', express.json(), async (req, res) => {
     }
 });
 
-// ----- GET /admin/agent/run/:runId – run summary; falls back to S3 if not in memory -----
+// ----- GET /admin/agent/run/:runId – run summary; falls back to S3 (primary then AGENT_RUNS_READ_BUCKET) if not in memory -----
 router.get('/run/:runId', async (req, res) => {
     let run = getRun(req.params.runId);
     if (!run) {
-        const snapshot = await loadRunFromS3(req.params.runId);
+        const { snapshot, assetsBucket } = await loadRunFromS3WithFallback(req.params.runId);
         if (!snapshot) return res.status(404).json({ error: 'Run not found' });
-        hydrateRun(req.params.runId, snapshot);
+        hydrateRun(req.params.runId, snapshot, assetsBucket ? { assetsBucket } : {});
         run = getRun(req.params.runId);
     }
     if (!run) return res.status(404).json({ error: 'Run not found' });
@@ -377,14 +413,15 @@ router.get('/run/:runId', async (req, res) => {
 router.get('/run/:runId/audit-image', async (req, res) => {
     let run = getRun(req.params.runId);
     if (!run) {
-        const snapshot = await loadRunFromS3(req.params.runId);
+        const { snapshot, assetsBucket } = await loadRunFromS3WithFallback(req.params.runId);
         if (!snapshot) return res.status(404).send('Run not found');
-        hydrateRun(req.params.runId, snapshot);
+        hydrateRun(req.params.runId, snapshot, assetsBucket ? { assetsBucket } : {});
         run = getRun(req.params.runId);
     }
     const key = run?.auditReportImageKey;
     if (!key) return res.status(404).send('No audit image');
-    const result = await fetchFromS3Buffer(key);
+    const bucket = run._assetsBucket;
+    const result = await fetchFromS3Buffer(key, bucket);
     if (!result) return res.status(404).send('Image not found');
     res.set('Content-Type', result.contentType);
     res.send(result.body);
@@ -394,14 +431,15 @@ router.get('/run/:runId/audit-image', async (req, res) => {
 router.get('/run/:runId/ask-image', async (req, res) => {
     let run = getRun(req.params.runId);
     if (!run) {
-        const snapshot = await loadRunFromS3(req.params.runId);
+        const { snapshot, assetsBucket } = await loadRunFromS3WithFallback(req.params.runId);
         if (!snapshot) return res.status(404).send('Run not found');
-        hydrateRun(req.params.runId, snapshot);
+        hydrateRun(req.params.runId, snapshot, assetsBucket ? { assetsBucket } : {});
         run = getRun(req.params.runId);
     }
     const key = run?.askResponseImageKey;
     if (!key) return res.status(404).send('No ask image');
-    const result = await fetchFromS3Buffer(key);
+    const bucket = run._assetsBucket;
+    const result = await fetchFromS3Buffer(key, bucket);
     if (!result) return res.status(404).send('Image not found');
     res.set('Content-Type', result.contentType);
     res.send(result.body);
@@ -413,15 +451,16 @@ router.get('/run/:runId/diagram/:index', async (req, res) => {
     if (isNaN(idx) || idx < 0) return res.status(400).send('Invalid index');
     let run = getRun(req.params.runId);
     if (!run) {
-        const snapshot = await loadRunFromS3(req.params.runId);
+        const { snapshot, assetsBucket } = await loadRunFromS3WithFallback(req.params.runId);
         if (!snapshot) return res.status(404).send('Run not found');
-        hydrateRun(req.params.runId, snapshot);
+        hydrateRun(req.params.runId, snapshot, assetsBucket ? { assetsBucket } : {});
         run = getRun(req.params.runId);
     }
     const keys = run?.diagramKeys;
     if (!Array.isArray(keys) || idx >= keys.length) return res.status(404).send('Diagram not found');
+    const bucket = run._assetsBucket;
     try {
-        const result = await fetchFromS3Buffer(keys[idx]);
+        const result = await fetchFromS3Buffer(keys[idx], bucket);
         if (!result) return res.status(404).send('Image not found in S3');
         res.set('Content-Type', result.contentType);
         res.set('Cache-Control', 'public, max-age=86400');
@@ -467,9 +506,9 @@ router.post('/run/:runId/resume', async (req, res) => {
     const runId = req.params.runId;
     let run = getRun(runId);
     if (!run) {
-        const snapshot = await loadRunFromS3(runId);
+        const { snapshot, assetsBucket } = await loadRunFromS3WithFallback(runId);
         if (!snapshot) return res.status(404).json({ ok: false, error: 'Run not found' });
-        hydrateRun(runId, snapshot);
+        hydrateRun(runId, snapshot, assetsBucket ? { assetsBucket } : {});
         run = getRun(runId);
     }
     const terminal = ['done', 'error', 'cancelled'].includes(run.status);

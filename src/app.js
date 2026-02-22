@@ -4,6 +4,7 @@
  */
 import express from 'express';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import { getSessionConfig } from './admin/auth.js';
@@ -12,6 +13,22 @@ import { webhookRouter } from './admin/webhookRoutes.js';
 
 const ENFORCE_HTTPS = process.env.ENFORCE_HTTPS === 'true' || process.env.ENFORCE_HTTPS === '1';
 const isProduction = process.env.NODE_ENV === 'production';
+
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+    handler: (_req, res) => res.redirect('/admin/login?error=ratelimit'),
+});
+
+const webhookLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 export function createApp() {
     const app = express();
@@ -25,21 +42,40 @@ export function createApp() {
     if (ENFORCE_HTTPS) {
         app.use((req, res, next) => {
             if (req.secure) return next();
-            const host = req.get('Host') || req.hostname || 'localhost';
-            res.redirect(301, 'https://' + host + req.originalUrl);
+            res.redirect(301, 'https://' + req.hostname + req.originalUrl);
         });
     }
 
-    // Raw body parser must be registered before urlencoded/json so the webhook.
+    // Rate limiting on sensitive endpoints (before body parsing to reject early).
+    app.post('/admin/login', loginLimiter);
+    app.post('/github/webhook', webhookLimiter);
+
+    // Raw body parser must be registered before urlencoded/json so the webhook
     // route receives raw bytes for HMAC signature verification.
     app.use('/github/webhook', express.raw({ type: 'application/json' }));
     app.use(webhookRouter);
 
-    // Security headers (CSP disabled so admin inline scripts and existing pages work).
-    app.use(helmet({ contentSecurityPolicy: false }));
+    // Security headers with CSP. 'unsafe-inline' allows existing inline scripts;
+    // a future improvement could use per-request nonces for stricter script-src.
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
+                fontSrc: ["'self'", "https://fonts.gstatic.com"],
+                imgSrc: ["'self'", "data:"],
+                connectSrc: ["'self'"],
+                objectSrc: ["'none'"],
+                frameAncestors: ["'none'"],
+                baseUri: ["'self'"],
+                formAction: ["'self'"],
+            },
+        },
+    }));
 
-    app.use(express.urlencoded({ extended: true }));
-    app.use(express.json());
+    app.use(express.urlencoded({ extended: true, limit: '50kb' }));
+    app.use(express.json({ limit: '50kb' }));
     app.use(session(getSessionConfig()));
     app.use(cookieParser());
     app.use('/admin', adminRouter);

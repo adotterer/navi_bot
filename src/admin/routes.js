@@ -39,9 +39,9 @@ router.get('/login', (req, res) => {
     }
     const csrfToken = generateCsrfToken(req, res);
     req.session.pendingLoginCsrf = csrfToken; // fallback when cookie isn't sent (e.g. behind ALB)
-    const error = req.query.error === 'csrf'
-        ? 'Your session or security token expired. Please try again.'
-        : null;
+    let error = null;
+    if (req.query.error === 'csrf') error = 'Your session or security token expired. Please try again.';
+    else if (req.query.error === 'ratelimit') error = 'Too many login attempts. Please wait a few minutes and try again.';
     res.send(loginPage({ csrfToken, error: error || undefined }));
 });
 
@@ -88,11 +88,15 @@ router.use('/commands', requireAdmin, commandRoutes);
 router.use('/agent', requireAdmin, agentRoutes);
 router.use('/cost', requireAdmin, costRoutes);
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 function loginPage(opts = {}) {
     const error = opts.error
         ? `<div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">${escapeHtml(opts.error)}</div>`
         : '';
     const csrfInput = opts.csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(opts.csrfToken)}">` : '';
+    const devUser = !isProduction ? escapeHtml(process.env.ADMIN_USERNAME || '') : '';
+    const devPass = !isProduction ? escapeHtml(process.env.ADMIN_PASSWORD || '') : '';
     return `<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Login')}</head>
@@ -108,12 +112,12 @@ function loginPage(opts = {}) {
         ${csrfInput}
         <div>
           <label for="username" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Username</label>
-          <input id="username" type="text" name="username" value="" autocomplete="username"
+          <input id="username" type="text" name="username" value="${devUser}" autocomplete="username"
             class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
         </div>
         <div>
           <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
-          <input id="password" type="password" name="password" autocomplete="current-password"
+          <input id="password" type="password" name="password" value="${devPass}" autocomplete="current-password"
             class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
         </div>
         <button type="submit" class="w-full rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-4 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Log in</button>

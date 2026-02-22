@@ -7,11 +7,18 @@ export function requireAdmin(req, res, next) {
 }
 
 export function getSessionConfig() {
+    const isProduction = process.env.NODE_ENV === 'production';
     return {
         secret: process.env.SESSION_SECRET || 'change-me-in-production',
         resave: false,
         saveUninitialized: false,
         name: 'navi.admin.sid',
+        cookie: {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: 'lax',
+            maxAge: 8 * 60 * 60 * 1000, // 8 hours
+        },
     };
 }
 

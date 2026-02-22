@@ -60,12 +60,13 @@ export async function persistRunToS3(runId) {
 /**
  * Load run snapshot from S3. Returns plain object or null.
  * @param {string} runId
+ * @param {string} [bucket] - Optional bucket (e.g. AGENT_RUNS_READ_BUCKET); uses default when omitted.
  * @returns {Promise<object|null>}
  */
-export async function loadRunFromS3(runId) {
+export async function loadRunFromS3(runId, bucket) {
     try {
         const key = S3_PREFIX + runId + '.json';
-        const raw = await fetchFromS3Raw(key);
+        const raw = bucket ? await fetchFromS3Raw(key, bucket) : await fetchFromS3Raw(key);
         if (!raw) return null;
         return JSON.parse(raw);
     } catch (err) {
@@ -77,12 +78,13 @@ export async function loadRunFromS3(runId) {
 /**
  * Load lightweight metadata for run listing (including model and token counts for cost).
  * @param {string} runId
+ * @param {string} [bucket] - Optional bucket; uses default when omitted.
  * @returns {Promise<{ runId: string, title?: string, prompt?: string, status?: string, createdAt?: number, runMode?: string, model?: string, inputTokens?: number, outputTokens?: number }|null>}
  */
-export async function loadRunMetadataFromS3(runId) {
+export async function loadRunMetadataFromS3(runId, bucket) {
     try {
         const key = S3_PREFIX + runId + '.json';
-        const raw = await fetchFromS3Raw(key);
+        const raw = bucket ? await fetchFromS3Raw(key, bucket) : await fetchFromS3Raw(key);
         if (!raw) return null;
         const full = JSON.parse(raw);
         return {

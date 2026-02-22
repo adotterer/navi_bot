@@ -38,11 +38,14 @@ export async function fetchFromS3(filename) {
     return JSON.parse(str);
 }
 
-/** Fetch raw string from S3 (for prompts, CSV). Returns null if key not found. */
-export async function fetchFromS3Raw(key) {
+const defaultBucket = () => S3_BUCKET_NAME;
+
+/** Fetch raw string from S3 (for prompts, CSV). Returns null if key not found. bucket overrides S3_BUCKET_NAME when provided. */
+export async function fetchFromS3Raw(key, bucket = defaultBucket()) {
+    if (!bucket) return null;
     try {
         const command = new GetObjectCommand({
-            Bucket: S3_BUCKET_NAME,
+            Bucket: bucket,
             Key: key
         });
         const response = await s3Client.send(command);
@@ -53,11 +56,12 @@ export async function fetchFromS3Raw(key) {
     }
 }
 
-/** Fetch object from S3 as Buffer (e.g. for images). Returns null if key not found. */
-export async function fetchFromS3Buffer(key) {
+/** Fetch object from S3 as Buffer (e.g. for images). Returns null if key not found. bucket overrides S3_BUCKET_NAME when provided. */
+export async function fetchFromS3Buffer(key, bucket = defaultBucket()) {
+    if (!bucket) return null;
     try {
         const command = new GetObjectCommand({
-            Bucket: S3_BUCKET_NAME,
+            Bucket: bucket,
             Key: key
         });
         const response = await s3Client.send(command);
@@ -96,11 +100,12 @@ export async function hasS3KeysWithPrefix(prefix) {
     }
 }
 
-/** List keys with the given prefix. Returns array of { Key, LastModified, Size }. */
-export async function listS3KeysWithPrefix(prefix, maxKeys = 100) {
+/** List keys with the given prefix. Returns array of { Key, LastModified, Size }. bucket overrides S3_BUCKET_NAME when provided. */
+export async function listS3KeysWithPrefix(prefix, maxKeys = 100, bucket = defaultBucket()) {
+    if (!bucket) return [];
     try {
         const res = await s3Client.send(new ListObjectsV2Command({
-            Bucket: S3_BUCKET_NAME,
+            Bucket: bucket,
             Prefix: prefix,
             MaxKeys: maxKeys
         }));

@@ -822,6 +822,7 @@
       if (pastRunsOpen) {
         pastRunsListEl.classList.remove('hidden');
         if (pastRunsChevron) pastRunsChevron.textContent = '▴';
+        loadPastRunsList();
       } else {
         pastRunsListEl.classList.add('hidden');
         if (pastRunsChevron) pastRunsChevron.textContent = '▾';
@@ -1212,6 +1213,7 @@
                 stopBtn.disabled = true;
                 stopTimer();
                 resumeBtn && resumeBtn.classList.add('hidden');
+                loadPastRunsList();
                 showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error, data);
                 return;
               }
@@ -1270,6 +1272,7 @@
             stopBtn.disabled = true;
             resumeBtn && resumeBtn.classList.add('hidden');
             updateTokenDisplay(entry.inputTokens, entry.outputTokens);
+            loadPastRunsList();
             var runId = currentRunId;
             if (runId) {
               _adminFetch('/admin/agent/run/' + encodeURIComponent(runId), { credentials: 'same-origin' })
@@ -1291,6 +1294,7 @@
             startBtn.disabled = false;
             stopBtn.disabled = true;
             resumeBtn && resumeBtn.classList.add('hidden');
+            loadPastRunsList();
             showResult(null, entry.message || 'Run failed');
           }
         } catch (_) {}

@@ -255,8 +255,9 @@ function listRuns(limit = 20) {
  * Re-hydrate a run from a persisted snapshot (e.g. loaded from S3).
  * @param {string} runId
  * @param {object} snapshot - Plain object with runId, status, prompt, docs, flightPlan, steps, stepResults, logs, edits, prUrl, error, createdAt, cancelled
+ * @param {{ assetsBucket?: string }} [opts] - If assetsBucket is set (e.g. when loaded from AGENT_RUNS_READ_BUCKET), image routes use this bucket for audit/ask/diagram assets.
  */
-function hydrateRun(runId, snapshot) {
+function hydrateRun(runId, snapshot, opts = {}) {
     if (!snapshot || snapshot.runId !== runId) return;
     const run = {
         runId: snapshot.runId,
@@ -287,6 +288,7 @@ function hydrateRun(runId, snapshot) {
         inputTokens: snapshot.inputTokens ?? 0,
         outputTokens: snapshot.outputTokens ?? 0,
     };
+    if (opts.assetsBucket) run._assetsBucket = opts.assetsBucket;
     runs.set(runId, run);
     if (!runOrder.includes(runId)) runOrder.push(runId);
 }
