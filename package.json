@@ -16,7 +16,10 @@
   "description": "",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
+    "@aws-sdk/client-dynamodb": "^3.995.0",
     "@aws-sdk/client-s3": "^3.490.0",
+    "@aws-sdk/client-ses": "^3.490.0",
+    "@aws-sdk/lib-dynamodb": "^3.995.0",
     "@google/genai": "^1.39.0",
     "@octokit/rest": "^22.0.1",
     "axios": "^1.13.4",
@@ -31,8 +34,7 @@
     "helmet": "^8.1.0",
     "node-cron": "^4.2.1",
     "p-limit": "^7.3.0",
-    "simple-git": "^3.31.1",
-    "@aws-sdk/client-ses": "^3.490.0"
+    "simple-git": "^3.31.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.11",

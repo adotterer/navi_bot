@@ -9,10 +9,16 @@ import { getClient } from '../../shared/discordClient.js';
 import { INFO_EMBED_COLOR } from '../../messages/faqAndAliasHandler.js';
 import { appendLog, getRun, updateRun, isRunCancelled, notifyDocsUpdate, registerAbortController, unregisterAbortController } from './runStore.js';
 import { persistRunToS3 } from './agentRunPersistence.js';
+import { upsertRunMeta } from './agentRunDynamo.js';
 import { runResearcher, runPlanner, runCoder, validateCoderStep, runReviewer, runAuditor, runAsk, runTester } from './agents.js';
 import { callTool } from './toolRegistry.js';
 import { getFileTree } from './codebaseTools.js';
 import { getBranchDiff, getDiffForPullRequest } from './repoBrowser.js';
+
+function updateRunAndMeta(runId, updates) {
+    updateRun(runId, updates);
+    upsertRunMeta(getRun(runId)).catch(() => {});
+}
 
 /** Parse Quality (Tester) report recommendation. Returns 'merge' | 'request_changes' | 'reject' (or 'merge' if unclear). */
 function parseQualityRecommendation(report) {
@@ -34,7 +40,7 @@ function parseQualityRecommendation(report) {
  */
 function checkCancelled(runId, log) {
     if (isRunCancelled(runId)) {
-        updateRun(runId, { status: 'cancelled' });
+        updateRunAndMeta(runId, { status: 'cancelled' });
         log('system', 'cancelled', 'Run stopped by user.\n');
         return true;
     }
@@ -262,15 +268,15 @@ export async function runPipeline(runId, opts = {}) {
                 .trim();
             if (branchName.includes('\n')) branchName = branchName.split('\n')[0].trim();
             if (!branchName) {
-                updateRun(runId, { status: 'error', error: 'Branch name required. Enter a branch name (e.g. agent/run-xyz or feature/abc).' });
+                updateRunAndMeta(runId, { status: 'error', error: 'Branch name required. Enter a branch name (e.g. agent/run-xyz or feature/abc).' });
                 log('system', 'error', 'No branch name in prompt.\n');
                 return;
             }
-            updateRun(runId, { status: 'planning' });
+            updateRunAndMeta(runId, { status: 'planning' });
             log('system', 'planning', 'Getting diff…\n');
             const diffResult = await getBranchDiff(branchName, 'main');
             if (!diffResult.ok) {
-                updateRun(runId, { status: 'error', error: diffResult.error || 'Branch not found or not accessible' });
+                updateRunAndMeta(runId, { status: 'error', error: diffResult.error || 'Branch not found or not accessible' });
                 log('system', 'error', (diffResult.error || 'Branch not found') + '\n');
                 return;
             }
@@ -290,11 +296,11 @@ export async function runPipeline(runId, opts = {}) {
                 adminCssInDiff: diffText.includes('public/admin.css'),
             });
             if (!testerResult.ok) {
-                updateRun(runId, { status: 'error', error: testerResult.error });
+                updateRunAndMeta(runId, { status: 'error', error: testerResult.error });
                 log('system', 'error', 'Tester failed: ' + testerResult.error + '\n');
                 return;
             }
-            updateRun(runId, {
+            updateRunAndMeta(runId, {
                 status: 'done',
                 reviewReport: testerResult.report,
                 ...(testerResult.diagramKeys?.length && { diagramKeys: testerResult.diagramKeys }),
@@ -312,12 +318,12 @@ export async function runPipeline(runId, opts = {}) {
 
         const shouldRunResearch = !resume || !flightPlan?.length;
         if (shouldRunResearch) {
-            updateRun(runId, { status: 'research' });
+            updateRunAndMeta(runId, { status: 'research' });
             log('system', 'research', resume ? 'Resuming: re-running Researcher…\n' : 'Running Researcher…\n');
 
             const researchResult = await runResearcher(prompt, { docs: getRun(runId)?.docs, signal, model, depth });
             if (!researchResult.ok) {
-                updateRun(runId, { status: 'error', error: researchResult.error });
+                updateRunAndMeta(runId, { status: 'error', error: researchResult.error });
                 log('system', 'error', 'Researcher failed: ' + researchResult.error + '\n');
                 return;
             }
@@ -342,7 +348,7 @@ export async function runPipeline(runId, opts = {}) {
 
         const currentRun = getRun(runId);
         if (currentRun?.runMode === 'audit') {
-            updateRun(runId, { status: 'planning' });
+            updateRunAndMeta(runId, { status: 'planning' });
             log('system', 'planning', 'Running Auditor (report only)…\n');
             const { grepText: grepFromMission } = await buildGrepContext(prompt);
             const entryPointContext = await getEntryPointContext();
@@ -359,11 +365,11 @@ export async function runPipeline(runId, opts = {}) {
             const flightPlanSummary = (flightPlan || []).map((t) => `- ${t.title || t.id}: ${t.description || ''}`).join('\n');
             const auditResult = await runAuditor(prompt, { grepContext, treeContext, flightPlanSummary, signal, model, runId });
             if (!auditResult.ok) {
-                updateRun(runId, { status: 'error', error: auditResult.error });
+                updateRunAndMeta(runId, { status: 'error', error: auditResult.error });
                 log('system', 'error', 'Auditor failed: ' + auditResult.error + '\n');
                 return;
             }
-            updateRun(runId, {
+            updateRunAndMeta(runId, {
                 status: 'done',
                 auditReport: auditResult.report,
                 ...(auditResult.diagramKeys?.length && { diagramKeys: auditResult.diagramKeys }),
@@ -380,7 +386,7 @@ export async function runPipeline(runId, opts = {}) {
         }
 
         if (currentRun?.runMode === 'ask') {
-            updateRun(runId, { status: 'planning' });
+            updateRunAndMeta(runId, { status: 'planning' });
             log('system', 'planning', 'Answering question…\n');
             const { grepText: grepFromMission } = await buildGrepContext(prompt);
             const entryPointContext = await getEntryPointContext();
@@ -397,11 +403,11 @@ export async function runPipeline(runId, opts = {}) {
             const flightPlanSummary = (flightPlan || []).map((t) => `- ${t.title || t.id}: ${t.description || ''}`).join('\n');
             const askResult = await runAsk(prompt, { grepContext, treeContext, flightPlanSummary, signal, model, runId });
             if (!askResult.ok) {
-                updateRun(runId, { status: 'error', error: askResult.error });
+                updateRunAndMeta(runId, { status: 'error', error: askResult.error });
                 log('system', 'error', 'Ask failed: ' + askResult.error + '\n');
                 return;
             }
-            updateRun(runId, {
+            updateRunAndMeta(runId, {
                 status: 'done',
                 askResponse: askResult.report,
                 ...(askResult.diagramKeys?.length && { diagramKeys: askResult.diagramKeys }),
@@ -441,7 +447,7 @@ export async function runPipeline(runId, opts = {}) {
         const shouldRunPlanning = !resume || !allSteps?.length;
         if (shouldRunPlanning) {
             if (checkCancelled(runId, log)) return;
-            updateRun(runId, { status: 'planning' });
+            updateRunAndMeta(runId, { status: 'planning' });
             log('system', 'planning', resume ? 'Resuming: re-running Planners…\n' : 'Running Planners…\n');
 
             const planResults = await Promise.all(
@@ -471,7 +477,7 @@ export async function runPipeline(runId, opts = {}) {
                     : []
             );
             if (allSteps.length === 0) {
-                updateRun(runId, { status: 'error', error: 'No implementation steps could be parsed from any Planner.' });
+                updateRunAndMeta(runId, { status: 'error', error: 'No implementation steps could be parsed from any Planner.' });
                 log('system', 'error', 'No implementation steps could be parsed from any Planner.\n');
                 return;
             }
@@ -491,7 +497,7 @@ export async function runPipeline(runId, opts = {}) {
         }
 
         if (checkCancelled(runId, log)) return;
-        updateRun(runId, { status: 'coding' });
+        updateRunAndMeta(runId, { status: 'coding' });
 
         const stepsToRunIndices = allSteps.map((_, j) => j).filter((j) => {
             const existing = existingStepResults[j];
@@ -655,7 +661,7 @@ export async function runPipeline(runId, opts = {}) {
         await persistRunToS3(runId);
 
         if (aggregatedEdits.length === 0) {
-            updateRun(runId, { status: 'done' });
+            updateRunAndMeta(runId, { status: 'done' });
             log('system', 'done', 'Run complete (no edits approved).\n');
             await persistRunToS3(runId);
             return;
@@ -675,7 +681,7 @@ export async function runPipeline(runId, opts = {}) {
 
         while (reviewRound < MAX_REVIEW_ROUNDS) {
             if (checkCancelled(runId, log)) return;
-            updateRun(runId, { status: 'reviewing' });
+            updateRunAndMeta(runId, { status: 'reviewing' });
             log('system', 'reviewing', reviewRound === 0 ? 'Running Reviewer…\n' : `Review round ${reviewRound + 1}…\n`);
 
             const reviewResult = await runReviewer(editsToReview, prompt, {
@@ -735,7 +741,7 @@ export async function runPipeline(runId, opts = {}) {
         await persistRunToS3(runId);
 
         if (checkCancelled(runId, log)) return;
-        updateRun(runId, { status: 'creating_pr' });
+        updateRunAndMeta(runId, { status: 'creating_pr' });
         log('system', 'creating_pr', `Collected ${editsToReview.length} file edit(s). Creating PR…\n`);
 
         const prResult = await createPrIfConfigured(runId, { prompt, edits: editsToReview, title: getRun(runId)?.title || '' });
@@ -743,7 +749,7 @@ export async function runPipeline(runId, opts = {}) {
             await notifyAuditLog(getRun(runId)?.title, prompt, prResult.prUrl, editsToReview.map((e) => e.path));
             if (checkCancelled(runId, log)) return;
             const branchName = 'agent/' + runId.replace(/[^a-z0-9-]/gi, '-').slice(0, 80);
-            updateRun(runId, { status: 'tester' });
+            updateRunAndMeta(runId, { status: 'tester' });
             log('system', 'tester', 'Running Tester (review)…\n');
             const currentRunForTester = getRun(runId);
             const testerModel = currentRunForTester?.model || model;
@@ -751,7 +757,7 @@ export async function runPipeline(runId, opts = {}) {
             if (!diffResult.ok) {
                 const errMsg = 'Diff unavailable: ' + (diffResult.error || 'unknown');
                 log('system', 'tester', errMsg + '. Skipping review report.\n');
-                updateRun(runId, { status: 'done', prUrl: prResult.prUrl, reviewReportError: errMsg });
+                updateRunAndMeta(runId, { status: 'done', prUrl: prResult.prUrl, reviewReportError: errMsg });
                 log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
             } else {
                 let diffText = diffResult.diffText || '';
@@ -771,7 +777,7 @@ export async function runPipeline(runId, opts = {}) {
                 if (!testerResult.ok) {
                     const errMsg = 'Tester failed: ' + (testerResult.error || 'unknown');
                     log('system', 'tester', errMsg + '. PR still created.\n');
-                    updateRun(runId, { status: 'done', prUrl: prResult.prUrl, reviewReportError: errMsg });
+                    updateRunAndMeta(runId, { status: 'done', prUrl: prResult.prUrl, reviewReportError: errMsg });
                     log('system', 'done', 'PR: ' + prResult.prUrl + '\n');
                 } else {
                     const recommendation = parseQualityRecommendation(testerResult.report);
@@ -785,15 +791,15 @@ export async function runPipeline(runId, opts = {}) {
                     });
 
                     if (recommendation === 'reject') {
-                        updateRun(runId, { status: 'quality_failed' });
+                        updateRunAndMeta(runId, { status: 'quality_failed' });
                         log('system', 'quality_failed', 'Quality review rejected. Stopping.\n');
                     } else if (recommendation === 'merge') {
-                        updateRun(runId, { status: 'done' });
+                        updateRunAndMeta(runId, { status: 'done' });
                         log('system', 'done', 'PR: ' + prResult.prUrl + ' — Review report ready.\n');
                     } else {
                         // request_changes: one quality-fix round (Reviewer + Coder → push → re-run Tester)
                         if (checkCancelled(runId, log)) return;
-                        updateRun(runId, { status: 'quality_fix' });
+                        updateRunAndMeta(runId, { status: 'quality_fix' });
                         log('system', 'quality_fix', 'Quality requested changes. Reviewer assigning fixes to Coder…\n');
 
                         const reviewResult = await runReviewer(editsToReview, prompt, {
@@ -804,7 +810,7 @@ export async function runPipeline(runId, opts = {}) {
                         updateRun(runId, { inputTokens: (currentRunForTester?.inputTokens || 0) + (reviewResult.inputTokens || 0), outputTokens: (currentRunForTester?.outputTokens || 0) + (reviewResult.outputTokens || 0) });
 
                         if (!reviewResult.ok || !reviewResult.feedback?.trim()) {
-                            updateRun(runId, { status: 'done' });
+                            updateRunAndMeta(runId, { status: 'done' });
                             log('system', 'done', 'PR: ' + prResult.prUrl + ' — Review report ready (no fix round).\n');
                         } else {
                             log('system', 'quality_fix', `Reviewer: ${reviewResult.feedback}\n`);
@@ -821,7 +827,7 @@ export async function runPipeline(runId, opts = {}) {
                             updateRun(runId, { inputTokens: (getRun(runId)?.inputTokens || 0) + (fixResult.inputTokens || 0), outputTokens: (getRun(runId)?.outputTokens || 0) + (fixResult.outputTokens || 0) });
 
                             if (!fixResult.ok || !fixResult.edits?.length) {
-                                updateRun(runId, { status: 'quality_failed' });
+                                updateRunAndMeta(runId, { status: 'quality_failed' });
                                 log('system', 'quality_failed', `Coder fix pass failed or no edits: ${fixResult.error || 'no edits'}. Stopping.\n`);
                             } else {
                                 const byPath = new Map(editsToReview.map((e) => [e.path, e.content ?? '']));
@@ -847,13 +853,13 @@ export async function runPipeline(runId, opts = {}) {
 
                                 const pushResult = await pushToExistingBranchIfConfigured(runId, branchName, updatedEdits);
                                 if (!pushResult.ok) {
-                                    updateRun(runId, { status: 'quality_failed' });
+                                    updateRunAndMeta(runId, { status: 'quality_failed' });
                                     log('system', 'quality_failed', 'Failed to push fix to PR: ' + (pushResult.error || '') + '\n');
                                 } else {
                                     log('system', 'quality_fix', 'Pushed fix. Re-running Quality…\n');
                                     const diffResult2 = await getDiffForPullRequest(prResult.prUrl);
                                     if (!diffResult2.ok) {
-                                        updateRun(runId, { status: 'done' });
+                                        updateRunAndMeta(runId, { status: 'done' });
                                         log('system', 'done', 'PR: ' + prResult.prUrl + ' — Fix pushed; diff unavailable for second review.\n');
                                     } else {
                                         let diffText2 = diffResult2.diffText || '';
@@ -880,10 +886,10 @@ export async function runPipeline(runId, opts = {}) {
 
                                         const recommendation2 = testerResult2.ok ? parseQualityRecommendation(testerResult2.report) : 'request_changes';
                                         if (recommendation2 === 'merge') {
-                                            updateRun(runId, { status: 'done' });
+                                            updateRunAndMeta(runId, { status: 'done' });
                                             log('system', 'done', 'PR: ' + prResult.prUrl + ' — Review report ready after fix.\n');
                                         } else {
-                                            updateRun(runId, { status: 'quality_failed' });
+                                            updateRunAndMeta(runId, { status: 'quality_failed' });
                                             log('system', 'quality_failed', 'Quality still requested changes or rejected after one fix round. Stopping.\n');
                                         }
                                     }
@@ -894,20 +900,20 @@ export async function runPipeline(runId, opts = {}) {
                 }
             }
         } else if (prResult.error) {
-            updateRun(runId, { status: 'error', error: prResult.error });
+            updateRunAndMeta(runId, { status: 'error', error: prResult.error });
             log('system', 'error', 'PR failed: ' + prResult.error + '\n');
         } else {
-            updateRun(runId, { status: 'done' });
+            updateRunAndMeta(runId, { status: 'done' });
             log('system', 'done', 'Run complete (PR not configured or dry run).\n');
         }
         await persistRunToS3(runId);
     } catch (err) {
         const isAbort = err?.name === 'AbortError' || isRunCancelled(runId);
         if (isAbort) {
-            updateRun(runId, { status: 'cancelled' });
+            updateRunAndMeta(runId, { status: 'cancelled' });
             appendLog(runId, { role: 'system', stage: 'cancelled', message: 'Run stopped by user.\n' });
         } else {
-            updateRun(runId, { status: 'error', error: err.message || String(err) });
+            updateRunAndMeta(runId, { status: 'error', error: err.message || String(err) });
             appendLog(runId, { role: 'system', stage: 'error', message: (err.message || String(err)) + '\n' });
         }
     } finally {

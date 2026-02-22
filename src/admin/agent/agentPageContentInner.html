@@ -698,19 +698,20 @@
     var emptyEl = document.getElementById('past-runs-empty');
     var countEl = document.getElementById('past-runs-count');
     if (!listEl) return;
-    Promise.all([
-      _adminFetch('/admin/agent/runs', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; }),
-      _adminFetch('/admin/agent/runs/history', { credentials: 'same-origin' }).then(function(r) { return r.json(); }).catch(function() { return { runs: [] }; })
-    ]).then(function(results) {
-      var memory = results[0].runs || [];
-      var history = results[1].runs || [];
-      var seen = new Set();
-      var all = [];
-      memory.concat(history).forEach(function(r) {
-        if (!seen.has(r.runId)) { seen.add(r.runId); all.push(r); }
-      });
+    _adminFetch('/admin/agent/runs?limit=30', { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .catch(function() { return { runs: [] }; })
+      .then(function(primary) {
+        var runs = primary.runs || [];
+        if (runs.length) return runs;
+        return _adminFetch('/admin/agent/runs/history', { credentials: 'same-origin' })
+          .then(function(r) { return r.json(); })
+          .catch(function() { return { runs: [] }; })
+          .then(function(fallback) { return fallback.runs || []; });
+      })
+      .then(function(all) {
       all.sort(function(a, b) { return (b.createdAt || b.lastModified || 0) - (a.createdAt || a.lastModified || 0); });
-      all = all.slice(0, 20);
+      all = all.slice(0, 30);
       if (countEl) countEl.textContent = all.length ? '(' + all.length + ')' : '';
       listEl.querySelectorAll('.past-run-row').forEach(function(el) { el.remove(); });
       if (!all.length) {

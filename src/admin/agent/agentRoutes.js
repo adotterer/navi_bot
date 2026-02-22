@@ -12,6 +12,7 @@ import { loadRunFromS3, loadRunMetadataFromS3, persistRunToS3 } from './agentRun
 import { listS3KeysWithPrefix, deleteFromS3, fetchFromS3Buffer } from '../../shared/s3Helper.js';
 import { getAgentPrompt, saveAgentPrompt, resetAgentPromptToDefault, listAgentPromptIds } from './agentPromptLoader.js';
 import { listModelsForMissions } from './agents.js';
+import { upsertRunMeta, listRunsMeta, deleteRunMeta } from './agentRunDynamo.js';
 import { Octokit } from '@octokit/rest';
 
 const router = express.Router();
@@ -249,9 +250,13 @@ router.get('/repo/file', async (req, res) => {
     res.json({ ok: true, content: result.content });
 });
 
-// ----- GET /admin/agent/runs – list recent in-memory runs -----
-router.get('/runs', (req, res) => {
+// ----- GET /admin/agent/runs – list recent runs (DynamoDB → in-memory fallback) -----
+router.get('/runs', async (req, res) => {
     const limit = Math.min(50, parseInt(req.query.limit, 10) || 20);
+    try {
+        const dynamoRuns = await listRunsMeta(limit);
+        if (dynamoRuns !== null) return res.json({ runs: dynamoRuns });
+    } catch (_) {}
     res.json({ runs: listRuns(limit) });
 });
 
@@ -318,6 +323,7 @@ router.delete('/run/:runId', async (req, res) => {
     try {
         await deleteFromS3('admin/agent-runs/' + runId + '.json');
     } catch (_) {}
+    deleteRunMeta(runId).catch(() => {});
     res.json({ ok: true });
 });
 
@@ -495,6 +501,7 @@ router.post('/run', express.json(), (req, res) => {
         updateRun(runId, { docs: seedDocs });
     }
     persistRunToS3(runId).catch(() => {});
+    upsertRunMeta(getRun(runId)).catch(() => {});
     res.json({ runId });
 
     setImmediate(() => {
