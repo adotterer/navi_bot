@@ -7,6 +7,7 @@ import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
 import { EmbedBuilder } from 'discord.js';
 import { buildMatchupReferenceData } from '../shared/promptDataHelper.js';
 import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
+import { createRun, updateRun } from '../admin/agent/runStore.js';
 const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
     defaultModel: process.env.GEMINI_MODEL || 'gemini-3-flash-preview'
@@ -125,10 +126,20 @@ export async function handleMatchupNotes(message) {
             referenceData: referenceData || 'None found'
         });
 
+        const run = createRun({ mode: 'command', mission: message.content });
         const response = await genAI.models.generateContent({
             model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
             contents: prompt
         });
+        if (response.usageMetadata) {
+            updateRun(run.id, {
+                usage: {
+                    promptTokenCount: response.usageMetadata.promptTokenCount,
+                    candidatesTokenCount: response.usageMetadata.candidatesTokenCount,
+                    cachedContentTokenCount: response.usageMetadata.cachedContentTokenCount
+                }
+            });
+        }
         const summary = response.text;
         
         const embeds = createSplitEmbeds(EmbedBuilder, summary, INFO_EMBED_COLOR, SUMMARY_DISCLAIMER);
@@ -212,10 +223,20 @@ export async function handleMuQuestion(message) {
         });
 
 
+        const run = createRun({ mode: 'command', mission: message.content });
         const response = await genAI.models.generateContent({
             model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
             contents: prompt
         });
+        if (response.usageMetadata) {
+            updateRun(run.id, {
+                usage: {
+                    promptTokenCount: response.usageMetadata.promptTokenCount,
+                    candidatesTokenCount: response.usageMetadata.candidatesTokenCount,
+                    cachedContentTokenCount: response.usageMetadata.cachedContentTokenCount
+                }
+            });
+        }
 
         const answer = response.text;
         
@@ -312,10 +333,20 @@ export async function handleRefinement(message, repliedMessage, client) {
         const originalMessages = channelMessages.map(m => `[${m.author}]: ${m.content}`).join('\n\n');
         const refinementPrompt = await getPrompt('refinement', { previousSummary, userFeedback, originalMessages });
 
+        const run = createRun({ mode: 'command', mission: message.content });
         const response = await genAI.models.generateContent({
             model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
             contents: refinementPrompt
         });
+        if (response.usageMetadata) {
+            updateRun(run.id, {
+                usage: {
+                    promptTokenCount: response.usageMetadata.promptTokenCount,
+                    candidatesTokenCount: response.usageMetadata.candidatesTokenCount,
+                    cachedContentTokenCount: response.usageMetadata.cachedContentTokenCount
+                }
+            });
+        }
         const refinedSummary = response.text;
         
         const refinedWithTitle = `**Refined Summary:**\n${refinedSummary}`;
