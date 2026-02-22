@@ -201,6 +201,7 @@ async function generateContent({ model, systemPrompt, userContent, maxOutputToke
         usageMetadata: {
             promptTokenCount: usage.promptTokenCount ?? 0,
             candidatesTokenCount: usage.candidatesTokenCount ?? 0,
+            cachedContentTokenCount: usage.cachedContentTokenCount ?? 0,
         },
     };
 }
@@ -263,6 +264,7 @@ async function generateContentStream({ model, systemPrompt, userContent, maxOutp
                 result.usageMetadata = {
                     promptTokenCount: chunk.usageMetadata.promptTokenCount ?? 0,
                     candidatesTokenCount: chunk.usageMetadata.candidatesTokenCount ?? 0,
+                    cachedContentTokenCount: chunk.usageMetadata.cachedContentTokenCount ?? 0,
                 };
             }
         }
@@ -270,6 +272,7 @@ async function generateContentStream({ model, systemPrompt, userContent, maxOutp
             result.usageMetadata = {
                 promptTokenCount: stream.usageMetadata.promptTokenCount ?? 0,
                 candidatesTokenCount: stream.usageMetadata.candidatesTokenCount ?? 0,
+                cachedContentTokenCount: stream.usageMetadata.cachedContentTokenCount ?? 0,
             };
         }
     };
