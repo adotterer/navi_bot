@@ -56,7 +56,7 @@ router.post('/login', express.urlencoded({ extended: true }), async (req, res) =
         return res.status(401).send(loginPage({ error: 'Invalid username or password.', csrfToken }));
     }
     const adminEmail = process.env.ADMIN_EMAIL;
-    if (adminEmail && process.env.SES_SENDER_EMAIL) {
+    if (process.env.NODE_ENV === 'production' && adminEmail && process.env.SES_SENDER_EMAIL) {
         const code = generate2FACode();
         req.session.twoFactorCode = code;
         req.session.twoFactorExpires = Date.now() + TWO_FA_EXPIRY_MS;
