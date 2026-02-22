@@ -1,5 +1,8 @@
     __BREADCRUMB__
     <style id="agent-prism-override">
+      /* PR mode pill: bright green text/icon in dark mode (avoids Tailwind arbitrary value) */
+      .dark #mode-pills .mode-pill-pr { color: #56d364 !important; }
+      .dark #mode-pills .mode-pill-pr svg { color: #56d364 !important; }
       /* Vibrant rainbow Prism theme for repo/files panels (dark background) */
       #repo-content pre[class*="language-"],
       #files-content pre[class*="language-"] { color: #e2e8f0; background: #1e1e2e !important; padding: 1rem; margin: 0; }
@@ -39,50 +42,73 @@
       <section class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden w-full">
         <div class="border-b border-slate-200 dark:border-slate-700 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300">Mission prompt</div>
         <form id="agent-form" class="flex flex-col p-4 gap-4">
-          <textarea id="prompt" name="prompt" rows="4" placeholder="e.g. Add a health check endpoint at GET /health that returns { status: &#39;ok&#39; }"
+          <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-4">
+            <label for="prompt" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Mission</label>
+            <textarea id="prompt" name="prompt" rows="4" placeholder="e.g. Add a health check endpoint at GET /health that returns { status: &#39;ok&#39; }"
             data-placeholder-pr="e.g. Add a health check endpoint at GET /health that returns { status: &#39;ok&#39; }"
             data-placeholder-audit="e.g. Audit dark-mode hover and active states"
             data-placeholder-ask="e.g. How does the export command work?"
             data-placeholder-review="e.g. agent/run-mlvo0ju4-we6rkc or Review branch feature/xyz"
             class="w-full min-h-[100px] rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none font-mono text-sm resize-y"></textarea>
+          </div>
           <div class="flex flex-wrap gap-4 items-end">
-            <div>
-              <label for="mode" class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Mode</label>
-              <select id="mode" name="mode" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-sm">
-                <option value="pr">PR — implement &amp; open PR</option>
-                <option value="audit">Audit — report only (no code changes)</option>
-                <option value="ask">Ask — Q&amp;A about codebase (no code changes)</option>
-                <option value="review">Review — analyze a branch / PR (no code changes)</option>
-              </select>
+            <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-4">
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Mode <span class="font-normal text-slate-500 dark:text-slate-400">(choose one)</span></label>
+              <input type="hidden" id="mode" name="mode" value="">
+              <div id="mode-pills" class="flex flex-wrap gap-2" role="group" aria-label="Run mode">
+                <button type="button" data-mode="pr" title="PR — Implement changes and open a pull request"
+                  class="mode-pill mode-pill-pr inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:!text-[#56d364] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+                  <span class="inline-flex items-center justify-center w-6 h-6 flex-shrink-0"><svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" preserveAspectRatio="xMidYMid meet"><path fill-rule="evenodd" d="M3.25 3A2.25 2.25 0 001 5.25v9.5A2.25 2.25 0 003.25 17h13.5A2.25 2.25 0 0019 14.75v-9.5A2.25 2.25 0 0016.75 3H3.25zm.943 8.752a.75.75 0 01.055-1.06L6.128 9 4.248 7.307a.75.75 0 111.004-1.114l2.5 2.25a.75.75 0 010 1.114l-2.5 2.25a.75.75 0 01-1.06-.055zM9.75 10.25a.75.75 0 000 1.5h2.5a.75.75 0 000-1.5h-2.5z" clip-rule="evenodd"/></svg></span>
+                  <span>PR</span>
+                </button>
+                <button type="button" data-mode="audit" title="Audit — Report only, no code changes"
+                  class="mode-pill mode-pill-audit inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2">
+                  <span class="inline-flex items-center justify-center w-6 h-6 flex-shrink-0"><svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" preserveAspectRatio="xMidYMid meet"><path fill-rule="evenodd" d="M9.661 2.237a.531.531 0 01.678 0 11.947 11.947 0 007.078 2.749.5.5 0 01.479.425c.069.52.104 1.05.104 1.589 0 5.162-3.26 9.563-7.834 11.256a.48.48 0 01-.332 0C5.26 16.563 2 12.162 2 7c0-.54.035-1.07.104-1.589a.5.5 0 01.48-.425 11.947 11.947 0 007.077-2.75zm4.196 5.954a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg></span>
+                  <span>Audit</span>
+                </button>
+                <button type="button" data-mode="ask" title="Ask — Q&amp;A about the codebase, no code changes"
+                  class="mode-pill mode-pill-ask inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer border-violet-300 dark:border-violet-500 bg-violet-50 dark:bg-violet-900/40 text-violet-800 dark:text-violet-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+                  <span class="inline-flex items-center justify-center w-6 h-6 flex-shrink-0"><svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" preserveAspectRatio="xMidYMid meet"><path fill-rule="evenodd" d="M10 2c-2.236 0-4.43.18-6.57.524C1.993 2.755 1 3.925 1 5.261v2.478c0 1.336.993 2.506 2.43 2.737.236.038.474.065.713.084a.75.75 0 01.627.498l.78 2.145a.75.75 0 001.327.132L8.71 10.9a.75.75 0 01.582-.281H10c2.236 0 4.43-.18 6.57-.524C18.007 9.864 19 8.694 19 7.358V5.261c0-1.336-.993-2.506-2.43-2.737A33.558 33.558 0 0010 2zM8 6.5a1 1 0 11-2 0 1 1 0 012 0zm3 1a1 1 0 100-2 1 1 0 000 2zm4-1a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"/></svg></span>
+                  <span>Ask</span>
+                </button>
+                <button type="button" data-mode="review" title="Review — Analyze a branch or PR, no code changes"
+                  class="mode-pill mode-pill-review inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer border-cyan-300 dark:border-cyan-500 bg-cyan-50 dark:bg-cyan-900/40 text-cyan-800 dark:text-cyan-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                  <span class="inline-flex items-center justify-center w-6 h-6 flex-shrink-0"><svg class="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" preserveAspectRatio="xMidYMid meet"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg></span>
+                  <span>Review</span>
+                </button>
+              </div>
             </div>
-            <div>
-              <label for="model" class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Model <span class="font-normal text-slate-400">(hover for use-case)</span></label>
-              <select id="model" name="model" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-sm min-w-[180px]">
+            <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-4">
+              <label for="model" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Model <span class="font-normal text-slate-500 dark:text-slate-400">(hover for use-case)</span></label>
+              <select id="model" name="model" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-sm min-w-0">
                 <option value="">Loading…</option>
               </select>
             </div>
-            <div>
-              <label for="depth" class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Depth</label>
-              <select id="depth" name="depth" class="rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-sm">
+            <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-4">
+              <label for="depth" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Depth</label>
+              <select id="depth" name="depth" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none text-sm min-w-0">
                 <option value="light" title="Narrow scope, minimal plan. Best for targeted bug fixes.">Light</option>
                 <option value="medium" selected title="Balanced research and planning. Good default.">Medium</option>
                 <option value="deep-dive" title="Thorough analysis, comprehensive plan. Best for complex features.">Deep-dive</option>
               </select>
             </div>
-            <div>
-              <label for="maxPlanners" class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Max planners</label>
+            <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-4 flex flex-col">
+              <label for="maxPlanners" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Max planners</label>
               <input type="number" id="maxPlanners" name="maxPlanners" min="1" max="5" value="2"
                 class="w-20 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
             </div>
-            <div>
-              <label for="maxCoders" class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Max coders</label>
+            <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-4 flex flex-col">
+              <label for="maxCoders" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Max coders</label>
               <input type="number" id="maxCoders" name="maxCoders" min="1" max="10" value="3"
                 class="w-20 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
             </div>
-            <div class="flex items-center gap-2">
-              <button type="button" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:enabled:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed">Start run</button>
-              <button type="button" id="stop-btn" disabled class="rounded-lg bg-red-600 text-white font-medium py-2.5 px-5 hover:enabled:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed" title="Stop the current run — work so far is saved to S3">Stop run</button>
-              <button type="button" id="resume-btn" class="hidden rounded-lg bg-amber-500 text-white font-medium py-2.5 px-5 hover:bg-amber-600 focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 transition-colors">Resume</button>
+            <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-4 flex flex-col justify-end">
+              <span class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Actions</span>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" id="start-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:enabled:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed">Start run</button>
+                <button type="button" id="stop-btn" disabled class="rounded-lg bg-red-600 text-white font-medium py-2.5 px-5 hover:enabled:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:bg-slate-300 disabled:text-slate-400 disabled:cursor-not-allowed" title="Stop the current run — work so far is saved to S3">Stop run</button>
+                <button type="button" id="resume-btn" class="hidden rounded-lg bg-amber-500 text-white font-medium py-2.5 px-5 hover:bg-amber-600 focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 transition-colors">Resume</button>
+              </div>
             </div>
           </div>
         </form>
@@ -251,7 +277,7 @@
   var currentRunId = null;
   var currentModel = '';
   var scrolledToPrRunId = null;
-  var currentRunMode = 'pr';
+  var currentRunMode = '';
   var currentAuditReportMarkdown = '';
   var currentAskReportMarkdown = '';
   var currentReviewReportMarkdown = '';
@@ -265,6 +291,38 @@
   var logBuffer = [];
   var logFlushTimer = null;
   var LOG_FLUSH_MS = 120;
+
+  var MODE_PILL_ACTIVE = {
+    pr:     'ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-800 shadow-md border-2 border-emerald-500 bg-emerald-100 dark:bg-emerald-600 text-emerald-900 dark:!text-[#56d364]',
+    audit:  'ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-slate-800 shadow-md border-2 border-amber-500 bg-amber-100 dark:bg-amber-800/50 text-amber-900 dark:text-amber-100',
+    ask:    'ring-2 ring-violet-500 ring-offset-2 dark:ring-offset-slate-800 shadow-md border-2 border-violet-500 bg-violet-100 dark:bg-violet-300 text-violet-900 dark:text-slate-900',
+    review: 'ring-2 ring-cyan-500 ring-offset-2 dark:ring-offset-slate-800 shadow-md border-2 border-cyan-500 bg-cyan-100 dark:bg-cyan-400 text-cyan-900 dark:text-slate-900'
+  };
+  var MODE_PILL_INACTIVE = '';
+
+  function selectMode(mode) {
+    var modeInput = document.getElementById('mode');
+    if (modeInput) modeInput.value = mode || '';
+    var pills = document.querySelectorAll('#mode-pills .mode-pill');
+    pills.forEach(function(pill) {
+      var m = pill.getAttribute('data-mode');
+      var allClasses = MODE_PILL_INACTIVE + ' ' + Object.values(MODE_PILL_ACTIVE).join(' ');
+      allClasses.split(/\s+/).forEach(function(c) { if (c) pill.classList.remove(c); });
+      var classes = (m === mode) ? MODE_PILL_ACTIVE[m] : MODE_PILL_INACTIVE;
+      classes.split(/\s+/).forEach(function(c) { if (c) pill.classList.add(c); });
+    });
+    var promptEl = document.getElementById('prompt');
+    if (promptEl && mode) {
+      var ph = promptEl.getAttribute('data-placeholder-' + mode);
+      if (ph != null) promptEl.placeholder = ph;
+    }
+  }
+
+  document.querySelectorAll('#mode-pills .mode-pill').forEach(function(pill) {
+    pill.addEventListener('click', function() {
+      selectMode(pill.getAttribute('data-mode'));
+    });
+  });
 
   function abbreviateModel(id) {
     if (!id || typeof id !== 'string') return 'system';
@@ -725,7 +783,7 @@
         var ts = r.createdAt || r.lastModified || 0;
         var mission = (r.title || r.prompt || '').trim().slice(0, 90) || '(No mission)';
         var statusBadge = r.status ? '<span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex-shrink-0">' + escapeHtml(r.status) + '</span>' : '';
-        var modeBadge = (r.runMode === 'audit') ? '<span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex-shrink-0">Audit</span>' : (r.runMode === 'ask') ? '<span class="text-xs px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 flex-shrink-0">Ask</span>' : (r.runMode === 'review') ? '<span class="text-xs px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 flex-shrink-0">Review</span>' : '';
+        var modeBadge = (r.runMode === 'audit') ? '<span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex-shrink-0">Audit</span>' : (r.runMode === 'ask') ? '<span class="text-xs px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 flex-shrink-0">Ask</span>' : (r.runMode === 'review') ? '<span class="text-xs px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 flex-shrink-0">Review</span>' : '';
         row.innerHTML = '<span class="text-xs text-slate-400 flex-shrink-0 w-20">' + escapeHtml(relativeTime(ts)) + '</span>'
           + '<span class="text-sm text-slate-700 dark:text-slate-300 truncate flex-1">' + escapeHtml(mission) + '</span>'
           + modeBadge
@@ -1127,6 +1185,17 @@
   function startRun() {
     scrolledToPrRunId = null;
     var promptEl = document.getElementById('prompt');
+    var mode = (document.getElementById('mode') && document.getElementById('mode').value) || '';
+    if (!mode) {
+      var pillsWrap = document.getElementById('mode-pills');
+      if (pillsWrap) {
+        pillsWrap.style.outline = '2px solid #ef4444';
+        pillsWrap.style.outlineOffset = '2px';
+        pillsWrap.style.borderRadius = '0.5rem';
+        setTimeout(function() { pillsWrap.style.outline = ''; pillsWrap.style.outlineOffset = ''; }, 2500);
+      }
+      return;
+    }
     var maxPlanners = document.getElementById('maxPlanners').value || '2';
     var maxCoders = document.getElementById('maxCoders').value || '3';
     docsPopulated = false;
@@ -1163,7 +1232,6 @@
     if (tokensBar) tokensBar.classList.add('hidden');
     runStatus.textContent = 'Starting…';
     runStage.textContent = '';
-    var mode = (document.getElementById('mode') && document.getElementById('mode').value) || 'pr';
     currentRunMode = mode;
     ensurePipelineRenderedForMode(mode);
     updatePipeline('research', { runMode: mode });
@@ -1183,7 +1251,7 @@
       body: JSON.stringify({
         prompt: promptEl.value.trim(),
         model: model,
-        mode: (document.getElementById('mode') && document.getElementById('mode').value) || 'pr',
+        mode: mode,
         depth: (document.getElementById('depth') && document.getElementById('depth').value) || 'medium',
         maxParallelPlanners: parseInt(maxPlanners, 10) || 2,
         maxParallelCoders: parseInt(maxCoders, 10) || 3,
@@ -1387,12 +1455,7 @@
         var promptText = report === 'audit' ? ('Implement the following audit recommendations:\n\n' + (md || '')) : (md || '');
         promptEl.value = promptText;
         if (report === 'audit') {
-          var modeEl = document.getElementById('mode');
-          if (modeEl) {
-            modeEl.value = 'pr';
-            var prPlaceholder = promptEl.getAttribute('data-placeholder-pr');
-            if (prPlaceholder != null) promptEl.placeholder = prPlaceholder;
-          }
+          selectMode('pr');
         }
         promptEl.focus();
         promptEl.scrollIntoView({ behavior: 'smooth' });

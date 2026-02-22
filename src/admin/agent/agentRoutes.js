@@ -2,7 +2,7 @@
  * Agent PR routes: main page, start run, SSE stream.
  */
 import express from 'express';
-import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml } from '../layout.js';
+import { adminHead, adminNav, adminContainer, adminContainerWide, breadcrumb, escapeHtml } from '../layout.js';
 import { generateCsrfToken } from '../csrf.js';
 import { getAgentPageContent } from './agentPageContent.js';
 import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled, hydrateRun, deleteRun, DEFAULT_DOCS } from './runStore.js';
@@ -35,7 +35,7 @@ async function loadRunFromS3WithFallback(runId) {
 // ----- GET /admin/agent – main page (template in agentPageContent.js + agentPageContentInner.html) -----
 router.get('/', (req, res) => {
     const csrfToken = generateCsrfToken(req, res);
-    const { content, prismTail } = getAgentPageContent({ adminNav, adminContainer, breadcrumb });
+    const { content, prismTail } = getAgentPageContent({ adminNav, adminContainer: adminContainerWide, breadcrumb });
     const themeScript = '<script>(function(){var t=localStorage.getItem("theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark");})();<\/script>';
     const csrfScript = `<script>window.__ADMIN_CSRF_TOKEN=${JSON.stringify(csrfToken || '')};window._adminFetch=function(u,o){o=o||{};o.credentials=o.credentials||'same-origin';if(window.__ADMIN_CSRF_TOKEN&&(o.method==='POST'||o.method==='DELETE'||o.method==='PUT'||o.method==='PATCH')){o.headers=Object.assign({},o.headers||{},{'x-csrf-token':window.__ADMIN_CSRF_TOKEN});}return fetch(u,o);};<\/script>`;
     res.send(`<!DOCTYPE html>

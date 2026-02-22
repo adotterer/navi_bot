@@ -69,6 +69,11 @@ function adminContainer(innerHtml) {
     return `<main class="max-w-5xl mx-auto px-2 sm:px-4 py-8 font-sans">${innerHtml}</main>`;
 }
 
+/** Full-width main for content-heavy pages (e.g. Missions). No max-width so content can use horizontal space. */
+function adminContainerWide(innerHtml) {
+    return `<main class="w-full mx-auto px-4 sm:px-6 py-8 font-sans">${innerHtml}</main>`;
+}
+
 function breadcrumb(items) {
     const parts = items
         .map((item, i) => {
@@ -134,4 +139,4 @@ function saveBarMinimizeScript(barId, storageKey) {
 </script>`;
 }
 
-export { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript };
+export { adminHead, adminNav, adminContainer, adminContainerWide, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript };
