@@ -549,17 +549,17 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
     </script>
   `)}
   <div id="csv-action-bar" class="save-bar border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" data-save-bar-key="csv">
-    <div class="save-bar-inner max-w-[85rem] mx-auto px-4">
+    <div class="save-bar-inner max-w-[85rem] mx-auto">
       <div class="save-bar-content">
         <div id="csv-unsaved-reminder-placeholder" class="text-slate-400 text-sm"></div>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-nowrap gap-2 p-2 w-full justify-between items-center">
           <span class="save-bar-hint text-slate-400 text-xs hidden sm:inline">Ctrl+S to save</span>
-          <button type="submit" form="csv-form" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
-          <a href="${backUrl}" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 font-medium py-2.5 px-5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 inline-block">Cancel</a>
+          <button type="submit" form="csv-form" class="rounded-lg bg-emerald-600 text-white text-sm font-medium py-2 px-3 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Save to S3</button>
+          <a href="${backUrl}" class="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium py-2 px-3 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 inline-block">Cancel</a>
           ${s3InUse ? `
           <form method="post" action="${saveAction}/revert-to-disk" class="inline-block" onsubmit="return confirm('Remove S3 override and load content from disk?');">
             ${csrfInput}
-            <button type="submit" class="rounded-lg border border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/40 font-medium py-2.5 px-5 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 inline-block">Revert to disk</button>
+            <button type="submit" class="rounded-lg border border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/40 text-sm font-medium py-2 px-3 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 inline-block">Revert to disk</button>
           </form>` : ''}
         </div>
       </div>
