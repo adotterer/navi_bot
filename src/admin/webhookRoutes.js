@@ -17,14 +17,13 @@ import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 export const webhookRouter = express.Router();
 
 function verifySignature(rawBody, signatureHeader) {
-    const secret = process.env.WEBHOOK_SECRET;
+    const secret = process.env.GITHUB_WEBHOOK_SECRET;
     if (!secret || !signatureHeader) return false;
     const expected = 'sha256=' + createHmac('sha256', secret).update(rawBody).digest('hex');
-    try {
-        return timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expected));
-    } catch {
-        return false;
-    }
+    const signatureBuffer = Buffer.from(signatureHeader);
+    const expectedBuffer = Buffer.from(expected);
+    if (signatureBuffer.length !== expectedBuffer.length) return false;
+    return timingSafeEqual(signatureBuffer, expectedBuffer);
 }
 
 webhookRouter.post('/github/webhook', async (req, res) => {
