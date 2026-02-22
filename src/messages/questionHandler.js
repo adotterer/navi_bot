@@ -5,6 +5,7 @@ import { getPrompt } from '../shared/promptLoader.js';
 import { SUMMARY_DISCLAIMER } from "../shared/responseNotices.js";
 import { EmbedBuilder } from 'discord.js';
 import { INFO_EMBED_COLOR } from './faqAndAliasHandler.js';
+import { createRun, updateRun } from '../admin/agent/runStore.js';
 
 const genAI = new GoogleGenAI({
     apiKey: process.env.GOOGLE_API_KEY
@@ -18,6 +19,8 @@ export async function handleQuestion(message) {
         await message.reply("❌ Usage: !q <your question>");
         return;
     }
+
+    const runId = createRun('!q command', 'command');
 
     try {
         await message.reply(`⏳ Looking up resources and searching for an answer...`);
@@ -72,6 +75,16 @@ export async function handleQuestion(message) {
             model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
             contents: fullPrompt
         });
+
+        if (runId && response.usageMetadata) {
+            updateRun(runId, {
+                usage: {
+                    promptTokenCount: response.usageMetadata.promptTokenCount,
+                    candidatesTokenCount: response.usageMetadata.candidatesTokenCount,
+                    cachedContentTokenCount: response.usageMetadata.cachedContentTokenCount
+                }
+            });
+        }
 
         const answer = response.text;
         
