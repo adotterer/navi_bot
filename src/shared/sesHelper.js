@@ -14,15 +14,15 @@ export async function send2FACode(email, code) {
         throw new Error("SES_SENDER_EMAIL environment variable is not set.");
     }
 
+    const codeStr = String(code ?? '').trim();
     const htmlBody = `<!DOCTYPE html>
 <html>
 <body style="font-family: sans-serif; background-color: #f4f4f4; padding: 20px;">
     <div style="max-width: 400px; margin: auto; background: #ffffff; padding: 30px; border-radius: 10px; text-align: center; border: 1px solid #eeeeee;">
         <h2 style="color: #222; margin-bottom: 20px;">Navi Admin</h2>
         <p style="font-size: 16px; color: #444;">Your verification code is:</p>
-        <div style="font-size: 36px; font-weight: bold; background: #000000; color: #ffffff; padding: 15px 25px; border-radius: 6px; display: inline-block; letter-spacing: 5px; margin: 20px 0; font-family: monospace;">
-            ${code}
-        </div>
+        <p style="font-size: 28px; font-weight: bold; color: #111; letter-spacing: 6px; margin: 20px 0;">${codeStr}</p>
+        <table cellpadding="0" cellspacing="0" style="margin: 20px auto; border-collapse: collapse;"><tr><td style="font-size: 32px; font-weight: bold; background: #111; color: #fff; padding: 12px 24px; letter-spacing: 4px;">${codeStr}</td></tr></table>
         <p style="font-size: 14px; color: #777; margin-top: 20px;">It expires in 10 minutes.</p>
     </div>
 </body>
@@ -44,7 +44,7 @@ export async function send2FACode(email, code) {
                     Charset: "UTF-8",
                 },
                 Text: {
-                    Data: `Your verification code is: ${code}\n\nIt expires in 10 minutes.`,
+                    Data: `Your verification code is: ${codeStr}\n\nIt expires in 10 minutes.`,
                     Charset: "UTF-8",
                 },
             },
