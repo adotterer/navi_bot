@@ -194,7 +194,6 @@ client.on("messageCreate", async (message) => {
     const isDocsCommand = message.content.toLowerCase() === "!docs";
     const isFaqCommand = message.content.toLowerCase() === "!faq";
     const isAliasesCommand = message.content.toLowerCase() === "!aliases";
-    const isSlCommand = message.content.toLowerCase() === "!sl";
     const isCanonicalCommand = message.content.toLowerCase() === "!canonical";
     const isAddAliasCommand = message.content.toLowerCase().startsWith("!add-a ");
     const isModHelpCommand = message.content.toLowerCase() === "!modhelp";
