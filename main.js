@@ -208,12 +208,6 @@ client.on("messageCreate", async (message) => {
         return;
     }
 
-    // Canonical list: Moderators + Legend only
-    if (isCanonicalCommand && !hasAuthorizedRole) {
-        await message.reply("❌ Only Moderators or Legend members can run this command.");
-        return;
-    }
-
     // MU notes/questions: anyone in ask-navi; Moderators/Legend anywhere
     if (isMuCommand && !hasAuthorizedRole && !isAskNaviChannel) {
         await message.reply("❌ This command can only be used in the ask-navi channel.");
@@ -254,14 +248,14 @@ client.on("messageCreate", async (message) => {
         return;
     }
 
-    // ===== CANONICAL CHARACTER THREADS (Moderators + Legend) =====
+    // ===== CANONICAL CHARACTER THREADS (anyone — reference for character names) =====
     if (isCanonicalCommand) {
         try {
             const list = await getCanonicalCharacterThreads();
             const title = "Canonical character threads";
             const body = list.length
                 ? list.map(s => `• ${s}`).join("\n")
-                : "_No list yet. Run `!export matchups` to populate from Discord._";
+                : "_No list yet.._";
             const description = body.length > 4096
                 ? body.slice(0, 4080) + "\n\n_…truncated_"
                 : body;
@@ -269,7 +263,7 @@ client.on("messageCreate", async (message) => {
                 .setColor(INFO_EMBED_COLOR)
                 .setTitle(title)
                 .setDescription(description)
-                .setFooter({ text: `Source: S3 (${list.length} threads). Refreshed by !export matchups.` });
+                .setFooter({ text: `Source: S3 (${list.length} threads).` });
             await message.reply({ embeds: [embed] });
         } catch (err) {
             console.error("[!canonical]", err);

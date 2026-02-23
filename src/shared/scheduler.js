@@ -1,7 +1,7 @@
 import { EmbedBuilder } from 'discord.js';
 import cron from 'node-cron';
 import { fetchAllMessages, uploadToS3 } from './s3Helper.js';
-import { writeCanonicalCharacterThreads } from '../export/exportHandler.js';
+import { writeCanonicalCharacterThreads, EXCLUDED_MATCHUP_CHANNEL_NAMES } from '../export/exportHandler.js';
 import { checkTodaysTournaments } from '../tournaments/dailyTournamentCheck.js';
 import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 
@@ -37,7 +37,7 @@ export function initializeScheduler(client) {
                     continue;
                 }
 
-                const channels = category.children.cache.filter(ch => ch.isTextBased());
+                const channels = category.children.cache.filter(ch => ch.isTextBased() && !EXCLUDED_MATCHUP_CHANNEL_NAMES.includes(ch.name));
 
                 for (const [, channel] of channels) {
                     try {

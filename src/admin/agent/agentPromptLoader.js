@@ -8,6 +8,18 @@ import { fetchFromS3Raw, putToS3 } from '../../shared/s3Helper.js';
 
 const S3_PREFIX = 'admin/agent-prompts/';
 
+/** Canonical Discord channel names for Match Ups (B-L) and (M-Z). Use these exact spellings in missions about matchup channels, !export, or character threads. */
+const CANONICAL_CHARACTER_THREAD_NAMES = [
+    'banjo・and・kazooie', 'bayonetta', 'bowser', 'bowser-jr', 'byleth', 'captain-falcon', 'charizard', 'chrom', 'cloud', 'corrin',
+    'diddy-kong', 'donkey-kong', 'dr-mario', 'duck-hunt', 'falco', 'fox', 'ganondorf', 'greninja', 'hero', 'ice-climbers', 'ike',
+    'incineroar', 'inkling', 'isabelle', 'ivysaur', 'jigglypuff', 'joker', 'kazuya', 'ken', 'king-dedede', 'king-k-rool', 'kirby',
+    'link', 'little-mac', 'lucario', 'lucas', 'lucina', 'luigi', 'mario', 'marth', 'mega-man', 'meta-knight', 'mewtwo', 'mii-brawler',
+    'mii-gunner', 'mii-swordfighter', 'min-min', 'mr-game-and-watch', 'mythra', 'ness', 'olimar', 'pac-man', 'palutena', 'peach︱daisy',
+    'pichu', 'pikachu', 'piranha-plant', 'pit︱dark-pit', 'pokemon-trainer', 'pyra', 'ridley', 'rob', 'robin', 'rosalina-and-luma', 'roy',
+    'ryu', 'samus︱dark-samus', 'sephiroth', 'sheik', 'shulk', 'simon-richter', 'snake', 'sonic', 'sora', 'squirtle', 'steve', 'terry',
+    'toon-link', 'villager', 'wario', 'wii-fit-trainer', 'wolf', 'yoshi', 'young-link', 'zelda', 'zero-suit-samus'
+];
+
 /** Project-specific package/API rules — agents should use these, not alternate package names or APIs. */
 const PROJECT_PACKAGE_RULES = `
 PROJECT PACKAGES (use these exactly — wrong package names or APIs break the app):
@@ -34,6 +46,7 @@ FILE MAPPING RULES — use these to select the correct hint paths:
 - Agent pipeline logic: src/admin/agent/orchestrator.js, src/admin/agent/agents.js
 - Agent run state: src/admin/agent/runStore.js
 - Shared utilities: src/shared/messageSplitter.js, src/shared/s3Helper.js, src/shared/promptLoader.js
+- Matchup / character threads: When the mission involves !export, matchup channels, canonical list, or character thread names, use ONLY these exact Discord channel names (copy verbatim): ${CANONICAL_CHARACTER_THREAD_NAMES.join(', ')}. Include src/export/exportHandler.js and src/matchups/characterAliases.js in hints.
 - If the mission involves changes to both a backend store AND a UI button/display, always include BOTH the store file AND the UI routes file in hints.
 - If the mission introduces a new shared utility module, include it as a hint with a path under src/shared/.
 
@@ -59,6 +72,7 @@ Output format: Your response is parsed by the pipeline; output only a valid JSON
 7. SHARED UI / CSS: If the mission affects behavior or styling of a shared component (e.g. save bar used on Data, Aliases, Prompts, Emojis), the implementation must touch the shared definition (e.g. layout.js and/or input.css), not duplicate logic or styles in each route file. If the mission lists multiple pages, all listed pages must be updated or the shared component must be updated so all pages benefit.
 8. BUILT VS SOURCE: Do not add steps that edit built/generated output (e.g. public/admin.css) without also updating the source (e.g. src/admin/input.css) and noting that the build script must be run. Prefer steps that only edit the source.
 9. HOME PAGE VS DASHBOARD: When the mission refers to "home page", "root page", "page at /", or "landing page", the UI to change is the root route in src/app.js (the handler for app.get('/', ...)), not the admin dashboard. The admin dashboard is at /admin and is rendered in src/admin/routes.js. For "match admin styling" or "same look as admin", the step must edit the root route in app.js (and may reference layout.js or admin CSS patterns).
+10. CANONICAL THREAD NAMES: When the mission involves matchup channels, !export, or character thread names, use ONLY these exact channel names (do not invent or alter spellings; e.g. use peach︱daisy not peach|daisy): ${CANONICAL_CHARACTER_THREAD_NAMES.join(', ')}.
 
 Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (array of file paths, e.g. ["src/app.js"]), "changeDescription" (optional, ONE sentence max — do not write multi-line prose). Example:
 [{"what":"Add GET /health handler","files":["src/app.js"],"changeDescription":"Add app.get('/health', ...) returning { status: 'ok' }"}]`,
@@ -82,7 +96,7 @@ RULES:
 - Use escaped newlines (\\n) inside all string values — never literal line breaks.
 - KEEP SEARCH STRINGS SHORT: "search" must be 2–6 lines maximum — just enough to uniquely identify the insertion/replacement point. Never copy large blocks of existing code into "search". Find the smallest unique anchor near your change.
 - KEEP REPLACE STRINGS FOCUSED: only include lines that are changing plus minimal context. Do not re-emit large unchanged sections of the file.
-- CITE YOUR SOURCES: Any specific names, descriptions, labels, text content, or data values you write in "replace" must be copied verbatim from the mission prompt or the file contents shown above. Never invent descriptions, command names, or other content that does not appear in those sources.
+- CITE YOUR SOURCES: Any specific names, descriptions, labels, text content, or data values you write in "replace" must be copied verbatim from the mission prompt or the file contents shown above. Never invent descriptions, command names, or other content that does not appear in those sources. When the step involves matchup channel names or character threads, use the exact spellings from the mission or file contents (e.g. peach︱daisy not peach|daisy; banjo・and・kazooie with ・ not hyphens).
 
 IMPORT PATH RULES — incorrect imports will break the app:
 - Import paths must be relative to the file you are editing. To compute the correct path: find the file being edited in "Current file contents", note its directory, then write the path relative to that directory. Example: editing "src/admin/routes.js" (directory: src/admin/) and importing from "src/admin/agent/runStore.js" → use "./agent/runStore.js". Editing "src/admin/agent/orchestrator.js" (directory: src/admin/agent/) and importing from "src/admin/agent/runStore.js" → use "./runStore.js".
