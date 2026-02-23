@@ -53,6 +53,7 @@ export function createApp() {
 
     // Raw body parser must be registered before urlencoded/json so the webhook
     // route receives raw bytes for HMAC signature verification.
+    // Public GitHub webhook endpoint (associated with src/admin/webhookRoutes.js; primary application entry point).
     app.use('/github/webhook', express.raw({ type: 'application/json' }));
     app.use(webhookRouter);
 
@@ -90,15 +91,18 @@ export function createApp() {
     });
 
     app.use(express.static('public'));
+    // Public exports endpoint (primary application entry point).
     // Serve only exported data from an isolated dir (audit: do not serve project root).
     app.use('/exports', express.static('data/exports', { index: false }));
 
+    // Public robots.txt (primary application entry point).
     // Ask crawlers not to index the site (admin/internal use).
     app.get('/robots.txt', (req, res) => {
         res.type('text/plain');
         res.send('User-agent: *\nDisallow: /\n');
     });
 
+    // Root landing page (primary application entry point).
     app.get('/', (req, res) => {
         res.send(`
 <!DOCTYPE html>
@@ -185,6 +189,7 @@ export function createApp() {
         `);
     });
 
+    // Public health check API (primary application entry point).
     app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
     return app;
