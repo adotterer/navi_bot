@@ -7,7 +7,7 @@ import { generateCsrfToken } from '../csrf.js';
 import { getAgentPageContent } from './agentPageContent.js';
 import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled, hydrateRun, deleteRun, DEFAULT_DOCS } from './runStore.js';
 import { runPipeline } from './orchestrator.js';
-import { listBranches, getTree, getFileContent } from './repoBrowser.js';
+import { listBranches, getTree, getFileContent, searchRepoPaths } from './repoBrowser.js';
 import { loadRunFromS3, loadRunMetadataFromS3, persistRunToS3 } from './agentRunPersistence.js';
 import { listS3KeysWithPrefix, deleteFromS3, fetchFromS3Buffer } from '../../shared/s3Helper.js';
 import { getAgentPrompt, saveAgentPrompt, resetAgentPromptToDefault, listAgentPromptIds } from './agentPromptLoader.js';
@@ -248,6 +248,18 @@ router.get('/repo/file', async (req, res) => {
     const result = await getFileContent(branch, path);
     if (!result.ok) return res.status(400).json({ ok: false, error: result.error });
     res.json({ ok: true, content: result.content });
+});
+
+router.get('/repo-browser/search', async (req, res) => {
+    const q = req.query.q ?? req.query.query;
+    const branch = (req.query.branch || 'main').trim();
+    const contentSearch = /^(1|true|yes)$/i.test(String(req.query.content || ''));
+    if (q == null || String(q).trim() === '') {
+        return res.status(400).json({ ok: false, error: 'Query parameter q or query is required.' });
+    }
+    const result = await searchRepoPaths(branch, String(q), { contentSearch });
+    if (!result.ok) return res.status(500).json({ ok: false, error: result.error });
+    res.json({ ok: true, paths: result.paths });
 });
 
 // ----- GET /admin/agent/runs – list recent runs (DynamoDB → in-memory fallback) -----

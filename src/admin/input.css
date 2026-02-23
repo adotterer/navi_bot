@@ -76,6 +76,23 @@
     opacity: 1;
     transform: scale(1) rotate(0deg);
   }
+
+  /* Repo browser search */
+  .repo-search-input {
+    @apply rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none;
+  }
+  .repo-search-results {
+    @apply rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 overflow-y-auto;
+  }
+  .repo-search-result-item {
+    @apply flex items-center gap-2 px-2.5 py-1.5 cursor-pointer text-sm;
+  }
+  .repo-search-match {
+    @apply bg-amber-200 dark:bg-amber-600/60 text-amber-900 dark:text-amber-100 font-medium rounded px-0.5;
+  }
+  .repo-search-insert-btn {
+    @apply flex-shrink-0 p-1 rounded text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200 dark:hover:bg-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500;
+  }
 }
 
 @layer base {

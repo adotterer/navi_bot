@@ -370,6 +370,71 @@ export async function getTree(ref, dirPath) {
     }
 }
 
+/** Max file paths to collect when walking the tree (avoids runaway on huge repos). */
+const MAX_WALK_PATHS = 5000;
+/** When contentSearch is true, max files to read for content match. */
+const MAX_CONTENT_SEARCH_FILES = 200;
+
+/**
+ * Recursively walk the repo tree and collect all file paths (and optionally dir paths).
+ * @param {string} ref - Branch name
+ * @param {string} dirPath - Current directory path ('' for root)
+ * @param {string[]} filePaths - Mutable array to push file paths into
+ * @param {{ includeDirs?: boolean }} [opts]
+ * @returns {Promise<{ ok: true } | { ok: false, error: string }>}
+ */
+async function walkRepoTree(ref, dirPath, filePaths, opts = {}) {
+    const result = await getTree(ref, dirPath);
+    if (!result.ok) return result;
+    for (const entry of result.entries) {
+        if (filePaths.length >= MAX_WALK_PATHS) break;
+        if (entry.type === 'file') {
+            filePaths.push(entry.path);
+        } else if (entry.type === 'dir') {
+            if (opts.includeDirs) filePaths.push(entry.path);
+            const childResult = await walkRepoTree(ref, entry.path, filePaths, opts);
+            if (!childResult.ok) return childResult;
+        }
+    }
+    return { ok: true };
+}
+
+/**
+ * Search repo for paths matching query (case-insensitive substring on path).
+ * Optionally filter by file content (grep-like).
+ * @param {string} ref - Branch name
+ * @param {string} query - Search string
+ * @param {{ contentSearch?: boolean }} [options]
+ * @returns {Promise<{ ok: true, paths: string[] } | { ok: false, error: string }>}
+ */
+export async function searchRepoPaths(ref, query, options = {}) {
+    const refTrim = typeof ref === 'string' ? ref.trim() : '';
+    if (!refTrim) return { ok: false, error: 'Branch required' };
+    const q = typeof query === 'string' ? query.trim() : '';
+    const allPaths = [];
+    const walkResult = await walkRepoTree(refTrim, '', allPaths, { includeDirs: true });
+    if (!walkResult.ok) return walkResult;
+
+    const qLower = q.toLowerCase();
+    let paths = q.length < 2
+        ? []
+        : allPaths.filter((p) => p.toLowerCase().includes(qLower));
+
+    if (options.contentSearch && q.length >= 2 && paths.length > 0) {
+        const contentMatches = [];
+        const toRead = paths.filter((p) => !/\/$/.test(p)).slice(0, MAX_CONTENT_SEARCH_FILES);
+        for (const filePath of toRead) {
+            const contentResult = await getFileContent(refTrim, filePath);
+            if (contentResult.ok && contentResult.content.toLowerCase().includes(qLower)) {
+                contentMatches.push(filePath);
+            }
+        }
+        paths = contentMatches;
+    }
+
+    return { ok: true, paths };
+}
+
 /**
  * Get file content at ref:path. Fails for binary or oversized.
  * @param {string} ref

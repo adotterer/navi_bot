@@ -258,14 +258,20 @@
       </div>
     </div>
     <div class="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 overflow-hidden mb-8">
-      <div class="border-b border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-3">
-        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Repository</span>
-        <select id="repo-branch" class="rounded border border-slate-300 dark:border-slate-600 px-2 py-1 text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"></select>
-        <button type="button" id="toggle-repo-files" class="ml-auto block sm:hidden text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700">Hide Files</button>
+      <div class="border-b border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-3 flex-wrap">
+        <span class="text-sm font-medium text-slate-700 dark:text-slate-300 flex-shrink-0">Repository</span>
+        <div class="repo-search-wrap relative flex-1 min-w-0 flex items-center">
+          <input type="text" id="repo-search-input" placeholder="Search files…" class="repo-search-input w-full min-w-0 px-2.5 py-1.5 text-sm" autocomplete="off" />
+          <div id="repo-search-results" class="repo-search-results hidden absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 shadow-lg z-20"></div>
+        </div>
+        <button type="button" id="toggle-repo-files" class="flex-shrink-0 block sm:hidden text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700">Hide Files</button>
       </div>
       <div class="flex flex-col sm:flex-row min-h-[400px]">
-        <div id="repo-sidebar" class="w-full sm:w-60 max-h-60 sm:max-h-none border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto flex-shrink-0">
-          <ul id="repo-tree" class="py-2 text-sm"><li class="px-2 sm:px-6 py-2 text-slate-500 text-sm">Loading…</li></ul>
+        <div id="repo-sidebar" class="w-full sm:w-60 max-h-60 sm:max-h-none border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto flex-shrink-0 flex flex-col">
+          <div class="flex-shrink-0 p-2 border-b border-slate-200 dark:border-slate-700">
+            <select id="repo-branch" class="w-full rounded border border-slate-300 dark:border-slate-600 px-2 py-1 text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"></select>
+          </div>
+          <ul id="repo-tree" class="py-2 text-sm flex-1 min-h-0"><li class="px-2 sm:px-6 py-2 text-slate-500 text-sm">Loading…</li></ul>
         </div>
         <div id="repo-content-wrap" class="flex-1 min-w-0 flex flex-col bg-slate-900">
           <div id="repo-content-header" class="px-3 py-1.5 bg-slate-800 text-slate-300 text-sm font-mono truncate border-b border-slate-700"></div>
@@ -444,6 +450,8 @@
   var repoTree = document.getElementById('repo-tree');
   var repoContentHeader = document.getElementById('repo-content-header');
   var repoContent = document.getElementById('repo-content');
+  var repoSearchInput = document.getElementById('repo-search-input');
+  var repoSearchResults = document.getElementById('repo-search-results');
   var repoExpanded = {};
   var repoTreeCache = {};
 
@@ -763,6 +771,156 @@
       }
     })
     .catch(function() {});
+
+  (function() {
+    var searchDebounceTimer = null;
+    var searchPaths = [];
+    var searchHighlightIndex = -1;
+    var SEARCH_DEBOUNCE_MS = 220;
+    var MIN_QUERY_LEN = 2;
+
+    function highlightPath(path, query) {
+      if (!query) return escapeHtml(path);
+      var p = path;
+      var q = (query || '').toLowerCase();
+      var i = p.toLowerCase().indexOf(q);
+      if (i === -1) return escapeHtml(p);
+      return escapeHtml(p.slice(0, i)) + '<span class="repo-search-match">' + escapeHtml(p.slice(i, i + q.length)) + '</span>' + escapeHtml(p.slice(i + q.length));
+    }
+
+    function hideSearchResults() {
+      if (repoSearchResults) { repoSearchResults.classList.add('hidden'); repoSearchResults.innerHTML = ''; }
+      searchHighlightIndex = -1;
+    }
+
+    function runSearch() {
+      var q = repoSearchInput && repoSearchInput.value ? repoSearchInput.value.trim() : '';
+      if (q.length < MIN_QUERY_LEN) { hideSearchResults(); return; }
+      var branch = repoBranch ? repoBranch.value : 'main';
+      _adminFetch('/admin/agent/repo-browser/search?q=' + encodeURIComponent(q) + '&branch=' + encodeURIComponent(branch), { credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data.ok || !Array.isArray(data.paths)) { hideSearchResults(); return; }
+          searchPaths = data.paths;
+          searchHighlightIndex = searchPaths.length ? 0 : -1;
+          repoSearchResults.innerHTML = '';
+          if (searchPaths.length === 0) { repoSearchResults.classList.add('hidden'); return; }
+          searchPaths.forEach(function(path, idx) {
+            var item = document.createElement('div');
+            item.className = 'repo-search-result-item flex items-center gap-2 px-2.5 py-1.5 cursor-pointer border-b border-slate-100 dark:border-slate-700 last:border-b-0 hover:bg-slate-100 dark:hover:bg-slate-700/70' + (idx === 0 ? ' bg-slate-100 dark:bg-slate-700/50' : '');
+            item.dataset.path = path;
+            item.dataset.index = String(idx);
+            var pathSpan = document.createElement('span');
+            pathSpan.className = 'flex-1 truncate text-slate-700 dark:text-slate-200 text-sm';
+            pathSpan.innerHTML = highlightPath(path, q);
+            var insertBtn = document.createElement('button');
+            insertBtn.type = 'button';
+            insertBtn.className = 'repo-search-insert-btn flex-shrink-0 p-1 rounded text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200 dark:hover:bg-slate-600';
+            insertBtn.title = 'Insert path into mission';
+            insertBtn.setAttribute('aria-label', 'Insert path into mission');
+            insertBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>';
+            item.appendChild(pathSpan);
+            item.appendChild(insertBtn);
+            pathSpan.addEventListener('click', function(ev) {
+              ev.stopPropagation();
+              var path = item.dataset.path;
+              var b = repoBranch ? repoBranch.value : 'main';
+              repoContentHeader.textContent = path;
+              repoContent.textContent = 'Loading…';
+              fetchFile(b, path, function(err, content) {
+                if (err) repoContent.textContent = err;
+                else renderCodeBlock(repoContent, content, path);
+              });
+              hideSearchResults();
+            });
+            insertBtn.addEventListener('click', function(ev) {
+              ev.stopPropagation();
+              var path = item.dataset.path;
+              var promptEl = document.getElementById('prompt');
+              if (promptEl) {
+                var start = promptEl.selectionStart;
+                var end = promptEl.selectionEnd;
+                var before = promptEl.value.slice(0, start);
+                var after = promptEl.value.slice(end);
+                promptEl.value = before + path + after;
+                promptEl.selectionStart = promptEl.selectionEnd = start + path.length;
+                promptEl.focus();
+              }
+              hideSearchResults();
+            });
+            repoSearchResults.appendChild(item);
+          });
+          repoSearchResults.classList.remove('hidden');
+        })
+        .catch(function() { hideSearchResults(); });
+    }
+
+    function setHighlightIndex(idx) {
+      var items = repoSearchResults && repoSearchResults.querySelectorAll('.repo-search-result-item');
+      if (!items || !items.length) return;
+      var prev = searchHighlightIndex;
+      searchHighlightIndex = idx;
+      if (prev >= 0 && prev < items.length) items[prev].classList.remove('bg-slate-100', 'dark:bg-slate-700/50');
+      if (searchHighlightIndex >= 0 && searchHighlightIndex < items.length) {
+        items[searchHighlightIndex].classList.add('bg-slate-100', 'dark:bg-slate-700/50');
+        items[searchHighlightIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+
+    function activateHighlighted() {
+      if (searchHighlightIndex < 0 || !searchPaths.length) return;
+      var path = searchPaths[searchHighlightIndex];
+      var b = repoBranch ? repoBranch.value : 'main';
+      repoContentHeader.textContent = path;
+      repoContent.textContent = 'Loading…';
+      fetchFile(b, path, function(err, content) {
+        if (err) repoContent.textContent = err;
+        else renderCodeBlock(repoContent, content, path);
+      });
+      hideSearchResults();
+    }
+
+    if (repoSearchInput) {
+      repoSearchInput.addEventListener('input', function() {
+        if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(runSearch, SEARCH_DEBOUNCE_MS);
+      });
+      repoSearchInput.addEventListener('keydown', function(ev) {
+        if (!repoSearchResults || repoSearchResults.classList.contains('hidden')) {
+          if (ev.key === 'Escape') { repoSearchInput.blur(); }
+          return;
+        }
+        if (ev.key === 'ArrowDown') {
+          ev.preventDefault();
+          setHighlightIndex(searchPaths.length ? (searchHighlightIndex + 1) % searchPaths.length : -1);
+          return;
+        }
+        if (ev.key === 'ArrowUp') {
+          ev.preventDefault();
+          setHighlightIndex(searchPaths.length ? (searchHighlightIndex <= 0 ? searchPaths.length - 1 : searchHighlightIndex - 1) : -1);
+          return;
+        }
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          activateHighlighted();
+          return;
+        }
+        if (ev.key === 'Escape') {
+          ev.preventDefault();
+          hideSearchResults();
+          repoSearchInput.blur();
+        }
+      });
+      repoSearchInput.addEventListener('focus', function() {
+        if (searchPaths.length > 0) repoSearchResults.classList.remove('hidden');
+      });
+    }
+    document.addEventListener('click', function(ev) {
+      if (repoSearchResults && !repoSearchResults.classList.contains('hidden') && repoSearchInput && !repoSearchInput.contains(ev.target) && !repoSearchResults.contains(ev.target)) {
+        hideSearchResults();
+      }
+    });
+  })();
 
   function escapeHtml(s) {
     if (s == null) return '';
