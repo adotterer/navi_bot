@@ -310,10 +310,13 @@ The messages below are from a community matchup thread written from Zelda's pers
 
 Rules:
 - Base everything on the messages and the provided frame/stats data. Do not invent information.
-- Do not mention Zelda-specific moves or strategies. When a message mentions specific moves (such as F-tilt or Up B, Nayru's, Din's, Farore's, Phantom, etc.) keep in mind this written from Zelda's perspective and not the character's perspective.
+- Do not mention Zelda-specific moves or strategies. When a message mentions specific moves (such as F-tilt or Up B, Nayru's, Din's, Farore's, Phantom, 'Displaced' Phantom etc.) keep in mind this written from Zelda's perspective and not the character's perspective.
 - Use Discord markdown (**, *, compact formatting). No extra blank lines between sections.
 - Keep the response readable in under a couple of minutes.
-- Include which character has faster stats and is how much faster or which stats are faster, if there is not a clear answer. Do not make up information.`
+- Include which character has faster stats and is how much faster or which stats are faster, if there is not a clear answer. Do not make up information.
+- Any Out of Shield Options (OoS) that aerial moves (nair, fair, etc) you must add +3 frames to the stats for the universal jump squat animation
+- Any Out of Shield Options that are grounded moves (neutral b, side b, down b, up tilt, d tilt, forward smash, downsmash) you must add +11 shield drop animation.
+- Up B and Up Smash are special cases where universally all characters ignore the +11 shield drop animation.`
 };
 
 const templateCache = new Map();
