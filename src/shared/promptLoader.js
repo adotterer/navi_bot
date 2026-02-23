@@ -314,6 +314,7 @@ Rules:
 - Use Discord markdown (**, *, compact formatting). No extra blank lines between sections.
 - Keep the response readable in under a couple of minutes.
 - Include which character has faster stats and is how much faster or which stats are faster, if there is not a clear answer. Do not make up information.
+- If one character is clearly faster in all stats, include that in the response and say that means <slower character> has to approach <faster character> especically if you don't already have a stock or % lead. (we call this "who approaches who" in the server)
 - Any Out of Shield Options (OoS) that aerial moves (nair, fair, etc) you must add +3 frames to the stats for the universal jump squat animation
 - Any Out of Shield Options that are grounded moves (neutral b, side b, down b, up tilt, d tilt, forward smash, downsmash) you must add +11 shield drop animation.
 - Up B and Up Smash are special cases where universally all characters ignore the +11 shield drop animation.`
