@@ -9,13 +9,30 @@ import { listS3KeysWithPrefix } from '../shared/s3Helper.js';
 
 const router = express.Router();
 
-// Pricing per 1M tokens (approximate list price; actual billing may differ)
+// Pricing per 1M tokens (list price; actual billing may differ). Source: https://docs.anthropic.com/en/docs/about-claude/pricing
 const GEMINI_FLASH_INPUT_PER_1M = 0.075;
 const GEMINI_FLASH_OUTPUT_PER_1M = 0.3;
 const GEMINI_PRO_INPUT_PER_1M = 3.5;
 const GEMINI_PRO_OUTPUT_PER_1M = 10.5;
-const ANTHROPIC_INPUT_PER_1M = 3;
-const ANTHROPIC_OUTPUT_PER_1M = 15;
+
+/** Anthropic base input/output $ per 1M tokens by model tier. Fallback: Sonnet 4.x. */
+function getAnthropicRates(modelId) {
+    const m = (modelId || '').toLowerCase();
+    // Opus 4.5 / 4.6: $5 in, $25 out
+    if (/opus-4-[56]|opus-4\.(5|6)/.test(m)) return { input: 5, output: 25 };
+    // Opus 4 / 4.1: $15 in, $75 out
+    if (/opus-4|opus-3/.test(m)) return { input: 15, output: 75 };
+    // Sonnet 4.x / 3.7: $3 in, $15 out
+    if (/sonnet/.test(m)) return { input: 3, output: 15 };
+    // Haiku 4.5: $1 in, $5 out
+    if (/haiku-4-5|haiku-4\.5/.test(m)) return { input: 1, output: 5 };
+    // Haiku 3.5: $0.80 in, $4 out
+    if (/haiku-3-5|haiku-3\.5/.test(m)) return { input: 0.8, output: 4 };
+    // Haiku 3: $0.25 in, $1.25 out
+    if (/haiku-3\b/.test(m)) return { input: 0.25, output: 1.25 };
+    // Default: Sonnet 4.x
+    return { input: 3, output: 15 };
+}
 
 function isAnthropic(model) {
     return typeof model === 'string' && model.trim().toLowerCase().startsWith('claude-');
@@ -30,7 +47,8 @@ function costForRun(model, inputTokens, outputTokens, cachedTokens = 0) {
     const outT = Number(outputTokens) || 0;
     const cacheT = Number(cachedTokens) || 0;
     if (isAnthropic(model)) {
-        return (inT / 1e6) * ANTHROPIC_INPUT_PER_1M + (outT / 1e6) * ANTHROPIC_OUTPUT_PER_1M;
+        const rates = getAnthropicRates(model);
+        return (inT / 1e6) * rates.input + (outT / 1e6) * rates.output;
     }
     const isPro = typeof model === 'string' && model.toLowerCase().includes('pro');
     const inputRate = isPro ? GEMINI_PRO_INPUT_PER_1M : GEMINI_FLASH_INPUT_PER_1M;

@@ -555,6 +555,7 @@ video {
 }
 
 html {
+  min-height: 100%;
   --tw-bg-opacity: 1;
   background-color: rgb(248 250 252 / var(--tw-bg-opacity, 1));
   --tw-text-opacity: 1;
@@ -568,6 +569,10 @@ html:is(.dark *) {
   background-color: rgb(15 23 42 / var(--tw-bg-opacity, 1));
   --tw-text-opacity: 1;
   color: rgb(248 250 252 / var(--tw-text-opacity, 1));
+}
+
+html, body {
+  overflow-x: hidden;
 }
 
 input, select, textarea {
@@ -930,20 +935,28 @@ tr:is(.dark *) {
   position: sticky;
 }
 
-.left-2 {
-  left: 0.5rem;
+.left-0 {
+  left: 0px;
 }
 
-.right-2 {
-  right: 0.5rem;
+.right-0 {
+  right: 0px;
 }
 
 .top-0 {
   top: 0px;
 }
 
+.top-full {
+  top: 100%;
+}
+
 .z-10 {
   z-index: 10;
+}
+
+.z-20 {
+  z-index: 20;
 }
 
 .-mx-4 {
@@ -964,11 +977,6 @@ tr:is(.dark *) {
 .mx-4 {
   margin-left: 1rem;
   margin-right: 1rem;
-}
-
-.mx-8 {
-  margin-left: 2rem;
-  margin-right: 2rem;
 }
 
 .mx-auto {
@@ -1058,6 +1066,10 @@ tr:is(.dark *) {
   margin-top: 2rem;
 }
 
+.box-border {
+  box-sizing: border-box;
+}
+
 .block {
   display: block;
 }
@@ -1120,10 +1132,6 @@ tr:is(.dark *) {
 
 .max-h-\[280px\] {
   max-height: 280px;
-}
-
-.max-h-\[320px\] {
-  max-height: 320px;
 }
 
 .max-h-\[420px\] {
@@ -1416,12 +1424,6 @@ tr:is(.dark *) {
   margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
 }
 
-.space-y-4 > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-y-reverse: 0;
-  margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
-  margin-bottom: calc(1rem * var(--tw-space-y-reverse));
-}
-
 .space-y-5 > :not([hidden]) ~ :not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-top: calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));
@@ -1463,6 +1465,10 @@ tr:is(.dark *) {
 
 .overflow-y-auto {
   overflow-y: auto;
+}
+
+.overflow-x-hidden {
+  overflow-x: hidden;
 }
 
 .overflow-y-hidden {
@@ -1537,6 +1543,10 @@ tr:is(.dark *) {
 
 .border-l {
   border-left-width: 1px;
+}
+
+.border-l-2 {
+  border-left-width: 2px;
 }
 
 .border-t {
@@ -1944,6 +1954,10 @@ tr:is(.dark *) {
 
 .pb-32 {
   padding-bottom: 8rem;
+}
+
+.pl-1 {
+  padding-left: 0.25rem;
 }
 
 .pl-4 {

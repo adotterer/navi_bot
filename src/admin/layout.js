@@ -69,9 +69,9 @@ function adminContainer(innerHtml) {
     return `<main class="max-w-5xl mx-auto px-2 sm:px-4 py-8 font-sans">${innerHtml}</main>`;
 }
 
-/** Full-width main for content-heavy pages (e.g. Missions). No max-width so content can use horizontal space. */
+/** Full-width main for content-heavy pages (e.g. Missions). Padding only (no mx) to avoid horizontal overflow; overflow-x-hidden prevents scroll past viewport. */
 function adminContainerWide(innerHtml) {
-    return `<main class="w-full mx-8 px-5 sm:px-8 py-8 font-sans">${innerHtml}</main>`;
+    return `<main class="w-full max-w-full overflow-x-hidden px-4 sm:px-8 py-8 font-sans box-border">${innerHtml}</main>`;
 }
 
 function breadcrumb(items) {
