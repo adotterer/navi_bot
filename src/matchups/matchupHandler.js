@@ -32,7 +32,7 @@ function formatMessageForPrompt(msg) {
  * @param {string} characterSlug - The main character slug
  * @returns {Promise<{messages: Array, characterList: string}>} Combined messages and character list
  */
-async function fetchMultiCharacterData(characterSlug) {
+export async function fetchMultiCharacterData(characterSlug) {
     const related = relatedCharacters[characterSlug] || [];
     const allCharacters = [characterSlug, ...related];
 

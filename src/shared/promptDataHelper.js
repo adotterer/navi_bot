@@ -204,6 +204,8 @@ function buildStatsBlock(slug, alias) {
     return `STATS: ${displayName}\n${lines.join('\n')}`;
 }
 
+export { buildStatsBlock };
+
 function escapeRegex(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

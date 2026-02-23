@@ -56,6 +56,16 @@ const PROMPT_META = {
             { name: 'question', description: "The user's question" }
         ]
     },
+    general_tips: {
+        description: '!gt – general tips for your character vs opponent (MU thread + frame data and OoS)',
+        variables: [
+            { name: 'opponentDisplayName', description: 'Opponent character name' },
+            { name: 'myCharacterDisplayName', description: "The user's character name" },
+            { name: 'priorityMessages', description: 'Messages from katyparry (formatted)' },
+            { name: 'otherMessages', description: 'Other community messages (formatted)' },
+            { name: 'myCharacterReferenceData', description: 'Frame data and stats (including OoS) for the user\'s character' }
+        ]
+    },
     ts: {
         description: '!ts – manually trigger tournament notification (Moderators only)',
         variables: []
@@ -279,7 +289,30 @@ Answer concisely. Use Discord markdown.`,
 === QUESTION ===
 {{question}}
 
-Answer concisely. Use Discord markdown.`
+Answer concisely. Use Discord markdown.`,
+    general_tips: `You are an expert Super Smash Bros. Ultimate analyst. The user plays {{myCharacterDisplayName}} and wants general tips for the matchup vs {{opponentDisplayName}}.
+
+The messages below are from a community matchup thread written from Zelda's perspective (Zelda vs {{opponentDisplayName}}). Extract only GENERAL advice that applies to ANY character: spacing, when to shield, opponent habits, stage picks, punish windows, neutral tips, etc. Do NOT give Zelda-specific moves, Phantom, Nayru's, Din's, Farore's, or any character-specific advice for Zelda.
+
+=== PRIORITY MESSAGES (from katyparry) ===
+{{priorityMessages}}
+
+=== OTHER COMMUNITY MESSAGES ===
+{{otherMessages}}
+
+=== {{myCharacterDisplayName}} FRAME DATA AND STATS (includes Out of Shield) ===
+{{myCharacterReferenceData}}
+
+=== YOUR TASK ===
+1. **General tips vs {{opponentDisplayName}}** – Summarize advice from the thread that applies to any character (not Zelda-specific). Be concise.
+2. **Your character: OoS and key reminders** – Using the frame data and stats above, state {{myCharacterDisplayName}}'s fastest Out of Shield options (from the stats) and 1–2 short practical reminders (e.g. safe on shield, fast punishes) where relevant.
+3. **Reminders** – Any other general matchup reminders from the messages that help when playing as {{myCharacterDisplayName}}.
+
+Rules:
+- Base everything on the messages and the provided frame/stats data. Do not invent information.
+- Do not mention Zelda-specific moves or strategies.
+- Use Discord markdown (**, *, compact formatting). No extra blank lines between sections.
+- Keep the response readable in under a couple of minutes.`
 };
 
 const templateCache = new Map();

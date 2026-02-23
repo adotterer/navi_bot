@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { handleExportCharacter, handleExportMatchups, handleListThreadCounts } from './src/export/exportHandler.js';
 import { handleDMMessage } from './src/messages/dmHandler.js';
 import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/matchups/matchupHandler.js';
+import { handleGeneralTips } from './src/matchups/generalTipsHandler.js';
 import { handleQuestion } from './src/messages/questionHandler.js';
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
 import { initializeScheduler } from './src/shared/scheduler.js';
@@ -103,6 +104,7 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!muq") ||
         message.content.toLowerCase().startsWith("!mq");
     const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
+    const isGtCommand = message.content.toLowerCase().startsWith("!gt ");
 
     if (isAskNaviChannel) {
         const adminId = process.env.ADMIN_DISCORD_ID || '596207448935628812';
@@ -118,8 +120,8 @@ client.on("messageCreate", async (message) => {
             }
         }
 
-        // Allow MU commands and FDQ only
-        if (!isMuCommand && !isFdqCommand) {
+        // Allow MU commands, FDQ, and GT only
+        if (!isMuCommand && !isFdqCommand && !isGtCommand) {
             const hasAuthorizedRole = message.member?.roles?.cache?.some(
             role => role.name === "Moderators" || role.name === "Legend"
             );
@@ -454,6 +456,12 @@ client.on("messageCreate", async (message) => {
     if (message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu")) {
         await handleMatchupNotes(message);
+        return;
+    }
+
+    // ===== GENERAL TIPS =====
+    if (message.content.toLowerCase().startsWith("!gt ")) {
+        await handleGeneralTips(message);
         return;
     }
 
