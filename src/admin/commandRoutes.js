@@ -140,8 +140,8 @@ router.get('/', requireAdmin, (req, res) => {
           <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
             <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">!cleanup</code></td>
             <td class="px-4 py-3 text-slate-500"><code class="font-mono">!cleanupall</code></td>
-            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">Delete bot messages in channel</td>
-            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Any channel</td>
+            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">Delete bot messages (!cleanup) or all messages (!cleanupall) in #ask-navi</td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Moderator/Legend only</td>
           </tr>
           <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
             <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">!list-thread-counts</code></td>
