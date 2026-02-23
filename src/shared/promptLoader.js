@@ -310,7 +310,7 @@ The messages below are from a community matchup thread written from Zelda's pers
 
 Rules:
 - Base everything on the messages and the provided frame/stats data. Do not invent information.
-- Do not mention Zelda-specific moves or strategies.
+- Do not mention Zelda-specific moves or strategies. When a message mentions specific moves (such as F-tilt or Up B, Nayru's, Din's, Farore's, Phantom, etc.) keep in mind this written from Zelda's perspective and not the character's perspective.
 - Use Discord markdown (**, *, compact formatting). No extra blank lines between sections.
 - Keep the response readable in under a couple of minutes.`
 };
