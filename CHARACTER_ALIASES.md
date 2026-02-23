@@ -1,5 +1,14 @@
 # Commands, Character Aliases & Related Characters
 
+## Mod-only: Add alias (!add-a)
+
+**!add-a \<alias\> \<canonical-name\>**  
+Adds a new alias that maps to a canonical character name (from the S3 list). Use when a user tries a name the bot doesn’t recognize (e.g. “game and wat h” for Mr. Game & Watch). After adding, the alias works for !mu, !mu-notes, !mu-q, etc.
+
+- **Who:** Moderators or Legend only.
+- **Canonical list:** Use `!canonical` to see valid names. Canonical must match one of those (e.g. `mr-game-and-watch`, `peach | daisy`).
+- **Example:** `!add-a game and watch mr-game-and-watch` or `!add-a gaw mr-game-and-watch`.
+
 ## Matchup (MU) Commands
 
 **!mu <character>**

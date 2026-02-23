@@ -15,6 +15,7 @@ import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler
 import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
 import { handleCleanup } from './src/messages/cleanupHandler.js';
 import { handleDocs, handleFaq, handleAliases, INFO_EMBED_COLOR } from './src/messages/faqAndAliasHandler.js';
+import { handleAddAlias } from './src/messages/addAliasCommand.js';
 import { getCanonicalCharacterThreads } from './src/matchups/characterAliases.js';
 import { setClient } from './src/shared/discordClient.js';
 
@@ -190,6 +191,7 @@ client.on("messageCreate", async (message) => {
     const isFaqCommand = message.content.toLowerCase() === "!faq";
     const isAliasesCommand = message.content.toLowerCase() === "!aliases";
     const isCanonicalCommand = message.content.toLowerCase() === "!canonical";
+    const isAddAliasCommand = message.content.toLowerCase().startsWith("!add-a ");
 
     const hasAuthorizedRole = message.member?.roles?.cache?.some(
         role => role.name === "Moderators" || role.name === "Legend"
@@ -205,6 +207,12 @@ client.on("messageCreate", async (message) => {
     // Cleanup commands: Moderators + Legend only, any channel
     if (isCleanupCommand && !hasAuthorizedRole) {
         await message.reply("❌ Only Moderators or Legend members can run cleanup commands.");
+        return;
+    }
+
+    // Add alias: Moderators + Legend only (updates S3, refreshes cache)
+    if (isAddAliasCommand) {
+        await handleAddAlias(message);
         return;
     }
 
