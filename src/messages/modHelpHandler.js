@@ -19,7 +19,8 @@ export async function handleModHelp(message) {
             { name: "!ts", value: "!ts – manually trigger tournament notification (Moderators only)" },
             { name: "!export <character> or !export matchups", value: "Export character matchup notes to CSV." },
             { name: "!list-thread-counts", value: "List the message count for each character's matchup thread." },
-            { name: "!cleanup / !cleanupall", value: "Clean up bot messages in the current channel." },
+            { name: "!cleanup", value: "delete all bot messages" },
+            { name: "!cleanupall", value: "delete all messages" },
             { name: "!add-a <alias> <canonical char>", value: "!add-a <alias> <canonical char> – add new aliases (Moderators only)" },
             { name: "!canonical", value: "List all canonical character names" }
         );
