@@ -105,6 +105,7 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!mq");
     const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
     const isGtCommand = message.content.toLowerCase().startsWith("!gt ");
+    const isSlCommand = message.content.toLowerCase() === "!sl";
 
     if (isAskNaviChannel) {
         const adminId = process.env.ADMIN_DISCORD_ID || '596207448935628812';
@@ -120,8 +121,8 @@ client.on("messageCreate", async (message) => {
             }
         }
 
-        // Allow MU commands, FDQ, and GT only
-        if (!isMuCommand && !isFdqCommand && !isGtCommand) {
+        // Allow MU commands, FDQ, GT, and SL only
+        if (!isMuCommand && !isFdqCommand && !isGtCommand && !isSlCommand) {
             const hasAuthorizedRole = message.member?.roles?.cache?.some(
             role => role.name === "Moderators" || role.name === "Legend"
             );
@@ -193,6 +194,7 @@ client.on("messageCreate", async (message) => {
     const isDocsCommand = message.content.toLowerCase() === "!docs";
     const isFaqCommand = message.content.toLowerCase() === "!faq";
     const isAliasesCommand = message.content.toLowerCase() === "!aliases";
+    const isSlCommand = message.content.toLowerCase() === "!sl";
     const isCanonicalCommand = message.content.toLowerCase() === "!canonical";
     const isAddAliasCommand = message.content.toLowerCase().startsWith("!add-a ");
     const isModHelpCommand = message.content.toLowerCase() === "!modhelp";
@@ -267,6 +269,18 @@ client.on("messageCreate", async (message) => {
 
     if (isAliasesCommand) {
         await handleAliases(message);
+        return;
+    }
+
+    if (isSlCommand) {
+        const embed = new EmbedBuilder()
+            .setColor(INFO_EMBED_COLOR)
+            .setTitle("Stage List")
+            .addFields(
+                { name: "Starters", value: "- Final Destination\n- Battlefield\n- Small Battlefield\n- Smashville\n- Pokemon Stadium 2 (PS2)" },
+                { name: "Counter picks", value: "- Hollow Bastion\n- Town & City\n- Kalos Pokemon League" }
+            );
+        await message.reply({ embeds: [embed] });
         return;
     }
 
