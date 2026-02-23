@@ -197,6 +197,7 @@ client.on("messageCreate", async (message) => {
     const isCanonicalCommand = message.content.toLowerCase() === "!canonical";
     const isAddAliasCommand = message.content.toLowerCase().startsWith("!add-a ");
     const isModHelpCommand = message.content.toLowerCase() === "!modhelp";
+    const isSlCommand = message.content.toLowerCase() === "!sl";
 
     const hasAuthorizedRole = message.member?.roles?.cache?.some(
         role => role.name === "Moderators" || role.name === "Legend"
