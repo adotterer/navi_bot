@@ -32,6 +32,12 @@
         .dark #mode-pills .mode-pill.mode-pill-active {
           box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
         }
+        .repo-search-results {
+          max-height: 250px;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          z-index: 100 !important;
+        }
       }
     </style>
     <div class="flex items-center justify-between mb-8">
@@ -265,12 +271,12 @@
         </div>
       </div>
     </div>
-    <div class="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 overflow-hidden mb-8">
+    <div class="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 mb-8">
       <div class="border-b border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-3 flex-wrap">
         <span class="text-sm font-medium text-slate-700 dark:text-slate-300 flex-shrink-0">Repository</span>
         <div class="repo-search-wrap relative flex-1 min-w-0 flex items-center">
           <input type="text" id="repo-search-input" placeholder="Search files…" class="repo-search-input w-full min-w-0 px-2.5 py-1.5 text-sm" autocomplete="off" />
-          <div id="repo-search-results" class="repo-search-results hidden absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 shadow-lg z-20"></div>
+          <div id="repo-search-results" class="repo-search-results hidden shadow-lg"></div>
         </div>
         <button type="button" id="toggle-repo-files" class="flex-shrink-0 block sm:hidden text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700">Hide Files</button>
       </div>
@@ -361,6 +367,15 @@
       if (/^\d/.test(p)) return p;
       return p.charAt(0).toUpperCase() + p.slice(1);
     }).join(' ') || 'system';
+  }
+
+  function debounce(fn, delay) {
+    var timer = null;
+    return function() {
+      var context = this, args = arguments;
+      clearTimeout(timer);
+      timer = setTimeout(function() { fn.apply(context, args); }, delay);
+    };
   }
 
   var logStageConfig = {
@@ -781,10 +796,8 @@
     .catch(function() {});
 
   (function() {
-    var searchDebounceTimer = null;
     var searchPaths = [];
     var searchHighlightIndex = -1;
-    var SEARCH_DEBOUNCE_MS = 220;
     var MIN_QUERY_LEN = 2;
 
     function highlightPath(path, query) {
@@ -804,6 +817,8 @@
     function runSearch() {
       var q = repoSearchInput && repoSearchInput.value ? repoSearchInput.value.trim() : '';
       if (q.length < MIN_QUERY_LEN) { hideSearchResults(); return; }
+      repoSearchResults.innerHTML = '<div class="px-3 py-2 text-xs text-slate-500 italic">Searching...</div>';
+      repoSearchResults.classList.remove('hidden');
       var branch = repoBranch ? repoBranch.value : 'main';
       _adminFetch('/admin/agent/repo-browser/search?q=' + encodeURIComponent(q) + '&branch=' + encodeURIComponent(branch), { credentials: 'same-origin' })
         .then(function(r) { return r.json(); })
@@ -889,10 +904,9 @@
     }
 
     if (repoSearchInput) {
-      repoSearchInput.addEventListener('input', function() {
-        if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(runSearch, SEARCH_DEBOUNCE_MS);
-      });
+      var debouncedSearch = debounce(runSearch, 150);
+      repoSearchInput.addEventListener('input', debouncedSearch);
+      repoSearchInput.addEventListener('compositionend', debouncedSearch);
       repoSearchInput.addEventListener('keydown', function(ev) {
         if (!repoSearchResults || repoSearchResults.classList.contains('hidden')) {
           if (ev.key === 'Escape') { repoSearchInput.blur(); }

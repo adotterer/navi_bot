@@ -82,7 +82,7 @@
     @apply rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none;
   }
   .repo-search-results {
-    @apply rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 overflow-y-auto;
+    @apply absolute top-full left-0 right-0 z-50 mt-1 max-h-[60vh] rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 overflow-y-auto shadow-xl;
   }
   .repo-search-result-item {
     @apply flex items-center gap-2 px-2.5 py-1.5 cursor-pointer text-sm;
