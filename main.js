@@ -326,6 +326,10 @@ client.on("messageCreate", async (message) => {
 
     // ===== LIST THREAD COUNTS =====
     if (message.content.toLowerCase() === "!list-thread-counts") {
+        if (!hasAuthorizedRole) {
+            await message.reply("❌ Only Moderators or Legend members can run this command.");
+            return;
+        }
         await handleListThreadCounts(message);
         return;
     }
