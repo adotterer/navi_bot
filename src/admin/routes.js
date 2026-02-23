@@ -270,6 +270,13 @@ function dashboardPage(s3 = {}, csrfToken = '') {
         <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Discord custom emoji library for use in prompts (insert as images in the editor).</p>
         <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Open →</span>
       </a>
+      <a href="/admin/commands" class="block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-md transition-all group">
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Commands</h2>
+        </div>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">View all available Discord commands, their aliases, and permissions.</p>
+        <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Open →</span>
+      </a>
       <a href="/admin/agent" class="block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-md transition-all group">
         <div class="flex items-center gap-2">
           <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Missions</h2>
