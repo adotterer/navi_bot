@@ -365,7 +365,21 @@
   function getStageConfig(stage) {
     return logStageConfig[stage] || { label: stage || 'System', tip: 'Mission control log.', class: 'bg-slate-600/30 text-slate-400 border border-slate-500/40' };
   }
+  function showLogPlaceholder() {
+    if (!logContainer) return;
+    if (document.getElementById('log-placeholder')) return;
+    var ph = document.createElement('div');
+    ph.id = 'log-placeholder';
+    ph.className = 'text-slate-500 dark:text-slate-400 py-2 text-sm';
+    ph.textContent = 'Run in progress… output will appear here.';
+    logContainer.appendChild(ph);
+  }
+  function hideLogPlaceholder() {
+    var ph = document.getElementById('log-placeholder');
+    if (ph) ph.remove();
+  }
   function appendLogLine(container, stage, message, modelLabel) {
+    hideLogPlaceholder();
     var line = document.createElement('div');
     line.className = 'log-line flex items-center gap-2 py-0.5 flex-wrap';
     var cfg = getStageConfig(stage);
@@ -542,9 +556,12 @@
     }).catch(function() {});
   }
 
-  function updateResumeButton(status) {
+  function updateResumeButton(runData) {
     if (!resumeBtn) return;
-    if (status === 'cancelled' || status === 'error') {
+    var status = runData && (typeof runData === 'string' ? runData : runData.status);
+    var terminalWithPr = status === 'done' && runData && runData.prUrl;
+    var show = !terminalWithPr;
+    if (show) {
       resumeBtn.classList.remove('hidden');
     } else {
       resumeBtn.classList.add('hidden');
@@ -806,6 +823,11 @@
           + statusBadge
           + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="load-run-btn text-xs font-medium text-emerald-600 hover:text-emerald-800 px-2 py-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/30 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">Load</button>'
           + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="delete-run-btn text-xs font-medium text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete run">✕</button>';
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function(e) {
+          if (e.target.closest('.delete-run-btn') || e.target.closest('.load-run-btn')) return;
+          loadPastRun(r.runId);
+        });
         listEl.appendChild(row);
       });
       listEl.querySelectorAll('.load-run-btn').forEach(function(btn) {
@@ -860,7 +882,7 @@
         startBtn.disabled = isActive;
         ensurePipelineRenderedForMode(currentRunMode);
         updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults, runMode: data.runMode });
-        updateResumeButton(data.status);
+        updateResumeButton(data);
         populateDocsPanel(data);
         if (data.edits && data.edits.length) showFileBrowser(data.edits);
         else filesArea.classList.add('hidden');
@@ -1110,7 +1132,7 @@
           currentRunMode = fetched.runMode || 'pr';
           ensurePipelineRenderedForMode(currentRunMode);
           updatePipeline(fetched.status || 'done', { flightPlan: fetched.flightPlan, stepResults: fetched.stepResults, runMode: fetched.runMode });
-          updateResumeButton(fetched.status);
+          updateResumeButton(fetched);
           populateDocsPanel(fetched);
           if (fetched.edits && fetched.edits.length) showFileBrowser(fetched.edits);
           if (fetched.stepResults && fetched.stepResults.length) {
@@ -1186,10 +1208,12 @@
         appendLogLine(logContainer, item.stage, item.message, modelLabel);
       });
       logBuffer = [];
+      if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
     }
   }
 
   function closeStream() {
+    stopPollingRunStatus();
     flushPipelineThrottle();
     flushLogBuffer();
     if (eventSource) {
@@ -1225,6 +1249,7 @@
     var missionEl = document.getElementById('run-mission');
     if (missionEl) missionEl.innerHTML = renderMissionMarkdown(promptEl.value.trim());
     logContainer.innerHTML = '';
+    showLogPlaceholder();
     document.getElementById('step-results-area').classList.add('hidden');
     document.getElementById('step-results-list').innerHTML = '';
     resultArea.classList.add('hidden');
@@ -1350,11 +1375,13 @@
                     appendLogLine(logContainer, item.stage, item.message, modelLabel);
                   });
                   logBuffer = [];
+                  if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
                 }
               }, LOG_FLUSH_MS);
             }
             if (entry.stage) throttleUpdatePipeline(entry.stage, { runMode: currentRunMode });
           } else if (entry.type === 'status') {
+            if (entry.model) currentModel = entry.model;
             runStage.textContent = entry.status || '';
             throttleUpdatePipeline(entry.status || '', { runMode: currentRunMode });
             maybePopulateDocs();
@@ -1377,6 +1404,15 @@
                 .then(function(data) {
                   if (data.error) { runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created'; showResult(entry.prUrl, entry.error); return; }
                   runStatus.textContent = data.status === 'cancelled' ? 'Cancelled' : data.status === 'quality_failed' ? 'Quality failed' : (data.runMode === 'audit' ? 'Done — Audit report' : data.runMode === 'ask' ? 'Done — Answer' : data.runMode === 'review' ? 'Done — Review report' : data.reviewReport ? 'Done — PR created — Review report' : 'Done — PR created');
+                  if (data.logs && data.logs.length && logContainer) {
+                    var modelLabel = abbreviateModel(data.model || currentModel);
+                    logContainer.innerHTML = '';
+                    hideLogPlaceholder();
+                    data.logs.forEach(function(logEntry) {
+                      appendLogLine(logContainer, logEntry.stage, logEntry.message, modelLabel);
+                    });
+                    logContainer.scrollTop = logContainer.scrollHeight;
+                  }
                   showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error, data);
                 })
                 .catch(function() { runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created'; showResult(entry.prUrl, entry.error); });
@@ -1415,6 +1451,13 @@
     startRun();
   });
 
+  var stopPollInterval = null;
+  function stopPollingRunStatus() {
+    if (stopPollInterval) {
+      clearInterval(stopPollInterval);
+      stopPollInterval = null;
+    }
+  }
   stopBtn.addEventListener('click', function() {
     if (!currentRunId || stopBtn.disabled) return;
     stopBtn.disabled = true;
@@ -1422,7 +1465,65 @@
     _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/cancel', {
       method: 'POST',
       credentials: 'same-origin'
-    }).catch(function() {});
+    })
+      .then(function(r) {
+        return r.json().then(function(data) { return { ok: data && data.ok, status: r.status }; }, function() { return { ok: false, status: r.status }; });
+      })
+      .then(function(result) {
+        if (!result || !result.ok) {
+          stopBtn.disabled = false;
+          stopBtn.textContent = 'Stop run';
+          runStatus.textContent = result && result.status === 404 ? 'Run not found' : 'Already finished';
+          return;
+        }
+        runStatus.textContent = 'Stopping… (run will stop after current step)';
+        var pollAttempts = 0;
+        var POLL_MAX_ATTEMPTS = 45;
+        stopPollInterval = setInterval(function() {
+          if (!currentRunId) { stopPollingRunStatus(); return; }
+          pollAttempts += 1;
+          if (pollAttempts > POLL_MAX_ATTEMPTS) {
+            stopPollingRunStatus();
+            stopBtn.disabled = true;
+            stopBtn.textContent = 'Stop run';
+            runStatus.textContent = 'Stop requested. Refresh the page to see latest status.';
+            return;
+          }
+          _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+            .then(function(r) { return r.json().then(function(data) { return { data: data, status: r.status }; }, function() { return { data: {}, status: r.status }; }); })
+            .then(function(out) {
+              var data = out.data;
+              if (out.status === 404 || (data && data.error)) {
+                stopPollingRunStatus();
+                stopBtn.disabled = true;
+                stopBtn.textContent = 'Stop run';
+                runStatus.textContent = 'Run not found';
+                return;
+              }
+              if (!data || !data.status) return;
+              if (['done', 'error', 'cancelled'].indexOf(data.status) === -1) return;
+              stopPollingRunStatus();
+              closeStream();
+              stopTimer();
+              startBtn.disabled = false;
+              stopBtn.disabled = true;
+              stopBtn.textContent = 'Stop run';
+              runStage.textContent = '';
+              updateResumeButton(data);
+              updatePipeline(data.status, { flightPlan: data.flightPlan, stepResults: data.stepResults, runMode: data.runMode || currentRunMode });
+              updateTokenDisplay(data.inputTokens || 0, data.outputTokens || 0);
+              runStatus.textContent = data.status === 'cancelled' ? 'Cancelled' : data.status === 'error' ? 'Error' : (data.runMode === 'audit' ? 'Done — Audit report' : data.runMode === 'ask' ? 'Done — Answer' : data.runMode === 'review' ? 'Done — Review report' : 'Done — PR created');
+              showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error, data);
+              loadPastRunsList();
+            })
+            .catch(function() { stopPollingRunStatus(); stopBtn.disabled = false; stopBtn.textContent = 'Stop run'; runStatus.textContent = 'Error'; });
+        }, 2000);
+      })
+      .catch(function() {
+        stopBtn.disabled = false;
+        stopBtn.textContent = 'Stop run';
+        runStatus.textContent = 'Request failed';
+      });
   });
 
   if (docsSaveBtn) {
@@ -1533,6 +1634,13 @@
             if (resumeBtn) { resumeBtn.classList.remove('hidden'); resumeBtn.disabled = false; }
             return;
           }
+          if (logFlushTimer) { clearTimeout(logFlushTimer); logFlushTimer = null; }
+          logBuffer = [];
+          if (logContainer) { logContainer.innerHTML = ''; showLogPlaceholder(); }
+          _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(runData) { if (runData && runData.model) currentModel = runData.model; })
+            .catch(function() {});
           eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(currentRunId));
           eventSource.onmessage = onStreamMessage;
           eventSource.onerror = function() { handleStreamError(); };

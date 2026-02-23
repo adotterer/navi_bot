@@ -509,7 +509,7 @@ router.post('/run', express.json(), (req, res) => {
     });
 });
 
-// ----- POST /admin/agent/run/:runId/resume – resume a run (load from S3 if not in memory) -----
+// ----- POST /admin/agent/run/:runId/resume – resume a run (load from S3 if not in memory); allow restart from error/cancelled -----
 router.post('/run/:runId/resume', async (req, res) => {
     const runId = req.params.runId;
     let run = getRun(runId);
@@ -519,8 +519,18 @@ router.post('/run/:runId/resume', async (req, res) => {
         hydrateRun(runId, snapshot, assetsBucket ? { assetsBucket } : {});
         run = getRun(runId);
     }
-    const terminal = ['done', 'error', 'cancelled'].includes(run.status);
-    if (terminal) return res.status(400).json({ ok: false, error: 'Run already finished; cannot resume' });
+    const canRestartDone = run.status === 'done' && !run.prUrl;
+    if (run.status === 'done' && !canRestartDone) return res.status(400).json({ ok: false, error: 'Run already finished; cannot resume' });
+
+    const inProgress = ['pending', 'research', 'planning', 'coding', 'reviewing', 'creating_pr', 'tester', 'quality_fix'].includes(run.status);
+    if (inProgress) {
+        setRunCancelled(runId);
+    }
+    if (run.status === 'error' || run.status === 'cancelled' || canRestartDone || inProgress) {
+        const resumableStatus = run.steps?.length ? 'coding' : run.flightPlan?.length ? 'planning' : 'research';
+        updateRun(runId, { status: resumableStatus, error: '', cancelled: false, stepResults: [], edits: [], logs: [] });
+        await persistRunToS3(runId).catch(() => {});
+    }
 
     res.json({ ok: true });
     setImmediate(() => runPipeline(runId, { prompt: run.prompt, model: run.model, maxParallelPlanners: 2, maxParallelCoders: 3, resume: true }));
@@ -545,8 +555,10 @@ router.get('/stream/:runId', (req, res) => {
     // Send all existing logs
     run.logs.forEach((entry) => {
         res.write('data: ' + JSON.stringify({ type: 'log', ...entry }) + '\n\n');
+        res.flush?.();
     });
-    res.write('data: ' + JSON.stringify({ type: 'status', status: run.status, inputTokens: run.inputTokens || 0, outputTokens: run.outputTokens || 0 }) + '\n\n');
+    res.write('data: ' + JSON.stringify({ type: 'status', status: run.status, inputTokens: run.inputTokens || 0, outputTokens: run.outputTokens || 0, model: run.model || '' }) + '\n\n');
+    res.flush?.();
 
     if (run.status === 'done' || run.status === 'error' || run.status === 'cancelled') {
         res.write('data: ' + JSON.stringify({
@@ -557,6 +569,7 @@ router.get('/stream/:runId', (req, res) => {
             inputTokens: run.inputTokens || 0,
             outputTokens: run.outputTokens || 0,
         }) + '\n\n');
+        res.flush?.();
         res.end();
         return;
     }
@@ -569,7 +582,8 @@ router.get('/stream/:runId', (req, res) => {
             res.write('data: ' + JSON.stringify({ type: 'log', ...entry }) + '\n\n');
         }
         const r = getRun(runId);
-        res.write('data: ' + JSON.stringify({ type: 'status', status: r?.status, inputTokens: r?.inputTokens || 0, outputTokens: r?.outputTokens || 0 }) + '\n\n');
+        res.write('data: ' + JSON.stringify({ type: 'status', status: r?.status, inputTokens: r?.inputTokens || 0, outputTokens: r?.outputTokens || 0, model: r?.model || '' }) + '\n\n');
+        res.flush?.();
     });
 
     const heartbeat = setInterval(() => {
@@ -590,6 +604,7 @@ router.get('/stream/:runId', (req, res) => {
                 inputTokens: r.inputTokens || 0,
                 outputTokens: r.outputTokens || 0,
             }) + '\n\n');
+            res.flush?.();
             res.end();
         }
     }, 500);

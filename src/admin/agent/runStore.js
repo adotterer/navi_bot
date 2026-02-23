@@ -134,6 +134,7 @@ function updateRun(runId, updates) {
     if (updates.steps != null) run.steps = updates.steps;
     if (updates.stepResults != null) run.stepResults = updates.stepResults;
     if (updates.edits != null) run.edits = updates.edits;
+    if (Array.isArray(updates.logs)) run.logs = updates.logs;
     if (updates.docs != null) {
         run.docs = run.docs || { ...DEFAULT_DOCS };
         const d = updates.docs;
