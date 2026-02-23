@@ -20,7 +20,8 @@ export async function handleModHelp(message) {
             { name: "!export <character> or !export matchups", value: "Export character matchup notes to CSV." },
             { name: "!list-thread-counts", value: "List the message count for each character's matchup thread." },
             { name: "!cleanup / !cleanupall", value: "Clean up bot messages in the current channel." },
-            { name: "!add-a", value: "!add-a – add new aliases (Moderators only)" }
+            { name: "!add-a <alias> <canonical char>", value: "!add-a <alias> <canonical char> – add new aliases (Moderators only)" },
+            { name: "!canonical", value: "List all canonical character names" }
         );
 
     await message.reply({ embeds: [embed] });
