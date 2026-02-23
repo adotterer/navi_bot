@@ -69,7 +69,9 @@ export async function handleAddAlias(message) {
     const { alias, canonical } = parseAddAliasArgs(content, canonicalList);
 
     if (!alias || !canonical) {
-        await message.reply(`❌ ${USAGE}`);
+        await message.reply(
+            `❌ Couldn't match a valid canonical character from your message. The last part must match a name from the list exactly (e.g. \`mr-game-and-watch\`, \`peach | daisy\`). Use \`!canonical\` to see all valid names.\n${USAGE}`
+        );
         return;
     }
 
