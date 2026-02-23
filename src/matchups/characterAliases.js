@@ -11,6 +11,9 @@ const CANONICAL_THREADS_PATH = path.join(__dirname, '../../data/canonical-charac
 /** S3 key for canonical character threads (same as in exportHandler). Source of truth across redeploys. */
 export const CANONICAL_THREADS_S3_KEY = 'admin/canonical-character-threads.json';
 
+/** S3 key for character nickname aliases. */
+export const ALIAS_S3_KEY = 'admin/character-aliases.json';
+
 /** Path to the local canonical character threads file (for reference; may be ephemeral on deploy). */
 export const canonicalCharacterThreadsPath = CANONICAL_THREADS_PATH;
 
@@ -40,6 +43,12 @@ export async function getCanonicalCharacterThreads() {
         // Local file missing or invalid
     }
     return [];
+}
+
+/** Check if a name exists in the canonical character list. */
+export async function isValidCanonicalName(name) {
+    const list = await getCanonicalCharacterThreads();
+    return list.includes(name);
 }
 
 // Related characters that should be fetched together
@@ -149,8 +158,14 @@ const DEFAULT_NICKNAME_ALIASES = {
     zss: "zero-suit-samus",
 };
 
-/** Returns the current nickname aliases (alias -> canonical). Loaded from data/character-aliases.json when present. */
-export function getNicknameAliases() {
+/** Returns the current nickname aliases (alias -> canonical). Loaded from S3 first; falls back to local file/defaults. */
+export async function getNicknameAliases() {
+    try {
+        const data = await fetchFromS3(ALIAS_S3_KEY);
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+            return data;
+        }
+    } catch (_) {}
     try {
         const raw = fs.readFileSync(ALIASES_PATH, 'utf8');
         const data = JSON.parse(raw);
@@ -177,7 +192,7 @@ export function normalizeCharacterText(text) {
         .trim();
 }
 
-export function buildCharacterAliasMap(guild) {
+export async function buildCharacterAliasMap(guild) {
     const aliasMap = new Map();
     const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
 
@@ -202,7 +217,8 @@ export function buildCharacterAliasMap(guild) {
         }
     }
 
-    for (const [alias, canonical] of Object.entries(getNicknameAliases())) {
+    const currentNicknameAliases = await getNicknameAliases();
+    for (const [alias, canonical] of Object.entries(currentNicknameAliases)) {
         const normalizedAlias = normalizeCharacterText(alias);
         const normalizedCanonical = normalizeCharacterText(canonical);
         const canonicalSlug = aliasMap.get(normalizedCanonical) || canonical.toLowerCase();

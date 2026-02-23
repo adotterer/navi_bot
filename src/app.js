@@ -155,6 +155,7 @@ export function createApp() {
             <tr><td><code>!mq</code></td></tr>
             <tr><td><code>!export</code></td></tr>
             <tr><td><code>!fd</code></td></tr>
+            <tr><td><code>!add-a</code></td></tr>
         </tbody>
     </table>
     <script>

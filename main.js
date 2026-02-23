@@ -14,7 +14,8 @@ import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaComma
 import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler.js';
 import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
 import { handleCleanup } from './src/messages/cleanupHandler.js';
-import { handleDocs, handleFaq, handleAliases, INFO_EMBED_COLOR } from './src/messages/faqAndAliasHandler.js';
+import { handleAddAlias } from './src/messages/adminCommandHandler.js';
+import { handleDocs, handleFaq, handleAliases, handleAddAlias, INFO_EMBED_COLOR } from './src/messages/faqAndAliasHandler.js';
 import { getCanonicalCharacterThreads } from './src/matchups/characterAliases.js';
 import { setClient } from './src/shared/discordClient.js';
 
@@ -189,6 +190,7 @@ client.on("messageCreate", async (message) => {
     const isDocsCommand = message.content.toLowerCase() === "!docs";
     const isFaqCommand = message.content.toLowerCase() === "!faq";
     const isAliasesCommand = message.content.toLowerCase() === "!aliases";
+    const isAddAliasCommand = message.content.toLowerCase().startsWith("!add-a");
     const isCanonicalCommand = message.content.toLowerCase() === "!canonical";
 
     const hasAuthorizedRole = message.member?.roles?.cache?.some(
@@ -205,6 +207,12 @@ client.on("messageCreate", async (message) => {
     // Cleanup commands: Moderators + Legend only, any channel
     if (isCleanupCommand && !hasAuthorizedRole) {
         await message.reply("❌ Only Moderators or Legend members can run cleanup commands.");
+        return;
+    }
+
+    // Add-alias command: Moderators + Legend only, any channel
+    if (isAddAliasCommand && !hasAuthorizedRole) {
+        await message.reply("❌ Only Moderators or Legend members can run this command.");
         return;
     }
 
@@ -245,6 +253,11 @@ client.on("messageCreate", async (message) => {
 
     if (isAliasesCommand) {
         await handleAliases(message);
+        return;
+    }
+
+    if (isAddAliasCommand) {
+        await handleAddAlias(message);
         return;
     }
 
@@ -430,6 +443,16 @@ client.on("messageCreate", async (message) => {
     if (message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu")) {
         await handleMatchupNotes(message);
+        return;
+    }
+
+    // ===== ADD ALIAS =====
+    if (message.content.toLowerCase().startsWith("!add-a")) {
+        if (!hasAuthorizedRole) {
+            await message.reply("❌ Only Moderators or Legend members can run this command.");
+            return;
+        }
+        await handleAddAlias(message);
         return;
     }
 

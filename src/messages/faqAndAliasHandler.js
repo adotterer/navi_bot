@@ -1,4 +1,5 @@
-import { getNicknameAliases } from '../matchups/characterAliases.js';
+import { getNicknameAliases, getCanonicalCharacterThreads, saveNicknameAliases } from '../matchups/characterAliases.js';
+import { syncAliasesFromS3 } from '../shared/aliasSync.js';
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { EmbedBuilder } from 'discord.js';
 
@@ -71,7 +72,7 @@ export async function handleFaq(message) {
 }
 
 export async function handleAliases(message) {
-    const nicknameAliases = getNicknameAliases();
+    const nicknameAliases = await getNicknameAliases();
     const aliases = Object.keys(nicknameAliases)
         .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
 
@@ -87,4 +88,35 @@ export async function handleAliases(message) {
     ];
 
     await sendSplitEmbedMessage(message, lines.join('\n'));
+}
+
+export async function handleAddAlias(message) {
+    const args = message.content.trim().split(/\s+/).slice(1);
+    if (args.length < 2) {
+        await message.reply('❌ Usage: `!add-a <alias> <canonical>`');
+        return;
+    }
+
+    const alias = args[0].toLowerCase();
+    const canonicalInput = args.slice(1).join(' ');
+
+    const canonicals = await getCanonicalCharacterThreads();
+    const canonicalMatch = canonicals.find(c => c.toLowerCase() === canonicalInput.toLowerCase());
+
+    if (!canonicalMatch) {
+        await message.reply(`❌ "${canonicalInput}" is not a recognized canonical name.`);
+        return;
+    }
+
+    const nicknameAliases = getNicknameAliases();
+    nicknameAliases[alias] = canonicalMatch;
+
+    try {
+        await saveNicknameAliases(nicknameAliases);
+        await syncAliasesFromS3();
+        await message.reply(`✅ Alias added: **${alias}** → **${canonicalMatch}**`);
+    } catch (err) {
+        console.error('[handleAddAlias] Error:', err);
+        await message.reply(`❌ Failed to update aliases: ${err.message}`);
+    }
 }

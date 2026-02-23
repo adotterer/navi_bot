@@ -83,7 +83,7 @@ export async function handleMatchupNotes(message) {
     let displayName;
 
     try {
-        const aliasMap = buildCharacterAliasMap(message.guild);
+        const aliasMap = await buildCharacterAliasMap(message.guild);
         const characterQuery = args.slice(1).join(" ");
         const characterMatch = resolveCharacterFromText(characterQuery, aliasMap);
 
@@ -180,7 +180,7 @@ export async function handleMuQuestion(message) {
     let displayName;
 
     try {
-        const aliasMap = buildCharacterAliasMap(message.guild);
+        const aliasMap = await buildCharacterAliasMap(message.guild);
         const characterMatch = resolveCharacterFromText(rawQuestion, aliasMap, { allowZelda: true });
 
         if (!characterMatch) {
