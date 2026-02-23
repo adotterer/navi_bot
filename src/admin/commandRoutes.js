@@ -107,6 +107,13 @@ router.get('/', requireAdmin, (req, res) => {
             </td>
           </tr>
           <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">!add-a</code></td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400"><code class="font-mono">!add-alias</code></td>
+            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">Add new aliases</td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Moderator/Legend only</td>
+          </tr>
+
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
             <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">!addzelda</code></td>
             <td class="px-4 py-3 text-slate-500 dark:text-slate-400">—</td>
             <td class="px-4 py-3 text-slate-700 dark:text-slate-300">Add Zelda player for tournament tracking</td>
