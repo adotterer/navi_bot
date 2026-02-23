@@ -65,7 +65,7 @@ router.get('/', requireAdmin, (req, res) => {
           <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
             <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">!gt</code></td>
             <td class="px-4 py-3 text-slate-500">—</td>
-            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">General tips for your character vs opponent (MU thread + frame data and OoS); for non-Zelda players</td>
+            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">General tips for your character vs opponent (e.g. <code class="font-mono">!gt mario falco</code>; MU thread + frame data and OoS)</td>
             <td class="px-4 py-3 text-slate-500 dark:text-slate-400">ask-navi or Mod/Legend</td>
           </tr>
 

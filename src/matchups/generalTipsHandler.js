@@ -60,32 +60,32 @@ function buildFrameDataSummary(characterSlug, alias) {
 export async function handleGeneralTips(message) {
     const args = message.content.trim().split(/\s+/).slice(1);
     if (args.length < 2) {
-        await message.reply("❌ Usage: `!gt <opponent> <your character>`. Example: `!gt falco mario`. For general tips vs an opponent using your character's frame data and OoS.");
+        await message.reply("❌ Usage: `!gt <your character> <opponent>`. Example: `!gt mario falco`. General tips for your character vs that opponent (frame data + OoS).");
         return;
     }
 
-    const opponentQuery = args[0];
-    const myCharQuery = args.slice(1).join(" ");
+    const myCharQuery = args[0];
+    const opponentQuery = args.slice(1).join(" ");
 
     try {
         const aliasMap = buildCharacterAliasMap(message.guild);
 
-        const opponentMatch = resolveCharacterFromText(opponentQuery, aliasMap, { allowZelda: true });
-        if (!opponentMatch) {
-            await message.reply("❌ I couldn't recognize that opponent. Use the character name or a known alias. Example: `!gt falco mario`.");
-            return;
-        }
-
         const myCharMatch = resolveCharacterFromText(myCharQuery, aliasMap, { allowZelda: true });
         if (!myCharMatch) {
-            await message.reply("❌ I couldn't recognize your character. Use the character name or a known alias. Example: `!gt falco mario`.");
+            await message.reply("❌ I couldn't recognize your character. Use the character name or a known alias. Example: `!gt mario falco`.");
             return;
         }
 
-        const opponentSlug = opponentMatch.slug;
-        const opponentDisplayName = opponentSlug.replace("|", "/");
+        const opponentMatch = resolveCharacterFromText(opponentQuery, aliasMap, { allowZelda: true });
+        if (!opponentMatch) {
+            await message.reply("❌ I couldn't recognize that opponent. Use the character name or a known alias. Example: `!gt mario falco`.");
+            return;
+        }
+
         const myCharSlug = myCharMatch.slug;
         const myCharDisplayName = myCharSlug.replace("|", "/");
+        const opponentSlug = opponentMatch.slug;
+        const opponentDisplayName = opponentSlug.replace("|", "/");
 
         const { messages } = await fetchMultiCharacterData(opponentSlug);
         if (!messages || messages.length === 0) {
