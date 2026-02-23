@@ -85,7 +85,7 @@ export async function handleMatchupNotes(message) {
     try {
         const aliasMap = buildCharacterAliasMap(message.guild);
         const characterQuery = args.slice(1).join(" ");
-        const characterMatch = resolveCharacterFromText(characterQuery, aliasMap);
+        const characterMatch = resolveCharacterFromText(characterQuery, aliasMap, { allowZelda: true });
 
         if (!characterMatch) {
             await message.reply("❌ I couldn't recognize that character. Please use the character name or a known alias. Example: \`!mu falco\`. For full docs, see https://discord.com/channels/1010002260786430052/1468015613711482974/1471297119574032486");
