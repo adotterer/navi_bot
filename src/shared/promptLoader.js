@@ -63,6 +63,10 @@ const PROMPT_META = {
     add_a: {
         description: '!add-a – add new aliases (Moderators only)',
         variables: []
+    },
+    modhelp: {
+        description: '!modhelp – help command for moderators (Moderators only)',
+        variables: []
     }
 };
 
