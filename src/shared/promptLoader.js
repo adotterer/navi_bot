@@ -89,6 +89,10 @@ const PROMPT_META = {
     cleanupall: {
         description: '!cleanupall – delete all messages (Moderators only)',
         variables: []
+    },
+    sl: {
+        description: '!sl – show stage lists used in the game',
+        variables: []
     }
 };
 
