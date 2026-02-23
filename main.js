@@ -14,6 +14,7 @@ import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaComma
 import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler.js';
 import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
 import { handleCleanup } from './src/messages/cleanupHandler.js';
+import { handleModHelp } from './src/messages/modHelpHandler.js';
 import { handleDocs, handleFaq, handleAliases, INFO_EMBED_COLOR } from './src/messages/faqAndAliasHandler.js';
 import { handleAddAlias } from './src/messages/addAliasCommand.js';
 import { getCanonicalCharacterThreads } from './src/matchups/characterAliases.js';
@@ -192,6 +193,7 @@ client.on("messageCreate", async (message) => {
     const isAliasesCommand = message.content.toLowerCase() === "!aliases";
     const isCanonicalCommand = message.content.toLowerCase() === "!canonical";
     const isAddAliasCommand = message.content.toLowerCase().startsWith("!add-a ");
+    const isModHelpCommand = message.content.toLowerCase() === "!modhelp";
 
     const hasAuthorizedRole = message.member?.roles?.cache?.some(
         role => role.name === "Moderators" || role.name === "Legend"
@@ -237,6 +239,16 @@ client.on("messageCreate", async (message) => {
     // Stats questions (!sq): anyone in ask-navi; Moderators/Legend anywhere
     if (isSqCommand && !hasAuthorizedRole && !isAskNaviChannel) {
         await message.reply("❌ This command can only be used in the ask-navi channel.");
+        return;
+    }
+
+    // Mod help: Moderators + Legend only
+    if (isModHelpCommand) {
+        if (!hasAuthorizedRole) {
+            await message.reply("❌ Only Moderators or Legend members can run this command.");
+            return;
+        }
+        await handleModHelp(message);
         return;
     }
 
@@ -314,6 +326,10 @@ client.on("messageCreate", async (message) => {
 
     // ===== LIST THREAD COUNTS =====
     if (message.content.toLowerCase() === "!list-thread-counts") {
+        if (!hasAuthorizedRole) {
+            await message.reply("❌ Only Moderators or Legend members can run this command.");
+            return;
+        }
         await handleListThreadCounts(message);
         return;
     }
