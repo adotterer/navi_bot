@@ -59,6 +59,10 @@ const PROMPT_META = {
     ts: {
         description: '!ts – manually trigger tournament notification (Moderators only)',
         variables: []
+    },
+    add_a: {
+        description: '!add-a – add new aliases (Moderators only)',
+        variables: []
     }
 };
 
