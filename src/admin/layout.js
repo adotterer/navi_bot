@@ -10,7 +10,7 @@ function adminHead(title) {
     return `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>${escapeHtml(title)} – Navi Admin</title>${FONTS}${STYLESHEET}<script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>`;
 }
 
-function adminNav(active = 'dashboard') {
+function adminNav(active = 'dashboard', isSuperAdmin = false) {
     const links = [
         { href: '/admin', label: 'Dashboard', key: 'dashboard' },
         { href: '/admin/prompts', label: 'Prompts', key: 'prompts' },
@@ -20,6 +20,7 @@ function adminNav(active = 'dashboard') {
         { href: '/admin/agent', label: 'Missions', key: 'agent' },
         { href: '/admin/cost', label: 'Cost', key: 'cost' },
         { href: '/admin/commands', label: 'Commands', key: 'commands' },
+        ...(isSuperAdmin ? [{ href: '/admin/admins', label: 'Admins', key: 'admins' }] : []),
     ];
     const items = links
         .map(

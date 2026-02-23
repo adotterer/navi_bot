@@ -52,3 +52,44 @@ export async function send2FACode(email, code) {
 
     return sesClient.send(command);
 }
+
+/**
+ * Sends an admin invite email with a setup link. Link should point to /admin/setup?token=...
+ * @param {string} toEmail - Invitee email.
+ * @param {string} setupLink - Full URL to set password (e.g. https://yoursite.com/admin/setup?token=xxx).
+ */
+export async function sendAdminInviteEmail(toEmail, setupLink) {
+    const sender = process.env.SES_SENDER_EMAIL;
+    if (!sender) {
+        throw new Error('SES_SENDER_EMAIL environment variable is not set.');
+    }
+
+    const htmlBody = `<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; background-color: #0f172a; padding: 20px;">
+    <div style="max-width: 400px; margin: auto; background: #1e293b; padding: 30px; border-radius: 10px; border: 1px solid #334155;">
+        <h2 style="color: #f8fafc; margin-bottom: 20px;">Navi Admin – You're invited</h2>
+        <p style="font-size: 16px; color: #f1f5f9;">You've been invited to join the Navi admin panel. Click the link below to set your password and sign in.</p>
+        <p style="margin: 24px 0;"><a href="${setupLink}" style="display: inline-block; background: #10b981; color: #0f172a; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Set your password</a></p>
+        <p style="font-size: 14px; color: #94a3b8;">This link expires in 7 days. If you didn't expect this email, you can ignore it.</p>
+    </div>
+</body>
+</html>`;
+
+    const command = new SendEmailCommand({
+        Source: sender,
+        Destination: { ToAddresses: [toEmail] },
+        Message: {
+            Subject: { Data: 'Navi Admin – Set up your account', Charset: 'UTF-8' },
+            Body: {
+                Html: { Data: htmlBody, Charset: 'UTF-8' },
+                Text: {
+                    Data: `You've been invited to Navi Admin. Set your password here: ${setupLink}\n\nThis link expires in 7 days.`,
+                    Charset: 'UTF-8',
+                },
+            },
+        },
+    });
+
+    return sesClient.send(command);
+}

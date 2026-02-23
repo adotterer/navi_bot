@@ -2,8 +2,9 @@
  * Admin routes: login, logout, dashboard. All except login require auth.
  */
 import express from 'express';
-import { requireAdmin, checkLogin, verify2fa, generate2FACode, is2faBypassed } from './auth.js';
-import { send2FACode } from '../shared/sesHelper.js';
+import { requireAdmin, checkLogin, verify2fa, generate2FACode, is2faBypassed, isSuperAdmin, requireSuperAdmin } from './auth.js';
+import { send2FACode, sendAdminInviteEmail } from '../shared/sesHelper.js';
+import { createInvite, getInviteByToken, deleteInvite, putAdmin, getAdminByEmail, listAdminEmails, hashPasswordForStorage } from '../shared/adminDynamo.js';
 import { doubleCsrfProtection, generateCsrfToken } from './csrf.js';
 import { promptRoutes } from './promptRoutes.js';
 import { dataRoutes } from './dataRoutes.js';
@@ -17,10 +18,10 @@ import { headS3Key, hasS3KeysWithPrefix } from '../shared/s3Helper.js';
 
 const router = express.Router();
 
-// Session-based CSRF fallback for login only: when the double-submit cookie isn't sent
-// (e.g. behind some load balancers), accept the token from session so login still works securely.
+// Session-based CSRF fallback for login/setup: when the double-submit cookie isn't sent
+// (e.g. behind some load balancers), accept the token from session so login/setup still works securely.
 router.use((req, res, next) => {
-    if (req.method !== 'POST' || (req.path !== '/login' && req.path !== '/2fa')) return next();
+    if (req.method !== 'POST' || (req.path !== '/login' && req.path !== '/2fa' && req.path !== '/setup')) return next();
     const bodyToken = req.body && typeof req.body._csrf === 'string' ? req.body._csrf : null;
     const cookieToken = req.cookies && req.cookies.navi_admin_csrf;
     if (cookieToken && bodyToken && cookieToken === bodyToken) return next();
@@ -41,32 +42,38 @@ router.get('/login', (req, res) => {
     const csrfToken = generateCsrfToken(req, res);
     req.session.pendingLoginCsrf = csrfToken; // fallback when cookie isn't sent (e.g. behind ALB)
     let error = null;
+    let success = null;
     if (req.query.error === 'csrf') error = 'Your session or security token expired. Please try again.';
     else if (req.query.error === 'ratelimit') error = 'Too many login attempts. Please wait a few minutes and try again.';
     else if (req.query.error === '2fa_expired') error = 'Verification code expired. Please log in again.';
-    res.send(loginPage({ csrfToken, error: error || undefined }));
+    if (req.query.setup === '1') success = 'Password set. You can sign in with your email and password.';
+    res.send(loginPage({ csrfToken, error: error || undefined, success: success || undefined }));
 });
 
 const TWO_FA_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 
 router.post('/login', express.urlencoded({ extended: true }), async (req, res) => {
     const { username, password } = req.body || {};
-    if (!checkLogin(username, password)) {
+    const result = await checkLogin(username, password);
+    if (!result.ok) {
         const csrfToken = generateCsrfToken(req, res);
         return res.status(401).send(loginPage({ error: 'Invalid username or password.', csrfToken }));
     }
+    const emailFor2FA = result.email || process.env.ADMIN_EMAIL;
     if (is2faBypassed()) {
         req.session.admin = true;
+        req.session.adminEmail = result.email;
+        req.session.isSuperAdmin = result.isSuperAdmin;
         return req.session.save(() => res.redirect('/admin'));
     }
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (adminEmail && process.env.SES_SENDER_EMAIL) {
+    if (emailFor2FA && process.env.SES_SENDER_EMAIL) {
         const code = generate2FACode();
         req.session.twoFactorCode = code;
         req.session.twoFactorExpires = Date.now() + TWO_FA_EXPIRY_MS;
+        req.session.pendingAdminEmail = result.email;
+        req.session.pendingSuperAdmin = result.isSuperAdmin;
         try {
-            // Send the 6-digit verification code via SES using the HTML template
-            await send2FACode(adminEmail, code);
+            await send2FACode(emailFor2FA, code);
         } catch (err) {
             console.error('2FA email send failed:', err);
             const csrfToken = generateCsrfToken(req, res);
@@ -75,6 +82,8 @@ router.post('/login', express.urlencoded({ extended: true }), async (req, res) =
         return req.session.save(() => res.redirect('/admin/2fa'));
     }
     req.session.admin = true;
+    req.session.adminEmail = result.email;
+    req.session.isSuperAdmin = result.isSuperAdmin;
     return req.session.save(() => res.redirect('/admin'));
 });
 
@@ -113,9 +122,13 @@ router.post('/2fa', express.urlencoded({ extended: true }), (req, res) => {
     }
     if (verify2fa(req.session, code)) {
         req.session.admin = true;
+        req.session.adminEmail = req.session.pendingAdminEmail;
+        req.session.isSuperAdmin = req.session.pendingSuperAdmin === true;
         req.session.twoFactorVerified = true;
         req.session.twoFactorCode = undefined;
         req.session.twoFactorExpires = undefined;
+        req.session.pendingAdminEmail = undefined;
+        req.session.pendingSuperAdmin = undefined;
         return req.session.save(() => res.redirect('/admin'));
     }
     const csrfToken = generateCsrfToken(req, res);
@@ -123,10 +136,92 @@ router.post('/2fa', express.urlencoded({ extended: true }), (req, res) => {
     res.status(401).send(twoFAPage({ error: 'Invalid or expired code.', csrfToken }));
 });
 
+function setupPage(opts = {}) {
+    const error = opts.error
+        ? `<div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">${escapeHtml(opts.error)}</div>`
+        : '';
+    const csrfInput = opts.csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(opts.csrfToken)}">` : '';
+    const tokenInput = opts.token ? `<input type="hidden" name="token" value="${escapeHtml(opts.token)}">` : '';
+    const emailDisplay = opts.email ? `<p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Account: ${escapeHtml(opts.email)}</p>` : '';
+    const formSection = opts.token
+        ? `
+      ${error}
+      ${emailDisplay}
+      <form method="post" action="/admin/setup" class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-5">
+        ${csrfInput}
+        ${tokenInput}
+        <div>
+          <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Choose a password (min 8 characters)</label>
+          <input id="password" type="password" name="password" minlength="8" autocomplete="new-password" required
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+        </div>
+        <button type="submit" class="w-full rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-4 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Set password & sign in</button>
+      </form>`
+        : `
+      ${error}
+      <p class="text-slate-600 dark:text-slate-400">Use the link from your invite email to set your password.</p>`;
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>${adminHead('Set up account')}</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+  <div class="min-h-screen flex flex-col items-center justify-center px-4">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Navi Admin</h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Set your password to finish setting up your account</p>
+      </div>
+      ${formSection}
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 router.post('/logout', (req, res) => {
     req.session.destroy(() => {
         res.redirect('/admin/login');
     });
+});
+
+// ----- Setup (public, token in URL) – new admin sets password from invite link -----
+function getBaseUrl(req) {
+    const base = process.env.APP_BASE_URL;
+    if (base) return base.replace(/\/$/, '');
+    return `${req.protocol}://${req.get('host') || req.hostname}`;
+}
+
+router.get('/setup', async (req, res) => {
+    const token = (req.query.token && String(req.query.token).trim()) || '';
+    if (!token) {
+        return res.status(400).send(setupPage({ error: 'Missing or invalid setup link.' }));
+    }
+    const invite = await getInviteByToken(token);
+    if (!invite) {
+        return res.status(400).send(setupPage({ error: 'This setup link is invalid or has expired.' }));
+    }
+    const csrfToken = generateCsrfToken(req, res);
+    if (req.session) req.session.pendingLoginCsrf = csrfToken;
+    res.send(setupPage({ token, email: invite.email, csrfToken }));
+});
+
+router.post('/setup', express.urlencoded({ extended: true }), async (req, res) => {
+    const token = (req.body && req.body.token && String(req.body.token).trim()) || '';
+    const password = req.body && req.body.password ? String(req.body.password) : '';
+    if (!token) {
+        return res.status(400).send(setupPage({ error: 'Missing setup token.' }));
+    }
+    const invite = await getInviteByToken(token);
+    if (!invite) {
+        return res.status(400).send(setupPage({ error: 'This setup link is invalid or has expired.' }));
+    }
+    if (!password || password.length < 8) {
+        const csrfToken = generateCsrfToken(req, res);
+        return res.status(400).send(setupPage({ token, email: invite.email, csrfToken, error: 'Password must be at least 8 characters.' }));
+    }
+    const { salt, hash } = hashPasswordForStorage(password);
+    await putAdmin(invite.email, salt, hash);
+    await deleteInvite(token);
+    return res.redirect('/admin/login?setup=1');
 });
 
 // ----- Dashboard (protected) -----
@@ -144,7 +239,58 @@ router.get('/', requireAdmin, async (req, res) => {
         // S3 not configured or error: show no badges
     }
     const csrfToken = generateCsrfToken(req, res);
-    res.send(dashboardPage(s3, csrfToken));
+    const superAdmin = isSuperAdmin(req);
+    res.send(dashboardPage(s3, csrfToken, superAdmin));
+});
+
+// ----- Admins (super-admin only: invite new admins) -----
+router.get('/admins', requireAdmin, requireSuperAdmin, async (req, res) => {
+    const csrfToken = generateCsrfToken(req, res);
+    const list = await listAdminEmails();
+    const superAdminEmail = process.env.ADMIN_EMAIL || process.env.ADMIN_USERNAME || '';
+    const allEmails = superAdminEmail ? [superAdminEmail, ...list.filter((e) => e !== superAdminEmail)] : list;
+    const invited = req.query.invited === '1';
+    res.send(adminsPage(allEmails, csrfToken, null, invited));
+});
+
+router.post('/admins/invite', requireAdmin, requireSuperAdmin, express.urlencoded({ extended: true }), async (req, res) => {
+    const email = (req.body && req.body.email && String(req.body.email).trim()) || '';
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        const csrfToken = generateCsrfToken(req, res);
+        const list = await listAdminEmails();
+        const superAdminEmail = process.env.ADMIN_EMAIL || process.env.ADMIN_USERNAME || '';
+        const allEmails = superAdminEmail ? [superAdminEmail, ...list.filter((e) => e !== superAdminEmail)] : list;
+        return res.status(400).send(adminsPage(allEmails, csrfToken, 'Please enter a valid email address.', false));
+    }
+    const existing = await getAdminByEmail(email);
+    if (existing) {
+        const csrfToken = generateCsrfToken(req, res);
+        const list = await listAdminEmails();
+        const superAdminEmail = process.env.ADMIN_EMAIL || process.env.ADMIN_USERNAME || '';
+        const allEmails = superAdminEmail ? [superAdminEmail, ...list.filter((e) => e !== superAdminEmail)] : list;
+        return res.status(400).send(adminsPage(allEmails, csrfToken, 'That email already has an admin account.', false));
+    }
+    const created = await createInvite(email);
+    if (!created) {
+        const csrfToken = generateCsrfToken(req, res);
+        const list = await listAdminEmails();
+        const superAdminEmail = process.env.ADMIN_EMAIL || process.env.ADMIN_USERNAME || '';
+        const allEmails = superAdminEmail ? [superAdminEmail, ...list.filter((e) => e !== superAdminEmail)] : list;
+        return res.status(500).send(adminsPage(allEmails, csrfToken, 'Failed to create invite (DynamoDB may be unavailable).', false));
+    }
+    const baseUrl = getBaseUrl(req);
+    const setupLink = `${baseUrl}/admin/setup?token=${encodeURIComponent(created.token)}`;
+    try {
+        await sendAdminInviteEmail(email, setupLink);
+    } catch (err) {
+        console.error('Admin invite email failed:', err);
+        const csrfToken = generateCsrfToken(req, res);
+        const list = await listAdminEmails();
+        const superAdminEmail = process.env.ADMIN_EMAIL || process.env.ADMIN_USERNAME || '';
+        const allEmails = superAdminEmail ? [superAdminEmail, ...list.filter((e) => e !== superAdminEmail)] : list;
+        return res.status(500).send(adminsPage(allEmails, csrfToken, 'Invite created but email could not be sent. Check SES configuration.', false));
+    }
+    return res.redirect('/admin/admins?invited=1');
 });
 
 // Mount sub-routers (all protected)
@@ -162,6 +308,9 @@ function loginPage(opts = {}) {
     const error = opts.error
         ? `<div class="rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm px-4 py-3 mb-6">${escapeHtml(opts.error)}</div>`
         : '';
+    const success = opts.success
+        ? `<div class="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200 text-sm px-4 py-3 mb-6">${escapeHtml(opts.success)}</div>`
+        : '';
     const csrfInput = opts.csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(opts.csrfToken)}">` : '';
     const devUser = !isProduction ? escapeHtml(process.env.ADMIN_USERNAME || '') : '';
     const devPass = !isProduction ? escapeHtml(process.env.ADMIN_PASSWORD || '') : '';
@@ -173,8 +322,9 @@ function loginPage(opts = {}) {
     <div class="w-full max-w-sm">
       <div class="text-center mb-8">
         <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Navi Admin</h1>
-        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Sign in to edit prompts and data</p>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Sign in with your username (super admin) or email (invited admin)</p>
       </div>
+      ${success}
       ${error}
       <form method="post" action="/admin/login" class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-5">
         ${csrfInput}
@@ -227,11 +377,11 @@ function twoFAPage(opts = {}) {
 </html>`;
 }
 
-function dashboardPage(s3 = {}, csrfToken = '') {
+function dashboardPage(s3 = {}, csrfToken = '', isSuperAdmin = false) {
     const badge = (on) => (on ? s3Badge() : '');
     const logoutCsrf = csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">` : '';
     const content = `
-  ${adminNav('dashboard')}
+  ${adminNav('dashboard', isSuperAdmin)}
   ${adminContainer(`
     <div class="flex items-center justify-between mb-8">
       <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Dashboard</h1>
@@ -297,6 +447,51 @@ function dashboardPage(s3 = {}, csrfToken = '') {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Dashboard')}</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
+</html>`;
+}
+
+function adminsPage(adminEmails = [], csrfToken = '', message = '', invited = false) {
+    const msgClass = message && message.includes('already') ? 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-200' : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-200';
+    const invitedBanner = invited ? '<div class="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200 text-sm px-4 py-3 mb-6">Invite sent. They will receive an email with a link to set their password.</div>' : '';
+    const errorBanner = message && (message.includes('already') || message.includes('valid') || message.includes('SES') || message.includes('DynamoDB'))
+        ? `<div class="rounded-lg ${msgClass} border text-sm px-4 py-3 mb-6">${escapeHtml(message)}</div>`
+        : '';
+    const listHtml = adminEmails.length
+        ? `<ul class="mt-4 space-y-1 text-sm text-slate-600 dark:text-slate-400">${adminEmails.map((e) => `<li>${escapeHtml(e)}</li>`).join('')}</ul>`
+        : '<p class="mt-2 text-sm text-slate-500 dark:text-slate-400">No other admins yet. Invite someone below.</p>';
+    const logoutCsrf = csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">` : '';
+    const content = `
+  ${adminNav('admins', true)}
+  ${adminContainer(`
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Admins</h1>
+      <form method="post" action="/admin/logout">${logoutCsrf}<button type="submit" class="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium">Log out</button></form>
+    </div>
+    <p class="text-slate-600 dark:text-slate-400 mb-6">Only you (super admin) can invite new admins. They receive an email with a link to set their password, then can sign in with their email and that password.</p>
+    ${invitedBanner}
+    ${errorBanner}
+    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 mb-8">
+      <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Invite an admin</h2>
+      <form method="post" action="/admin/admins/invite" class="mt-4 flex flex-wrap items-end gap-3">
+        <input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">
+        <div class="min-w-[200px]">
+          <label for="invite-email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+          <input id="invite-email" type="email" name="email" required placeholder="admin@example.com"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+        </div>
+        <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-4 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Send invite</button>
+      </form>
+    </div>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
+      <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Admin accounts</h2>
+      ${listHtml}
+    </div>
+  `)}
+`;
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>${adminHead('Admins')}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`;
 }

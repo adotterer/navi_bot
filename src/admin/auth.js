@@ -1,7 +1,9 @@
 import crypto from 'crypto';
+import { getAdminByEmail, verifyPasswordFromStorage } from '../shared/adminDynamo.js';
 
 /**
  * Admin auth: session-based login. Requires ADMIN_PASSWORD and SESSION_SECRET in env.
+ * Super admin = logged in with env ADMIN_USERNAME/ADMIN_PASSWORD (only they can invite).
  */
 export function requireAdmin(req, res, next) {
     if (!req.session || !req.session.admin) {
@@ -9,6 +11,20 @@ export function requireAdmin(req, res, next) {
     }
     if (is2faBypassed() || req.session.twoFactorVerified) return next();
     return res.redirect('/admin/2fa');
+}
+
+/** True if the current session is the super admin (env credentials). Only super admin can create new admin accounts. */
+export function isSuperAdmin(req) {
+    return !!(req.session && req.session.isSuperAdmin);
+}
+
+/** Require super admin; redirect to dashboard if not. Use after requireAdmin. */
+export function requireSuperAdmin(req, res, next) {
+    if (!req.session || !req.session.admin) return res.redirect('/admin/login');
+    if (is2faBypassed() || req.session.twoFactorVerified) {
+        if (isSuperAdmin(req)) return next();
+    }
+    return res.redirect('/admin');
 }
 
 /** When true, 2FA is skipped (non-production and SKIP_2FA_FOR_DEV=true). */
@@ -32,11 +48,33 @@ export function getSessionConfig() {
     };
 }
 
-export function checkLogin(username, password) {
+/** Sync check for env super-admin only. */
+export function checkLoginEnv(username, password) {
     const expectedUser = process.env.ADMIN_USERNAME || 'admin';
     const expectedPass = process.env.ADMIN_PASSWORD;
     if (!expectedPass) return false;
     return username === expectedUser && password === expectedPass;
+}
+
+/**
+ * Async login: try env (super admin) first, then DynamoDB admins.
+ * @returns {Promise<{ ok: true, isSuperAdmin: boolean, email: string } | { ok: false }>}
+ */
+export async function checkLogin(username, password) {
+    const u = (username && String(username).trim()) || '';
+    const p = password;
+    if (!p) return { ok: false };
+    // 1) Super admin (env)
+    if (checkLoginEnv(u, p)) {
+        const email = process.env.ADMIN_EMAIL || '';
+        return { ok: true, isSuperAdmin: true, email: email || u };
+    }
+    // 2) DynamoDB admin (login with email)
+    const admin = await getAdminByEmail(u);
+    if (admin && verifyPasswordFromStorage(p, admin.salt, admin.hash)) {
+        return { ok: true, isSuperAdmin: false, email: admin.email };
+    }
+    return { ok: false };
 }
 
 export function verify2fa(session, code) {
