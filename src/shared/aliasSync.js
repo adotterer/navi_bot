@@ -49,3 +49,21 @@ export async function fetchAliasesFromS3() {
         throw err;
     }
 }
+
+/**
+ * Update a single alias mapping in S3.
+ */
+export async function updateAliasInS3(alias, canonical) {
+    const raw = await fetchAliasesFromS3();
+    let data = {};
+    if (raw != null && raw.trim()) {
+        try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                data = parsed;
+            }
+        } catch (err) {}
+    }
+    data[alias.toLowerCase()] = canonical;
+    await putAliasesToS3(JSON.stringify(data, null, 2));
+}
