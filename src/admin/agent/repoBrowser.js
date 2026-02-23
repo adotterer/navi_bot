@@ -376,6 +376,142 @@ export async function getTree(ref, dirPath) {
  * @param {string} filePath
  * @returns {Promise<{ ok: true, content: string } | { ok: false, error: string }>}
  */
+/**
+ * Recursively walk the repo tree and collect all file/folder paths, then filter by query.
+ * Supports case-insensitive substring match on path, and optional grep-like content search.
+ * @param {string} query - Search query (substring match on path; also searched in file contents)
+ * @param {string} [ref='main'] - Branch name or ref
+ * @returns {Promise<{ ok: true, results: Array<{ path: string, type: string, matchContext?: string }> } | { ok: false, error: string }>}
+ */
+export async function searchFiles(query, ref) {
+    const refTrim = (typeof ref === 'string' ? ref.trim() : '') || 'main';
+    const q = (query || '').trim();
+    if (!q) return { ok: false, error: 'Search query required' };
+    const qLower = q.toLowerCase();
+    const MAX_RESULTS = 50;
+
+    // Collect all paths recursively
+    const allPaths = [];
+
+    if (GITHUB_REPO_AVAILABLE) {
+        // Use GitHub API recursive tree
+        const repo = getRepoFromEnv();
+        if (!repo) return { ok: false, error: 'Repo not available' };
+        try {
+            const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+            // Resolve ref to a commit SHA first
+            const { data: refData } = await octokit.git.getRef({
+                owner: repo.owner,
+                repo: repo.repo,
+                ref: 'heads/' + refTrim,
+            }).catch(() => ({ data: null }));
+            let sha = refTrim;
+            if (refData && refData.object) sha = refData.object.sha;
+            const { data: treeData } = await octokit.git.getTree({
+                owner: repo.owner,
+                repo: repo.repo,
+                tree_sha: sha,
+                recursive: 'true',
+            });
+            for (const item of (treeData.tree || [])) {
+                const p = item.path || '';
+                const parts = p.split('/');
+                if (parts.some(part => EXCLUDED_DIRS.has(part))) continue;
+                allPaths.push({ path: p, type: item.type === 'tree' ? 'dir' : 'file' });
+            }
+        } catch (err) {
+            return { ok: false, error: err.message || String(err) };
+        }
+    } else if (REPO_AVAILABLE) {
+        // Use local git ls-tree -r --name-only
+        try {
+            const out = await git.raw(['ls-tree', '-r', '--name-only', refTrim]);
+            const lines = (out || '').trim().split('\n').filter(Boolean);
+            for (const line of lines) {
+                const p = line.trim();
+                if (!p) continue;
+                const parts = p.split('/');
+                if (parts.some(part => EXCLUDED_DIRS.has(part))) continue;
+                allPaths.push({ path: p, type: 'file' });
+            }
+            // Also get directories via ls-tree -r -d
+            const dirOut = await git.raw(['ls-tree', '-r', '-d', '--name-only', refTrim]);
+            const dirLines = (dirOut || '').trim().split('\n').filter(Boolean);
+            for (const line of dirLines) {
+                const p = line.trim();
+                if (!p) continue;
+                const parts = p.split('/');
+                if (parts.some(part => EXCLUDED_DIRS.has(part))) continue;
+                allPaths.push({ path: p, type: 'dir' });
+            }
+        } catch (err) {
+            return { ok: false, error: err.message || String(err) };
+        }
+    } else {
+        return { ok: false, error: 'Repo not available (need local git clone or GITHUB_TOKEN + GITHUB_REPO)' };
+    }
+
+    // Filter by path match
+    const pathMatches = allPaths.filter(item => item.path.toLowerCase().includes(qLower));
+
+    // Build results from path matches first (up to MAX_RESULTS)
+    const results = [];
+    const seenPaths = new Set();
+    for (const item of pathMatches) {
+        if (results.length >= MAX_RESULTS) break;
+        results.push({ path: item.path, type: item.type });
+        seenPaths.add(item.path);
+    }
+
+    // If we have room, do grep-like content search on files
+    if (results.length < MAX_RESULTS) {
+        const filePaths = allPaths.filter(item => item.type === 'file' && !seenPaths.has(item.path));
+        // Limit how many files we read for content search
+        const MAX_CONTENT_SEARCH = 200;
+        const toSearch = filePaths.slice(0, MAX_CONTENT_SEARCH);
+
+        if (REPO_AVAILABLE) {
+            // Use git grep for efficiency
+            try {
+                const grepOut = await git.raw(['grep', '-il', '--fixed-strings', q, refTrim, '--']);
+                const grepLines = (grepOut || '').trim().split('\n').filter(Boolean);
+                for (const line of grepLines) {
+                    if (results.length >= MAX_RESULTS) break;
+                    // git grep output: ref:path
+                    const colonIdx = line.indexOf(':');
+                    const p = colonIdx >= 0 ? line.slice(colonIdx + 1) : line;
+                    if (!p || seenPaths.has(p)) continue;
+                    seenPaths.add(p);
+                    results.push({ path: p, type: 'file', matchContext: 'content match' });
+                }
+            } catch (_) {
+                // git grep returns exit code 1 when no matches; ignore
+            }
+        } else if (GITHUB_REPO_AVAILABLE) {
+            // Read files via API (limited)
+            for (const item of toSearch) {
+                if (results.length >= MAX_RESULTS) break;
+                try {
+                    const fileResult = await getFileContentGitHub(refTrim, item.path);
+                    if (fileResult.ok && fileResult.content && fileResult.content.toLowerCase().includes(qLower)) {
+                        seenPaths.add(item.path);
+                        // Extract a small context snippet
+                        const idx = fileResult.content.toLowerCase().indexOf(qLower);
+                        const start = Math.max(0, idx - 40);
+                        const end = Math.min(fileResult.content.length, idx + q.length + 40);
+                        const snippet = (start > 0 ? '...' : '') + fileResult.content.slice(start, end).replace(/\n/g, ' ') + (end < fileResult.content.length ? '...' : '');
+                        results.push({ path: item.path, type: 'file', matchContext: snippet });
+                    }
+                } catch (_) {
+                    // skip unreadable files
+                }
+            }
+        }
+    }
+
+    return { ok: true, results: results.slice(0, MAX_RESULTS) };
+}
+
 export async function getFileContent(ref, filePath) {
     if (GITHUB_REPO_AVAILABLE) return getFileContentGitHub(ref, filePath);
     if (!REPO_AVAILABLE) return { ok: false, error: 'Repo browser not available (no git in this environment)' };

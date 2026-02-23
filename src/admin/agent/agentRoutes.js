@@ -7,7 +7,7 @@ import { generateCsrfToken } from '../csrf.js';
 import { getAgentPageContent } from './agentPageContent.js';
 import { createRun, getRun, updateRun, subscribe, listRuns, setRunCancelled, hydrateRun, deleteRun, DEFAULT_DOCS } from './runStore.js';
 import { runPipeline } from './orchestrator.js';
-import { listBranches, getTree, getFileContent } from './repoBrowser.js';
+import { listBranches, getTree, getFileContent, searchFiles } from './repoBrowser.js';
 import { loadRunFromS3, loadRunMetadataFromS3, persistRunToS3 } from './agentRunPersistence.js';
 import { listS3KeysWithPrefix, deleteFromS3, fetchFromS3Buffer } from '../../shared/s3Helper.js';
 import { getAgentPrompt, saveAgentPrompt, resetAgentPromptToDefault, listAgentPromptIds } from './agentPromptLoader.js';
@@ -248,6 +248,44 @@ router.get('/repo/file', async (req, res) => {
     const result = await getFileContent(branch, path);
     if (!result.ok) return res.status(400).json({ ok: false, error: result.error });
     res.json({ ok: true, content: result.content });
+});
+
+router.get('/repo-browser/search', async (req, res) => {
+    const q = (req.query.q || '').trim();
+    if (!q) return res.json([]);
+    const branch = req.query.branch || 'main';
+    const allPaths = [];
+    async function walk(dir) {
+        const result = await getTree(branch, dir);
+        if (!result.ok) return;
+        for (const entry of result.entries) {
+            if (entry.type === 'dir') {
+                await walk(entry.path);
+            } else {
+                allPaths.push(entry.path);
+            }
+        }
+    }
+    try {
+        await walk('');
+    } catch (_) {
+        return res.status(500).json([]);
+    }
+    const lower = q.toLowerCase();
+    const matches = allPaths.filter(p => p.toLowerCase().includes(lower)).slice(0, 50);
+    res.json(matches);
+});
+router.get('/repo-browser/search', async (req, res) => {
+    const q = (req.query.q || '').trim();
+    if (!q) return res.status(400).json({ ok: false, error: 'Search query required (q parameter)' });
+    const ref = req.query.ref || 'main';
+    try {
+        const result = await searchFiles(q, ref);
+        if (!result.ok) return res.status(400).json({ ok: false, error: result.error });
+        res.json({ ok: true, results: result.results.slice(0, 50) });
+    } catch (err) {
+        res.status(500).json({ ok: false, error: err.message || String(err) });
+    }
 });
 
 // ----- GET /admin/agent/runs – list recent runs (DynamoDB → in-memory fallback) -----
@@ -509,7 +547,7 @@ router.post('/run', express.json(), (req, res) => {
     });
 });
 
-// ----- POST /admin/agent/run/:runId/resume – resume a run (load from S3 if not in memory) -----
+// ----- POST /admin/agent/run/:runId/resume – resume a run (load from S3 if not in memory); allow restart from error/cancelled -----
 router.post('/run/:runId/resume', async (req, res) => {
     const runId = req.params.runId;
     let run = getRun(runId);
@@ -519,8 +557,18 @@ router.post('/run/:runId/resume', async (req, res) => {
         hydrateRun(runId, snapshot, assetsBucket ? { assetsBucket } : {});
         run = getRun(runId);
     }
-    const terminal = ['done', 'error', 'cancelled'].includes(run.status);
-    if (terminal) return res.status(400).json({ ok: false, error: 'Run already finished; cannot resume' });
+    const canRestartDone = run.status === 'done' && !run.prUrl;
+    if (run.status === 'done' && !canRestartDone) return res.status(400).json({ ok: false, error: 'Run already finished; cannot resume' });
+
+    const inProgress = ['pending', 'research', 'planning', 'coding', 'reviewing', 'creating_pr', 'tester', 'quality_fix'].includes(run.status);
+    if (inProgress) {
+        setRunCancelled(runId);
+    }
+    if (run.status === 'error' || run.status === 'cancelled' || canRestartDone || inProgress) {
+        const resumableStatus = run.steps?.length ? 'coding' : run.flightPlan?.length ? 'planning' : 'research';
+        updateRun(runId, { status: resumableStatus, error: '', cancelled: false, stepResults: [], edits: [], logs: [] });
+        await persistRunToS3(runId).catch(() => {});
+    }
 
     res.json({ ok: true });
     setImmediate(() => runPipeline(runId, { prompt: run.prompt, model: run.model, maxParallelPlanners: 2, maxParallelCoders: 3, resume: true }));

@@ -22,6 +22,11 @@
       #files-content pre[class*="language-"] .token.string, #files-content pre[class*="language-"] .token.attr-value, #files-content pre[class*="language-"] .token.regex, #files-content pre[class*="language-"] .token.variable { color: #4ade80; }
       .token.operator, .token.entity, #repo-content pre[class*="language-"] .token.operator, #repo-content pre[class*="language-"] .token.entity,
       #files-content pre[class*="language-"] .token.operator, #files-content pre[class*="language-"] .token.entity { color: #22d3d4; }
+      /* Repo search result items */
+      #repo-search-results .repo-search-item { padding: 0.375rem 0.75rem; cursor: pointer; color: inherit; }
+      #repo-search-results .repo-search-item:hover { background: rgba(100,116,139,0.15); }
+      #repo-search-results .repo-search-item.repo-search-active { background: rgba(16,185,129,0.2); color: #10b981; }
+      .dark #repo-search-results .repo-search-item.repo-search-active { background: rgba(16,185,129,0.25); color: #34d399; }
       /* High-contrast active state for mode pills on touch/mobile (persistent visible selection) */
       @media (pointer: coarse), (max-width: 768px) {
         #mode-pills .mode-pill.mode-pill-active {
@@ -261,10 +266,22 @@
       <div class="border-b border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-3">
         <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Repository</span>
         <select id="repo-branch" class="rounded border border-slate-300 dark:border-slate-600 px-2 py-1 text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"></select>
+        <div class="relative ml-2 flex-1 max-w-xs">
+          <input type="text" id="repo-search" placeholder="Search files…" class="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" autocomplete="off" />
+          <ul id="repo-search-results" class="hidden absolute z-50 left-0 right-0 top-full mt-1 max-h-60 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg text-sm"></ul>
+        </div>
         <button type="button" id="toggle-repo-files" class="ml-auto block sm:hidden text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700">Hide Files</button>
+      </div>
+      <div class="px-3 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 relative">
+        <input type="text" id="repo-search-input" placeholder="Search repository files…" class="repo-search-input w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm font-mono text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+        <ul id="repo-search-results" class="repo-search-results hidden absolute left-3 right-3 z-20 mt-1 max-h-64 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg text-sm"></ul>
       </div>
       <div class="flex flex-col sm:flex-row min-h-[400px]">
         <div id="repo-sidebar" class="w-full sm:w-60 max-h-60 sm:max-h-none border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto flex-shrink-0">
+          <div class="relative px-2 pt-2 pb-1">
+            <input id="repo-search-input" type="text" placeholder="Search files…" autocomplete="off" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1 text-sm placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
+            <div id="repo-search-results" class="absolute left-2 right-2 z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 shadow-lg hidden"></div>
+          </div>
           <ul id="repo-tree" class="py-2 text-sm"><li class="px-2 sm:px-6 py-2 text-slate-500 text-sm">Loading…</li></ul>
         </div>
         <div id="repo-content-wrap" class="flex-1 min-w-0 flex flex-col bg-slate-900">
@@ -365,7 +382,21 @@
   function getStageConfig(stage) {
     return logStageConfig[stage] || { label: stage || 'System', tip: 'Mission control log.', class: 'bg-slate-600/30 text-slate-400 border border-slate-500/40' };
   }
+  function showLogPlaceholder() {
+    if (!logContainer) return;
+    if (document.getElementById('log-placeholder')) return;
+    var ph = document.createElement('div');
+    ph.id = 'log-placeholder';
+    ph.className = 'text-slate-500 dark:text-slate-400 py-2 text-sm';
+    ph.textContent = 'Run in progress… output will appear here.';
+    logContainer.appendChild(ph);
+  }
+  function hideLogPlaceholder() {
+    var ph = document.getElementById('log-placeholder');
+    if (ph) ph.remove();
+  }
   function appendLogLine(container, stage, message, modelLabel) {
+    hideLogPlaceholder();
     var line = document.createElement('div');
     line.className = 'log-line flex items-center gap-2 py-0.5 flex-wrap';
     var cfg = getStageConfig(stage);
@@ -542,9 +573,12 @@
     }).catch(function() {});
   }
 
-  function updateResumeButton(status) {
+  function updateResumeButton(runData) {
     if (!resumeBtn) return;
-    if (status === 'cancelled' || status === 'error') {
+    var status = runData && (typeof runData === 'string' ? runData : runData.status);
+    var terminalWithPr = status === 'done' && runData && runData.prUrl;
+    var show = !terminalWithPr;
+    if (show) {
       resumeBtn.classList.remove('hidden');
     } else {
       resumeBtn.classList.add('hidden');
@@ -806,6 +840,11 @@
           + statusBadge
           + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="load-run-btn text-xs font-medium text-emerald-600 hover:text-emerald-800 px-2 py-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/30 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">Load</button>'
           + '<button type="button" data-run-id="' + escapeHtml(r.runId) + '" class="delete-run-btn text-xs font-medium text-red-400 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete run">✕</button>';
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function(e) {
+          if (e.target.closest('.delete-run-btn') || e.target.closest('.load-run-btn')) return;
+          loadPastRun(r.runId);
+        });
         listEl.appendChild(row);
       });
       listEl.querySelectorAll('.load-run-btn').forEach(function(btn) {
@@ -860,7 +899,7 @@
         startBtn.disabled = isActive;
         ensurePipelineRenderedForMode(currentRunMode);
         updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults, runMode: data.runMode });
-        updateResumeButton(data.status);
+        updateResumeButton(data);
         populateDocsPanel(data);
         if (data.edits && data.edits.length) showFileBrowser(data.edits);
         else filesArea.classList.add('hidden');
@@ -1110,7 +1149,7 @@
           currentRunMode = fetched.runMode || 'pr';
           ensurePipelineRenderedForMode(currentRunMode);
           updatePipeline(fetched.status || 'done', { flightPlan: fetched.flightPlan, stepResults: fetched.stepResults, runMode: fetched.runMode });
-          updateResumeButton(fetched.status);
+          updateResumeButton(fetched);
           populateDocsPanel(fetched);
           if (fetched.edits && fetched.edits.length) showFileBrowser(fetched.edits);
           if (fetched.stepResults && fetched.stepResults.length) {
@@ -1186,10 +1225,12 @@
         appendLogLine(logContainer, item.stage, item.message, modelLabel);
       });
       logBuffer = [];
+      if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
     }
   }
 
   function closeStream() {
+    stopPollingRunStatus();
     flushPipelineThrottle();
     flushLogBuffer();
     if (eventSource) {
@@ -1225,6 +1266,7 @@
     var missionEl = document.getElementById('run-mission');
     if (missionEl) missionEl.innerHTML = renderMissionMarkdown(promptEl.value.trim());
     logContainer.innerHTML = '';
+    showLogPlaceholder();
     document.getElementById('step-results-area').classList.add('hidden');
     document.getElementById('step-results-list').innerHTML = '';
     resultArea.classList.add('hidden');
@@ -1350,6 +1392,7 @@
                     appendLogLine(logContainer, item.stage, item.message, modelLabel);
                   });
                   logBuffer = [];
+                  if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
                 }
               }, LOG_FLUSH_MS);
             }
@@ -1415,6 +1458,13 @@
     startRun();
   });
 
+  var stopPollInterval = null;
+  function stopPollingRunStatus() {
+    if (stopPollInterval) {
+      clearInterval(stopPollInterval);
+      stopPollInterval = null;
+    }
+  }
   stopBtn.addEventListener('click', function() {
     if (!currentRunId || stopBtn.disabled) return;
     stopBtn.disabled = true;
@@ -1422,7 +1472,65 @@
     _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId) + '/cancel', {
       method: 'POST',
       credentials: 'same-origin'
-    }).catch(function() {});
+    })
+      .then(function(r) {
+        return r.json().then(function(data) { return { ok: data && data.ok, status: r.status }; }, function() { return { ok: false, status: r.status }; });
+      })
+      .then(function(result) {
+        if (!result || !result.ok) {
+          stopBtn.disabled = false;
+          stopBtn.textContent = 'Stop run';
+          runStatus.textContent = result && result.status === 404 ? 'Run not found' : 'Already finished';
+          return;
+        }
+        runStatus.textContent = 'Stopping… (run will stop after current step)';
+        var pollAttempts = 0;
+        var POLL_MAX_ATTEMPTS = 45;
+        stopPollInterval = setInterval(function() {
+          if (!currentRunId) { stopPollingRunStatus(); return; }
+          pollAttempts += 1;
+          if (pollAttempts > POLL_MAX_ATTEMPTS) {
+            stopPollingRunStatus();
+            stopBtn.disabled = true;
+            stopBtn.textContent = 'Stop run';
+            runStatus.textContent = 'Stop requested. Refresh the page to see latest status.';
+            return;
+          }
+          _adminFetch('/admin/agent/run/' + encodeURIComponent(currentRunId), { credentials: 'same-origin' })
+            .then(function(r) { return r.json().then(function(data) { return { data: data, status: r.status }; }, function() { return { data: {}, status: r.status }; }); })
+            .then(function(out) {
+              var data = out.data;
+              if (out.status === 404 || (data && data.error)) {
+                stopPollingRunStatus();
+                stopBtn.disabled = true;
+                stopBtn.textContent = 'Stop run';
+                runStatus.textContent = 'Run not found';
+                return;
+              }
+              if (!data || !data.status) return;
+              if (['done', 'error', 'cancelled'].indexOf(data.status) === -1) return;
+              stopPollingRunStatus();
+              closeStream();
+              stopTimer();
+              startBtn.disabled = false;
+              stopBtn.disabled = true;
+              stopBtn.textContent = 'Stop run';
+              runStage.textContent = '';
+              updateResumeButton(data);
+              updatePipeline(data.status, { flightPlan: data.flightPlan, stepResults: data.stepResults, runMode: data.runMode || currentRunMode });
+              updateTokenDisplay(data.inputTokens || 0, data.outputTokens || 0);
+              runStatus.textContent = data.status === 'cancelled' ? 'Cancelled' : data.status === 'error' ? 'Error' : (data.runMode === 'audit' ? 'Done — Audit report' : data.runMode === 'ask' ? 'Done — Answer' : data.runMode === 'review' ? 'Done — Review report' : 'Done — PR created');
+              showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error, data);
+              loadPastRunsList();
+            })
+            .catch(function() { stopPollingRunStatus(); stopBtn.disabled = false; stopBtn.textContent = 'Stop run'; runStatus.textContent = 'Error'; });
+        }, 2000);
+      })
+      .catch(function() {
+        stopBtn.disabled = false;
+        stopBtn.textContent = 'Stop run';
+        runStatus.textContent = 'Request failed';
+      });
   });
 
   if (docsSaveBtn) {
@@ -1533,6 +1641,9 @@
             if (resumeBtn) { resumeBtn.classList.remove('hidden'); resumeBtn.disabled = false; }
             return;
           }
+          if (logFlushTimer) { clearTimeout(logFlushTimer); logFlushTimer = null; }
+          logBuffer = [];
+          if (logContainer) { logContainer.innerHTML = ''; showLogPlaceholder(); }
           eventSource = new EventSource('/admin/agent/stream/' + encodeURIComponent(currentRunId));
           eventSource.onmessage = onStreamMessage;
           eventSource.onerror = function() { handleStreamError(); };
@@ -1582,5 +1693,280 @@
   }
   if (prMergeBtn) prMergeBtn.addEventListener('click', function() { doPrAction('merge'); });
   if (prCloseBtn) prCloseBtn.addEventListener('click', function() { doPrAction('close'); });
+
+  /* ── Repo browser search ── */
+  (function() {
+    var searchInput = document.getElementById('repo-search');
+    var searchResults = document.getElementById('repo-search-results');
+    var searchTimer = null;
+    var allFiles = [];
+
+    function collectFiles(entries, prefix) {
+      (entries || []).forEach(function(e) {
+        if (e.type === 'dir') {
+          // dirs are not added; we only index files
+        } else {
+          allFiles.push(e.path);
+        }
+      });
+    }
+
+    function flattenTree(branch, path, cb) {
+      fetchTree(branch, path, function(err, entries) {
+        if (err || !entries) { cb(); return; }
+        var pending = 0;
+        entries.forEach(function(e) {
+          if (e.type === 'dir') {
+            pending++;
+            flattenTree(branch, e.path, function() {
+              pending--;
+              if (pending === 0) cb();
+            });
+          } else {
+            allFiles.push(e.path);
+          }
+        });
+        if (pending === 0) cb();
+      });
+    }
+
+    function ensureIndex(cb) {
+      if (allFiles.length) { cb(); return; }
+      var branch = repoBranch ? repoBranch.value : '';
+      if (!branch) { cb(); return; }
+      flattenTree(branch, '', cb);
+    }
+
+    function insertPathAtCursor(path) {
+      var ta = document.getElementById('prompt');
+      if (!ta) return;
+      var start = ta.selectionStart || 0;
+      var end = ta.selectionEnd || 0;
+      var before = ta.value.substring(0, start);
+      var after = ta.value.substring(end);
+      ta.value = before + path + after;
+      var newPos = start + path.length;
+      ta.selectionStart = newPos;
+      ta.selectionEnd = newPos;
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      ta.focus();
+    }
+
+    function renderSearchResults(query) {
+      if (!searchResults) return;
+      if (!query) { searchResults.innerHTML = ''; searchResults.classList.add('hidden'); return; }
+      var lq = query.toLowerCase();
+      var matches = allFiles.filter(function(f) { return f.toLowerCase().indexOf(lq) !== -1; }).slice(0, 30);
+      if (!matches.length) {
+        searchResults.innerHTML = '<li class="px-3 py-2 text-slate-400">No results</li>';
+        searchResults.classList.remove('hidden');
+        return;
+      }
+      searchResults.innerHTML = '';
+      matches.forEach(function(filePath) {
+        var li = document.createElement('li');
+        li.className = 'repo-search-item flex items-center gap-1 px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-200 truncate';
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'truncate flex-1 min-w-0';
+        nameSpan.textContent = filePath;
+        li.appendChild(nameSpan);
+        var insertBtn = document.createElement('button');
+        insertBtn.type = 'button';
+        insertBtn.className = 'repo-search-insert flex-shrink-0 ml-1 p-0.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400';
+        insertBtn.title = 'Insert path into mission prompt';
+        insertBtn.innerHTML = '<svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M15.988 3.012A2.25 2.25 0 0018 5.25v6.5A2.25 2.25 0 0015.75 14H13.5v-1.5h2.25a.75.75 0 00.75-.75v-6.5a.75.75 0 00-.75-.75h-6.5a.75.75 0 00-.75.75V7.5H7V5.25A2.25 2.25 0 009.25 3h6.5a2.25 2.25 0 00.238.012zM4.25 8A2.25 2.25 0 002 10.25v4.5A2.25 2.25 0 004.25 17h6.5A2.25 2.25 0 0013 14.75v-4.5A2.25 2.25 0 0010.75 8h-6.5zm0 1.5h6.5a.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75h-6.5a.75.75 0 01-.75-.75v-4.5a.75.75 0 01.75-.75z"/></svg>';
+        insertBtn.addEventListener('click', function(ev) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          insertPathAtCursor(filePath);
+          searchResults.classList.add('hidden');
+          if (searchInput) searchInput.value = '';
+        });
+        li.appendChild(insertBtn);
+        li.addEventListener('click', function(ev) {
+          ev.stopPropagation();
+          searchResults.classList.add('hidden');
+          if (searchInput) searchInput.value = '';
+          repoContentHeader.textContent = filePath;
+          repoContent.textContent = 'Loading…';
+          var branch = repoBranch ? repoBranch.value : '';
+          fetchFile(branch, filePath, function(err, content) {
+            if (err) repoContent.textContent = err;
+            else renderCodeBlock(repoContent, content, filePath);
+          });
+        });
+        searchResults.appendChild(li);
+      });
+      searchResults.classList.remove('hidden');
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        var q = searchInput.value.trim();
+        if (searchTimer) clearTimeout(searchTimer);
+        if (!q) { renderSearchResults(''); return; }
+        searchTimer = setTimeout(function() {
+          ensureIndex(function() { renderSearchResults(q); });
+        }, 150);
+      });
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          searchResults.classList.add('hidden');
+          searchInput.value = '';
+        }
+      });
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('#repo-search') && !e.target.closest('#repo-search-results')) {
+          if (searchResults) searchResults.classList.add('hidden');
+        }
+      });
+    }
+
+    // Re-index when branch changes
+    if (repoBranch) {
+      repoBranch.addEventListener('change', function() {
+        allFiles = [];
+        if (searchInput) searchInput.value = '';
+        if (searchResults) { searchResults.innerHTML = ''; searchResults.classList.add('hidden'); }
+      });
+    }
+  })();
+
+  /* ── Repo browser search ── */
+  (function() {
+    var searchInput = document.getElementById('repo-search-input');
+    var searchResults = document.getElementById('repo-search-results');
+    if (!searchInput || !searchResults) return;
+    var debounceTimer = null;
+    var activeIndex = -1;
+
+    function openFileInRepoBrowser(filePath) {
+      var header = document.getElementById('repo-content-header');
+      var content = document.getElementById('repo-content');
+      if (header) header.textContent = filePath;
+      if (content) content.textContent = 'Loading…';
+      var branch = repoBranch ? repoBranch.value : 'main';
+      fetchFile(branch, filePath, function(err, fileContent) {
+        if (err) { if (content) content.textContent = err; }
+        else renderCodeBlock(content, fileContent, filePath);
+      });
+    }
+
+    function insertAtCursor(text) {
+      var ta = document.getElementById('prompt');
+      if (!ta) return;
+      ta.focus();
+      var start = ta.selectionStart || 0;
+      var end = ta.selectionEnd || 0;
+      var before = ta.value.substring(0, start);
+      var after = ta.value.substring(end);
+      ta.value = before + text + after;
+      var pos = start + text.length;
+      ta.selectionStart = pos;
+      ta.selectionEnd = pos;
+    }
+
+    function highlightMatch(text, query) {
+      if (!query) return escapeHtml(text);
+      var lower = text.toLowerCase();
+      var qLower = query.toLowerCase();
+      var idx = lower.indexOf(qLower);
+      if (idx === -1) return escapeHtml(text);
+      return escapeHtml(text.substring(0, idx)) + '<mark>' + escapeHtml(text.substring(idx, idx + query.length)) + '</mark>' + escapeHtml(text.substring(idx + query.length));
+    }
+
+    function renderResults(items, query) {
+      activeIndex = -1;
+      if (!items || !items.length) {
+        searchResults.innerHTML = '<div class="px-3 py-2 text-sm text-slate-400">No results</div>';
+        searchResults.classList.remove('hidden');
+        return;
+      }
+      searchResults.innerHTML = items.map(function(item, i) {
+        return '<div class="repo-search-item flex items-center gap-1 px-3 py-1.5 text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" data-index="' + i + '" data-path="' + escapeHtml(item.path) + '">'
+          + '<span class="truncate flex-1 text-slate-700 dark:text-slate-200">' + highlightMatch(item.path, query) + '</span>'
+          + '<button type="button" class="repo-search-insert flex-shrink-0 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 px-1" title="Insert path into mission prompt" data-path="' + escapeHtml(item.path) + '">⎀</button>'
+          + '</div>';
+      }).join('');
+      searchResults.classList.remove('hidden');
+
+      searchResults.querySelectorAll('.repo-search-item').forEach(function(el) {
+        el.addEventListener('click', function(ev) {
+          if (ev.target.closest('.repo-search-insert')) return;
+          openFileInRepoBrowser(el.getAttribute('data-path'));
+          closeResults();
+        });
+      });
+      searchResults.querySelectorAll('.repo-search-insert').forEach(function(btn) {
+        btn.addEventListener('click', function(ev) {
+          ev.stopPropagation();
+          insertAtCursor(btn.getAttribute('data-path'));
+        });
+      });
+    }
+
+    function closeResults() {
+      searchResults.classList.add('hidden');
+      searchResults.innerHTML = '';
+      activeIndex = -1;
+    }
+
+    function updateActive() {
+      var items = searchResults.querySelectorAll('.repo-search-item');
+      items.forEach(function(el, i) {
+        if (i === activeIndex) el.classList.add('bg-slate-100', 'dark:bg-slate-700');
+        else el.classList.remove('bg-slate-100', 'dark:bg-slate-700');
+      });
+      if (activeIndex >= 0 && items[activeIndex]) {
+        items[activeIndex].scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    searchInput.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      var q = searchInput.value.trim();
+      if (!q) { closeResults(); return; }
+      debounceTimer = setTimeout(function() {
+        var branch = repoBranch ? repoBranch.value : 'main';
+        _adminFetch('/admin/agent/repo-browser/search?q=' + encodeURIComponent(q) + '&branch=' + encodeURIComponent(branch), { credentials: 'same-origin' })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (searchInput.value.trim() !== q) return;
+            renderResults(data.results || [], q);
+          })
+          .catch(function() { closeResults(); });
+      }, 300);
+    });
+
+    searchInput.addEventListener('keydown', function(ev) {
+      var items = searchResults.querySelectorAll('.repo-search-item');
+      if (!items.length) return;
+      if (ev.key === 'ArrowDown') {
+        ev.preventDefault();
+        activeIndex = (activeIndex + 1) % items.length;
+        updateActive();
+      } else if (ev.key === 'ArrowUp') {
+        ev.preventDefault();
+        activeIndex = (activeIndex - 1 + items.length) % items.length;
+        updateActive();
+      } else if (ev.key === 'Enter') {
+        ev.preventDefault();
+        if (activeIndex >= 0 && items[activeIndex]) {
+          openFileInRepoBrowser(items[activeIndex].getAttribute('data-path'));
+          closeResults();
+        }
+      } else if (ev.key === 'Escape') {
+        ev.preventDefault();
+        closeResults();
+        searchInput.blur();
+      }
+    });
+
+    document.addEventListener('click', function(ev) {
+      if (!searchResults.contains(ev.target) && ev.target !== searchInput) {
+        closeResults();
+      }
+    });
+  })();
 })();
     </script>
