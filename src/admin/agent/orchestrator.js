@@ -435,6 +435,11 @@ export async function runPipeline(runId, opts = {}) {
             allowedPaths.add(AGENT_ROUTES_PATH);
             allowedPaths.add(AGENT_PAGE_INNER_PATH);
         }
+        // Admin commands page: single file (route + table HTML) at commandRoutes.js; no separate template.
+        const COMMAND_ROUTES_PATH = 'src/admin/commandRoutes.js';
+        if (/\/admin\/commands|admin commands|command list|synchronize.*command|commands (ui|dashboard|panel)|documenting commands/i.test(prompt || '')) {
+            allowedPaths.add(COMMAND_ROUTES_PATH);
+        }
         // Home page (route "/"): restyle to match admin — root route is in app.js; admin look is in layout.js.
         const APP_JS_PATH = 'src/app.js';
         const LAYOUT_JS_PATH = 'src/admin/layout.js';
@@ -565,6 +570,12 @@ export async function runPipeline(runId, opts = {}) {
                     if (isMissionsUiStep && !fileContext[AGENT_ROUTES_PATH] && /model dropdown|model selector|modelmeta|model meta/i.test(stepText)) {
                         const r = await callTool('read_file', { path: AGENT_ROUTES_PATH });
                         if (r.ok && typeof r.result === 'string') fileContext[AGENT_ROUTES_PATH] = r.result;
+                    }
+                    // Admin commands page: single file (route + table); ensure Coder sees commandRoutes.js.
+                    const isAdminCommandsStep = /\/admin\/commands|admin commands|command list|synchronize.*command|commands (ui|dashboard|panel)|documenting commands/i.test(stepText);
+                    if (isAdminCommandsStep && !fileContext[COMMAND_ROUTES_PATH]) {
+                        const r = await callTool('read_file', { path: COMMAND_ROUTES_PATH });
+                        if (r.ok && typeof r.result === 'string') fileContext[COMMAND_ROUTES_PATH] = r.result;
                     }
                     // Home page (route "/"): ensure Coder sees app.js and optionally layout.js for "match admin" styling.
                     const isHomePageStep = /home page|root page|landing page|route ["']\/["']|match admin|theme disconnect|look and feel/i.test(stepText);

@@ -1001,8 +1001,14 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
             }
         }
     }
+    const EDIT_PREVIEW_CHARS = 1400;
     const editSummary = (edits || []).map((e) => e.path + (e.content ? ` (${e.content.length} chars)` : '')).join(', ') || 'none';
-    const prompt = `Step: ${step.what}\n${step.changeDescription || ''}\nMission context: ${(missionSummary || '').slice(0, 500)}\n\nCoder produced edits for: ${editSummary}.\n\nDo these edits satisfy the step and mission? Reply with exactly one word: done or failed. Optionally add a short reason after a colon (e.g. "failed: edits change wrong file").`;
+    const editPreviews = (edits || [])
+        .filter((e) => e.path && e.content)
+        .map((e) => `--- ${e.path} (preview) ---\n${e.content.slice(0, EDIT_PREVIEW_CHARS)}${e.content.length > EDIT_PREVIEW_CHARS ? '\n...' : ''}`)
+        .join('\n\n');
+    const projectNote = `In this project, the admin Commands page (/admin/commands) is implemented entirely in src/admin/commandRoutes.js (route + inline HTML table). No separate view/template file exists for that page.`;
+    const prompt = `Step: ${step.what}\n${step.changeDescription || ''}\nMission context: ${(missionSummary || '').slice(0, 500)}\n\nCoder produced edits for: ${editSummary}.\n\n${editPreviews ? `Edit previews:\n${editPreviews}\n\n` : ''}${projectNote}\n\nDo these edits satisfy the step and mission? Reply with exactly one word: done or failed. Optionally add a short reason after a colon (e.g. "failed: edits change wrong file").`;
     try {
         const response = await generateContent({
             model,
