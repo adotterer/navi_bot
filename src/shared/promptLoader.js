@@ -61,7 +61,11 @@ const PROMPT_META = {
         variables: []
     },
     add_a: {
-        description: '!add-a – add new aliases (Moderators only)',
+        description: '!add-a <alias> <canonical char> – add new aliases (Moderators only)',
+        variables: []
+    },
+    canonical: {
+        description: '!canonical – fetch all canonical characters',
         variables: []
     },
     modhelp: {
