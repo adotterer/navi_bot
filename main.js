@@ -16,6 +16,7 @@ import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler
 import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
 import { handleCleanup } from './src/messages/cleanupHandler.js';
 import { handleModHelp } from './src/messages/modHelpHandler.js';
+import { handleGetLogs } from './src/messages/logHandler.js';
 import { handleDocs, handleFaq, handleAliases, INFO_EMBED_COLOR } from './src/messages/faqAndAliasHandler.js';
 import { handleAddAlias } from './src/messages/addAliasCommand.js';
 import { getCanonicalCharacterThreads } from './src/matchups/characterAliases.js';
@@ -198,6 +199,7 @@ client.on("messageCreate", async (message) => {
     const isAddAliasCommand = message.content.toLowerCase().startsWith("!add-a ");
     const isModHelpCommand = message.content.toLowerCase() === "!modhelp";
     const isSlCommand = message.content.toLowerCase() === "!sl";
+    const isLogsCommand = message.content.toLowerCase() === "!logs";
 
     const hasAuthorizedRole = message.member?.roles?.cache?.some(
         role => role.name === "Moderators" || role.name === "Legend"
@@ -281,6 +283,11 @@ client.on("messageCreate", async (message) => {
                 { name: "Counter picks", value: "- Hollow Bastion\n- Town & City\n- Kalos Pokemon League" }
             );
         await message.reply({ embeds: [embed] });
+        return;
+    }
+
+    if (isLogsCommand) {
+        await handleGetLogs(message);
         return;
     }
 

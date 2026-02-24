@@ -130,6 +130,12 @@ router.get('/', requireAdmin, (req, res) => {
             <td class="px-4 py-3 text-slate-700 dark:text-slate-300">helps them remember what the mod commands are by sending an embed message with the commands available to mods only.</td>
             <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Moderator/Legend only</td>
           </tr>
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">!logs</code></td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">—</td>
+            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">Fetch system logs</td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Moderator/Legend only</td>
+          </tr>
 
           <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
             <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">!addzelda</code></td>
