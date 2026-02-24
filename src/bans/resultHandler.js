@@ -279,11 +279,11 @@ export async function handleResultConfirm(interaction) {
       })
       .addFields({
         name: 'Next step',
-        value: `${winnerMention}, ban **3** stage(s) from the dropdown below.\n*Only the Game 1 winner can use the dropdown.*`,
+        value: `${winnerMention}: open the **dropdown** and **select exactly 3 stages** to ban (pick all 3 at once).\n*Only the Game 1 winner can use the dropdown.*`,
       })
       .setFooter({ text: `Match: ${matchId} • Dropdown is only for the player whose turn it is` });
 
-    const row = buildStageSelectRow(matchId, updatedSession, 'Game 1 winner: ban 3 stages');
+    const row = buildStageSelectRow(matchId, updatedSession, 'Select exactly 3 stages to ban');
     await interaction.editReply({
       embeds: [embed],
       components: row ? [row] : [],
@@ -292,9 +292,9 @@ export async function handleResultConfirm(interaction) {
     try {
       const winnerMember = await interaction.guild.members.fetch(game1WinnerId).catch(() => null);
       if (winnerMember) {
-        await winnerMember.send(
-          `You won Game 1! For Game 2 you ban 3 stages. Use the **dropdown** in the server or \`/ban stage:<stage> match_id:${matchId}\`.`
-        );
+      await winnerMember.send(
+        `You won Game 1! For Game 2: open the **dropdown** in the server and **select exactly 3 stages** to ban (all at once).`
+      );
       }
     } catch (err) {
       console.warn('[resultHandler] Could not DM Game 1 winner:', err.message);
@@ -451,18 +451,18 @@ export async function handleAnotherMatch(interaction) {
     })
     .addFields({
       name: 'Next step',
-      value: `${banMention}, ban **3** stage(s) from the dropdown below.\n*Only the player mentioned can use the dropdown.*`,
+      value: `${banMention}: open the **dropdown** and **select exactly 3 stages** to ban (pick all 3 at once).\n*Only the player mentioned can use the dropdown.*`,
     })
     .setFooter({ text: `Match: ${matchId} • Dropdown is only for the player whose turn it is` });
 
-  const row = buildStageSelectRow(matchId, updatedSession, `Game ${nextGameNumber}: ban 3 stages`);
+  const row = buildStageSelectRow(matchId, updatedSession, 'Select exactly 3 stages to ban');
   await interaction.editReply({ embeds: [embed], components: row ? [row] : [] });
 
   try {
     const banMember = await interaction.guild.members.fetch(banPlayerId).catch(() => null);
     if (banMember) {
       await banMember.send(
-        `Your turn to ban 3 stages for Game ${nextGameNumber}. Use the **dropdown** in the server or \`/ban stage:<stage> match_id:${matchId}\`.`
+        `Your turn for Game ${nextGameNumber}: open the **dropdown** in the server and **select exactly 3 stages** to ban (all at once).`
       );
     }
   } catch (err) {

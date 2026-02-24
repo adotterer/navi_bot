@@ -225,7 +225,7 @@ export async function handleBan(interaction) {
     } else if (nextPhase === 'game2_ban_3') {
       banEmbed.addFields({
         name: 'Next step',
-        value: `${nextMention} (Game 1 winner), ban **3** stage(s) for Game 2. Match ID: \`${matchId}\``,
+        value: `${nextMention} (Game 1 winner): open the **dropdown** and **select exactly 3 stages** to ban for Game 2 (pick all 3 at once). Match ID: \`${matchId}\``,
       });
     } else if (nextPhase === 'game2_complete') {
       banEmbed.addFields({
@@ -395,10 +395,10 @@ export async function handleBanComponent(interaction) {
       });
     } else if (nextPhase === 'game2_ban_3') {
       const gameNum = updatedSession.gameNumber || 2;
-      nextPlaceholder = `${nextName}: ban 3 stages (Game ${gameNum})`;
+      nextPlaceholder = `Select exactly 3 stages to ban (Game ${gameNum})`;
       banEmbed.addFields({
         name: 'Next step',
-        value: `${nextMention}${gameNum === 2 ? ' (Game 1 winner)' : ' (previous game winner)'}, ban **3** stage(s) for Game ${gameNum} from the dropdown below.\n*Only ${nextName} can use the dropdown.*`,
+        value: `${nextMention}${gameNum === 2 ? ' (Game 1 winner)' : ' (previous game winner)'}: open the **dropdown** and **select exactly 3 stages** to ban for Game ${gameNum} (pick all 3 at once).\n*Only ${nextName} can use the dropdown.*`,
       });
     } else if (nextPhase === 'game2_complete') {
       const gameNum = updatedSession.gameNumber || 2;
@@ -434,10 +434,10 @@ export async function handleBanComponent(interaction) {
       });
     } else if (nextPhase === 'game2_ban_3') {
       const gameNum = updatedSession.gameNumber || 2;
-      nextPlaceholder = `Ban 3 stages (Game ${gameNum})`;
+      nextPlaceholder = `Select exactly 3 stages to ban (Game ${gameNum})`;
       banEmbed.addFields({
         name: 'Next step',
-        value: `${nextMention}, ban **3** stage(s) for Game ${gameNum}.`,
+        value: `${nextMention}, open the dropdown and **select exactly 3 stages** to ban for Game ${gameNum} (all at once).`,
       });
     } else if (nextPhase === 'game2_complete') {
       const gameNum = updatedSession.gameNumber || 2;

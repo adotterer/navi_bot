@@ -28,10 +28,11 @@ function getAllowedStagesForSession(session) {
 
 /**
  * Build an ActionRow with a StringSelectMenu for the current turn's allowed stages, or null if none (e.g. game 1 complete).
- * When the phase requires banning 2 stages (game1_ban_2), the menu allows multi-select so the player can pick both at once.
+ * When the phase requires banning 2 stages (game1_ban_2), the menu is multi-select so the player picks both at once.
+ * When the phase requires banning 3 stages (game2_ban_3), the menu is multi-select so the player picks all 3 at once.
  * @param {string} matchId
  * @param {object} session
- * @param {string} [placeholder] - e.g. "Ban a stage" or "Select stage"
+ * @param {string} [placeholder] - e.g. "Ban a stage" or "Select exactly 3 stages to ban"
  * @returns {ActionRowBuilder|null}
  */
 export function buildStageSelectRow(matchId, session, placeholder = 'Ban or select a stage') {
@@ -39,12 +40,15 @@ export function buildStageSelectRow(matchId, session, placeholder = 'Ban or sele
   if (allowed.length === 0) return null;
   const phase = session.turnPhase || '';
   const isBan2FirstStep = phase === 'game1_ban_2_of_2';
+  const isBan3Phase = phase === 'game2_ban_3';
   const menu = new StringSelectMenuBuilder()
     .setCustomId(`ban:${matchId}`)
     .setPlaceholder(placeholder)
     .addOptions(allowed.map(s => ({ label: s.name, value: s.name })));
   if (isBan2FirstStep && allowed.length >= 2) {
     menu.setMinValues(2).setMaxValues(2);
+  } else if (isBan3Phase && allowed.length >= 3) {
+    menu.setMinValues(3).setMaxValues(3);
   }
   return new ActionRowBuilder().addComponents(menu);
 }
