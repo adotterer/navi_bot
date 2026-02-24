@@ -71,8 +71,17 @@ export async function handleCoinFlip(interaction) {
     }
   } catch (err) {
     console.error('[coinflipHandler] error:', err);
+    let message = '❌ Something went wrong with the coin flip.';
+    const name = err?.name || '';
+    const msg = err?.message || '';
+    if (name === 'ResourceNotFoundException' || msg.includes('Requested resource not found')) {
+      const table = process.env.DYNAMODB_BAN_SESSIONS_TABLE || 'navi-ban-sessions';
+      message = `❌ Ban sessions table not found. Create a DynamoDB table named **${table}** with partition key **pk** (String) in the same region as your AUTH_DYNAMODB_* credentials.`;
+    } else if (msg.includes('DynamoDB not configured')) {
+      message = `❌ ${msg}`;
+    }
     try {
-      await interaction.editReply('❌ Something went wrong with the coin flip.');
+      await interaction.editReply(message);
     } catch (_) {}
   }
 }
