@@ -4,6 +4,7 @@ Standalone scripts for tournament and Zelda-list maintenance. Not used by the bo
 
 | Script | Purpose |
 |--------|---------|
+| `upload-assets-to-s3.js [file ...] [--prefix stage-lists/]` | Upload files from ~/Downloads (or path) to S3; prints public URL(s). Uses `.env` AWS/S3 vars. |
 | `list_all_tournaments.js` | List active SSBU tournaments (Start.gg). |
 | `search_tournaments_today.js` | Search today’s tournaments with pagination. |
 | `show_tournament_participants.js [slug]` | Show participants for a tournament by slug. |

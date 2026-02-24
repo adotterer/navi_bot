@@ -3,15 +3,16 @@ import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, ListOb
 // Env names: prefer .env.example (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME)
 const AWS_REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-west-1';
 const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || process.env.BUCKET_NAME;
-const ACCESS_KEY = process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY;
-const SECRET_KEY = process.env.AWS_SECRET_ACCESS_KEY || process.env.SECRET_ACCESS_KEY || process.env.AWS_SECRET_KEY;
+// Prefer main AWS keys; fall back to DynamoDB auth keys (same IAM may have S3 + DynamoDB permissions)
+const ACCESS_KEY = process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY || process.env.AUTH_DYNAMODB_ID;
+const SECRET_KEY = process.env.AWS_SECRET_ACCESS_KEY || process.env.SECRET_ACCESS_KEY || process.env.AWS_SECRET_KEY || process.env.AUTH_DYNAMODB_SECRET;
 
+// Use explicit credentials when we have both (main AWS or AUTH_DYNAMODB_*); otherwise default chain (~/.aws/credentials, SSO)
 const s3Client = new S3Client({
     region: AWS_REGION,
-    credentials: {
-        accessKeyId: ACCESS_KEY,
-        secretAccessKey: SECRET_KEY
-    }
+    ...(ACCESS_KEY && SECRET_KEY
+        ? { credentials: { accessKeyId: ACCESS_KEY, secretAccessKey: SECRET_KEY } }
+        : {})
 });
 
 export async function uploadToS3(filename, fileContent) {
@@ -120,6 +121,32 @@ export async function listS3KeysWithPrefix(prefix, maxKeys = 100, bucket = defau
     }
 }
 
+/** List all keys with the given prefix, using pagination (ContinuationToken). Returns array of { Key, LastModified, Size }. Cap at maxTotal keys. */
+export async function listAllS3KeysWithPrefix(prefix, maxTotal = 5000, bucket = defaultBucket()) {
+    if (!bucket) return [];
+    const out = [];
+    let continuationToken;
+    try {
+        do {
+            const res = await s3Client.send(new ListObjectsV2Command({
+                Bucket: bucket,
+                Prefix: prefix,
+                MaxKeys: Math.min(1000, maxTotal - out.length),
+                ContinuationToken: continuationToken
+            }));
+            const contents = res.Contents ?? [];
+            for (const c of contents) {
+                out.push({ Key: c.Key, LastModified: c.LastModified, Size: c.Size });
+                if (out.length >= maxTotal) break;
+            }
+            continuationToken = res.IsTruncated ? res.NextContinuationToken : undefined;
+        } while (continuationToken && out.length < maxTotal);
+        return out;
+    } catch (_) {
+        return [];
+    }
+}
+
 /** Delete one object by key. */
 export async function deleteFromS3(key) {
     await s3Client.send(new DeleteObjectCommand({
@@ -137,6 +164,18 @@ export async function putToS3(key, body, contentType = 'text/plain') {
         ContentType: contentType
     });
     await s3Client.send(command);
+}
+
+/** Upload a buffer (e.g. image) to S3 and return the public URL. Key is full path e.g. stage-lists/region-name.png */
+export async function uploadBufferToS3(key, buffer, contentType = 'application/octet-stream') {
+    const command = new PutObjectCommand({
+        Bucket: S3_BUCKET_NAME,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType
+    });
+    await s3Client.send(command);
+    return `https://${S3_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${key}`;
 }
 
 export function isModelOverloaded(error) {

@@ -17,6 +17,7 @@ function adminNav(active = 'dashboard', isSuperAdmin = false) {
         { href: '/admin/data', label: 'Data', key: 'data' },
         { href: '/admin/aliases', label: 'Aliases', key: 'aliases' },
         { href: '/admin/emojis', label: 'Emojis', key: 'emojis' },
+        { href: '/admin/assets', label: 'Assets', key: 'assets' },
         { href: '/admin/agent', label: 'Missions', key: 'agent' },
         { href: '/admin/cost', label: 'Cost', key: 'cost' },
         { href: '/admin/commands', label: 'Commands', key: 'commands' },

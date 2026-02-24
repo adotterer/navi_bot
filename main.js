@@ -305,14 +305,18 @@ client.on("messageCreate", async (message) => {
     }
 
     if (isSlCommand) {
-        const embed = new EmbedBuilder()
-            .setColor(INFO_EMBED_COLOR)
-            .setTitle("Stage List")
-            .addFields(
-                { name: "Starters", value: "- Final Destination\n- Battlefield\n- Small Battlefield\n- Smashville\n- Pokemon Stadium 2 (PS2)" },
-                { name: "Counter picks", value: "- Hollow Bastion\n- Town & City\n- Kalos Pokemon League" }
-            );
-        await message.reply({ embeds: [embed] });
+        const baseUrl = (process.env.APP_BASE_URL || `http://localhost:${process.env.PORT || 8080}`).replace(/\/$/, '');
+        const embeds = [
+            new EmbedBuilder()
+                .setColor(INFO_EMBED_COLOR)
+                .setTitle("Stage List (NA)")
+                .setImage(`${baseUrl}/assets/na.png`),
+            new EmbedBuilder()
+                .setColor(INFO_EMBED_COLOR)
+                .setTitle("Stage List (EU)")
+                .setImage(`${baseUrl}/assets/eu.png`),
+        ];
+        await message.reply({ embeds });
         return;
     }
 

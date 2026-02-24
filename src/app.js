@@ -16,6 +16,7 @@ const require = createRequire(import.meta.url);
 const FileStore = require('session-file-store')(session);
 import { adminRouter } from './admin/routes.js';
 import { webhookRouter } from './admin/webhookRoutes.js';
+import { fetchFromS3Buffer } from './shared/s3Helper.js';
 
 const ENFORCE_HTTPS = process.env.ENFORCE_HTTPS === 'true' || process.env.ENFORCE_HTTPS === '1';
 const isProduction = process.env.NODE_ENV === 'production';
@@ -108,6 +109,25 @@ export function createApp() {
     // Public exports endpoint (primary application entry point).
     // Serve only exported data from an isolated dir (audit: do not serve project root).
     app.use('/exports', express.static('data/exports', { index: false }));
+
+    // Public asset proxy: /assets/path → stream from S3 key assets/path (bucket can stay private). Anyone can view.
+    app.get(/^\/assets\/(.+)$/, async (req, res) => {
+        const raw = (req.params[0] || '').replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
+        if (!raw || /\.\.|[^a-zA-Z0-9/._-]/.test(raw)) {
+            return res.status(400).send('Invalid path');
+        }
+        const key = 'assets/' + raw;
+        try {
+            const result = await fetchFromS3Buffer(key);
+            if (!result) {
+                return res.status(404).send('Not found');
+            }
+            res.type(result.contentType).send(result.body);
+        } catch (err) {
+            console.error('[assets]', key, err.message || err);
+            res.status(500).send('Error loading asset');
+        }
+    });
 
     // Public robots.txt (primary application entry point).
     // Ask crawlers not to index the site (admin/internal use).

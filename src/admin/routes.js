@@ -2,6 +2,7 @@
  * Admin routes: login, logout, dashboard. All except login require auth.
  */
 import express from 'express';
+import multer from 'multer';
 import { requireAdmin, checkLogin, verify2fa, generate2FACode, is2faBypassed, isSuperAdmin, requireSuperAdmin } from './auth.js';
 import { send2FACode, sendAdminInviteEmail } from '../shared/sesHelper.js';
 import { createInvite, getInviteByToken, deleteInvite, putAdmin, getAdminByEmail, listAdminEmails, hashPasswordForStorage } from '../shared/adminDynamo.js';
@@ -13,10 +14,21 @@ import { emojiRoutes } from './emojiRoutes.js';
 import { commandRoutes } from './commandRoutes.js';
 import { agentRoutes } from './agent/agentRoutes.js';
 import { costRoutes } from './costRoutes.js';
+import assetRoutes from './assetRoutes.js';
 import { adminHead, adminNav, adminContainer, escapeHtml, s3Badge } from './layout.js';
 import { headS3Key, hasS3KeysWithPrefix } from '../shared/s3Helper.js';
 
 const router = express.Router();
+
+// Parse multipart for POST /assets before CSRF so req.body._csrf is available
+const multerMemory = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+router.use('/assets', (req, res, next) => {
+    if (req.method !== 'POST' || !req.is('multipart/form-data')) return next();
+    multerMemory.array('assets')(req, res, (err) => {
+        if (err) return next(err);
+        next();
+    });
+});
 
 // Session-based CSRF fallback for login/setup: when the double-submit cookie isn't sent
 // (e.g. behind some load balancers), accept the token from session so login/setup still works securely.
@@ -298,6 +310,7 @@ router.use('/prompts', requireAdmin, promptRoutes);
 router.use('/data', requireAdmin, dataRoutes);
 router.use('/aliases', requireAdmin, aliasRoutes);
 router.use('/emojis', requireAdmin, emojiRoutes);
+router.use('/assets', requireAdmin, assetRoutes);
 router.use('/commands', requireAdmin, commandRoutes);
 router.use('/agent', requireAdmin, agentRoutes);
 router.use('/cost', requireAdmin, costRoutes);
@@ -418,6 +431,13 @@ function dashboardPage(s3 = {}, csrfToken = '', isSuperAdmin = false) {
           ${badge(s3.emojis)}
         </div>
         <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Discord custom emoji library for use in prompts (insert as images in the editor).</p>
+        <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Open →</span>
+      </a>
+      <a href="/admin/assets" class="block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-md transition-all group">
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Assets</h2>
+        </div>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Upload images or other files to S3. Use the same bucket and credentials as the rest of the app.</p>
         <span class="mt-3 inline-block text-sm font-medium text-emerald-600 group-hover:text-emerald-700 dark:group-hover:text-emerald-400">Open →</span>
       </a>
       <a href="/admin/commands" class="block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-800 hover:shadow-md transition-all group">
