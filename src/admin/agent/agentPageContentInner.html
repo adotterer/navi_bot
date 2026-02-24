@@ -923,7 +923,7 @@
     }
 
     if (repoSearchInput) {
-      var debouncedSearch = debounce(runSearch, 150);
+      var debouncedSearch = debounce(runSearch, 100);
       repoSearchInput.addEventListener('input', debouncedSearch);
       repoSearchInput.addEventListener('compositionend', debouncedSearch);
       repoSearchInput.addEventListener('keydown', function(ev) {

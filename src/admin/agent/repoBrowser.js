@@ -376,7 +376,87 @@ const MAX_WALK_PATHS = 5000;
 const MAX_CONTENT_SEARCH_FILES = 200;
 
 /**
+ * Get all paths (files and dirs) in the repo in one shot (local git). Much faster than walkRepoTree.
+ * @param {string} ref - Branch name
+ * @returns {Promise<{ ok: true, paths: string[] } | { ok: false, error: string }>}
+ */
+async function getAllPathsLocal(ref) {
+    try {
+        const out = await git.raw(['ls-tree', '-r', '--name-only', ref]);
+        const rawStr = out != null ? String(out) : '';
+        const lines = rawStr.trim() ? rawStr.trim().split(/\r?\n/) : [];
+        const paths = [];
+        const dirsSeen = new Set();
+        for (const line of lines) {
+            if (paths.length >= MAX_WALK_PATHS) break;
+            const p = line.trim();
+            if (!p || EXCLUDED_DIRS.has(p.split('/')[0])) continue;
+            paths.push(p);
+            const parts = p.split('/');
+            for (let i = 1; i < parts.length; i++) {
+                const dir = parts.slice(0, i).join('/');
+                if (!dirsSeen.has(dir)) {
+                    dirsSeen.add(dir);
+                    if (paths.length < MAX_WALK_PATHS) paths.push(dir);
+                }
+            }
+        }
+        return { ok: true, paths: [...new Set(paths)] };
+    } catch (err) {
+        const msg = err.message || String(err);
+        if (msg.includes('Not a valid object') || msg.includes('unknown revision')) return { ok: false, error: 'Branch not found' };
+        return { ok: false, error: msg };
+    }
+}
+
+/**
+ * Get full tree recursively from GitHub (one API call after resolving ref).
+ * @param {string} ref - Branch name
+ * @returns {Promise<{ ok: true, paths: string[] } | { ok: false, error: string }>}
+ */
+async function getAllPathsGitHub(ref) {
+    const repo = getRepoFromEnv();
+    if (!repo) return { ok: false, error: 'Repo not available' };
+    const refTrim = (ref || 'main').trim();
+    try {
+        const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+        const { data: commit } = await octokit.repos.getCommit({
+            owner: repo.owner,
+            repo: repo.repo,
+            ref: refTrim,
+        });
+        const treeSha = commit.commit?.tree?.sha;
+        if (!treeSha) return { ok: false, error: 'Could not get tree for branch' };
+        const { data: tree } = await octokit.git.getTree({
+            owner: repo.owner,
+            repo: repo.repo,
+            tree_sha: treeSha,
+            recursive: '1',
+        });
+        const paths = [];
+        const dirsSeen = new Set();
+        for (const node of tree.tree || []) {
+            if (paths.length >= MAX_WALK_PATHS) break;
+            const p = node.path || '';
+            if (!p || EXCLUDED_DIRS.has(p.split('/')[0])) continue;
+            if (node.type === 'blob') paths.push(p);
+            if (node.type === 'tree') {
+                if (!dirsSeen.has(p)) {
+                    dirsSeen.add(p);
+                    paths.push(p);
+                }
+            }
+        }
+        return { ok: true, paths };
+    } catch (err) {
+        if (err.status === 404) return { ok: false, error: 'Branch not found' };
+        return { ok: false, error: err.message || String(err) };
+    }
+}
+
+/**
  * Recursively walk the repo tree and collect all file paths (and optionally dir paths).
+ * Used when getAllPaths* is not available (e.g. getTree for lazy UI tree).
  * @param {string} ref - Branch name
  * @param {string} dirPath - Current directory path ('' for root)
  * @param {string[]} filePaths - Mutable array to push file paths into
@@ -402,6 +482,7 @@ async function walkRepoTree(ref, dirPath, filePaths, opts = {}) {
 /**
  * Search repo for paths matching query (case-insensitive substring on path).
  * Optionally filter by file content (grep-like).
+ * Uses a single recursive tree listing when possible for speed.
  * @param {string} ref - Branch name
  * @param {string} query - Search string
  * @param {{ contentSearch?: boolean }} [options]
@@ -411,9 +492,19 @@ export async function searchRepoPaths(ref, query, options = {}) {
     const refTrim = typeof ref === 'string' ? ref.trim() : '';
     if (!refTrim) return { ok: false, error: 'Branch required' };
     const q = typeof query === 'string' ? query.trim() : '';
-    const allPaths = [];
-    const walkResult = await walkRepoTree(refTrim, '', allPaths, { includeDirs: true });
-    if (!walkResult.ok) return walkResult;
+    let allPaths = [];
+
+    if (GITHUB_REPO_AVAILABLE) {
+        const result = await getAllPathsGitHub(refTrim);
+        if (!result.ok) return result;
+        allPaths = result.paths;
+    } else if (REPO_AVAILABLE) {
+        const result = await getAllPathsLocal(refTrim);
+        if (!result.ok) return result;
+        allPaths = result.paths;
+    } else {
+        return { ok: false, error: 'Repo browser not available' };
+    }
 
     const qLower = q.toLowerCase();
     let paths = q.length < 2
