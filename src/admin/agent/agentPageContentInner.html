@@ -33,7 +33,7 @@
           box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
         }
         .repo-search-results {
-          max-height: 250px;
+          max-height: min(60vh, 420px);
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
           z-index: 100 !important;
@@ -271,17 +271,20 @@
         </div>
       </div>
     </div>
-    <div class="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 mb-8">
-      <div class="border-b border-slate-200 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-3 flex-wrap">
+    <div class="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 mb-8 repo-browser-card">
+      <div class="repo-browser-header border-b border-slate-200 dark:border-slate-700 px-3 py-2 sm:py-2.5 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-3 flex-wrap relative">
         <span class="text-sm font-medium text-slate-700 dark:text-slate-300 flex-shrink-0">Repository</span>
-        <div class="repo-search-wrap relative flex-1 min-w-0 flex items-center">
-          <input type="text" id="repo-search-input" placeholder="Search files…" class="repo-search-input w-full min-w-0 px-2.5 py-1.5 text-sm" autocomplete="off" />
-          <div id="repo-search-results" class="repo-search-results hidden shadow-lg"></div>
+        <div class="repo-search-wrap flex-1 min-w-0 flex items-center w-full sm:w-auto">
+          <input type="text" id="repo-search-input" placeholder="Search files…" class="repo-search-input w-full min-w-0 px-3 py-2 sm:py-1.5 text-sm" autocomplete="off" aria-expanded="false" aria-haspopup="listbox" aria-controls="repo-search-results" />
         </div>
-        <button type="button" id="toggle-repo-files" class="flex-shrink-0 block sm:hidden text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700">Hide Files</button>
+        <div id="repo-search-results" class="repo-search-results hidden shadow-lg" role="listbox" aria-label="File search results"></div>
+        <button type="button" id="toggle-repo-files" class="flex-shrink-0 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 touch-manipulation" aria-expanded="true" aria-controls="repo-sidebar" title="Toggle directory tree">
+          <span id="toggle-repo-files-icon" aria-hidden="true"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg></span>
+          <span id="toggle-repo-files-label">Hide directory</span>
+        </button>
       </div>
       <div class="flex flex-col sm:flex-row min-h-[400px]">
-        <div id="repo-sidebar" class="w-full sm:w-60 max-h-60 sm:max-h-none border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto flex-shrink-0 flex flex-col">
+        <div id="repo-sidebar" class="w-full sm:w-60 max-h-60 sm:max-h-none border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 overflow-y-auto flex-shrink-0 flex flex-col" role="region" aria-label="Repository file tree">
           <div class="flex-shrink-0 p-2 border-b border-slate-200 dark:border-slate-700">
             <select id="repo-branch" class="w-full rounded border border-slate-300 dark:border-slate-600 px-2 py-1 text-sm text-slate-800 dark:text-slate-100 dark:bg-slate-700"></select>
           </div>
@@ -480,18 +483,30 @@
 
   (function() {
     var toggleBtn = document.getElementById('toggle-repo-files');
+    var toggleLabel = document.getElementById('toggle-repo-files-label');
+    var toggleIcon = document.getElementById('toggle-repo-files-icon');
     var repoSidebar = document.getElementById('repo-sidebar');
     if (toggleBtn && repoSidebar) {
+      function updateToggleState() {
+        var hidden = repoSidebar.classList.contains('hidden');
+        toggleBtn.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+        if (toggleLabel) toggleLabel.textContent = hidden ? 'Show directory' : 'Hide directory';
+        if (toggleIcon) {
+          toggleIcon.innerHTML = hidden
+            ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>'
+            : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>';
+        }
+      }
       toggleBtn.addEventListener('click', function() {
         var hidden = repoSidebar.classList.contains('hidden');
         if (hidden) {
           repoSidebar.classList.remove('hidden');
-          toggleBtn.textContent = 'Hide Files';
         } else {
           repoSidebar.classList.add('hidden');
-          toggleBtn.textContent = 'Show Files';
         }
+        updateToggleState();
       });
+      updateToggleState();
     }
   })();
 
@@ -811,6 +826,7 @@
 
     function hideSearchResults() {
       if (repoSearchResults) { repoSearchResults.classList.add('hidden'); repoSearchResults.innerHTML = ''; }
+      if (repoSearchInput) repoSearchInput.setAttribute('aria-expanded', 'false');
       searchHighlightIndex = -1;
     }
 
@@ -819,6 +835,7 @@
       if (q.length < MIN_QUERY_LEN) { hideSearchResults(); return; }
       repoSearchResults.innerHTML = '<div class="px-3 py-2 text-xs text-slate-500 italic">Searching...</div>';
       repoSearchResults.classList.remove('hidden');
+      if (repoSearchInput) repoSearchInput.setAttribute('aria-expanded', 'true');
       var branch = repoBranch ? repoBranch.value : 'main';
       _adminFetch('/admin/agent/repo-browser/search?q=' + encodeURIComponent(q) + '&branch=' + encodeURIComponent(branch), { credentials: 'same-origin' })
         .then(function(r) { return r.json(); })
@@ -830,15 +847,16 @@
           if (searchPaths.length === 0) { repoSearchResults.classList.add('hidden'); return; }
           searchPaths.forEach(function(path, idx) {
             var item = document.createElement('div');
-            item.className = 'repo-search-result-item flex items-center gap-2 px-2.5 py-1.5 cursor-pointer border-b border-slate-100 dark:border-slate-700 last:border-b-0 hover:bg-slate-100 dark:hover:bg-slate-700/70' + (idx === 0 ? ' bg-slate-100 dark:bg-slate-700/50' : '');
+            item.className = 'repo-search-result-item' + (idx === 0 ? ' bg-slate-100 dark:bg-slate-700/50' : '');
+            item.setAttribute('role', 'option');
             item.dataset.path = path;
             item.dataset.index = String(idx);
             var pathSpan = document.createElement('span');
-            pathSpan.className = 'flex-1 truncate text-slate-700 dark:text-slate-200 text-sm';
+            pathSpan.className = 'path-text';
             pathSpan.innerHTML = highlightPath(path, q);
             var insertBtn = document.createElement('button');
             insertBtn.type = 'button';
-            insertBtn.className = 'repo-search-insert-btn flex-shrink-0 p-1 rounded text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200 dark:hover:bg-slate-600';
+            insertBtn.className = 'repo-search-insert-btn';
             insertBtn.title = 'Insert path into mission';
             insertBtn.setAttribute('aria-label', 'Insert path into mission');
             insertBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>';
@@ -874,6 +892,7 @@
             repoSearchResults.appendChild(item);
           });
           repoSearchResults.classList.remove('hidden');
+          if (repoSearchInput) repoSearchInput.setAttribute('aria-expanded', 'true');
         })
         .catch(function() { hideSearchResults(); });
     }
@@ -934,10 +953,20 @@
         }
       });
       repoSearchInput.addEventListener('focus', function() {
-        if (searchPaths.length > 0) repoSearchResults.classList.remove('hidden');
+        if (searchPaths.length > 0) {
+          repoSearchResults.classList.remove('hidden');
+          repoSearchInput.setAttribute('aria-expanded', 'true');
+        }
+      });
+      repoSearchInput.addEventListener('blur', function() {
+        setTimeout(function() {
+          if (repoSearchResults && !repoSearchResults.classList.contains('hidden') && document.activeElement && !repoSearchResults.contains(document.activeElement) && repoSearchInput && document.activeElement !== repoSearchInput) {
+            hideSearchResults();
+          }
+        }, 180);
       });
     }
-    document.addEventListener('click', function(ev) {
+    document.addEventListener('pointerdown', function(ev) {
       if (repoSearchResults && !repoSearchResults.classList.contains('hidden') && repoSearchInput && !repoSearchInput.contains(ev.target) && !repoSearchResults.contains(ev.target)) {
         hideSearchResults();
       }

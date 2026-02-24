@@ -765,7 +765,11 @@ tr:is(.dark *) {
   transform: scale(1) rotate(0deg);
 }
 
-/* Repo browser search */
+/* Repo browser search: dropdown full width of header, readable and touch-friendly */
+
+.repo-browser-header {
+  position: relative;
+}
 
 .repo-search-input {
   border-radius: 0.5rem;
@@ -820,6 +824,15 @@ tr:is(.dark *) {
 }
 
 .repo-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0px;
+  right: 0px;
+  z-index: 50;
+  margin-top: 0.375rem;
+  max-height: 60vh;
+  width: 100%;
+  min-width: 0px;
   overflow-y: auto;
   border-radius: 0.5rem;
   border-width: 1px;
@@ -829,6 +842,9 @@ tr:is(.dark *) {
   background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
   --tw-text-opacity: 1;
   color: rgb(30 41 59 / var(--tw-text-opacity, 1));
+  --tw-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
 .repo-search-results:is(.dark *) {
@@ -842,15 +858,61 @@ tr:is(.dark *) {
 
 .repo-search-result-item {
   display: flex;
+  min-height: 44px;
   cursor: pointer;
+  touch-action: manipulation;
   align-items: center;
   gap: 0.5rem;
-  padding-left: 0.625rem;
-  padding-right: 0.625rem;
-  padding-top: 0.375rem;
-  padding-bottom: 0.375rem;
+  border-bottom-width: 1px;
+  --tw-border-opacity: 1;
+  border-color: rgb(241 245 249 / var(--tw-border-opacity, 1));
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
+}
+
+.repo-search-result-item:last-child {
+  border-bottom-width: 0px;
+}
+
+.repo-search-result-item:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(241 245 249 / var(--tw-bg-opacity, 1));
+}
+
+.repo-search-result-item:is(.dark *) {
+  --tw-border-opacity: 1;
+  border-color: rgb(51 65 85 / var(--tw-border-opacity, 1));
+}
+
+.repo-search-result-item:hover:is(.dark *) {
+  background-color: rgb(51 65 85 / 0.7);
+}
+
+@media (min-width: 640px) {
+  .repo-search-result-item {
+    min-height: 0px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}
+
+.repo-search-result-item .path-text {
+  min-width: 0px;
+  flex: 1 1 0%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  --tw-text-opacity: 1;
+  color: rgb(51 65 85 / var(--tw-text-opacity, 1));
+}
+
+.repo-search-result-item .path-text:is(.dark *) {
+  --tw-text-opacity: 1;
+  color: rgb(226 232 240 / var(--tw-text-opacity, 1));
 }
 
 .repo-search-match {
@@ -871,9 +933,15 @@ tr:is(.dark *) {
 }
 
 .repo-search-insert-btn {
+  display: flex;
+  min-height: 44px;
+  min-width: 44px;
   flex-shrink: 0;
+  touch-action: manipulation;
+  align-items: center;
+  justify-content: center;
   border-radius: 0.25rem;
-  padding: 0.25rem;
+  padding: 0.5rem;
   --tw-text-opacity: 1;
   color: rgb(100 116 139 / var(--tw-text-opacity, 1));
 }
@@ -907,6 +975,14 @@ tr:is(.dark *) {
   color: rgb(52 211 153 / var(--tw-text-opacity, 1));
 }
 
+@media (min-width: 640px) {
+  .repo-search-insert-btn {
+    min-height: 0px;
+    min-width: 0px;
+    padding: 0.25rem;
+  }
+}
+
 .visible {
   visibility: visible;
 }
@@ -935,28 +1011,12 @@ tr:is(.dark *) {
   position: sticky;
 }
 
-.left-0 {
-  left: 0px;
-}
-
-.right-0 {
-  right: 0px;
-}
-
 .top-0 {
   top: 0px;
 }
 
-.top-full {
-  top: 100%;
-}
-
 .z-10 {
   z-index: 10;
-}
-
-.z-20 {
-  z-index: 20;
 }
 
 .-mx-4 {
@@ -1120,10 +1180,6 @@ tr:is(.dark *) {
 
 .h-full {
   height: 100%;
-}
-
-.max-h-48 {
-  max-height: 12rem;
 }
 
 .max-h-60 {
@@ -1318,6 +1374,10 @@ tr:is(.dark *) {
 
 .cursor-pointer {
   cursor: pointer;
+}
+
+.touch-manipulation {
+  touch-action: manipulation;
 }
 
 .select-none {
@@ -1849,10 +1909,6 @@ tr:is(.dark *) {
      object-fit: contain;
 }
 
-.p-1 {
-  padding: 0.25rem;
-}
-
 .p-1\.5 {
   padding: 0.375rem;
 }
@@ -1882,11 +1938,6 @@ tr:is(.dark *) {
 .px-2 {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
-}
-
-.px-2\.5 {
-  padding-left: 0.625rem;
-  padding-right: 0.625rem;
 }
 
 .px-3 {
@@ -2381,10 +2432,6 @@ tr:is(.dark *) {
 
 /* Save bar: slim height, slight transparency, one row of buttons */
 
-.last\:border-b-0:last-child {
-  border-bottom-width: 0px;
-}
-
 .focus-within\:border-emerald-500:focus-within {
   --tw-border-opacity: 1;
   border-color: rgb(16 185 129 / var(--tw-border-opacity, 1));
@@ -2665,6 +2712,11 @@ tr:is(.dark *) {
   border-color: rgb(6 95 70 / 0.5);
 }
 
+.dark\:border-red-700:is(.dark *) {
+  --tw-border-opacity: 1;
+  border-color: rgb(185 28 28 / var(--tw-border-opacity, 1));
+}
+
 .dark\:border-red-800:is(.dark *) {
   --tw-border-opacity: 1;
   border-color: rgb(153 27 27 / var(--tw-border-opacity, 1));
@@ -2837,6 +2889,11 @@ tr:is(.dark *) {
   color: rgb(103 232 249 / var(--tw-text-opacity, 1));
 }
 
+.dark\:text-emerald-200:is(.dark *) {
+  --tw-text-opacity: 1;
+  color: rgb(167 243 208 / var(--tw-text-opacity, 1));
+}
+
 .dark\:text-emerald-300:is(.dark *) {
   --tw-text-opacity: 1;
   color: rgb(110 231 183 / var(--tw-text-opacity, 1));
@@ -2855,6 +2912,11 @@ tr:is(.dark *) {
 .dark\:text-purple-300:is(.dark *) {
   --tw-text-opacity: 1;
   color: rgb(216 180 254 / var(--tw-text-opacity, 1));
+}
+
+.dark\:text-red-200:is(.dark *) {
+  --tw-text-opacity: 1;
+  color: rgb(254 202 202 / var(--tw-text-opacity, 1));
 }
 
 .dark\:text-red-400:is(.dark *) {
@@ -2981,10 +3043,6 @@ tr:is(.dark *) {
   background-color: rgb(51 65 85 / 0.5);
 }
 
-.dark\:hover\:bg-slate-700\/70:hover:is(.dark *) {
-  background-color: rgb(51 65 85 / 0.7);
-}
-
 .dark\:hover\:bg-slate-800:hover:is(.dark *) {
   --tw-bg-opacity: 1;
   background-color: rgb(30 41 59 / var(--tw-bg-opacity, 1));
@@ -3070,6 +3128,10 @@ tr:is(.dark *) {
     width: 18rem;
   }
 
+  .sm\:w-auto {
+    width: auto;
+  }
+
   .sm\:min-w-\[200px\] {
     min-width: 200px;
   }
@@ -3142,8 +3204,18 @@ tr:is(.dark *) {
     padding-right: 2rem;
   }
 
+  .sm\:py-1\.5 {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+
   .sm\:py-2 {
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
+  }
+
+  .sm\:py-2\.5 {
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
   }
 }

@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import { createRequire } from 'module';
 import path from 'path';
+import fs from 'fs';
 import { getSessionConfig } from './admin/auth.js';
 
 const require = createRequire(import.meta.url);
@@ -84,7 +85,13 @@ export function createApp() {
 
     app.use(express.urlencoded({ extended: true, limit: '50kb' }));
     app.use(express.json({ limit: '50kb' }));
-    const sessionStore = new FileStore({ path: path.join(process.cwd(), 'sessions') });
+    const sessionsPath = path.join(process.cwd(), 'sessions');
+    try {
+        fs.mkdirSync(sessionsPath, { recursive: true });
+    } catch (err) {
+        console.warn('[app] Could not create sessions directory:', err?.message || err);
+    }
+    const sessionStore = new FileStore({ path: sessionsPath });
     app.use(session(getSessionConfig({ store: sessionStore })));
     app.use(cookieParser());
     app.use('/admin', adminRouter);
