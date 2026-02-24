@@ -1,6 +1,6 @@
 /**
- * /findMatch: Challenger posts "Match started! @A VS @B" with BO3/BO5 dropdown (challenger picks) and "Accept Match" button (opponent clicks).
- * When both format is chosen and opponent accepted, the same BO3/BO5 flow starts (coinflip + stage ban).
+ * /findmatch: Open-ended matchmaking. Challenger posts; anyone in the thread can click "Accept Match" to become the opponent.
+ * Challenger picks BO3/BO5 from dropdown. When both someone has accepted and format is chosen, coinflip + stage ban starts.
  */
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';
 import { createSession, updateSession, getActiveSessionForPlayer } from './banSessionStore.js';
@@ -10,27 +10,30 @@ import { STAGES } from './stageData.js';
 const INFO_EMBED_COLOR = 0x1e88e5;
 const FORMAT_LABELS = { bo3: 'BO3 (first to 2 wins)', bo5: 'BO5 (first to 3 wins)' };
 
-/** In-memory pending find-match: pendingId -> { challengerId, opponentId, guildId, channelId, accepted, format } */
+/** In-memory pending find-match: pendingId -> { challengerId, opponentId?, guildId, channelId, format? } */
 const pendingFindMatches = new Map();
 
 function buildFindMatchEmbed(pending, challengerName, opponentName, formatSet = null) {
+  const hasOpponent = pending.opponentId != null;
   let desc;
-  if (formatSet) {
-    desc = `**Format:** ${FORMAT_LABELS[formatSet]}\n\n${pending.accepted ? 'Both confirmed. Starting match…' : 'Waiting for opponent to click **Accept Match**.'}`;
-  } else if (pending.accepted) {
-    desc = 'Opponent has accepted. Challenger: choose **Best of 3** or **Best of 5** from the dropdown below.';
+  if (formatSet && hasOpponent) {
+    desc = 'Both set! Starting match…';
+  } else if (formatSet) {
+    desc = `**Format:** ${FORMAT_LABELS[formatSet]}\n\nSomeone click **Accept Match** to play!`;
+  } else if (hasOpponent) {
+    desc = `Opponent: <@${pending.opponentId}>. Challenger: choose **Best of 3** or **Best of 5** from the dropdown below.`;
   } else {
-    desc = 'Is this match a **Best of 3** or **Best of 5**? Please use the drop down menu to confirm. The opponent must click **Accept Match**.';
+    desc = 'Is this match a **Best of 3** or **Best of 5**? Challenger: use the dropdown. Anyone can click **Accept Match** to play!';
   }
+  const vsLine = hasOpponent
+    ? `<@${pending.challengerId}> VS <@${pending.opponentId}>\n\n`
+    : `<@${pending.challengerId}> is looking for an opponent.\n\n`;
+  const namesLine = (challengerName && opponentName) ? `**${challengerName}** vs **${opponentName}**\n\n` : (challengerName ? `**${challengerName}** is the challenger.\n\n` : '');
   return new EmbedBuilder()
     .setColor(INFO_EMBED_COLOR)
     .setTitle('Match started!')
-    .setDescription(
-      `<@${pending.challengerId}> VS <@${pending.opponentId}>\n\n` +
-      (challengerName && opponentName ? `**${challengerName}** vs **${opponentName}**\n\n` : '') +
-      desc
-    )
-    .setFooter({ text: 'Challenger: pick format from dropdown • Opponent: click Accept Match' });
+    .setDescription(vsLine + namesLine + desc)
+    .setFooter({ text: 'Challenger: pick format from dropdown • Anyone: click Accept Match to play' });
 }
 
 function buildFindMatchComponents(pendingId, formatSet) {
@@ -128,43 +131,26 @@ async function startMatch(pending, interaction, format) {
 }
 
 /**
- * Handle /findMatch slash: post message with "Match started! @A VS @B", BO3/BO5 dropdown, Accept Match button.
+ * Handle /findmatch slash: post open-ended "Match started! Challenger is looking for an opponent." BO3/BO5 dropdown + Accept Match button. Anyone can click to play.
  */
 export async function handleFindMatch(interaction) {
   try {
     await interaction.deferReply();
 
-    const opponent = interaction.options.getUser('opponent');
-    if (!opponent) {
-      await interaction.editReply('❌ Please specify an opponent.');
-      return;
-    }
-    if (opponent.bot) {
-      await interaction.editReply('❌ You cannot play against a bot.');
-      return;
-    }
-
     const challengerId = interaction.user.id;
-    const opponentId = opponent.id;
     const guildId = interaction.guildId;
 
-    const existing1 = await getActiveSessionForPlayer(challengerId, guildId);
-    if (existing1) {
+    const existing = await getActiveSessionForPlayer(challengerId, guildId);
+    if (existing) {
       await interaction.editReply('❌ You are already in an active match. Finish it or wait for it to expire before starting another.');
-      return;
-    }
-    const existing2 = await getActiveSessionForPlayer(opponentId, guildId);
-    if (existing2) {
-      await interaction.editReply('❌ Your opponent is already in an active match. They need to finish it or wait for it to expire.');
       return;
     }
 
     const pending = {
       challengerId,
-      opponentId,
+      opponentId: null,
       guildId,
       channelId: interaction.channelId,
-      accepted: false,
       format: null,
     };
     const pendingId = `findmatch-${guildId}-${Date.now()}`;
@@ -172,8 +158,7 @@ export async function handleFindMatch(interaction) {
     pendingFindMatches.set(pendingId, pending);
 
     const challengerName = interaction.user.username;
-    const opponentName = opponent.username;
-    const embed = buildFindMatchEmbed(pending, challengerName, opponentName, null);
+    const embed = buildFindMatchEmbed(pending, challengerName, null, null);
     const components = buildFindMatchComponents(pendingId, null);
 
     await interaction.editReply({
@@ -211,27 +196,21 @@ export async function handleFindMatchFormat(interaction) {
 
   pending.format = format;
 
-  if (pending.accepted) {
+  if (pending.opponentId != null) {
     pendingFindMatches.delete(pendingId);
     await startMatch(pending, interaction, format);
     return true;
   }
 
   let challengerName = interaction.user.username;
-  let opponentName = null;
-  try {
-    const opponent = await interaction.client.users.fetch(pending.opponentId).catch(() => null);
-    if (opponent) opponentName = opponent.username;
-  } catch (_) {}
-
-  const embed = buildFindMatchEmbed(pending, challengerName, opponentName, format);
+  const embed = buildFindMatchEmbed(pending, challengerName, null, format);
   const components = buildFindMatchComponents(pendingId, format);
   await interaction.update({ embeds: [embed], components });
   return true;
 }
 
 /**
- * Handle Accept Match button: only opponent can click; then if format already chosen, start match.
+ * Handle Accept Match button: anyone (except the challenger) can click to become the opponent; first clicker wins. Then if format chosen, start match.
  */
 export async function handleFindMatchAccept(interaction) {
   const pendingId = interaction.customId.replace('findmatch_accept:', '');
@@ -240,12 +219,27 @@ export async function handleFindMatchAccept(interaction) {
     await interaction.reply({ content: '❌ This match request expired or was cancelled.', ephemeral: true }).catch(() => {});
     return true;
   }
-  if (interaction.user.id !== pending.opponentId) {
-    await interaction.reply({ content: '❌ Only the opponent can accept the match.', ephemeral: true }).catch(() => {});
+  if (interaction.user.id === pending.challengerId) {
+    await interaction.reply({ content: "❌ You're the challenger; someone else must click Accept Match to play you.", ephemeral: true }).catch(() => {});
+    return true;
+  }
+  if (interaction.user.bot) {
+    await interaction.reply({ content: '❌ Bots cannot accept matches.', ephemeral: true }).catch(() => {});
+    return true;
+  }
+  if (pending.opponentId != null) {
+    await interaction.reply({ content: '❌ Someone already accepted this match.', ephemeral: true }).catch(() => {});
     return true;
   }
 
-  pending.accepted = true;
+  const accepterId = interaction.user.id;
+  const existing = await getActiveSessionForPlayer(accepterId, pending.guildId);
+  if (existing) {
+    await interaction.reply({ content: '❌ You are already in an active match. Finish it or wait for it to expire.', ephemeral: true }).catch(() => {});
+    return true;
+  }
+
+  pending.opponentId = accepterId;
 
   if (pending.format) {
     pendingFindMatches.delete(pendingId);
@@ -254,7 +248,7 @@ export async function handleFindMatchAccept(interaction) {
   }
 
   let challengerName = null;
-  let opponentName = interaction.user.username;
+  const opponentName = interaction.user.username;
   try {
     const challenger = await interaction.client.users.fetch(pending.challengerId).catch(() => null);
     if (challenger) challengerName = challenger.username;

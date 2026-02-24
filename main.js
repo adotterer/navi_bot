@@ -130,8 +130,7 @@ client.on("clientReady", async () => {
                     .addUserOption(opt => opt.setName('opponent').setDescription('Your opponent').setRequired(true)),
                 new SlashCommandBuilder()
                     .setName('findmatch')
-                    .setDescription('Start a match: you choose BO3 or BO5, opponent accepts with the button')
-                    .addUserOption(opt => opt.setName('opponent').setDescription('Your opponent').setRequired(true)),
+                    .setDescription('Post an open match: you pick BO3/BO5; anyone who sees it can click Accept Match to play'),
             ].map(c => c.toJSON());
             await rest.put(Routes.applicationGuildCommands(client.user.id, guildId), { body: commands });
             console.log('✅ Slash commands registered (/coinflip, /ban, /result, /cancel-match, /end, /bo3, /bo5, /ft5, /findmatch)');
