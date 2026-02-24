@@ -28,6 +28,7 @@ import { handleCancelMatch } from './src/bans/cancelMatchHandler.js';
 import { handleAnotherMatch, handleEndSession } from './src/bans/resultHandler.js';
 import { handleEnd } from './src/bans/endHandler.js';
 import { handleCoinFlipFormat } from './src/bans/coinflipHandler.js';
+import { handleFindMatch, handleFindMatchFormat, handleFindMatchAccept } from './src/bans/findMatchHandler.js';
 import { cleanupExpiredSessions } from './src/bans/banSessionStore.js';
 
 dotenv.config();
@@ -127,9 +128,13 @@ client.on("clientReady", async () => {
                     .setName('ft5')
                     .setDescription('Start a First to 5 stage ban match')
                     .addUserOption(opt => opt.setName('opponent').setDescription('Your opponent').setRequired(true)),
+                new SlashCommandBuilder()
+                    .setName('findmatch')
+                    .setDescription('Start a match: you choose BO3 or BO5, opponent accepts with the button')
+                    .addUserOption(opt => opt.setName('opponent').setDescription('Your opponent').setRequired(true)),
             ].map(c => c.toJSON());
             await rest.put(Routes.applicationGuildCommands(client.user.id, guildId), { body: commands });
-            console.log('✅ Slash commands registered (/coinflip, /ban, /result, /cancel-match, /end, /bo3, /bo5, /ft5)');
+            console.log('✅ Slash commands registered (/coinflip, /ban, /result, /cancel-match, /end, /bo3, /bo5, /ft5, /findmatch)');
         } catch (err) {
             console.error('❌ Failed to register slash commands:', err);
         }
@@ -169,6 +174,8 @@ client.on('interactionCreate', async (interaction) => {
                 await handleCoinFlipFormat(interaction, 'bo5');
             } else if (interaction.commandName === 'ft5') {
                 await handleCoinFlipFormat(interaction, 'ft5');
+            } else if (interaction.commandName === 'findmatch') {
+                await handleFindMatch(interaction);
             }
             return;
         }
@@ -196,6 +203,14 @@ client.on('interactionCreate', async (interaction) => {
             }
             if (customId.startsWith('end_session:')) {
                 const handled = await handleEndSession(interaction);
+                if (handled) return;
+            }
+            if (customId.startsWith('findmatch_format:')) {
+                const handled = await handleFindMatchFormat(interaction);
+                if (handled) return;
+            }
+            if (customId.startsWith('findmatch_accept:')) {
+                const handled = await handleFindMatchAccept(interaction);
                 if (handled) return;
             }
         }
