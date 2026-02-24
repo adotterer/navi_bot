@@ -97,6 +97,14 @@ const PROMPT_META = {
     logs: {
         description: '!logs – last 100 lines of system log (Moderators only)',
         variables: []
+    },
+    coinflip: {
+        description: '/coinflip <opponent> – start a stage ban match with a coin flip',
+        variables: []
+    },
+    ban: {
+        description: '/ban <stage> [match_id] – ban or select a stage during a match',
+        variables: []
     }
 };
 

@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, ChannelType, EmbedBuilder } from "discord.js";
+import { Client, GatewayIntentBits, ChannelType, EmbedBuilder, SlashCommandBuilder, REST, Routes } from "discord.js";
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
@@ -21,6 +21,9 @@ import { handleDocs, handleFaq, handleAliases, INFO_EMBED_COLOR } from './src/me
 import { handleAddAlias } from './src/messages/addAliasCommand.js';
 import { getCanonicalCharacterThreads } from './src/matchups/characterAliases.js';
 import { setClient } from './src/shared/discordClient.js';
+import { handleCoinFlip } from './src/bans/coinflipHandler.js';
+import { handleBan } from './src/bans/banHandler.js';
+import { cleanupExpiredSessions } from './src/bans/banSessionStore.js';
 
 dotenv.config();
 
@@ -76,9 +79,36 @@ const client = new Client({ intents: [
 
 client.login(DISCORD_TOKEN);
 
-client.on("clientReady", () => {
+client.on("clientReady", async () => {
     console.log(`✅ Bot logged in as ${client.user.tag}`);
-    
+
+    // Register slash commands (guild-specific for instant updates)
+    const guildId = process.env.GUILD_ID;
+    if (guildId) {
+        try {
+            const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
+            const commands = [
+                new SlashCommandBuilder()
+                    .setName('coinflip')
+                    .setDescription('Start a stage ban match with a coin flip to determine who bans first')
+                    .addUserOption(opt => opt.setName('opponent').setDescription('Your opponent').setRequired(true)),
+                new SlashCommandBuilder()
+                    .setName('ban')
+                    .setDescription('Ban or select a stage during a match')
+                    .addStringOption(opt => opt.setName('stage').setDescription('Stage name or alias (e.g. sv, Smashville)').setRequired(true))
+                    .addStringOption(opt => opt.setName('match_id').setDescription('Match ID from /coinflip (see embed footer or DM)').setRequired(false)),
+            ].map(c => c.toJSON());
+            await rest.put(Routes.applicationGuildCommands(client.user.id, guildId), { body: commands });
+            console.log('✅ Slash commands registered (/coinflip, /ban)');
+        } catch (err) {
+            console.error('❌ Failed to register slash commands:', err);
+        }
+    } else {
+        console.warn('⚠️ GUILD_ID not set; slash commands not registered.');
+    }
+
+    await cleanupExpiredSessions();
+
     // Initialize weekly export scheduler
     initializeScheduler(client);
     setClient(client);
@@ -87,6 +117,27 @@ client.on("clientReady", () => {
         activities: [{ name: "Use !docs, !faq, !aliases", type: 0 }],
         status: "online"
     });
+});
+
+// Slash command interactions
+client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+    try {
+        if (interaction.commandName === 'coinflip') {
+            await handleCoinFlip(interaction);
+        } else if (interaction.commandName === 'ban') {
+            await handleBan(interaction);
+        }
+    } catch (err) {
+        console.error('[interactionCreate]', interaction.commandName, err);
+        try {
+            if (interaction.deferred) {
+                await interaction.editReply({ content: '❌ An error occurred.' }).catch(() => {});
+            } else {
+                await interaction.reply({ content: '❌ An error occurred.', ephemeral: true }).catch(() => {});
+            }
+        } catch (_) {}
+    }
 });
 // ========== MESSAGE HANDLERS ==========
 // Handler 1: "should have" → "could have" + Arena LAN warning
