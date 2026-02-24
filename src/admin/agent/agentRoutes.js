@@ -34,13 +34,15 @@ async function loadRunFromS3WithFallback(runId) {
 
 // ----- GET /admin/agent – main page (template in agentPageContent.js + agentPageContentInner.html) -----
 router.get('/', (req, res) => {
+    const nonce = res.locals.nonce || '';
     const csrfToken = generateCsrfToken(req, res);
-    const { content, prismTail } = getAgentPageContent({ adminNav, adminContainer: adminContainerWide, breadcrumb });
-    const themeScript = '<script>(function(){var t=localStorage.getItem("theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark");})();<\/script>';
-    const csrfScript = `<script>window.__ADMIN_CSRF_TOKEN=${JSON.stringify(csrfToken || '')};window._adminFetch=function(u,o){o=o||{};o.credentials=o.credentials||'same-origin';if(window.__ADMIN_CSRF_TOKEN&&(o.method==='POST'||o.method==='DELETE'||o.method==='PUT'||o.method==='PATCH')){o.headers=Object.assign({},o.headers||{},{'x-csrf-token':window.__ADMIN_CSRF_TOKEN});}return fetch(u,o);};<\/script>`;
+    const { content, prismTail } = getAgentPageContent({ adminNav, adminContainer: adminContainerWide, breadcrumb, nonce });
+    const n = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
+    const themeScript = `<script${n}>(function(){var t=localStorage.getItem("theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark");})();<\/script>`;
+    const csrfScript = `<script${n}>window.__ADMIN_CSRF_TOKEN=${JSON.stringify(csrfToken || '')};window._adminFetch=function(u,o){o=o||{};o.credentials=o.credentials||'same-origin';if(window.__ADMIN_CSRF_TOKEN&&(o.method==='POST'||o.method==='DELETE'||o.method==='PUT'||o.method==='PATCH')){o.headers=Object.assign({},o.headers||{},{'x-csrf-token':window.__ADMIN_CSRF_TOKEN});}return fetch(u,o);};<\/script>`;
     res.send(`<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Missions')}</head>
+<head>${adminHead('Missions', nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${themeScript}${csrfScript}
 ${content}
 ${prismTail}
@@ -125,8 +127,10 @@ router.get('/models', async (req, res) => {
 const AGENT_PROMPT_LABELS = { researcher: 'Researcher', planner: 'Planner', coder: 'Coder', reviewer: 'Reviewer', auditor: 'Auditor', ask: 'Ask', tester: 'Tester' };
 router.get('/prompts', async (req, res) => {
     try {
+        const nonce = res.locals.nonce || '';
         const csrfToken = generateCsrfToken(req, res);
-        const csrfScript = `<script>window.__ADMIN_CSRF_TOKEN=${JSON.stringify(csrfToken || '')};window._adminFetch=function(u,o){o=o||{};o.credentials=o.credentials||'same-origin';if(window.__ADMIN_CSRF_TOKEN&&(o.method==='POST'||o.method==='DELETE'||o.method==='PUT'||o.method==='PATCH')){o.headers=Object.assign({},o.headers||{},{'x-csrf-token':window.__ADMIN_CSRF_TOKEN});}return fetch(u,o);};<\/script>`;
+        const n = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
+        const csrfScript = `<script${n}>window.__ADMIN_CSRF_TOKEN=${JSON.stringify(csrfToken || '')};window._adminFetch=function(u,o){o=o||{};o.credentials=o.credentials||'same-origin';if(window.__ADMIN_CSRF_TOKEN&&(o.method==='POST'||o.method==='DELETE'||o.method==='PUT'||o.method==='PATCH')){o.headers=Object.assign({},o.headers||{},{'x-csrf-token':window.__ADMIN_CSRF_TOKEN});}return fetch(u,o);};<\/script>`;
         const ids = listAgentPromptIds();
         const prompts = await Promise.all(ids.map(async (id) => ({ id, body: await getAgentPrompt(id), label: AGENT_PROMPT_LABELS[id] || id })));
         const sections = prompts.map(({ id, body, label }) => `
@@ -142,7 +146,7 @@ router.get('/prompts', async (req, res) => {
       <div class="agent-prompt-status border-t border-slate-100 dark:border-slate-700 px-4 py-1.5 text-xs text-slate-400 hidden" data-id="${escapeHtml(id)}"></div>
     </section>`).join('');
         const content = `
-  ${adminNav('agent')}
+  ${adminNav('agent', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/agent', label: 'Missions' }, { label: 'Agent prompts' }])}
     <div class="flex items-center justify-between mb-6">
@@ -151,7 +155,7 @@ router.get('/prompts', async (req, res) => {
     </div>
     <p class="text-slate-600 mb-6">Edit the system prompts used by the Researcher, Planner, Coder, and Reviewer. Changes are saved to S3 and used on the next mission run.</p>
     ${sections}
-    <script>
+    <script${n}>
       document.querySelectorAll('.agent-prompt-save').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var id = btn.dataset.id;
@@ -194,7 +198,7 @@ router.get('/prompts', async (req, res) => {
 `;
         res.send(`<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Agent prompts')}</head>
+<head>${adminHead('Agent prompts', nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${csrfScript}${content}</body>
 </html>`);
     } catch (err) {

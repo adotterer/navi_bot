@@ -50,6 +50,8 @@ function sanitizeKeySegment(name) {
 }
 
 router.get('/', async (req, res) => {
+    const nonce = res.locals.nonce || '';
+    const scriptNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
     const csrfToken = generateCsrfToken(req, res);
     const csrfInput = `<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">`;
     const deleted = req.query.deleted === '1';
@@ -94,6 +96,16 @@ router.get('/', async (req, res) => {
         const allKeys = await listAllS3KeysWithPrefix(ASSETS_PREFIX, 5000);
         const keys = allKeys.sort((a, b) => (a.Key || '').localeCompare(b.Key || ''));
         const imageExt = /\.(png|jpe?g|gif|webp|svg)$/i;
+        const extToLabel = { '.pdf': 'PDF', '.svg': 'SVG' };
+        function previewCell(key, viewUrl) {
+            const isImg = imageExt.test(key);
+            if (isImg) {
+                return `<a href="${escapeHtml(viewUrl)}" target="_blank" rel="noopener" class="block w-12 h-12 rounded border border-slate-200 dark:border-slate-600 overflow-hidden bg-slate-100 dark:bg-slate-700"><img src="${escapeHtml(viewUrl)}" alt="" class="w-full h-full object-contain" loading="lazy" onerror="this.parentElement.innerHTML='—'"></a>`;
+            }
+            const ext = path.extname(key).toLowerCase();
+            const label = extToLabel[ext] || (ext ? ext.slice(1).toUpperCase() : 'File');
+            return `<a href="${escapeHtml(viewUrl)}" target="_blank" rel="noopener" class="inline-flex items-center justify-center w-12 h-12 rounded border border-slate-200 dark:border-slate-600 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 text-xs font-medium" title="Open ${escapeHtml(label)}">${escapeHtml(label)}</a>`;
+        }
         listHtml = keys.length === 0
             ? '<p class="text-slate-500 dark:text-slate-400 text-sm">No assets yet. Upload files above. All uploads go to the <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">assets/</code> folder in the bucket.</p>'
             : `
@@ -110,10 +122,7 @@ router.get('/', async (req, res) => {
               const key = e.Key || '';
               const pathAfterPrefix = key.startsWith(ASSETS_PREFIX) ? key.slice(ASSETS_PREFIX.length) : key;
               const viewUrl = `/assets/${pathAfterPrefix}`;
-              const isImg = imageExt.test(key);
-              const preview = isImg
-                  ? `<a href="${escapeHtml(viewUrl)}" target="_blank" rel="noopener" class="block w-12 h-12 rounded border border-slate-200 dark:border-slate-600 overflow-hidden bg-slate-100 dark:bg-slate-700"><img src="${escapeHtml(viewUrl)}" alt="" class="w-full h-full object-contain" loading="lazy" onerror="this.parentElement.innerHTML='—'"></a>`
-                  : '<span class="text-slate-400">—</span>';
+              const preview = previewCell(key, viewUrl);
               const size = e.Size != null ? (e.Size < 1024 ? e.Size + ' B' : (e.Size < 1024 * 1024 ? (e.Size / 1024).toFixed(1) + ' KB' : (e.Size / (1024 * 1024)).toFixed(1) + ' MB')) : '—';
               return `<tr class="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                 <td class="py-2 px-3 align-middle">${preview}</td>
@@ -137,11 +146,11 @@ router.get('/', async (req, res) => {
     }
 
     const content = `
-  ${adminNav('assets')}
+  ${adminNav('assets', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Assets' }])}
     <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mt-2">Upload assets to S3</h1>
-    <p class="text-slate-600 dark:text-slate-400 text-sm mb-6">Upload images or other files to the <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">assets/</code> folder in the S3 bucket (keeps them separate from other data). Max 10 MB per file.</p>
+    <p class="text-slate-600 dark:text-slate-400 text-sm mb-6">Upload images (PNG, JPG, GIF, WebP, SVG) or PDFs to the <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">assets/</code> folder in the S3 bucket. Non-image files show a type label in the table; click the key or label to open. Max 10 MB per file.</p>
     ${successHtml}
     ${deletedHtml}
     ${errorHtml}
@@ -175,9 +184,9 @@ router.get('/', async (req, res) => {
 `;
     const fullHtml = `<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Assets')}</head>
+<head>${adminHead('Assets', nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}
-<script>
+<script${scriptNonce}>
 (function(){
   var form = document.getElementById('asset-upload-form');
   var btn = document.getElementById('asset-upload-btn');

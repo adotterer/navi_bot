@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
             const meta = getPromptMeta(id);
             return { id, ...meta, s3InUse: s3Flags[i] };
         });
-        res.send(promptsListPage(list));
+        res.send(promptsListPage(list, res.locals.nonce));
     } catch (err) {
         console.error('Admin prompts list:', err);
         res.status(500).send('Error loading prompts.');
@@ -93,7 +93,7 @@ router.get('/:id', async (req, res) => {
         const reset = req.query.reset === '1';
         const emojiLibrary = getEmojiLibrary();
         const csrfToken = generateCsrfToken(req, res);
-        res.send(promptEditPage(id, meta, body, { saved, reset, s3InUse, emojiLibrary, error: req.query.error, csrfToken }));
+        res.send(promptEditPage(id, meta, body, { saved, reset, s3InUse, emojiLibrary, error: req.query.error, csrfToken, nonce: res.locals.nonce }));
     } catch (err) {
         console.error('Admin prompt get:', err);
         res.status(500).send('Error loading prompt.');
@@ -118,7 +118,7 @@ router.post('/:id', express.urlencoded({ extended: true }), async (req, res) => 
             : 'Could not save to S3. Check your .env (AWS_*, S3_BUCKET_NAME) and try again.';
         try {
             const emojiLibrary = getEmojiLibrary();
-            res.status(200).send(promptEditPage(id, meta, body, { saveError, emojiLibrary }));
+            res.status(200).send(promptEditPage(id, meta, body, { saveError, emojiLibrary, nonce: res.locals.nonce }));
         } catch (e) {
             res.status(500).send('Error saving prompt.');
         }
@@ -139,7 +139,7 @@ router.post('/:id/reset', express.urlencoded({ extended: true }), async (req, re
     }
 });
 
-function promptsListPage(list) {
+function promptsListPage(list, nonce = '') {
     const rows = list
         .map(
             ({ id, description, s3InUse }) => `
@@ -151,7 +151,7 @@ function promptsListPage(list) {
         )
         .join('');
     const content = `
-  ${adminNav('prompts')}
+  ${adminNav('prompts', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Prompts' }])}
     <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-2">Edit prompts</h1>
@@ -166,7 +166,7 @@ function promptsListPage(list) {
 `;
     return `<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Prompts')}</head>
+<head>${adminHead('Prompts', nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`;
 }
@@ -225,8 +225,11 @@ function promptEditPage(id, meta, body, opts = {}) {
         ? '<div class="rounded-lg prompt-banner-error text-sm px-4 py-3 mb-6">Could not revert. Version may have been deleted or invalid.</div>'
         : '';
     const csrfInput = opts.csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(opts.csrfToken)}">` : '';
+    const nonce = opts.nonce || '';
+    const scriptNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
+    const styleNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
     const content = `
-  ${adminNav('prompts')}
+  ${adminNav('prompts', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/prompts', label: 'Prompts' }, { label: id }])}
     <div class="flex items-center gap-2 mb-1 flex-wrap">
@@ -279,7 +282,7 @@ function promptEditPage(id, meta, body, opts = {}) {
         <div id="prompt-version-history-list" class="prompt-history-sidecar-body text-sm text-slate-600 dark:text-slate-400" data-prompt-id="${escapeHtml(id)}" data-csrf="${opts.csrfToken ? escapeHtml(opts.csrfToken) : ''}"></div>
       </div>
     </div>
-    <style>
+    <style${styleNonce}>
       #prompt-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
       .prompt-editor-header,
       .prompt-preview-header { height: 67px; min-height: 67px; max-height: 67px; flex-shrink: 0; box-sizing: border-box; }
@@ -331,7 +334,6 @@ function promptEditPage(id, meta, body, opts = {}) {
       .prompt-history-sidecar-body ul { list-style: none; padding: 0; margin: 0; }
       .prompt-history-sidecar-body li { padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
       .prompt-history-sidecar-body li:last-child { border-bottom: none; }
-
       /* Banners */
       .prompt-banner-saved { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
       .prompt-banner-reset { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
@@ -389,7 +391,7 @@ function promptEditPage(id, meta, body, opts = {}) {
         .prompt-split.preview-minimized .prompt-preview-column { flex: 0 0 0 !important; min-height: 0 !important; max-height: 0; overflow: hidden; opacity: 0; }
       }
     </style>
-    <script>
+    <script${scriptNonce}>
       (function(){
         var ta = document.getElementById('prompt-body');
         var form = document.getElementById('prompt-form');
@@ -628,7 +630,7 @@ function promptEditPage(id, meta, body, opts = {}) {
         // Preview is visible by default; user can click Minimize to hide. (Auto-minimize on narrow viewports removed so Preview (Discord) is always visible on load.)
       })();
     </script>
-    <script>
+    <script${scriptNonce}>
     (function(){
       var sidecar = document.getElementById('prompt-version-history-sidecar');
       var listEl = document.getElementById('prompt-version-history-list');
@@ -715,11 +717,11 @@ function promptEditPage(id, meta, body, opts = {}) {
       ${saveBarToggleButton()}
     </div>
   </div>
-  ${saveBarMinimizeScript('prompt-action-bar', 'prompts')}
+  ${saveBarMinimizeScript('prompt-action-bar', 'prompts', nonce)}
 `;
     return `<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Edit ' + id)}</head>
+<head>${adminHead('Edit ' + id, nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}${PRISM_TAIL}</body>
 </html>`;
 }

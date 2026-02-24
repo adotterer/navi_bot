@@ -27,13 +27,13 @@ function formatMessageForPrompt(msg) {
 }
 
 /**
- * Build a short frame data summary for a character (key moves with Startup, On Shield).
+ * Build a short frame data summary for a character (key moves with Startup, On Shield, Notes).
  * @param {string} characterSlug
  * @param {string} alias
- * @returns {string|null}
+ * @returns {Promise<string|null>}
  */
-function buildFrameDataSummary(characterSlug, alias) {
-    const frameData = loadCharacterFrameData(characterSlug, alias);
+async function buildFrameDataSummary(characterSlug, alias) {
+    const frameData = await loadCharacterFrameData(characterSlug, alias);
     if (!frameData || !frameData.moves) return null;
 
     const lines = [];
@@ -48,7 +48,11 @@ function buildFrameDataSummary(characterSlug, alias) {
             const name = move['Move Name'] || 'Move';
             const startup = move['Startup'] || '--';
             const onShield = move['On Shield'] || '--';
-            lines.push(`- ${name}: Startup ${startup}, On Shield ${onShield}`);
+            let line = `- ${name}: Startup ${startup}, On Shield ${onShield}`;
+            if (move['Notes'] && move['Notes'].trim() && move['Notes'] !== '--') {
+                line += `. Note: ${move['Notes'].trim()}`;
+            }
+            lines.push(line);
         }
     }
 
@@ -99,7 +103,7 @@ export async function handleGeneralTips(message) {
         const otherMessagesText = otherMessages.map(formatMessageForPrompt).join('\n\n');
 
         const myCharStats = buildStatsBlock(myCharSlug, myCharMatch.alias);
-        const myCharFrameData = buildFrameDataSummary(myCharSlug, myCharMatch.alias);
+        const myCharFrameData = await buildFrameDataSummary(myCharSlug, myCharMatch.alias);
         const myCharacterReferenceData = [myCharFrameData, myCharStats].filter(Boolean).join('\n\n') || 'None found';
 
         await message.reply(`General tips for **${myCharDisplayName}** vs **${opponentDisplayName}**…`);

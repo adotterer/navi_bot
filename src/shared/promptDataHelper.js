@@ -272,8 +272,8 @@ function formatMoveData(found) {
     return `${moveName} (${moveType}): ${parts.join(', ')}`;
 }
 
-function buildFrameDataBlock(slug, alias, textSource) {
-    const frameData = loadCharacterFrameData(slug, alias);
+async function buildFrameDataBlock(slug, alias, textSource) {
+    const frameData = await loadCharacterFrameData(slug, alias);
     if (!frameData) return null;
 
     const moves = detectMoveMentions(textSource, frameData);
@@ -294,10 +294,10 @@ function buildFrameDataBlock(slug, alias, textSource) {
     return `FRAME DATA: ${displayName}\n${lines.join('\n')}`;
 }
 
-function buildReferenceBlock(slug, alias, textSource) {
+async function buildReferenceBlock(slug, alias, textSource) {
     const blocks = [];
 
-    const frameBlock = buildFrameDataBlock(slug, alias, textSource);
+    const frameBlock = await buildFrameDataBlock(slug, alias, textSource);
     if (frameBlock) blocks.push(frameBlock);
 
     const statsBlock = buildStatsBlock(slug, alias);
@@ -306,7 +306,7 @@ function buildReferenceBlock(slug, alias, textSource) {
     return blocks.join('\n');
 }
 
-export function buildMatchupReferenceData({ opponentSlug, opponentAlias, messages, question }) {
+export async function buildMatchupReferenceData({ opponentSlug, opponentAlias, messages, question }) {
     const textParts = [];
 
     if (Array.isArray(messages)) {
@@ -321,10 +321,10 @@ export function buildMatchupReferenceData({ opponentSlug, opponentAlias, message
     const textSource = textParts.join(' \n ');
     const blocks = [];
 
-    const opponentBlock = buildReferenceBlock(opponentSlug, opponentAlias, textSource);
+    const opponentBlock = await buildReferenceBlock(opponentSlug, opponentAlias, textSource);
     if (opponentBlock) blocks.push(opponentBlock);
 
-    const zeldaBlock = buildReferenceBlock('zelda', 'zelda', textSource);
+    const zeldaBlock = await buildReferenceBlock('zelda', 'zelda', textSource);
     if (zeldaBlock) blocks.push(zeldaBlock);
 
     return blocks.join('\n\n');

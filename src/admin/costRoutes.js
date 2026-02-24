@@ -178,9 +178,11 @@ router.get('/', async (req, res) => {
     const sortedDates = Object.keys(dailyMap).sort().slice(-14);
     const chartLabels = JSON.stringify(sortedDates);
     const chartValues = JSON.stringify(sortedDates.map((d) => dailyMap[d]));
+    const nonce = res.locals.nonce || '';
+    const scriptNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
 
     const content = `
-  ${adminNav('cost')}
+  ${adminNav('cost', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Cost' }])}
     <div class="flex items-center justify-between mb-8">
@@ -240,12 +242,12 @@ router.get('/', async (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
-  ${adminHead('Cost')}
+  ${adminHead('Cost', nonce)}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
   ${content}
-  <script>
+  <script${scriptNonce}>
     const ctx = document.getElementById('costChart')?.getContext('2d');
     if (ctx) {
       new Chart(ctx, {

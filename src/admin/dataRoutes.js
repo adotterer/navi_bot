@@ -13,6 +13,7 @@ import {
     putFramedataCSV,
     clearFramedataCache
 } from '../shared/dataReader.js';
+import { clearFrameDataCache } from '../stats/frameDataHelper.js';
 import { adminHead, adminNav, adminContainer, breadcrumb, escapeHtml, s3Badge, saveBarToggleButton, saveBarMinimizeScript } from './layout.js';
 import { headS3Key, deleteFromS3 } from '../shared/s3Helper.js';
 import { generateCsrfToken } from './csrf.js';
@@ -24,8 +25,9 @@ const router = express.Router();
 
 // GET /admin/data – choose Stats or Framedata
 router.get('/', (req, res) => {
+    const nonce = res.locals.nonce || '';
     const content = `
-  ${adminNav('data')}
+  ${adminNav('data', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Data' }])}
     <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-6">Edit data</h1>
@@ -45,13 +47,14 @@ router.get('/', (req, res) => {
 `;
     res.send(`<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Data')}</head>
+<head>${adminHead('Data', nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
 // ----- Stats -----
 router.get('/stats', async (req, res) => {
+    const nonce = res.locals.nonce || '';
     const files = listStatsFiles();
     const s3Flags = await Promise.all(files.map(f => headS3Key(S3_STATS_PREFIX + f + '.csv').catch(() => false)));
     const rows = files
@@ -64,7 +67,7 @@ router.get('/stats', async (req, res) => {
         )
         .join('');
     const content = `
-  ${adminNav('data')}
+  ${adminNav('data', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/data', label: 'Data' }, { label: 'Stats' }])}
     <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-6">Stats CSVs</h1>
@@ -78,7 +81,7 @@ router.get('/stats', async (req, res) => {
 `;
     res.send(`<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Stats')}</head>
+<head>${adminHead('Stats', nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
@@ -95,7 +98,7 @@ router.get('/stats/:filename', async (req, res) => {
         const reverted = req.query.reverted === '1';
         const revertError = req.query.revert_error === '1';
         const csrfToken = generateCsrfToken(req, res);
-        res.send(csvEditPage('stats', raw, saved, 'Stats – ' + filename, filename, null, s3InUse, csrfToken, reverted, revertError));
+        res.send(csvEditPage('stats', raw, saved, 'Stats – ' + filename, filename, null, s3InUse, csrfToken, reverted, revertError, res.locals.nonce));
     } catch (err) {
         console.error('Admin stats get:', err);
         res.status(500).send('Error loading file.');
@@ -131,6 +134,7 @@ router.post('/stats/:filename/revert-to-disk', express.urlencoded({ extended: tr
 
 // ----- Framedata -----
 router.get('/framedata', (req, res) => {
+    const nonce = res.locals.nonce || '';
     const chars = listFramedataCharacters();
     const rows = chars
         .map(
@@ -141,7 +145,7 @@ router.get('/framedata', (req, res) => {
         )
         .join('');
     const content = `
-  ${adminNav('data')}
+  ${adminNav('data', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/data', label: 'Data' }, { label: 'Framedata' }])}
     <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-6">Framedata by character</h1>
@@ -155,12 +159,13 @@ router.get('/framedata', (req, res) => {
 `;
     res.send(`<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Framedata')}</head>
+<head>${adminHead('Framedata', nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
 
 router.get('/framedata/:character', async (req, res) => {
+    const nonce = res.locals.nonce || '';
     const character = req.params.character;
     const sections = listFramedataSections(character);
     const s3Flags = await Promise.all(sections.map(s => headS3Key(S3_FRAMEDATA_PREFIX + character + '/' + s + '.csv').catch(() => false)));
@@ -174,7 +179,7 @@ router.get('/framedata/:character', async (req, res) => {
         )
         .join('');
     const content = `
-  ${adminNav('data')}
+  ${adminNav('data', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { href: '/admin/data', label: 'Data' }, { href: '/admin/data/framedata', label: 'Framedata' }, { label: character }])}
     <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-6">${escapeHtml(character)}</h1>
@@ -188,7 +193,7 @@ router.get('/framedata/:character', async (req, res) => {
 `;
     res.send(`<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead(character)}</head>
+<head>${adminHead(character, nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
@@ -206,7 +211,7 @@ router.get('/framedata/:character/:section', async (req, res) => {
         const reverted = req.query.reverted === '1';
         const revertError = req.query.revert_error === '1';
         const csrfToken = generateCsrfToken(req, res);
-        res.send(csvEditPage('framedata', raw, saved, `Framedata: ${character} / ${sectionClean}`, character, sectionClean, s3InUse, csrfToken, reverted, revertError));
+        res.send(csvEditPage('framedata', raw, saved, `Framedata: ${character} / ${sectionClean}`, character, sectionClean, s3InUse, csrfToken, reverted, revertError, res.locals.nonce));
     } catch (err) {
         console.error('Admin framedata get:', err);
         res.status(500).send('Error loading file.');
@@ -220,6 +225,7 @@ router.post('/framedata/:character/:section', express.urlencoded({ extended: tru
     try {
         await putFramedataCSV(character, sectionClean, body);
         clearFramedataCache(character);
+        clearFrameDataCache(character);
         res.redirect(`/admin/data/framedata/${encodeURIComponent(character)}/${encodeURIComponent(sectionClean)}?saved=1`);
     } catch (err) {
         console.error('Admin framedata save:', err);
@@ -235,6 +241,7 @@ router.post('/framedata/:character/:section/revert-to-disk', express.urlencoded(
         const key = S3_FRAMEDATA_PREFIX + character + '/' + sectionClean + '.csv';
         await deleteFromS3(key);
         clearFramedataCache(character);
+        clearFrameDataCache(character);
         res.redirect(redirectUrl + '?reverted=1');
     } catch (err) {
         console.error('Admin framedata revert-to-disk:', err);
@@ -242,7 +249,9 @@ router.post('/framedata/:character/:section/revert-to-disk', express.urlencoded(
     }
 });
 
-function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, csrfToken = '', reverted = false, revertError = false) {
+function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, csrfToken = '', reverted = false, revertError = false, nonce = '') {
+    const scriptNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
+    const styleNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
     const backUrl =
         type === 'stats' ? '/admin/data/stats' : '/admin/data/framedata' + (param1 ? '/' + encodeURIComponent(param1) : '');
     const saveAction =
@@ -275,7 +284,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
         : '';
     const csrfInput = csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">` : '';
     const content = `
-  ${adminNav('data')}
+  ${adminNav('data', false, nonce)}
   ${adminContainer(`
     <div class="csv-edit-layout flex flex-col min-h-[calc(100vh-11rem)]">
       <div class="flex-shrink-0 mb-4">
@@ -297,7 +306,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
         </div>
       </form>
     </div>
-    <style>
+    <style${styleNonce}>
       main:has(.csv-edit-layout) { max-width: 85rem; }
       .csv-edit-layout { padding: 0 0.5rem; }
       #csv-body { display: none !important; }
@@ -325,7 +334,7 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
       .dark #csv-spreadsheet-wrap .csv-grid .cell-gif img { border-color: #475569; }
       .dark #csv-spreadsheet-wrap .csv-grid .cell-gif .gif-filename { color: #94a3b8; }
     </style>
-    <script>
+    <script${scriptNonce}>
 (function(){
   var rawText = ${JSON.stringify(body).replace(/<(?=\/script)/gi, '\\u003c')};
   var form = document.getElementById('csv-form');
@@ -566,11 +575,11 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
       ${saveBarToggleButton()}
     </div>
   </div>
-  ${saveBarMinimizeScript('csv-action-bar', 'csv')}
+  ${saveBarMinimizeScript('csv-action-bar', 'csv', nonce)}
 `;
     return `<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead(escapeHtml(title))}</head>
+<head>${adminHead(escapeHtml(title), nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`;
 }

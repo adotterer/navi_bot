@@ -23,6 +23,9 @@ function emojiCodeToUrl(code) {
 }
 
 router.get('/', async (req, res) => {
+    const nonce = res.locals.nonce || '';
+    const scriptNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
+    const styleNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
     let list = getEmojiLibrary();
     let s3InUse = false;
     try {
@@ -57,7 +60,7 @@ router.get('/', async (req, res) => {
         })
         .join('');
     const content = `
-  ${adminNav('emojis')}
+  ${adminNav('emojis', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Emojis' }])}
     <div class="flex items-center gap-2 mb-2">
@@ -96,7 +99,7 @@ router.get('/', async (req, res) => {
       </section>
     </form>
     </div>
-    <style>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
+    <style${styleNonce}>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
     <div id="emojis-action-bar" class="save-bar border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" data-save-bar-key="emojis">
       <div class="save-bar-inner max-w-5xl mx-auto px-4">
         <div class="save-bar-content">
@@ -110,8 +113,8 @@ router.get('/', async (req, res) => {
         ${saveBarToggleButton()}
       </div>
     </div>
-    ${saveBarMinimizeScript('emojis-action-bar', 'emojis')}
-    <script>
+    ${saveBarMinimizeScript('emojis-action-bar', 'emojis', nonce)}
+    <script${scriptNonce}>
 (function(){
   var form = document.getElementById('emojis-form');
   var tbody = document.getElementById('emojis-tbody');
@@ -187,7 +190,7 @@ router.get('/', async (req, res) => {
 `;
     res.send(`<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Emojis')}</head>
+<head>${adminHead('Emojis', nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });
@@ -207,6 +210,9 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
         return res.redirect('/admin/emojis?saved=1');
     } catch (err) {
         console.error('Admin emojis save:', err);
+        const nonce = res.locals.nonce || '';
+        const scriptNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
+        const styleNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
         const msg = (err && err.message) || '';
         const saveError = msg.toLowerCase().includes('credential')
             ? 'S3 credentials missing or invalid.'
@@ -219,7 +225,7 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
             })
             .join('');
         const content = `
-  ${adminNav('emojis')}
+  ${adminNav('emojis', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Emojis' }])}
     <div class="flex items-center gap-2 mb-2">
@@ -249,7 +255,7 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
       </div>
     </form>
     </div>
-    <style>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
+    <style${styleNonce}>#emojis-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
     <div id="emojis-action-bar" class="save-bar border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" data-save-bar-key="emojis">
       <div class="save-bar-inner max-w-5xl mx-auto px-4">
         <div class="save-bar-content">
@@ -263,8 +269,8 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
         ${saveBarToggleButton()}
       </div>
     </div>
-    ${saveBarMinimizeScript('emojis-action-bar', 'emojis')}
-    <script>
+    ${saveBarMinimizeScript('emojis-action-bar', 'emojis', nonce)}
+    <script${scriptNonce}>
 (function(){
   var form = document.getElementById('emojis-form');
   var tbody = document.getElementById('emojis-tbody');
@@ -340,7 +346,7 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
 `;
         res.status(200).send(`<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Emojis')}</head>
+<head>${adminHead('Emojis', nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
     }

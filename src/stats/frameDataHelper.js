@@ -6,6 +6,7 @@ import { EmbedBuilder } from 'discord.js';
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
 import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
+import { listFramedataSections, getFramedataCSVRaw } from '../shared/dataReader.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -113,7 +114,7 @@ function parseCSVLine(line) {
     return result;
 }
 
-function loadCharacterFrameData(characterSlug, requestedAlias = null) {
+async function loadCharacterFrameData(characterSlug, requestedAlias = null) {
     // Handle pipe-separated character names (e.g., "peach | daisy", "samus︱dark samus")
     // For frame data, we use the specific character directory that was requested
     let frameDataSlug = characterSlug;
@@ -160,37 +161,49 @@ function loadCharacterFrameData(characterSlug, requestedAlias = null) {
     if (frameDataCache[frameDataSlug]) {
         return frameDataCache[frameDataSlug];
     }
-    
+
     const characterDir = path.join(FRAMEDATA_DIR, frameDataSlug);
-    
     if (!fs.existsSync(characterDir)) {
         return null;
     }
-    
+
+    const sections = listFramedataSections(frameDataSlug);
+    if (!sections || sections.length === 0) {
+        return null;
+    }
+
     const frameData = {
         character: characterSlug,
         moves: {}
     };
-    
-    try {
-        const files = fs.readdirSync(characterDir);
-        
-        for (const file of files) {
-            if (!file.endsWith('.csv')) continue;
-            
-            const moveType = file.replace('.csv', '');
-            const filePath = path.join(characterDir, file);
-            const content = fs.readFileSync(filePath, 'utf8');
-            const moves = parseCSV(content);
-            
-            frameData.moves[moveType] = moves;
+
+    for (const section of sections) {
+        const raw = await getFramedataCSVRaw(frameDataSlug, section);
+        if (raw) {
+            try {
+                frameData.moves[section] = parseCSV(raw);
+            } catch (e) {
+                console.error(`Error parsing frame data ${frameDataSlug}/${section}:`, e.message);
+            }
         }
-        
-        frameDataCache[frameDataSlug] = frameData;
-        return frameData;
-    } catch (error) {
-        console.error(`Error loading frame data for ${frameDataSlug}:`, error.message);
+    }
+
+    if (Object.keys(frameData.moves).length === 0) {
         return null;
+    }
+
+    frameDataCache[frameDataSlug] = frameData;
+    return frameData;
+}
+
+/** Clear in-memory frame data cache for a character (e.g. after admin saves to S3). */
+export function clearFrameDataCache(characterSlug) {
+    if (characterSlug) {
+        delete frameDataCache[characterSlug];
+    } else {
+        for (const key of Object.keys(frameDataCache)) {
+            delete frameDataCache[key];
+        }
     }
 }
 
@@ -455,8 +468,8 @@ export async function handleFrameDataLookup(message, args) {
             return;
         }
         
-        const frameData = loadCharacterFrameData(parsed.characterSlug, parsed.character.alias);
-        
+        const frameData = await loadCharacterFrameData(parsed.characterSlug, parsed.character.alias);
+
         // Use the actual alias the user provided for display name, not the slug
         const displayName = parsed.character.alias
             .split('-')
@@ -483,24 +496,24 @@ export async function handleFrameDataLookup(message, args) {
     }
 }
 
-function buildFrameDataContext(question = '', guild = null, limit = 10) {
-    const dirs = fs.readdirSync(FRAMEDATA_DIR).filter(f => 
+async function buildFrameDataContext(question = '', guild = null, limit = 10) {
+    const dirs = fs.readdirSync(FRAMEDATA_DIR).filter(f =>
         fs.statSync(path.join(FRAMEDATA_DIR, f)).isDirectory()
     );
-    
+
     let context = '';
     let includedChars = new Set();
-    
+
     // Try to detect if a specific character is mentioned in the question
     if (question && guild) {
         const aliasMap = buildCharacterAliasMap(guild);
         const questionLower = question.toLowerCase();
-        
+
         // Check all aliases to see if they're in the question
         for (const [alias, slug] of aliasMap.entries()) {
             if (questionLower.includes(alias) && dirs.includes(slug)) {
                 // Add this character first
-                const frameData = loadCharacterFrameData(slug, alias);
+                const frameData = await loadCharacterFrameData(slug, alias);
                 if (frameData) {
                     const charName = slug.replace(/-/g, ' ').split(' ')
                         .map(w => w.charAt(0).toUpperCase() + w.slice(1))
@@ -511,7 +524,10 @@ function buildFrameDataContext(question = '', guild = null, limit = 10) {
                     for (const [moveType, moves] of Object.entries(frameData.moves)) {
                         context += `*${moveType.replace(/_/g, ' ')}:*\n`;
                         for (const move of moves) {
-                            const stats = `Startup: ${move['Startup']}, Damage: ${move['Base Damage']}, On Shield: ${move['On Shield']}`;
+                            let stats = `Startup: ${move['Startup']}, Damage: ${move['Base Damage']}, On Shield: ${move['On Shield']}`;
+                            if (move['Notes'] && move['Notes'].trim() && move['Notes'] !== '--') {
+                                stats += `. Note: ${move['Notes'].trim()}`;
+                            }
                             context += `- ${move['Move Name']}: ${stats}\n`;
                         }
                     }
@@ -527,8 +543,8 @@ function buildFrameDataContext(question = '', guild = null, limit = 10) {
     for (const dir of dirs) {
         if (charCount >= limit) break;
         if (includedChars.has(dir)) continue;
-        
-        const frameData = loadCharacterFrameData(dir);
+
+        const frameData = await loadCharacterFrameData(dir);
         if (!frameData) continue;
         
         const charName = dir.replace(/-/g, ' ').split(' ')
@@ -540,11 +556,14 @@ function buildFrameDataContext(question = '', guild = null, limit = 10) {
         for (const [moveType, moves] of Object.entries(frameData.moves)) {
             context += `*${moveType.replace(/_/g, ' ')}:*\n`;
             for (const move of moves.slice(0, 3)) {
-                const stats = `Startup: ${move['Startup']}, Damage: ${move['Base Damage']}, On Shield: ${move['On Shield']}`;
+                let stats = `Startup: ${move['Startup']}, Damage: ${move['Base Damage']}, On Shield: ${move['On Shield']}`;
+                if (move['Notes'] && move['Notes'].trim() && move['Notes'] !== '--') {
+                    stats += `. Note: ${move['Notes'].trim()}`;
+                }
                 context += `- ${move['Move Name']}: ${stats}\n`;
             }
         }
-        
+
         charCount++;
     }
     
@@ -560,7 +579,7 @@ export async function handleFrameDataQuestion(message, question) {
     try {
         await message.reply(`⏳ Analyzing frame data...`);
 
-        const frameDataContext = buildFrameDataContext(question, message.guild, 5);
+        const frameDataContext = await buildFrameDataContext(question, message.guild, 5);
 
         const fullPrompt = `You are Navi Bot, a helpful assistant for Super Smash Bros Ultimate frame data analysis.
 
@@ -594,7 +613,7 @@ Provide your answer:`;
         // Try to detect if a specific character + move was mentioned and show the GIF
         const parsed = detectCharacterAndMoveInText(question, message.guild);
         if (parsed) {
-            const frameData = loadCharacterFrameData(parsed.characterSlug, parsed.character.alias);
+            const frameData = await loadCharacterFrameData(parsed.characterSlug, parsed.character.alias);
             if (frameData) {
                 const found = findMove(frameData, parsed.move);
                 if (found && found.move['GIF URL'] && found.move['GIF URL'].trim()) {
@@ -614,4 +633,4 @@ Provide your answer:`;
     }
 }
 
-export { parseCharacterAndMove, findMove, normalizeMoveInput, loadCharacterFrameData };
+export { parseCharacterAndMove, findMove, normalizeMoveInput, loadCharacterFrameData, clearFrameDataCache };

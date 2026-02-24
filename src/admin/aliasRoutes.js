@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
     const entries = Object.entries(aliases).sort((a, b) => a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }));
     const saved = req.query.saved === '1';
     const csrfToken = generateCsrfToken(req, res);
-    res.send(renderAliasesTablePage(aliases, null, s3InUse, csrfToken, saved));
+    res.send(renderAliasesTablePage(aliases, null, s3InUse, csrfToken, saved, res.locals.nonce));
 });
 
 router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
@@ -43,11 +43,11 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
         data = JSON.parse(raw);
     } catch (_) {
         const csrfToken = generateCsrfToken(req, res);
-        return res.status(400).send(renderAliasesTablePage({}, 'Invalid JSON.', false, csrfToken));
+        return res.status(400).send(renderAliasesTablePage({}, 'Invalid JSON.', false, csrfToken, false, res.locals.nonce));
     }
     if (typeof data !== 'object' || data === null || Array.isArray(data)) {
         const csrfToken = generateCsrfToken(req, res);
-        return res.status(400).send(renderAliasesTablePage({}, 'JSON must be an object (alias → canonical).', false, csrfToken));
+        return res.status(400).send(renderAliasesTablePage({}, 'JSON must be an object (alias → canonical).', false, csrfToken, false, res.locals.nonce));
     }
     const normalized = {};
     for (const [k, v] of Object.entries(data)) {
@@ -69,14 +69,16 @@ router.post('/', express.urlencoded({ extended: true }), async (req, res) => {
             ? 'S3 credentials are missing or invalid. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env.'
             : 'Could not save to S3. Check .env (AWS_*, S3_BUCKET_NAME) and try again.';
         const csrfToken = generateCsrfToken(req, res);
-        return res.status(500).send(renderAliasesTablePage(normalized, saveError, false, csrfToken));
+        return res.status(500).send(renderAliasesTablePage(normalized, saveError, false, csrfToken, false, res.locals.nonce));
     }
     res.redirect('/admin/aliases?saved=1');
 });
 
-function renderAliasesTablePage(aliases, error, s3InUse = false, csrfToken = '', saved = false) {
+function renderAliasesTablePage(aliases, error, s3InUse = false, csrfToken = '', saved = false, nonce = '') {
     const entries = Object.entries(aliases).sort((a, b) => a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }));
     const csrfInput = csrfToken ? `<input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">` : '';
+    const scriptNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
+    const styleNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
     const rowsHtml = entries
         .map(([alias, canonical]) => `
         <tr class="alias-row border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
@@ -86,7 +88,7 @@ function renderAliasesTablePage(aliases, error, s3InUse = false, csrfToken = '',
         </tr>`)
         .join('');
     const content = `
-  ${adminNav('aliases')}
+  ${adminNav('aliases', false, nonce)}
   ${adminContainer(`
     ${breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Aliases' }])}
     <div class="flex items-center gap-2 mb-2">
@@ -126,7 +128,7 @@ function renderAliasesTablePage(aliases, error, s3InUse = false, csrfToken = '',
       <p class="text-xs text-slate-500 mt-1">Changes here are not saved unless you replace the table and save. Use the table above for normal editing.</p>
     </details>
     </div>
-    <style>#aliases-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
+    <style${styleNonce}>#aliases-action-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }</style>
     <div id="aliases-action-bar" class="save-bar border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" data-save-bar-key="aliases">
       <div class="save-bar-inner max-w-5xl mx-auto px-4">
         <div class="save-bar-content">
@@ -140,8 +142,8 @@ function renderAliasesTablePage(aliases, error, s3InUse = false, csrfToken = '',
         ${saveBarToggleButton()}
       </div>
     </div>
-    ${saveBarMinimizeScript('aliases-action-bar', 'aliases')}
-    <script>
+    ${saveBarMinimizeScript('aliases-action-bar', 'aliases', nonce)}
+    <script${scriptNonce}>
 (function(){
   var form = document.getElementById('aliases-form');
   var tbody = document.getElementById('aliases-tbody');
@@ -236,7 +238,7 @@ function renderAliasesTablePage(aliases, error, s3InUse = false, csrfToken = '',
 `;
     return `<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Aliases')}</head>
+<head>${adminHead('Aliases', nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`;
 }

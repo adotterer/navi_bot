@@ -26,16 +26,17 @@ const PRISM_TAIL = `
 `;
 
 /**
- * @param {{ adminNav: (s: string) => string, adminContainer: (s: string) => string, breadcrumb: (arr: Array<{ href?: string, label: string }>) => string }} helpers
+ * @param {{ adminNav: (s: string, isSuperAdmin?: boolean, nonce?: string) => string, adminContainer: (s: string) => string, breadcrumb: (arr: Array<{ href?: string, label: string }>) => string, nonce?: string }} helpers
  * @returns {{ content: string, prismTail: string }}
  */
 export function getAgentPageContent(helpers) {
-    const { adminNav, adminContainer, breadcrumb } = helpers;
+    const { adminNav, adminContainer, breadcrumb, nonce = '' } = helpers;
     let inner = fs.readFileSync(INNER_PATH, 'utf8');
     const breadcrumbHtml = breadcrumb([{ href: '/admin', label: 'Dashboard' }, { label: 'Missions' }]);
     inner = inner.replace('__BREADCRUMB__', breadcrumbHtml);
+    inner = inner.replace(/__NONCE__/g, nonce);
     // Wrapper with explicit page background so main content area is dark in dark mode (main itself has no bg)
     const wrapped = `<div class="min-h-full bg-slate-50 dark:bg-slate-900 -mx-4 -my-8 px-4 py-8">${inner}</div>`;
-    const content = `${adminNav('agent')}\n  ${adminContainer(wrapped)}`;
+    const content = `${adminNav('agent', false, nonce)}\n  ${adminContainer(wrapped)}`;
     return { content, prismTail: PRISM_TAIL };
 }

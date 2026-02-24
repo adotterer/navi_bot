@@ -112,7 +112,7 @@ export async function handleMatchupNotes(message) {
 
         const katyparryMessages = messages.filter(msg => msg.author === 'katyparry');
         const otherMessages = messages.filter(msg => msg.author !== 'katyparry');
-        const referenceData = buildMatchupReferenceData({
+        const referenceData = await buildMatchupReferenceData({
             opponentSlug: characterSlug,
             opponentAlias: characterMatch.alias,
             messages,
@@ -207,7 +207,7 @@ export async function handleMuQuestion(message) {
 
         const katyparryMessages = messages.filter(msg => msg.author === 'katyparry');
         const otherMessages = messages.filter(msg => msg.author !== 'katyparry');
-        const referenceData = buildMatchupReferenceData({
+        const referenceData = await buildMatchupReferenceData({
             opponentSlug: characterSlug,
             opponentAlias: characterMatch.alias,
             messages,

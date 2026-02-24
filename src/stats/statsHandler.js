@@ -143,8 +143,8 @@ export async function handleStatsLookup(message, args) {
         
         if (parsed) {
             // This looks like a frame data query
-            const frameData = loadCharacterFrameData(parsed.characterSlug);
-            
+            const frameData = await loadCharacterFrameData(parsed.characterSlug);
+
             if (frameData) {
                 const found = findMove(frameData, parsed.move);
                 

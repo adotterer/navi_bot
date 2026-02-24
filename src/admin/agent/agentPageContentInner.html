@@ -1,5 +1,5 @@
     __BREADCRUMB__
-    <style id="agent-prism-override">
+    <style id="agent-prism-override" nonce="__NONCE__">
       /* PR mode pill: bright green text/icon in dark mode (avoids Tailwind arbitrary value) */
       .dark #mode-pills .mode-pill-pr { color: #56d364 !important; }
       .dark #mode-pills .mode-pill-pr svg { color: #56d364 !important; }
@@ -297,7 +297,7 @@
         </div>
       </div>
     </div>
-    <script>
+    <script nonce="__NONCE__">
 (function(){
   var form = document.getElementById('agent-form');
   var startBtn = document.getElementById('start-btn');

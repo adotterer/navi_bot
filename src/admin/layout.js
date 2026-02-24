@@ -6,11 +6,13 @@ const STYLESHEET = '<link href="/admin.css" rel="stylesheet">';
 const FONTS =
     '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">';
 
-function adminHead(title) {
-    return `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>${escapeHtml(title)} – Navi Admin</title>${FONTS}${STYLESHEET}<script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>`;
+function adminHead(title, nonce = '') {
+    const n = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
+    return `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>${escapeHtml(title)} – Navi Admin</title>${FONTS}${STYLESHEET}<script${n}>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>`;
 }
 
-function adminNav(active = 'dashboard', isSuperAdmin = false) {
+function adminNav(active = 'dashboard', isSuperAdmin = false, nonce = '') {
+    const n = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
     const links = [
         { href: '/admin', label: 'Dashboard', key: 'dashboard' },
         { href: '/admin/prompts', label: 'Prompts', key: 'prompts' },
@@ -47,7 +49,7 @@ function adminNav(active = 'dashboard', isSuperAdmin = false) {
       </div>
     </div>
   </header>
-  <script>
+  <script${n}>
     (function() {
       var d = document.getElementById('theme-toggle-dark-icon');
       var l = document.getElementById('theme-toggle-light-icon');
@@ -114,9 +116,10 @@ function saveBarToggleButton() {
 }
 
 /** Inline script to wire save bar minimize toggle and persist in localStorage. barId = element id, storageKey = short key (e.g. "aliases"). */
-function saveBarMinimizeScript(barId, storageKey) {
+function saveBarMinimizeScript(barId, storageKey, nonce = '') {
+    const n = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
     const key = 'navi-save-bar-' + storageKey + '-minimized';
-    return `<script>
+    return `<script${n}>
 (function(){
   var bar = document.getElementById(${JSON.stringify(barId)});
   if (!bar) return;

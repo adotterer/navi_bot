@@ -5,8 +5,9 @@ import { adminHead, adminNav, adminContainer } from './layout.js';
 const router = express.Router();
 
 router.get('/', requireAdmin, (req, res) => {
+    const nonce = res.locals.nonce || '';
     const content = `
-  ${adminNav('commands')}
+  ${adminNav('commands', false, nonce)}
   ${adminContainer(`
     <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-6">Commands</h1>
     <div class="overflow-x-auto">
@@ -198,7 +199,7 @@ router.get('/', requireAdmin, (req, res) => {
 `;
     res.send(`<!DOCTYPE html>
 <html lang="en">
-<head>${adminHead('Commands')}</head>
+<head>${adminHead('Commands', nonce)}</head>
 <body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
 </html>`);
 });

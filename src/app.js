@@ -2,6 +2,7 @@
  * Express app factory. Used by main.js (full bot) and server-admin.js (Express-only for local admin testing).
  * No Discord code – safe to run without touching the Discord token.
  */
+import crypto from 'crypto';
 import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -65,14 +66,17 @@ export function createApp() {
     app.use('/github/webhook', express.raw({ type: 'application/json' }));
     app.use(webhookRouter);
 
-    // Security headers with CSP. 'unsafe-inline' allows existing inline scripts;
-    // a future improvement could use per-request nonces for stricter script-src.
+    // Per-request nonce for CSP so inline scripts/styles are allowlisted without 'unsafe-inline'.
+    app.use((req, res, next) => {
+        res.locals.nonce = crypto.randomBytes(16).toString('base64');
+        next();
+    });
     app.use(helmet({
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-                styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
+                scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`, "https://cdn.jsdelivr.net"],
+                styleSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`, "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
                 fontSrc: ["'self'", "https://fonts.gstatic.com"],
                 imgSrc: ["'self'", "data:", "https://cdn.discordapp.com", "https://ultimateframedata.com", "https://*.ultimateframedata.com"],
                 connectSrc: ["'self'", "https://cdn.jsdelivr.net"],
