@@ -93,6 +93,10 @@ const PROMPT_META = {
     sl: {
         description: '!sl – show stage lists used in the game',
         variables: []
+    },
+    logs: {
+        description: '!logs – last 100 lines of system log (Moderators only)',
+        variables: []
     }
 };
 

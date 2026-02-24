@@ -198,6 +198,7 @@ client.on("messageCreate", async (message) => {
     const isAddAliasCommand = message.content.toLowerCase().startsWith("!add-a ");
     const isModHelpCommand = message.content.toLowerCase() === "!modhelp";
     const isSlCommand = message.content.toLowerCase() === "!sl";
+    const isLogsCommand = message.content.toLowerCase() === "!logs";
 
     const hasAuthorizedRole = message.member?.roles?.cache?.some(
         role => role.name === "Moderators" || role.name === "Legend"
@@ -254,6 +255,16 @@ client.on("messageCreate", async (message) => {
         }
         await handleModHelp(message);
         return;
+    }
+
+    // Logs: Moderators + Legend only
+    if (isLogsCommand) {
+        if (!hasAuthorizedRole) {
+            await message.reply("❌ Only Moderators or Legend members can run this command.");
+            return;
+        }
+        const { handleGetLogs } = await import('./src/messages/logHandler.js');
+        return handleGetLogs(message);
     }
 
     // Docs/FAQ + alias commands are allowed for everyone in any channel

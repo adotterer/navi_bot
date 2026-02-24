@@ -17,6 +17,7 @@ export async function handleModHelp(message) {
         .addFields(
             { name: "!modhelp", value: "helps them remember what the mod commands are by sending an embed message with the commands available to mods only." },
             { name: "!ts", value: "!ts – manually trigger tournament notification (Moderators only)" },
+            { name: "!logs", value: "Last 100 lines of system log (Moderators only)" },
             { name: "!export <character> or !export matchups", value: "Export character matchup notes to CSV." },
             { name: "!list-thread-counts", value: "List the message count for each character's matchup thread." },
             { name: "!cleanup", value: "delete all bot messages" },
