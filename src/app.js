@@ -92,7 +92,14 @@ export function createApp() {
     } catch (err) {
         console.warn('[app] Could not create sessions directory:', err?.message || err);
     }
-    const sessionStore = new FileStore({ path: sessionsPath });
+    const sessionStore = new FileStore({
+        path: sessionsPath,
+        // Suppress retry spam when a session file is missing (common after deploy or on another instance).
+        logFn: (msg) => {
+            if (typeof msg === 'string' && msg.includes('will retry') && msg.includes('ENOENT')) return;
+            if (typeof console?.log === 'function') console.log(msg);
+        },
+    });
     app.use(session(getSessionConfig({ store: sessionStore })));
     app.use(cookieParser());
     app.use('/admin', adminRouter);

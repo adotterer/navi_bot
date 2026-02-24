@@ -39,8 +39,38 @@ export async function executeQuery(query, variables = {}, authToken) {
         return response.data.data;
     } catch (error) {
         if (error.response) {
-            console.error('[start.gg] API Error:', error.response.status, JSON.stringify(error.response.data));
-            throw new Error(`Start.gg API Error (${error.response.status}): ${JSON.stringify(error.response.data)}`);
+            const status = error.response.status;
+            const data = error.response.data;
+            const headers = error.response.headers || {};
+            const err = new Error(`Start.gg API Error (${status}): ${JSON.stringify(data)}`);
+            err.status = status;
+            err.retryAfter = headers['retry-after'] ? parseInt(headers['retry-after'], 10) : null;
+            console.error('[start.gg] API Error:', status, JSON.stringify(data));
+            throw err;
+        }
+        throw error;
+    }
+}
+
+const DEFAULT_429_DELAY_MS = 15_000;
+const MAX_429_RETRIES = 3;
+
+/**
+ * Execute a GraphQL query with automatic retry on 429 (rate limit).
+ * Uses Retry-After header when present, otherwise exponential backoff.
+ */
+export async function executeQueryWithRetry(query, variables = {}, authToken, retriesLeft = MAX_429_RETRIES) {
+    try {
+        return await executeQuery(query, variables, authToken);
+    } catch (error) {
+        const is429 = error.status === 429 || (error?.message && String(error.message).includes('429'));
+        if (is429 && retriesLeft > 0) {
+            const waitMs = Number.isFinite(error.retryAfter) && error.retryAfter > 0
+                ? error.retryAfter * 1000
+                : DEFAULT_429_DELAY_MS * (MAX_429_RETRIES - retriesLeft + 1);
+            console.warn(`[start.gg] 429 rate limited, waiting ${Math.round(waitMs / 1000)}s before retry (${retriesLeft} left)`);
+            await new Promise(r => setTimeout(r, waitMs));
+            return executeQueryWithRetry(query, variables, authToken, retriesLeft - 1);
         }
         throw error;
     }

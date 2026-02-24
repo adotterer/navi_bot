@@ -12,7 +12,6 @@ import { handleQuestion } from './src/messages/questionHandler.js';
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
 import { initializeScheduler } from './src/shared/scheduler.js';
 import { checkTodaysTournaments } from './src/tournaments/dailyTournamentCheck.js';
-import { buildTournamentEmbed } from './src/tournaments/tournamentEmbed.js';
 import { handleAddZelda, handleListZelda } from './src/tournaments/addZeldaCommand.js';
 import { handleStatsLookup, handleStatsQuestion } from './src/stats/statsHandler.js';
 import { handleFrameDataLookup, handleFrameDataQuestion } from './src/stats/frameDataHelper.js';
@@ -188,7 +187,7 @@ client.on("messageCreate", async (message) => {
 
         try {
             await message.reply("Testing notifications...");
-            await checkTodaysTournaments(client);
+            await checkTodaysTournaments(client, null, { useCache: false });
             await message.channel.send("✅ Test notification sent to audit-logs.");
         } catch (err) {
             console.error('[!ts] Error:', err);
@@ -529,26 +528,18 @@ client.on("messageCreate", async (message) => {
 
     // ===== MATCHES TODAY =====
     if (message.content.toLowerCase() === "!matches-today") {
-        const STARTGG_TOKEN = process.env.STARTGG_AUTH_TOKEN || '';
-        if (!STARTGG_TOKEN) {
+        if (!process.env.STARTGG_AUTH_TOKEN) {
             await message.reply("❌ Start.gg API token not configured.");
             return;
         }
 
         try {
             await message.reply("⏳ Checking today's tournaments for Zelda players...");
-            const tournaments = await checkTodaysTournaments(STARTGG_TOKEN);
-
+            const tournaments = await checkTodaysTournaments(client, message.channel, { useCache: false });
             if (tournaments.length === 0) {
                 await message.reply("❌ No Zelda players found in today's tournaments with Ultimate Singles.");
-                return;
             }
-
-            // Post one embed per tournament
-            for (const tournament of tournaments) {
-                const embed = buildTournamentEmbed(tournament);
-                await message.channel.send({ embeds: [embed] });
-            }
+            // Embeds are sent by checkTodaysTournaments when targetChannel is set
         } catch (error) {
             console.error("Error checking tournaments:", error);
             await message.reply(`❌ Error checking tournaments: ${error.message}`);

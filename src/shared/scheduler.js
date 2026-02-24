@@ -208,24 +208,22 @@ export function initializeScheduler(client) {
 
     console.log('📅 Weekly export scheduler initialized (runs every day at 1:24 AM America/New_York for testing)');
     
-    // ========== DAILY TOURNAMENT CHECK ==========
-    // Runs daily at 8:30 AM EST to check for Zelda players in tournaments
+    // ========== TOURNAMENT CHECK (every 12 hours, cached) ==========
+    // Runs at 00:00 and 12:00 America/New_York. Results are cached for 12h to avoid 429s from start.gg.
     // Cron format: minute hour day month dayOfWeek
-    // '30 8 * * *' = Every day at 8:30 AM America/New_York
-    const dailyTournamentTask = cron.schedule('30 11 * * *', async () => {
-        console.log('🎮 Starting daily tournament check for Zelda players...');
-        
+    const dailyTournamentTask = cron.schedule('0 0,12 * * *', async () => {
+        console.log('🎮 Starting tournament check for Zelda players (uses 12h cache when valid)...');
         try {
             const tournaments = await checkTodaysTournaments(client);
-            console.log(`✅ Daily tournament check completed: ${tournaments.length} tournament(s) with Zelda players`);
+            console.log(`✅ Tournament check completed: ${tournaments.length} tournament(s) with Zelda players`);
         } catch (error) {
-            console.error('❌ Daily tournament check failed:', error);
+            console.error('❌ Tournament check failed:', error);
         }
     }, {
         timezone: 'America/New_York'
     });
 
-    console.log('📅 Daily tournament check scheduler initialized (runs every day at 11:30 AM America/New_York)');
+    console.log('📅 Tournament check scheduler initialized (every 12h at 00:00 and 12:00 America/New_York, 12h cache)');
     return weeklyExportTask;
 }
 

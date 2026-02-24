@@ -1,11 +1,18 @@
 import fs from 'fs/promises';
-import { EmbedBuilder } from 'discord.js';
-import { executeQuery } from './startggClient.js';
+import { executeQueryWithRetry } from './startggClient.js';
 import { fetchFromS3 } from '../shared/s3Helper.js';
 import { buildTournamentEmbed } from './tournamentEmbed.js';
-import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+/** @type {{ dateKey: string, results: Array, fetchedAt: number } | null} */
+let tournamentCheckCache = null;
+
+/** Today's date key in America/New_York (YYYY-MM-DD) for cache keying */
+function getTodayDateKey() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+}
 
 /** Build clickable stream URL from start.gg stream object (streamName + streamSource). */
 function streamToUrl(s) {
@@ -13,19 +20,6 @@ function streamToUrl(s) {
     const source = (s.streamSource || '').toString().toUpperCase();
     if (source === 'YOUTUBE') return `https://www.youtube.com/@${encodeURIComponent(s.streamName)}`;
     return `https://www.twitch.tv/${encodeURIComponent(s.streamName)}`;
-}
-
-async function executeWithRetry(query, variables, authToken, retries = 3, delayMs = 500) {
-    try {
-        return await executeQuery(query, variables, authToken);
-    } catch (error) {
-        const message = error?.message || '';
-        if (message.includes('429') && retries > 0) {
-            await sleep(delayMs);
-            return executeWithRetry(query, variables, authToken, retries - 1, delayMs * 2);
-        }
-        throw error;
-    }
 }
 
 /**
@@ -96,7 +90,7 @@ async function getTodaysTournaments(videogameId, authToken) {
             }
         `;
 
-        const data = await executeWithRetry(query, {
+        const data = await executeQueryWithRetry(query, {
             videogameId,
             afterDate: start,
             page,
@@ -147,7 +141,7 @@ async function fetchEntrantsForEvent(eventId, authToken) {
             }
         `;
 
-        const entrantsData = await executeWithRetry(entrantsQuery, { eventId, page, perPage }, authToken);
+        const entrantsData = await executeQueryWithRetry(entrantsQuery, { eventId, page, perPage }, authToken);
         const nodes = entrantsData?.event?.entrants?.nodes || [];
         all.push(...nodes);
 
@@ -162,19 +156,28 @@ async function fetchEntrantsForEvent(eventId, authToken) {
 /**
  * Check today's tournaments for Zelda players
  * Returns structured data grouped by tournament (one entry per tournament with all Zelda players found)
- * 
+ *
  * @param {import('discord.js').Client} client - Discord client
  * @param {import('discord.js').TextChannel} [targetChannel=null] - Optional specific channel to send to
+ * @param {{ useCache?: boolean }} [options] - useCache: true use 12h cache (scheduler); false bypass (e.g. manual !ts)
  * @returns {Promise<Array>} Array of tournament match objects
  */
-export async function checkTodaysTournaments(client, targetChannel = null) {
+export async function checkTodaysTournaments(client, targetChannel = null, options = {}) {
+    const { useCache = true } = options;
     const authToken = process.env.STARTGG_AUTH_TOKEN;
     if (!authToken) {
         console.error('❌ STARTGG_AUTH_TOKEN not configured in environment');
         return [];
     }
+
+    const dateKey = getTodayDateKey();
+    if (useCache && tournamentCheckCache?.dateKey === dateKey && (Date.now() - tournamentCheckCache.fetchedAt) < CACHE_TTL_MS) {
+        console.log('🎮 Using cached tournament check result (valid for 12h)');
+        return tournamentCheckCache.results;
+    }
+
     console.log('🎮 Checking today\'s SSBU tournaments for Zelda players...');
-    
+
     try {
         // Load Zelda players
         const zeldaPlayers = await loadZeldaPlayers();
@@ -228,7 +231,7 @@ export async function checkTodaysTournaments(client, targetChannel = null) {
 
             let tourData;
             try {
-                tourData = await executeWithRetry(tourQuery, { slug: tournament.slug }, authToken);
+                tourData = await executeQueryWithRetry(tourQuery, { slug: tournament.slug }, authToken);
             } catch (e) {
                 console.error(`[TournamentCheck] Error fetching data for ${tournament.slug}:`, e.message);
                 await sleep(400);
@@ -297,6 +300,7 @@ export async function checkTodaysTournaments(client, targetChannel = null) {
 
         // Convert map to array and return
         const results = Array.from(tournamentMatches.values());
+        tournamentCheckCache = { dateKey, results, fetchedAt: Date.now() };
         console.log('\n');
         console.log(`✅ Found Zelda players in ${results.length} tournament(s)`);
 
