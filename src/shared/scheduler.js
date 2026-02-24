@@ -211,7 +211,7 @@ export function initializeScheduler(client) {
     // ========== TOURNAMENT CHECK (every 12 hours, cached) ==========
     // Runs at 16:00 and 04:00 America/New_York. Results are cached for 12h to avoid 429s from start.gg.
     // Cron format: minute hour day month dayOfWeek
-    const dailyTournamentTask = cron.schedule('0 4,16 * * *', async () => {
+    const dailyTournamentTask = cron.schedule('0 16,4 * * *', async () => {
         console.log('🎮 Starting tournament check for Zelda players (uses 12h cache when valid)...');
         try {
             const tournaments = await checkTodaysTournaments(client);
