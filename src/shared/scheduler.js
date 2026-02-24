@@ -216,23 +216,8 @@ export function initializeScheduler(client) {
         console.log('🎮 Starting daily tournament check for Zelda players...');
         
         try {
-            await checkTodaysTournaments(client);
-
-
-
-            // Post one embed per tournament
-            let postedCount = 0;
-            for (const tournament of tournaments) {
-                try {
-                    const embed = buildTournamentEmbed(tournament);
-                    await channel.send({ embeds: [embed] });
-                    postedCount++;
-                } catch (error) {
-                    console.error(`❌ Error posting tournament message:`, error.message);
-                }
-            }
-
-            console.log(`✅ Daily tournament check completed: ${postedCount} tournament(s) posted`);
+            const tournaments = await checkTodaysTournaments(client);
+            console.log(`✅ Daily tournament check completed: ${tournaments.length} tournament(s) with Zelda players`);
         } catch (error) {
             console.error('❌ Daily tournament check failed:', error);
         }
@@ -240,7 +225,7 @@ export function initializeScheduler(client) {
         timezone: 'America/New_York'
     });
 
-    console.log('📅 Daily tournament check scheduler initialized (runs every day at 8:30 AM America/New_York)');
+    console.log('📅 Daily tournament check scheduler initialized (runs every day at 11:30 AM America/New_York)');
     return weeklyExportTask;
 }
 
