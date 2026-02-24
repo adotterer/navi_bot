@@ -132,8 +132,10 @@ async function startMatch(pending, interaction, format) {
 
 /**
  * Handle /findmatch slash: post open-ended "Match started! Challenger is looking for an opponent." BO3/BO5 dropdown + Accept Match button. Anyone can click to play.
+ * @param {import('discord.js').ChatInputCommandInteraction} interaction
+ * @param {{ roleName?: string }} [options] - If roleName is set, the first message pings that role (e.g. for /acolyte, /evoker).
  */
-export async function handleFindMatch(interaction) {
+export async function handleFindMatch(interaction, options = {}) {
   try {
     await interaction.deferReply();
 
@@ -144,6 +146,14 @@ export async function handleFindMatch(interaction) {
     if (existing) {
       await interaction.editReply('❌ You are already in an active match. Finish it or wait for it to expire before starting another.');
       return;
+    }
+
+    let content = null;
+    if (options.roleName && interaction.guild) {
+      const role = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === options.roleName.toLowerCase());
+      if (role) {
+        content = `<@&${role.id}>`;
+      }
     }
 
     const pending = {
@@ -162,6 +172,7 @@ export async function handleFindMatch(interaction) {
     const components = buildFindMatchComponents(pendingId, null);
 
     await interaction.editReply({
+      content: content ?? undefined,
       embeds: [embed],
       components,
     });

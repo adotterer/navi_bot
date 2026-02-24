@@ -131,9 +131,27 @@ client.on("clientReady", async () => {
                 new SlashCommandBuilder()
                     .setName('findmatch')
                     .setDescription('Post an open match: you pick BO3/BO5; anyone who sees it can click Accept Match to play'),
+                new SlashCommandBuilder()
+                    .setName('acolyte')
+                    .setDescription('Ping @acolyte and start find-match: you pick BO3/BO5; anyone can Accept Match'),
+                new SlashCommandBuilder()
+                    .setName('evoker')
+                    .setDescription('Ping @evoker and start find-match: you pick BO3/BO5; anyone can Accept Match'),
+                new SlashCommandBuilder()
+                    .setName('conjurer')
+                    .setDescription('Ping @conjurer and start find-match: you pick BO3/BO5; anyone can Accept Match'),
+                new SlashCommandBuilder()
+                    .setName('sorcerer')
+                    .setDescription('Ping @sorcerer and start find-match: you pick BO3/BO5; anyone can Accept Match'),
+                new SlashCommandBuilder()
+                    .setName('arch-mage')
+                    .setDescription('Ping @arch-mage and start find-match: you pick BO3/BO5; anyone can Accept Match'),
+                new SlashCommandBuilder()
+                    .setName('3fr')
+                    .setDescription('Ping @3-Frame Mod and start find-match: you pick BO3/BO5; anyone can Accept Match'),
             ].map(c => c.toJSON());
             await rest.put(Routes.applicationGuildCommands(client.user.id, guildId), { body: commands });
-            console.log('✅ Slash commands registered (/coinflip, /ban, /result, /cancel-match, /end, /bo3, /bo5, /ft5, /findmatch)');
+            console.log('✅ Slash commands registered (/coinflip, /ban, /result, /cancel-match, /end, /bo3, /bo5, /ft5, /findmatch, /acolyte, /evoker, /conjurer, /sorcerer, /arch-mage, /3fr)');
         } catch (err) {
             console.error('❌ Failed to register slash commands:', err);
         }
@@ -175,6 +193,18 @@ client.on('interactionCreate', async (interaction) => {
                 await handleCoinFlipFormat(interaction, 'ft5');
             } else if (interaction.commandName === 'findmatch') {
                 await handleFindMatch(interaction);
+            } else if (interaction.commandName === 'acolyte') {
+                await handleFindMatch(interaction, { roleName: 'acolyte' });
+            } else if (interaction.commandName === 'evoker') {
+                await handleFindMatch(interaction, { roleName: 'evoker' });
+            } else if (interaction.commandName === 'conjurer') {
+                await handleFindMatch(interaction, { roleName: 'conjurer' });
+            } else if (interaction.commandName === 'sorcerer') {
+                await handleFindMatch(interaction, { roleName: 'sorcerer' });
+            } else if (interaction.commandName === 'arch-mage') {
+                await handleFindMatch(interaction, { roleName: 'arch-mage' });
+            } else if (interaction.commandName === '3fr') {
+                await handleFindMatch(interaction, { roleName: '3-Frame Mod' });
             }
             return;
         }
