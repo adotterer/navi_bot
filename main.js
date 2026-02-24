@@ -1,5 +1,7 @@
 import { Client, GatewayIntentBits, ChannelType, EmbedBuilder } from "discord.js";
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 
 // Import handlers
 import { handleExportCharacter, handleExportMatchups, handleListThreadCounts } from './src/export/exportHandler.js';
@@ -22,6 +24,25 @@ import { getCanonicalCharacterThreads } from './src/matchups/characterAliases.js
 import { setClient } from './src/shared/discordClient.js';
 
 dotenv.config();
+
+// App-owned log file for !logs: create and mirror stdout/stderr when LOG_PATH is unset
+if (!process.env.LOG_PATH) {
+    process.env.LOG_PATH = path.join(process.cwd(), 'logs', 'web.stdout.log');
+    try {
+        fs.mkdirSync(path.dirname(process.env.LOG_PATH), { recursive: true });
+        const logStream = fs.createWriteStream(process.env.LOG_PATH, { flags: 'a' });
+        logStream.write(`\n[${new Date().toISOString()}] process started\n`);
+        const tee = (original, stream) => function (chunk, encoding, cb) {
+            if (typeof encoding === 'function') { cb = encoding; encoding = undefined; }
+            stream.write(chunk, encoding, () => {});
+            return original(chunk, encoding, cb);
+        };
+        process.stdout.write = tee(process.stdout.write.bind(process.stdout), logStream);
+        process.stderr.write = tee(process.stderr.write.bind(process.stderr), logStream);
+    } catch (err) {
+        console.warn('[startup] Could not create app log file:', err?.message || err);
+    }
+}
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN || '';
 

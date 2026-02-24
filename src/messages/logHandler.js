@@ -31,7 +31,16 @@ export async function handleGetLogs(message) {
         const { stdout: out } = await execFileAsync('tail', ['-n', '100', logPath]);
         stdout = out || '';
     } catch (err) {
-        await message.reply('❌ Failed to read log file: ' + (err.message || String(err)));
+        const msg = err.message || String(err);
+        const isPermissionDenied = err.code === 'EACCES' || /Permission denied/i.test(msg);
+        if (isPermissionDenied) {
+            await message.reply(
+                '❌ Permission denied reading the log file. The app user cannot read that path. ' +
+                'Set **LOG_PATH** in the server env to a log file the process can read (e.g. one your app writes to), or fix file permissions / group membership for the default path.'
+            );
+        } else {
+            await message.reply('❌ Failed to read log file: ' + msg);
+        }
         return;
     }
 
