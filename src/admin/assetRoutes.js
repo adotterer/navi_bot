@@ -145,7 +145,7 @@ router.get('/', async (req, res) => {
     ${successHtml}
     ${deletedHtml}
     ${errorHtml}
-    <form method="post" action="/admin/assets" enctype="multipart/form-data" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm space-y-4 mb-8">
+    <form id="asset-upload-form" method="post" action="/admin/assets" enctype="multipart/form-data" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm space-y-4 mb-8">
       ${csrfInput}
       <div>
         <label for="prefix" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subfolder under assets/ (optional)</label>
@@ -158,7 +158,16 @@ router.get('/', async (req, res) => {
         <input type="file" id="assets" name="assets" multiple accept="image/*,.pdf"
           class="w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-emerald-50 file:text-emerald-700 dark:file:bg-emerald-900/30 dark:file:text-emerald-300 hover:file:bg-emerald-100 dark:hover:file:bg-emerald-900/50" />
       </div>
-      <button type="submit" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 text-sm hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">Upload</button>
+      <div id="upload-status" class="hidden flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 mb-2" aria-live="polite">
+        <svg class="animate-spin h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Uploading…</span>
+      </div>
+      <button type="submit" id="asset-upload-btn" class="rounded-lg bg-emerald-600 text-white font-medium py-2.5 px-5 text-sm hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors disabled:opacity-70 disabled:pointer-events-none inline-flex items-center gap-2">
+        <span id="asset-upload-btn-text">Upload</span>
+      </button>
     </form>
     <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">Uploaded assets</h2>
     ${listHtml}
@@ -167,7 +176,23 @@ router.get('/', async (req, res) => {
     const fullHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>${adminHead('Assets')}</head>
-<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}</body>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">${content}
+<script>
+(function(){
+  var form = document.getElementById('asset-upload-form');
+  var btn = document.getElementById('asset-upload-btn');
+  var status = document.getElementById('upload-status');
+  if (!form || !btn || !status) return;
+  form.addEventListener('submit', function(){
+    status.classList.remove('hidden');
+    status.classList.add('flex');
+    btn.disabled = true;
+    var textEl = document.getElementById('asset-upload-btn-text');
+    if (textEl) textEl.textContent = 'Uploading…';
+  });
+})();
+</script>
+</body>
 </html>`;
     saveSessionThenSend(fullHtml);
 });
