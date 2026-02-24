@@ -17,7 +17,16 @@ const DOCS_LINES = [
     '• **MU commands documentation** *(Farore\'s or Nayru\'s subscription required)*:',
     'https://discord.com/channels/1010002260786430052/1468015613711482974/1471297119574032486',
     '',
-    '• **Character aliases:** Use `!aliases` to view all aliases in alphabetical order.'
+    '• **Character aliases:** Use `!aliases` to view all aliases in alphabetical order.',
+    '',
+    '• **Stage ban (slash commands)**',
+    '`/coinflip` — Start a stage ban match (opponent required).',
+    '`/bo3`, `/bo5`, `/ft5` — Start a match with a set format (BO3 = first to 2, BO5 = first to 3, FT5 = first to 5).',
+    '`/ban` — Ban or select a stage (dropdown on the bot message or this command; match ID optional).',
+    '`/result` — Report who won a game (loser must confirm). After Game 2+ you can play another match or `/end`.',
+    '`/end` — End the session (either player). Sessions expire after 24 hours if not ended.',
+    '`/cancel-match` — Cancel your active match (either player).',
+    'Stage lists (starters/counterpicks): use `!sl` in Discord.'
 ];
 
 const FAQ_LINES = [
@@ -44,6 +53,12 @@ const FAQ_LINES = [
     '• `!mq what beats Wolf blaster?`',
     '• `!fdq is Cloud bair safe on shield?`',
     '• `!sq what is Sheik run speed?`',
+    '',
+    '**Stage ban (slash commands)**',
+    '• `/coinflip @opponent` or `/bo3`, `/bo5`, `/ft5 @opponent` — Start a match; coin flip decides who bans first. BO3/BO5/FT5 track set score (first to 2/3/5).',
+    '• The bot message has a **dropdown** for the player whose turn it is; they can also use `/ban <stage>` (match ID optional).',
+    '• Game 1: starters only. Game 2+: counterpicks; previous game winner bans 3, opponent picks 1. After each game, report result (loser confirms), then **Another match** or **/end**.',
+    '• `/result` — Report who won Game 1 or Game 2+ (loser must confirm). `/end` — End the session (24h auto-expiry if forgotten). `/cancel-match` — Cancel the match.',
     '',
     'Need command docs/threads? Use `!docs`.',
     'Need all character aliases? Use `!aliases`.'

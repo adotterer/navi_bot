@@ -6,7 +6,8 @@ import { PutCommand, GetCommand, DeleteCommand, ScanCommand } from '@aws-sdk/lib
 import { getDynamoClient } from '../shared/dynamoHelper.js';
 
 const TABLE_NAME = process.env.DYNAMODB_BAN_SESSIONS_TABLE || 'navi-ban-sessions';
-const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
+/** 24-hour expiration for sessions (refreshed when starting another match). */
+export const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * @param {string} matchId
@@ -32,6 +33,9 @@ export async function createSession(matchId, player1Id, player2Id, opts = {}) {
     currentTurn: null,
     turnPhase: 'game1_ban_1',
     selectedStage: null,
+    format: null,
+    gameWins: null,
+    lastGameWinnerId: null,
   };
 
   const client = getDynamoClient();

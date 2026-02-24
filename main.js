@@ -25,6 +25,9 @@ import { handleCoinFlip } from './src/bans/coinflipHandler.js';
 import { handleResult, handleResultConfirm, handleResultDispute, handleResultReportComponent } from './src/bans/resultHandler.js';
 import { handleBan, handleBanComponent } from './src/bans/banHandler.js';
 import { handleCancelMatch } from './src/bans/cancelMatchHandler.js';
+import { handleAnotherMatch, handleEndSession } from './src/bans/resultHandler.js';
+import { handleEnd } from './src/bans/endHandler.js';
+import { handleCoinFlipFormat } from './src/bans/coinflipHandler.js';
 import { cleanupExpiredSessions } from './src/bans/banSessionStore.js';
 
 dotenv.config();
@@ -101,16 +104,32 @@ client.on("clientReady", async () => {
                     .addStringOption(opt => opt.setName('match_id').setDescription('Match ID from /coinflip (see embed footer or DM)').setRequired(false)),
                 new SlashCommandBuilder()
                     .setName('result')
-                    .setDescription('Report who won Game 1 (loser must confirm to start Game 2)')
+                    .setDescription('Report who won a game (loser must confirm; use after Game 1 or Game 2+)')
                     .addUserOption(opt => opt.setName('winner').setDescription('The player who won the game').setRequired(true))
                     .addStringOption(opt => opt.setName('match_id').setDescription('Match ID (optional if you have one active match)').setRequired(false)),
                 new SlashCommandBuilder()
                     .setName('cancel-match')
                     .setDescription('Cancel your active stage ban match (either player can cancel)')
                     .addStringOption(opt => opt.setName('match_id').setDescription('Match ID (optional; cancels your current match if omitted)').setRequired(false)),
+                new SlashCommandBuilder()
+                    .setName('end')
+                    .setDescription('End the stage ban session (either player can end; use after a set or when done)')
+                    .addStringOption(opt => opt.setName('match_id').setDescription('Match ID (optional if you have one active match)').setRequired(false)),
+                new SlashCommandBuilder()
+                    .setName('bo3')
+                    .setDescription('Start a Best of 3 (first to 2 wins) stage ban match')
+                    .addUserOption(opt => opt.setName('opponent').setDescription('Your opponent').setRequired(true)),
+                new SlashCommandBuilder()
+                    .setName('bo5')
+                    .setDescription('Start a Best of 5 (first to 3 wins) stage ban match')
+                    .addUserOption(opt => opt.setName('opponent').setDescription('Your opponent').setRequired(true)),
+                new SlashCommandBuilder()
+                    .setName('ft5')
+                    .setDescription('Start a First to 5 stage ban match')
+                    .addUserOption(opt => opt.setName('opponent').setDescription('Your opponent').setRequired(true)),
             ].map(c => c.toJSON());
             await rest.put(Routes.applicationGuildCommands(client.user.id, guildId), { body: commands });
-            console.log('✅ Slash commands registered (/coinflip, /ban, /result, /cancel-match)');
+            console.log('✅ Slash commands registered (/coinflip, /ban, /result, /cancel-match, /end, /bo3, /bo5, /ft5)');
         } catch (err) {
             console.error('❌ Failed to register slash commands:', err);
         }
@@ -142,6 +161,14 @@ client.on('interactionCreate', async (interaction) => {
                 await handleResult(interaction);
             } else if (interaction.commandName === 'cancel-match') {
                 await handleCancelMatch(interaction);
+            } else if (interaction.commandName === 'end') {
+                await handleEnd(interaction);
+            } else if (interaction.commandName === 'bo3') {
+                await handleCoinFlipFormat(interaction, 'bo3');
+            } else if (interaction.commandName === 'bo5') {
+                await handleCoinFlipFormat(interaction, 'bo5');
+            } else if (interaction.commandName === 'ft5') {
+                await handleCoinFlipFormat(interaction, 'ft5');
             }
             return;
         }
@@ -161,6 +188,14 @@ client.on('interactionCreate', async (interaction) => {
             }
             if (customId.startsWith('result_dispute:')) {
                 const handled = await handleResultDispute(interaction);
+                if (handled) return;
+            }
+            if (customId.startsWith('another_match:')) {
+                const handled = await handleAnotherMatch(interaction);
+                if (handled) return;
+            }
+            if (customId.startsWith('end_session:')) {
+                const handled = await handleEndSession(interaction);
                 if (handled) return;
             }
         }

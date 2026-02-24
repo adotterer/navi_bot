@@ -113,6 +113,48 @@ router.get('/', requireAdmin, (req, res) => {
             <td class="px-4 py-3 text-slate-700 dark:text-slate-300">Show canonical character threads</td>
             <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Any channel</td>
           </tr>
+          <!-- Slash commands: Stage ban -->
+          <tr class="bg-green-50 dark:bg-green-900/20">
+            <td colspan="4" class="px-4 py-2 text-sm font-semibold text-green-800 dark:text-green-200">
+              Slash commands (stage ban)
+            </td>
+          </tr>
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">/coinflip</code></td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">—</td>
+            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">Start a stage ban match; opponent required; 24h expiry</td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Any channel</td>
+          </tr>
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">/bo3</code>, <code class="text-emerald-700 dark:text-emerald-400 font-mono">/bo5</code>, <code class="text-emerald-700 dark:text-emerald-400 font-mono">/ft5</code></td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">—</td>
+            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">Start a match with set format (first to 2 / 3 / 5); opponent required</td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Any channel</td>
+          </tr>
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">/ban</code></td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">—</td>
+            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">Ban or select a stage (dropdown or this command; stage name or alias, match_id optional)</td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Any channel</td>
+          </tr>
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">/result</code></td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">—</td>
+            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">Report who won a game (loser confirms); use after Game 1 or Game 2+</td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Any channel</td>
+          </tr>
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">/end</code></td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">—</td>
+            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">End the stage ban session (either player)</td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Any channel</td>
+          </tr>
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono">/cancel-match</code></td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">—</td>
+            <td class="px-4 py-3 text-slate-700 dark:text-slate-300">Cancel your active stage ban match (either player)</td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400">Any channel</td>
+          </tr>
           <!-- Admin/Mod Tools -->
           <tr class="bg-amber-50 dark:bg-amber-900/20">
             <td colspan="4" class="px-4 py-2 text-sm font-semibold text-amber-800 dark:text-amber-200">

@@ -28,6 +28,7 @@ function getAllowedStagesForSession(session) {
 
 /**
  * Build an ActionRow with a StringSelectMenu for the current turn's allowed stages, or null if none (e.g. game 1 complete).
+ * When the phase requires banning 2 stages (game1_ban_2), the menu allows multi-select so the player can pick both at once.
  * @param {string} matchId
  * @param {object} session
  * @param {string} [placeholder] - e.g. "Ban a stage" or "Select stage"
@@ -36,18 +37,42 @@ function getAllowedStagesForSession(session) {
 export function buildStageSelectRow(matchId, session, placeholder = 'Ban or select a stage') {
   const allowed = getAllowedStagesForSession(session);
   if (allowed.length === 0) return null;
+  const phase = session.turnPhase || '';
+  const isBan2FirstStep = phase === 'game1_ban_2_of_2';
   const menu = new StringSelectMenuBuilder()
     .setCustomId(`ban:${matchId}`)
     .setPlaceholder(placeholder)
     .addOptions(allowed.map(s => ({ label: s.name, value: s.name })));
+  if (isBan2FirstStep && allowed.length >= 2) {
+    menu.setMinValues(2).setMaxValues(2);
+  }
   return new ActionRowBuilder().addComponents(menu);
 }
+
+const FORMAT_LABELS = {
+  bo3: 'BO3 (first to 2 wins)',
+  bo5: 'BO5 (first to 3 wins)',
+  ft5: 'First to 5',
+};
 
 /**
  * Handle /coinflip slash command: start a stage ban match, pick random first ban, create session.
  * @param {import('discord.js').ChatInputCommandInteraction} interaction
  */
 export async function handleCoinFlip(interaction) {
+  return runCoinFlip(interaction, null);
+}
+
+/**
+ * Handle /bo3, /bo5, /ft5: same as coinflip but session has format set for set tracking and display.
+ * @param {import('discord.js').ChatInputCommandInteraction} interaction
+ * @param {'bo3'|'bo5'|'ft5'} format
+ */
+export async function handleCoinFlipFormat(interaction, format) {
+  return runCoinFlip(interaction, format);
+}
+
+async function runCoinFlip(interaction, format) {
   try {
     await interaction.deferReply();
 
@@ -85,16 +110,22 @@ export async function handleCoinFlip(interaction) {
       guildId,
       channelId: interaction.channelId,
     });
-    await updateSession(matchId, {
+    const sessionUpdates = {
       coinFlipWinnerId: winner.id,
       currentTurn: winner.id,
       turnPhase: 'game1_ban_1',
-    });
+    };
+    if (format) {
+      sessionUpdates.format = format;
+      sessionUpdates.gameWins = { [player1.id]: 0, [player2.id]: 0 };
+    }
+    await updateSession(matchId, sessionUpdates);
 
+    const formatTitle = format ? ` — ${FORMAT_LABELS[format]}` : '';
     const starterList = STAGES.starters.map(s => `• ${s.name} (${s.aliases.join('/')})`).join('\n');
     const coinFlipEmbed = new EmbedBuilder()
       .setColor(INFO_EMBED_COLOR)
-      .setTitle('🪙 Coin Flip Result')
+      .setTitle(`🪙 Coin Flip Result${formatTitle}`)
       .setDescription(
         `**${winner.username}** won the coin flip and bans **first**!\n\nAvailable stages:\n${starterList}`
       )
