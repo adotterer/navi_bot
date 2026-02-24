@@ -310,11 +310,11 @@ client.on("messageCreate", async (message) => {
             new EmbedBuilder()
                 .setColor(INFO_EMBED_COLOR)
                 .setTitle("Stage List (NA)")
-                .setImage(`${baseUrl}/assets/na.png`),
+                .setImage(`${baseUrl}/assets/stage-list/na.png`),
             new EmbedBuilder()
                 .setColor(INFO_EMBED_COLOR)
                 .setTitle("Stage List (EU)")
-                .setImage(`${baseUrl}/assets/eu.png`),
+                .setImage(`${baseUrl}/assets/stage-list/eu.png`),
         ];
         await message.reply({ embeds });
         return;
