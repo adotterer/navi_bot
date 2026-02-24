@@ -12,14 +12,18 @@ const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
  * @param {string} matchId
  * @param {string} player1Id
  * @param {string} player2Id
+ * @param {{ guildId: string, channelId?: string }} [opts] - guildId required for lookup; channelId optional for future use
  * @returns {Promise<object>} Created session object
  */
-export async function createSession(matchId, player1Id, player2Id) {
+export async function createSession(matchId, player1Id, player2Id, opts = {}) {
+  const { guildId, channelId } = opts;
   const session = {
     pk: matchId,
     matchId,
     player1Id,
     player2Id,
+    guildId: guildId || null,
+    channelId: channelId || null,
     createdAt: Date.now(),
     expiresAt: Date.now() + SESSION_TTL_MS,
     gameNumber: 1,
@@ -46,6 +50,75 @@ export async function createSession(matchId, player1Id, player2Id) {
   } catch (err) {
     console.warn('[banSessionStore] createSession failed:', err?.message || err);
     throw err;
+  }
+}
+
+/**
+ * Find an active session where this user is a participant (player1 or player2) in this guild.
+ * Used to enforce "one match at a time" per player.
+ * @param {string} userId - Discord user ID
+ * @param {string} guildId - Discord guild ID
+ * @returns {Promise<object|null>}
+ */
+export async function getActiveSessionForPlayer(userId, guildId) {
+  const client = getDynamoClient();
+  if (!client || !userId || !guildId) return null;
+
+  const now = Date.now();
+  try {
+    const result = await client.send(new ScanCommand({
+      TableName: TABLE_NAME,
+      FilterExpression: '(player1Id = :uid OR player2Id = :uid) AND guildId = :gid AND expiresAt > :now',
+      ExpressionAttributeValues: {
+        ':uid': userId,
+        ':gid': guildId,
+        ':now': now,
+      },
+    }));
+
+    const items = (result.Items || []).filter(
+      item => item && item.matchId && item.expiresAt > now
+    );
+    if (items.length === 0) return null;
+    items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return items[0];
+  } catch (err) {
+    console.warn('[banSessionStore] getActiveSessionForPlayer failed:', err?.message || err);
+    return null;
+  }
+}
+
+/**
+ * Find an active session where it is this user's turn in this guild. Uses Scan; returns latest by createdAt if multiple.
+ * @param {string} userId - Discord user ID (currentTurn)
+ * @param {string} guildId - Discord guild ID
+ * @returns {Promise<object|null>}
+ */
+export async function getSessionByCurrentTurn(userId, guildId) {
+  const client = getDynamoClient();
+  if (!client || !userId || !guildId) return null;
+
+  const now = Date.now();
+  try {
+    const result = await client.send(new ScanCommand({
+      TableName: TABLE_NAME,
+      FilterExpression: 'currentTurn = :uid AND guildId = :gid AND expiresAt > :now',
+      ExpressionAttributeValues: {
+        ':uid': userId,
+        ':gid': guildId,
+        ':now': now,
+      },
+    }));
+
+    const items = (result.Items || []).filter(
+      item => item && item.matchId && item.expiresAt > now
+    );
+    if (items.length === 0) return null;
+    items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return items[0];
+  } catch (err) {
+    console.warn('[banSessionStore] getSessionByCurrentTurn failed:', err?.message || err);
+    return null;
   }
 }
 

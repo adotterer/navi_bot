@@ -22,7 +22,7 @@ import { handleAddAlias } from './src/messages/addAliasCommand.js';
 import { getCanonicalCharacterThreads } from './src/matchups/characterAliases.js';
 import { setClient } from './src/shared/discordClient.js';
 import { handleCoinFlip } from './src/bans/coinflipHandler.js';
-import { handleBan } from './src/bans/banHandler.js';
+import { handleBan, handleBanComponent } from './src/bans/banHandler.js';
 import { cleanupExpiredSessions } from './src/bans/banSessionStore.js';
 
 dotenv.config();
@@ -119,17 +119,26 @@ client.on("clientReady", async () => {
     });
 });
 
-// Slash command interactions
+// Slash command and component interactions
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
     try {
-        if (interaction.commandName === 'coinflip') {
-            await handleCoinFlip(interaction);
-        } else if (interaction.commandName === 'ban') {
-            await handleBan(interaction);
+        if (interaction.isChatInputCommand()) {
+            if (interaction.commandName === 'coinflip') {
+                await handleCoinFlip(interaction);
+            } else if (interaction.commandName === 'ban') {
+                await handleBan(interaction);
+            }
+            return;
+        }
+        if (interaction.isStringSelectMenu() || interaction.isButton()) {
+            const customId = interaction.customId || '';
+            if (customId.startsWith('ban:')) {
+                await handleBanComponent(interaction);
+                return;
+            }
         }
     } catch (err) {
-        console.error('[interactionCreate]', interaction.commandName, err);
+        console.error('[interactionCreate]', interaction.commandName || interaction.customId, err);
         try {
             if (interaction.deferred) {
                 await interaction.editReply({ content: '❌ An error occurred.' }).catch(() => {});

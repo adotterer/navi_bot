@@ -1,6 +1,7 @@
 import { EmbedBuilder } from 'discord.js';
-import { getSession, updateSession } from './banSessionStore.js';
+import { getSession, getSessionByCurrentTurn, updateSession } from './banSessionStore.js';
 import { STAGES, findStageByInput } from './stageData.js';
+import { buildStageSelectRow } from './coinflipHandler.js';
 
 const INFO_EMBED_COLOR = 0x1e88e5;
 
@@ -63,16 +64,24 @@ export async function handleBan(interaction) {
     }
 
     let matchId = interaction.options.getString('match_id');
-    if (!matchId) {
-      await interaction.editReply(
-        '❌ No match ID provided. Run `/coinflip` first and use the Match ID from the embed footer or your DM.'
-      );
-      return;
+    let session = null;
+    if (matchId) {
+      session = await getSession(matchId);
+    } else {
+      const resolved = await getSessionByCurrentTurn(interaction.user.id, interaction.guildId);
+      if (resolved) {
+        session = resolved;
+        matchId = session.matchId;
+      }
     }
-
-    const session = await getSession(matchId);
     if (!session) {
-      await interaction.editReply('❌ Match session not found or expired. Start a new match with `/coinflip`.');
+      if (!matchId) {
+        await interaction.editReply(
+          '❌ No active match where it\'s your turn. Start one with `/coinflip` or provide the match ID.'
+        );
+      } else {
+        await interaction.editReply('❌ Match session not found or expired. Start a new match with `/coinflip`.');
+      }
       return;
     }
 
@@ -177,4 +186,116 @@ export async function handleBan(interaction) {
       await interaction.editReply('❌ Something went wrong.');
     } catch (_) {}
   }
+}
+
+/**
+ * Handle select menu (and optionally button) interaction for stage ban: parse matchId, validate turn, apply ban, update message.
+ * @param {import('discord.js').StringSelectMenuInteraction} interaction
+ */
+export async function handleBanComponent(interaction) {
+  const customId = interaction.customId;
+  if (!customId || !customId.startsWith('ban:')) return false;
+  const matchId = customId.slice(4);
+
+  const session = await getSession(matchId);
+  if (!session) {
+    await interaction.update({ content: '❌ This match expired.', embeds: [], components: [] }).catch(() => {});
+    return true;
+  }
+
+  if (session.currentTurn !== interaction.user.id) {
+    await interaction.reply({ content: "❌ It's not your turn.", ephemeral: true }).catch(() => {});
+    return true;
+  }
+
+  await interaction.deferUpdate();
+
+  const selectedValue = interaction.values && interaction.values[0];
+  const stage = findStageByInput(selectedValue);
+  if (!stage) {
+    await interaction.followUp({ content: '❌ Invalid stage.', ephemeral: true }).catch(() => {});
+    return true;
+  }
+
+  const isSelectionPhase = session.turnPhase === 'game1_select';
+  const bannedStages = session.bannedStages || [];
+
+  if (isSelectionPhase) {
+    const remainingStarters = STAGES.starters.filter(s => !bannedStages.includes(s.name));
+    if (!remainingStarters.some(s => s.name === stage.name)) {
+      await interaction.followUp({ content: `❌ **${stage.name}** is not one of the remaining starters.`, ephemeral: true }).catch(() => {});
+      return true;
+    }
+  } else {
+    if (bannedStages.includes(stage.name)) {
+      await interaction.followUp({ content: `❌ **${stage.name}** is already banned.`, ephemeral: true }).catch(() => {});
+      return true;
+    }
+    if (session.turnPhase.includes('game1') && !STAGES.starters.some(s => s.name === stage.name)) {
+      await interaction.followUp({ content: '❌ For Game 1 use starters only.', ephemeral: true }).catch(() => {});
+      return true;
+    }
+  }
+
+  const updates = { bannedStages: [...bannedStages, stage.name] };
+  if (isSelectionPhase) updates.selectedStage = stage.name;
+
+  const { nextPlayer, nextPhase } = advanceTurn({ ...session, ...updates });
+  updates.currentTurn = nextPlayer;
+  updates.turnPhase = nextPhase;
+
+  const updatedSession = await updateSession(matchId, updates);
+  const nextBannedList = updatedSession.bannedStages || [];
+
+  const remainingAll = [...STAGES.starters, ...STAGES.counterpicks].filter(
+    s => !nextBannedList.includes(s.name)
+  );
+
+  const banEmbed = new EmbedBuilder()
+    .setColor(INFO_EMBED_COLOR)
+    .setTitle(isSelectionPhase ? `Stage selected: ${stage.name}` : `Stage banned: ${stage.name}`)
+    .setDescription(
+      `**${interaction.user.username}** ${isSelectionPhase ? 'selected' : 'banned'} **${stage.name}**.\n\nBanned/used so far:\n${nextBannedList.map(s => `• ${s}`).join('\n') || '(none)'}`
+    )
+    .addFields({
+      name: 'Remaining stages',
+      value: remainingAll.map(s => `• ${s.name}`).join('\n') || 'None',
+    });
+
+  const nextMention = nextPlayer === session.player1Id ? `<@${session.player1Id}>` : `<@${session.player2Id}>`;
+  if (nextPhase.includes('select')) {
+    banEmbed.addFields({
+      name: 'Next step',
+      value: `${nextMention}, **select** the stage for Game 1 from the dropdown below.`,
+    });
+  } else if (nextPhase.includes('ban')) {
+    const bansLeft = getBansForPhase(nextPhase);
+    banEmbed.addFields({
+      name: 'Next step',
+      value: `${nextMention}, ban **${bansLeft}** stage(s) from the dropdown below.`,
+    });
+  } else if (nextPhase === 'game2_ban_3') {
+    banEmbed.addFields({
+      name: 'Game 1 complete',
+      value: `Stage for Game 1: **${updatedSession.selectedStage}**. Next: Game 2 counterpick bans (${nextMention} bans 3).`,
+    });
+  }
+
+  const nextRow = buildStageSelectRow(matchId, updatedSession);
+  await interaction.editReply({
+    embeds: [banEmbed],
+    components: nextRow ? [nextRow] : [],
+  });
+
+  try {
+    const nextMember = await interaction.guild.members.fetch(nextPlayer).catch(() => null);
+    if (nextMember) {
+      await nextMember.send(
+        `Your turn in match \`${matchId}\`. Use the **dropdown** on the bot message in the server, or \`/ban <stage>\`.`
+      );
+    }
+  } catch (err) {
+    console.warn('[banHandler] Could not DM next player:', err.message);
+  }
+  return true;
 }

@@ -1,8 +1,39 @@
-import { EmbedBuilder } from 'discord.js';
-import { createSession, updateSession } from './banSessionStore.js';
+import { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } from 'discord.js';
+import { createSession, updateSession, getActiveSessionForPlayer } from './banSessionStore.js';
 import { STAGES } from './stageData.js';
 
 const INFO_EMBED_COLOR = 0x1e88e5;
+
+/**
+ * Get the list of stages the current-turn player can ban or select for this session.
+ * @param {object} session
+ * @returns {{ name: string, aliases: string[] }[]}
+ */
+function getAllowedStagesForSession(session) {
+  const banned = session.bannedStages || [];
+  const isSelect = session.turnPhase === 'game1_select';
+  const starters = STAGES.starters.filter(s => !banned.includes(s.name));
+  if (isSelect) return starters;
+  if (session.turnPhase && session.turnPhase.includes('game1')) return starters;
+  return [];
+}
+
+/**
+ * Build an ActionRow with a StringSelectMenu for the current turn's allowed stages, or null if none (e.g. game 1 complete).
+ * @param {string} matchId
+ * @param {object} session
+ * @param {string} [placeholder] - e.g. "Ban a stage" or "Select stage"
+ * @returns {ActionRowBuilder|null}
+ */
+export function buildStageSelectRow(matchId, session, placeholder = 'Ban or select a stage') {
+  const allowed = getAllowedStagesForSession(session);
+  if (allowed.length === 0) return null;
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId(`ban:${matchId}`)
+    .setPlaceholder(placeholder)
+    .addOptions(allowed.map(s => ({ label: s.name, value: s.name })));
+  return new ActionRowBuilder().addComponents(menu);
+}
 
 /**
  * Handle /coinflip slash command: start a stage ban match, pick random first ban, create session.
@@ -25,12 +56,27 @@ export async function handleCoinFlip(interaction) {
 
     const player1 = interaction.user;
     const player2 = opponent;
-    const matchId = `${interaction.guildId}-${Date.now()}`;
+    const guildId = interaction.guildId;
 
+    const existing1 = await getActiveSessionForPlayer(player1.id, guildId);
+    if (existing1) {
+      await interaction.editReply('❌ You are already in an active match. Finish it or wait for it to expire before starting another.');
+      return;
+    }
+    const existing2 = await getActiveSessionForPlayer(player2.id, guildId);
+    if (existing2) {
+      await interaction.editReply('❌ Your opponent is already in an active match. They need to finish it or wait for it to expire.');
+      return;
+    }
+
+    const matchId = `${guildId}-${Date.now()}`;
     const winner = Math.random() < 0.5 ? player1 : player2;
     const loser = winner.id === player1.id ? player2 : player1;
 
-    await createSession(matchId, player1.id, player2.id);
+    await createSession(matchId, player1.id, player2.id, {
+      guildId,
+      channelId: interaction.channelId,
+    });
     await updateSession(matchId, {
       coinFlipWinnerId: winner.id,
       currentTurn: winner.id,
@@ -46,11 +92,16 @@ export async function handleCoinFlip(interaction) {
       )
       .addFields({
         name: 'Next Step',
-        value: `${winner}, use \`/ban <stage>\` to ban 1 stage. Include match ID: \`${matchId}\``,
+        value: `${winner}, pick a stage from the **dropdown below** (or use \`/ban <stage>\`).`,
       })
-      .setFooter({ text: `Match ID: ${matchId} (use this with /ban if needed)` });
+      .setFooter({ text: `Match ID: ${matchId}` });
 
-    await interaction.editReply({ embeds: [coinFlipEmbed] });
+    const sessionForMenu = { bannedStages: [], turnPhase: 'game1_ban_1' };
+    const row = buildStageSelectRow(matchId, sessionForMenu, 'Ban 1 stage');
+    const replyPayload = { embeds: [coinFlipEmbed] };
+    if (row) replyPayload.components = [row];
+
+    await interaction.editReply(replyPayload);
 
     try {
       await winner.send({
