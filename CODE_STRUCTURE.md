@@ -21,6 +21,9 @@ The project architecture distinguishes between the Discord bot client and the Ex
 | `/admin/commands` | `src/admin/commandRoutes.js` | Reference table for bot commands and permissions. |
 | `/admin/agent` | `src/admin/agent/agentRoutes.js` | Gemini agents (researcher, planners, coders) produce a flight plan and open a GitHub PR from your mission prompt. |
 | `/admin/cost` | `src/admin/costRoutes.js` | View token usage and estimated cost for Missions (Gemini and Anthropic). |
+
+For high-volume, non-interactive agent workloads, consider provider batch APIs (e.g. [Claude Batch](https://platform.claude.com/docs/build-with-claude/batch-processing)) where applicable; the current Missions flow is interactive (user waits for PR).
+
 | `/exports` | `src/app.js` | Serves exported data files from an isolated directory (primary application entry point). |
 | `/robots.txt` | `src/app.js` | Search engine instructions (primary application entry point). |
 | `/health` | `src/app.js` | Public health check API (primary application entry point). |

@@ -161,6 +161,7 @@ function updateRun(runId, updates) {
     if (updates.inputTokens != null) run.inputTokens = (run.inputTokens || 0) + updates.inputTokens;
     if (updates.outputTokens != null) run.outputTokens = (run.outputTokens || 0) + updates.outputTokens;
     if (updates.cached_tokens != null) run.cached_tokens = (run.cached_tokens || 0) + updates.cached_tokens;
+    if (updates.cachedTokens != null) run.cached_tokens = (run.cached_tokens || 0) + updates.cachedTokens;
 }
 
 function setRunCancelled(runId) {

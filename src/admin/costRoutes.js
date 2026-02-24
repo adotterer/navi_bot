@@ -48,13 +48,17 @@ function costForRun(model, inputTokens, outputTokens, cachedTokens = 0) {
     const cacheT = Number(cachedTokens) || 0;
     if (isAnthropic(model)) {
         const rates = getAnthropicRates(model);
-        return (inT / 1e6) * rates.input + (outT / 1e6) * rates.output;
+        // Claude: cache reads at 0.1x base input price (platform.claude.com/docs/about-claude/pricing)
+        const nonCached = Math.max(0, inT - cacheT);
+        return (nonCached / 1e6) * rates.input + (cacheT / 1e6) * rates.input * 0.1 + (outT / 1e6) * rates.output;
     }
     const isPro = typeof model === 'string' && model.toLowerCase().includes('pro');
     const inputRate = isPro ? GEMINI_PRO_INPUT_PER_1M : GEMINI_FLASH_INPUT_PER_1M;
     const outputRate = isPro ? GEMINI_PRO_OUTPUT_PER_1M : GEMINI_FLASH_OUTPUT_PER_1M;
     const multiplier = inT > 128000 ? 2 : 1;
-    return ((inT / 1e6) * inputRate + (outT / 1e6) * outputRate) * multiplier;
+    // Gemini: cached tokens at ~10% of input (context caching discount)
+    const nonCached = Math.max(0, inT - cacheT);
+    return (((nonCached / 1e6) * inputRate + (cacheT / 1e6) * inputRate * 0.1 + (outT / 1e6) * outputRate)) * multiplier;
 }
 
 async function getAggregatedUsage() {
@@ -79,6 +83,7 @@ async function getAggregatedUsage() {
                     model: meta?.model || '',
                     inputTokens: meta?.inputTokens || 0,
                     outputTokens: meta?.outputTokens || 0,
+                    cachedTokens: meta?.cachedTokens || 0,
                 };
             })
         );
@@ -101,7 +106,8 @@ async function getAggregatedUsage() {
     const byMission = {};
     const runsWithCost = runs.map((r) => {
         const provider = isAnthropic(r.model) ? 'anthropic' : 'gemini';
-        const cost = costForRun(r.model, r.inputTokens, r.outputTokens);
+        const cached = r.cachedTokens ?? r.cached_tokens ?? 0;
+        const cost = costForRun(r.model, r.inputTokens, r.outputTokens, cached);
         byProvider[provider].inputTokens += r.inputTokens || 0;
         byProvider[provider].outputTokens += r.outputTokens || 0;
         byProvider[provider].runs += 1;
@@ -137,6 +143,7 @@ async function getAggregatedUsage() {
             model: r.model || '',
             inputTokens: r.inputTokens || 0,
             outputTokens: r.outputTokens || 0,
+            cachedTokens: cached,
             cost,
             provider,
         };
@@ -210,7 +217,7 @@ router.get('/', async (req, res) => {
               <th class="py-2 px-4">Run</th>
               <th class="py-2 px-4">Model</th>
               <th class="py-2 px-4">Mode</th>
-              <th class="py-2 px-4">In / Out tokens</th>
+              <th class="py-2 px-4">In / Out / Cached</th>
               <th class="py-2 px-4">Est. cost</th>
             </tr>
           </thead>
@@ -220,7 +227,7 @@ router.get('/', async (req, res) => {
               <td class="py-2 px-4"><a href="/admin/agent" class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">${escapeHtml(r.runId)}</a></td>
               <td class="py-2 px-4">${escapeHtml(r.model || '—')}</td>
               <td class="py-2 px-4">${escapeHtml(r.runMode || 'pr')}</td>
-              <td class="py-2 px-4">${fmt(r.inputTokens)} / ${fmt(r.outputTokens)}</td>
+              <td class="py-2 px-4">${fmt(r.inputTokens)} / ${fmt(r.outputTokens)}${(r.cachedTokens || 0) > 0 ? ' <span class="text-slate-400" title="Cached tokens (discounted)">(' + fmt(r.cachedTokens) + ' cached)</span>' : ''}</td>
               <td class="py-2 px-4">${costFmt(r.cost)}</td>
             </tr>
             `).join('') : '<tr><td colspan="5" class="py-4 px-4 text-slate-500 dark:text-slate-400">No runs yet.</td></tr>'}

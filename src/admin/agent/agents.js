@@ -187,6 +187,7 @@ async function generateContent({ model, systemPrompt, userContent, maxOutputToke
                     max_tokens: maxOutputTokens || 4096,
                     system: system || undefined,
                     messages: [{ role: 'user', content: userContent || '' }],
+                    cache_control: { type: 'ephemeral' },
                 },
                 signal ? { signal } : undefined
             )
@@ -196,27 +197,31 @@ async function generateContent({ model, systemPrompt, userContent, maxOutputToke
             .map((b) => b.text)
             .join('');
         const usage = message.usage || {};
+        const cacheRead = usage.cache_read_input_tokens ?? 0;
         return {
             text: () => text,
             usageMetadata: {
                 promptTokenCount: usage.input_tokens ?? 0,
                 candidatesTokenCount: usage.output_tokens ?? 0,
-                cachedTokens: 0,
+                cachedTokens: cacheRead,
             },
         };
     }
+    // Gemini: system + user concatenated; implicit context caching may apply when model and token count meet minimum (see ai.google.dev/gemini-api/docs/caching).
     const response = await getGenAI().models.generateContent({
         model: m,
         contents: [{ role: 'user', parts: [{ text: (systemPrompt || '') + '\n\n' + (userContent || '') }] }],
         config: { maxOutputTokens: maxOutputTokens || 4096, responseMimeType, abortSignal: signal },
     });
     const usage = response.usageMetadata || {};
+    const cached = usage.cachedContentTokenCount ?? 0;
     return {
         text: () => response.text,
         usageMetadata: {
             promptTokenCount: usage.promptTokenCount ?? 0,
             candidatesTokenCount: usage.candidatesTokenCount ?? 0,
-            cachedContentTokenCount: usage.cachedContentTokenCount ?? 0,
+            cachedContentTokenCount: cached,
+            cachedTokens: cached,
         },
     };
 }
@@ -240,11 +245,12 @@ async function generateContentStream({ model, systemPrompt, userContent, maxOutp
                     system: system || undefined,
                     messages: [{ role: 'user', content: userContent || '' }],
                     stream: true,
+                    cache_control: { type: 'ephemeral' },
                 },
                 signal ? { signal } : undefined
             )
         );
-        const result = { usageMetadata: { promptTokenCount: 0, candidatesTokenCount: 0 } };
+        const result = { usageMetadata: { promptTokenCount: 0, candidatesTokenCount: 0, cachedTokens: 0 } };
         result[Symbol.asyncIterator] = async function* () {
             for await (const event of stream) {
                 // usage comes from message_delta and may be absent until the end of the stream
@@ -254,9 +260,11 @@ async function generateContentStream({ model, systemPrompt, userContent, maxOutp
                     yield { text: event.delta.text };
                 }
                 if (event.type === 'message_delta' && event.usage) {
+                    const u = event.usage;
                     result.usageMetadata = {
-                        promptTokenCount: event.usage.input_tokens ?? 0,
-                        candidatesTokenCount: event.usage.output_tokens ?? 0,
+                        promptTokenCount: u.input_tokens ?? 0,
+                        candidatesTokenCount: u.output_tokens ?? 0,
+                        cachedTokens: u.cache_read_input_tokens ?? 0,
                     };
                 }
             }
@@ -276,18 +284,22 @@ async function generateContentStream({ model, systemPrompt, userContent, maxOutp
             if (onChunk && text) onChunk(text);
             yield { text };
             if (chunk.usageMetadata) {
+                const c = chunk.usageMetadata.cachedContentTokenCount ?? 0;
                 result.usageMetadata = {
                     promptTokenCount: chunk.usageMetadata.promptTokenCount ?? 0,
                     candidatesTokenCount: chunk.usageMetadata.candidatesTokenCount ?? 0,
-                    cachedContentTokenCount: chunk.usageMetadata.cachedContentTokenCount ?? 0,
+                    cachedContentTokenCount: c,
+                    cachedTokens: c,
                 };
             }
         }
         if (stream.usageMetadata) {
+            const c = stream.usageMetadata.cachedContentTokenCount ?? 0;
             result.usageMetadata = {
                 promptTokenCount: stream.usageMetadata.promptTokenCount ?? 0,
                 candidatesTokenCount: stream.usageMetadata.candidatesTokenCount ?? 0,
-                cachedContentTokenCount: stream.usageMetadata.cachedContentTokenCount ?? 0,
+                cachedContentTokenCount: c,
+                cachedTokens: c,
             };
         }
     };
@@ -383,7 +395,7 @@ export async function runResearcher(missionPrompt, opts = {}) {
                     throw new Error('Could not parse flight plan from response. Reply was not valid JSON array (or tasks/flightPlan wrapper). First 400 chars: ' + (snippet || '(empty)'));
                 }
                 const usage = lastChunkUsage ?? response.usageMetadata;
-                return { ok: true, flightPlan, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0 };
+                return { ok: true, flightPlan, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0, cachedTokens: usage?.cachedTokens ?? 0 };
             })(),
             GEMINI_TIMEOUT_MS,
             'Researcher timed out'
@@ -643,7 +655,7 @@ export async function runPlanner(task, opts = {}) {
                     throw new Error('Could not parse implementation steps');
                 }
                 const usage = lastChunkUsage ?? response.usageMetadata;
-                return { ok: true, steps, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0 };
+                return { ok: true, steps, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0, cachedTokens: usage?.cachedTokens ?? 0 };
             })(),
             GEMINI_TIMEOUT_MS,
             'Planner timed out'
@@ -828,14 +840,15 @@ export async function runCoder(step, fileContext, opts = {}) {
                 }
                 const edits = parseCoderEdits(fullText);
                 const usage = lastChunkUsage ?? response?.usageMetadata;
+                const cached = usage?.cachedTokens ?? 0;
                 if (edits.length) {
-                    return { ok: true, edits, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0 };
+                    return { ok: true, edits, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0, cachedTokens: cached };
                 }
                 const trimmed = fullText.trim();
                 const isEmptyArray = /^\s*\[\s*\]\s*$/.test(trimmed)
                     || (() => { try { const p = JSON.parse(trimmed); return Array.isArray(p); } catch (_) { return false; } })();
                 if (isEmptyArray) {
-                    return { ok: true, edits: [], inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0 };
+                    return { ok: true, edits: [], inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0, cachedTokens: cached };
                 }
                 console.error('[Coder] Parse failed. Raw response (first 400):', fullText.slice(0, 400));
                 console.error('[Coder] Raw response (last 200):', fullText.slice(-200));
@@ -1029,6 +1042,7 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
             reason: failed ? reason : undefined,
             inputTokens: usage?.promptTokenCount ?? 0,
             outputTokens: usage?.candidatesTokenCount ?? 0,
+            cachedTokens: usage?.cachedTokens ?? 0,
         };
     } catch (err) {
         return {
@@ -1037,6 +1051,7 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
             reason: err.message || String(err),
             inputTokens: 0,
             outputTokens: 0,
+            cachedTokens: 0,
         };
     }
 }
@@ -1084,7 +1099,7 @@ export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
         const text = String(raw ?? '').trim();
         const fixPrefix = /^fix\s*:\s*/i;
         const usage = response?.usageMetadata;
-        const tokenCounts = { inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0 };
+        const tokenCounts = { inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0, cachedTokens: usage?.cachedTokens ?? 0 };
         if (fixPrefix.test(text)) {
             const feedback = text.replace(fixPrefix, '').trim();
             return { ok: true, feedback: feedback || null, ...tokenCounts };
@@ -1153,6 +1168,7 @@ export async function runAsk(question, opts = {}) {
             ...(diagramWarnings.length && { warnings: diagramWarnings }),
             inputTokens: usage?.promptTokenCount ?? 0,
             outputTokens: usage?.candidatesTokenCount ?? 0,
+            cachedTokens: usage?.cachedTokens ?? 0,
         };
     } catch (err) {
         return { ok: false, error: err.message || String(err) };
@@ -1217,6 +1233,7 @@ export async function runAuditor(missionPrompt, opts = {}) {
             ...(diagramWarnings.length && { warnings: diagramWarnings }),
             inputTokens: usage?.promptTokenCount ?? 0,
             outputTokens: usage?.candidatesTokenCount ?? 0,
+            cachedTokens: usage?.cachedTokens ?? 0,
         };
     } catch (err) {
         return { ok: false, error: err.message || String(err) };
@@ -1279,6 +1296,7 @@ export async function runTester(branchName, opts = {}) {
             ...(diagramWarnings.length && { warnings: diagramWarnings }),
             inputTokens: usage?.promptTokenCount ?? 0,
             outputTokens: usage?.candidatesTokenCount ?? 0,
+            cachedTokens: usage?.cachedTokens ?? 0,
         };
     } catch (err) {
         return { ok: false, error: err.message || String(err) };

@@ -45,6 +45,7 @@
       <a href="/admin/agent/prompts" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">Edit agent prompts</a>
     </div>
     <p class="text-slate-600 dark:text-slate-400 mb-6">Describe a mission; the AI will create a flight plan, implementation steps, and open a PR for you to review.</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Cost tip: use <strong>lighter/faster models</strong> (e.g. Haiku, Flash) for simple or narrow missions; use <strong>stronger models</strong> (e.g. Sonnet, Opus, Pro) for complex reasoning and multi-step code.</p>
     <section class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden w-full mb-4">
       <button type="button" id="past-runs-toggle" class="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 text-sm font-medium text-slate-700 dark:text-slate-300 text-left hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
         <span>Recent runs</span>
@@ -1215,6 +1216,46 @@
   function renderAuditMarkdown(md) {
     if (!md || typeof md !== 'string') return '';
     var s = escapeHtml(md);
+    // Extract fenced code blocks (```lang\ncontent\n```) first so inline-code and paragraph splits don't break them
+    var fencedBlocks = [];
+    s = s.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, content) {
+      var idx = fencedBlocks.length;
+      var langClass = (lang && lang.trim()) ? ' language-' + (lang.trim()) : '';
+      fencedBlocks.push('<pre class="bg-slate-100 dark:bg-slate-700 p-3 rounded-lg overflow-x-auto text-sm my-2 whitespace-pre border border-slate-200 dark:border-slate-600"><code class="' + langClass + '">' + content.trim() + '</code></pre>');
+      return '\u200B$FENCED' + idx + '$\u200B';
+    });
+    // Extract markdown tables (consecutive lines starting and ending with |) so they render as HTML tables
+    var tableBlocks = [];
+    s = s.replace(/(^\|[^\n]+\|(?:\s*\n|$))+/gm, function(tableMatch) {
+      var lines = tableMatch.trim().split('\n').filter(function(l) { return l.trim().length > 0; });
+      if (lines.length === 0) return tableMatch;
+      var parseRow = function(line) {
+        return line.split('|').slice(1, -1).map(function(c) { return c.trim(); });
+      };
+      var headerCells = parseRow(lines[0]);
+      var isSeparator = function(cells) {
+        return cells.every(function(c) { return /^[\s\-:]+$/.test(c); });
+      };
+      var bodyStart = 1;
+      if (lines.length > 1 && isSeparator(parseRow(lines[1]))) bodyStart = 2;
+      var idx = tableBlocks.length;
+      var tableHtml = '<div class="my-3 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-600"><table class="w-full min-w-0 text-sm border-collapse"><thead><tr class="bg-slate-100 dark:bg-slate-700">';
+      for (var h = 0; h < headerCells.length; h++) {
+        tableHtml += '<th class="text-left font-semibold text-slate-800 dark:text-slate-200 px-3 py-2 border-b border-slate-200 dark:border-slate-600">' + headerCells[h] + '</th>';
+      }
+      tableHtml += '</tr></thead><tbody>';
+      for (var r = bodyStart; r < lines.length; r++) {
+        var cells = parseRow(lines[r]);
+        tableHtml += '<tr class="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">';
+        for (var c = 0; c < cells.length; c++) {
+          tableHtml += '<td class="px-3 py-2 text-slate-700 dark:text-slate-300 align-top">' + cells[c] + '</td>';
+        }
+        tableHtml += '</tr>';
+      }
+      tableHtml += '</tbody></table></div>';
+      tableBlocks.push(tableHtml);
+      return '\u200B$TABLE' + idx + '$\u200B';
+    });
     var d1 = String.fromCharCode(36) + '1', d2 = String.fromCharCode(36) + '2';
     var bt = String.fromCharCode(92) + 'x60';
     var bs = String.fromCharCode(92);
@@ -1222,13 +1263,13 @@
     var numDot = bs + 'd+';
     var dotEsc = bs + '.';
     var nl = bs + 'n';
-    // Headings: match most specific first (h6..h1) so #### isn't eaten by ###
-    s = s.replace(new RegExp('^###### (.+)$', 'gm'), '<h6 class="text-sm font-semibold mt-2 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h6>');
-    s = s.replace(new RegExp('^##### (.+)$', 'gm'), '<h5 class="text-sm font-semibold mt-2 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h5>');
-    s = s.replace(new RegExp('^#### (.+)$', 'gm'), '<h4 class="text-sm font-semibold mt-2 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h4>');
-    s = s.replace(new RegExp('^### (.+)$', 'gm'), '<h3 class="text-base font-semibold mt-3 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h3>');
-    s = s.replace(new RegExp('^## (.+)$', 'gm'), '<h2 class="text-lg font-semibold mt-4 mb-2 text-slate-900 dark:text-slate-100">' + d1 + '</h2>');
-    s = s.replace(new RegExp('^# (.+)$', 'gm'), '<h1 class="text-xl font-semibold mt-4 mb-2 text-slate-900 dark:text-slate-100">' + d1 + '</h1>');
+    // Headings: match most specific first (h6..h1). Allow leading whitespace and flexible space after # (ATX style).
+    s = s.replace(new RegExp('^\\s*######\\s+(.+)$', 'gm'), '<h6 class="text-sm font-semibold mt-2 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h6>');
+    s = s.replace(new RegExp('^\\s*#####\\s+(.+)$', 'gm'), '<h5 class="text-sm font-semibold mt-2 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h5>');
+    s = s.replace(new RegExp('^\\s*####\\s+(.+)$', 'gm'), '<h4 class="text-sm font-semibold mt-2 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h4>');
+    s = s.replace(new RegExp('^\\s*###\\s+(.+)$', 'gm'), '<h3 class="text-base font-semibold mt-3 mb-1 text-slate-800 dark:text-slate-100">' + d1 + '</h3>');
+    s = s.replace(new RegExp('^\\s*##\\s+(.+)$', 'gm'), '<h2 class="text-lg font-semibold mt-4 mb-2 text-slate-900 dark:text-slate-100">' + d1 + '</h2>');
+    s = s.replace(new RegExp('^\\s*#\\s+(.+)$', 'gm'), '<h1 class="text-xl font-semibold mt-4 mb-2 text-slate-900 dark:text-slate-100">' + d1 + '</h1>');
     s = s.replace(new RegExp(star2 + '([^*]+)' + star2, 'g'), '<strong>' + d1 + '</strong>');
     s = s.replace(new RegExp(bt + '([^' + bt + ']+)' + bt, 'g'), '<code class="bg-slate-100 dark:bg-slate-700 px-1 rounded text-xs">' + d1 + '</code>');
     s = s.replace(new RegExp('^- (.+)$', 'gm'), '<li class="audit-list-item">' + d1 + '</li>');
@@ -1240,6 +1281,15 @@
     s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="my-3 max-w-full rounded border border-slate-200 dark:border-slate-600" />');
     s = s.replace(new RegExp(nl + nl, 'g'), '</p><p class="mt-2">');
     s = s.replace(new RegExp(nl, 'g'), '<br/>');
+    for (var i = 0; i < fencedBlocks.length; i++) {
+      s = s.replace(new RegExp('\u200B\\$FENCED' + i + '\\$\u200B', 'g'), fencedBlocks[i]);
+    }
+    for (var j = 0; j < tableBlocks.length; j++) {
+      s = s.replace(new RegExp('\u200B\\$TABLE' + j + '\\$\u200B', 'g'), tableBlocks[j]);
+    }
+    // Unwrap <p> that only contains a heading so headings render as block-level (valid HTML)
+    s = s.replace(/<\/p><p class="mt-2"><(h[1-6])/g, '</p><$1');
+    s = s.replace(/<\/(h[1-6])><\/p><p class="mt-2">/g, '</$1><p class="mt-2">');
     return '<p class="mt-2">' + s + '</p>';
   }
 

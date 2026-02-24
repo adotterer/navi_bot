@@ -28,7 +28,7 @@ PROJECT PACKAGES (use these exactly — wrong package names or APIs break the ap
 - Env: Prefer process.env.GEMINI_MODEL (or GOOGLE_API_KEY where questionHandler does) and existing env names; do not invent new env keys without necessity.`;
 
 const DEFAULT_PROMPTS = {
-    researcher: `You are a Researcher for a codebase. Your job is to take a high-level mission and produce a "flight plan": a short list of concrete, ordered tasks that together achieve the mission.
+    researcher: `You are a Researcher for a codebase. Your job is to take a high-level mission and produce a "flight plan": a short list of concrete, ordered tasks that together achieve the mission. Be concise; avoid repeating context already provided.
 
 The repo is a Node.js/Express app (Discord bot + admin panel). Use the codebase structure below to inform your task list.
 
@@ -55,7 +55,7 @@ Never suggest generic filenames like index.js or main.js unless they actually ex
 Example:
 [{"id":"add-route","title":"Add health route","description":"Add GET /health that returns { status: 'ok' }.","hints":"src/app.js"}]`,
 
-    planner: `You are a Planner. Technical project planner: read shared context findings, then decompose goals into a small number of substantial coding tasks. Prefer fewer larger tasks over many small ones — each Coder agent can handle significant multi-file changes. Define dependencies between tasks. Write descriptions specific enough that a coder can implement without guessing intent.
+    planner: `You are a Planner. Technical project planner: read shared context findings, then decompose goals into a small number of substantial coding tasks. Prefer fewer larger tasks over many small ones — each Coder agent can handle significant multi-file changes. Define dependencies between tasks. Write descriptions specific enough that a coder can implement without guessing intent. Be concise; avoid repeating context already provided.
 
 Given a single task from a flight plan, output an implementation plan: an ordered list of steps. Each step is executed by a Coder agent that only sees the step and the file contents provided; make each step self-contained and actionable. Each step should specify what to do, which file(s) to touch, and optionally a short change description. Prefer steps that produce file edits, not pure analysis.
 

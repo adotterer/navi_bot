@@ -26,6 +26,7 @@ function runToSnapshot(run) {
         title: run.title || '',
         inputTokens: run.inputTokens || 0,
         outputTokens: run.outputTokens || 0,
+        cached_tokens: run.cached_tokens || 0,
         flightPlan: run.flightPlan,
         steps: run.steps,
         docs: run.docs,
@@ -97,6 +98,7 @@ export async function loadRunMetadataFromS3(runId, bucket) {
             model: full.model || '',
             inputTokens: full.inputTokens || 0,
             outputTokens: full.outputTokens || 0,
+            cachedTokens: full.cached_tokens || 0,
         };
     } catch {
         return { runId };

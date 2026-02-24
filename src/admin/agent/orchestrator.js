@@ -1,6 +1,7 @@
 /**
  * Orchestrator: runs Researcher -> Planners -> Coders, aggregates edits, then PR.
  * Uses tool registry for read_file and grep_search; passes fileContext and grepContext to Planner.
+ * For high-volume non-interactive workloads, consider provider batch APIs (e.g. Claude Batch) instead.
  */
 import pLimit from 'p-limit';
 import { setMaxListeners } from 'node:events';
@@ -306,7 +307,7 @@ export async function runPipeline(runId, opts = {}) {
                 ...(testerResult.diagramKeys?.length && { diagramKeys: testerResult.diagramKeys }),
                 inputTokens: (currentRunEarly.inputTokens || 0) + (testerResult.inputTokens || 0),
                 outputTokens: (currentRunEarly.outputTokens || 0) + (testerResult.outputTokens || 0),
-                cachedTokens: (currentRunEarly.cachedTokens || 0) + (testerResult.cachedTokens || 0),
+                cached_tokens: (currentRunEarly.cached_tokens || 0) + (testerResult.cachedTokens || 0),
             });
             if (testerResult.warnings?.length) {
                 for (const w of testerResult.warnings) log('system', 'error', w + '\n');
@@ -337,7 +338,7 @@ export async function runPipeline(runId, opts = {}) {
                 flightPlan, title, docs: { overview, requirements },
                 inputTokens: (runBeforeRes?.inputTokens || 0) + (researchResult.inputTokens || 0),
                 outputTokens: (runBeforeRes?.outputTokens || 0) + (researchResult.outputTokens || 0),
-                cachedTokens: (runBeforeRes?.cachedTokens || 0) + (researchResult.cachedTokens || 0),
+                cached_tokens: (runBeforeRes?.cached_tokens || 0) + (researchResult.cachedTokens || 0),
             });
             notifyDocsUpdate(runId);
             log('system', 'research', `Flight plan: ${flightPlan.length} task(s).\n`);
@@ -375,7 +376,7 @@ export async function runPipeline(runId, opts = {}) {
                 ...(auditResult.diagramKeys?.length && { diagramKeys: auditResult.diagramKeys }),
                 inputTokens: (currentRun.inputTokens || 0) + (auditResult.inputTokens || 0),
                 outputTokens: (currentRun.outputTokens || 0) + (auditResult.outputTokens || 0),
-                cachedTokens: (currentRun.cachedTokens || 0) + (auditResult.cachedTokens || 0),
+                cached_tokens: (currentRun.cached_tokens || 0) + (auditResult.cachedTokens || 0),
             });
             if (auditResult.warnings?.length) {
                 for (const w of auditResult.warnings) log('system', 'error', w + '\n');
@@ -496,7 +497,8 @@ export async function runPipeline(runId, opts = {}) {
 
             const planInputTokens = planResults.reduce((s, { planResult }) => s + (planResult.inputTokens || 0), 0);
             const planOutputTokens = planResults.reduce((s, { planResult }) => s + (planResult.outputTokens || 0), 0);
-            updateRun(runId, { steps: allSteps, inputTokens: planInputTokens, outputTokens: planOutputTokens });
+            const planCachedTokens = planResults.reduce((s, { planResult }) => s + (planResult.cachedTokens || 0), 0);
+            updateRun(runId, { steps: allSteps, inputTokens: planInputTokens, outputTokens: planOutputTokens, cached_tokens: planCachedTokens });
             const runAfterPlan = getRun(runId);
             const existingReqs = runAfterPlan?.docs?.requirements || '';
             const implSteps = allSteps.map(({ step }, i) => `${i + 1}. ${step.what || 'Step'}`).join('\n');
@@ -616,6 +618,7 @@ export async function runPipeline(runId, opts = {}) {
             updateRun(runId, {
                 inputTokens: (coderResult.inputTokens || 0) + (validation.inputTokens || 0),
                 outputTokens: (coderResult.outputTokens || 0) + (validation.outputTokens || 0),
+                cached_tokens: (coderResult.cachedTokens || 0) + (validation.cachedTokens || 0),
             });
             stepResults.push({
                 step,
@@ -717,7 +720,7 @@ export async function runPipeline(runId, opts = {}) {
                 importWarnings: reviewRound === 0 ? importWarnings : [],
                 signal,
             });
-            updateRun(runId, { inputTokens: reviewResult.inputTokens || 0, outputTokens: reviewResult.outputTokens || 0 });
+            updateRun(runId, { inputTokens: reviewResult.inputTokens || 0, outputTokens: reviewResult.outputTokens || 0, cached_tokens: reviewResult.cachedTokens || 0 });
             if (!reviewResult.ok) {
                 log('system', 'reviewing', `Reviewer failed: ${reviewResult.error}\n`);
                 break;
@@ -738,7 +741,7 @@ export async function runPipeline(runId, opts = {}) {
                 if (e.path && e.content != null) fileContext[e.path] = e.content;
             }
             const fixResult = await runCoder(syntheticStep, fileContext, { reviewFeedback: reviewResult.feedback, signal, missionPrompt: prompt, model });
-            updateRun(runId, { inputTokens: fixResult.inputTokens || 0, outputTokens: fixResult.outputTokens || 0 });
+            updateRun(runId, { inputTokens: fixResult.inputTokens || 0, outputTokens: fixResult.outputTokens || 0, cached_tokens: fixResult.cachedTokens || 0 });
             if (!fixResult.ok || !fixResult.edits?.length) {
                 log('system', 'reviewing', `Coder fix pass failed or produced no edits: ${fixResult.error || 'no edits'}\n`);
                 break;
@@ -816,6 +819,7 @@ export async function runPipeline(runId, opts = {}) {
                         ...(testerResult.diagramKeys?.length && { diagramKeys: testerResult.diagramKeys }),
                         inputTokens: (currentRunForTester?.inputTokens || 0) + (testerResult.inputTokens || 0),
                         outputTokens: (currentRunForTester?.outputTokens || 0) + (testerResult.outputTokens || 0),
+                        cached_tokens: (currentRunForTester?.cached_tokens || 0) + (testerResult.cachedTokens || 0),
                     });
 
                     if (recommendation === 'reject') {
@@ -835,7 +839,7 @@ export async function runPipeline(runId, opts = {}) {
                             model: testerModel,
                             signal,
                         });
-                        updateRun(runId, { inputTokens: (currentRunForTester?.inputTokens || 0) + (reviewResult.inputTokens || 0), outputTokens: (currentRunForTester?.outputTokens || 0) + (reviewResult.outputTokens || 0) });
+                        updateRun(runId, { inputTokens: (currentRunForTester?.inputTokens || 0) + (reviewResult.inputTokens || 0), outputTokens: (currentRunForTester?.outputTokens || 0) + (reviewResult.outputTokens || 0), cached_tokens: (currentRunForTester?.cached_tokens || 0) + (reviewResult.cachedTokens || 0) });
 
                         if (!reviewResult.ok || !reviewResult.feedback?.trim()) {
                             updateRunAndMeta(runId, { status: 'done' });
@@ -852,7 +856,7 @@ export async function runPipeline(runId, opts = {}) {
                                 if (e.path && e.content != null) fileContext[e.path] = e.content;
                             }
                             const fixResult = await runCoder(syntheticStep, fileContext, { reviewFeedback: reviewResult.feedback, signal, missionPrompt: prompt, model: testerModel });
-                            updateRun(runId, { inputTokens: (getRun(runId)?.inputTokens || 0) + (fixResult.inputTokens || 0), outputTokens: (getRun(runId)?.outputTokens || 0) + (fixResult.outputTokens || 0) });
+                            updateRun(runId, { inputTokens: (getRun(runId)?.inputTokens || 0) + (fixResult.inputTokens || 0), outputTokens: (getRun(runId)?.outputTokens || 0) + (fixResult.outputTokens || 0), cached_tokens: (getRun(runId)?.cached_tokens || 0) + (fixResult.cachedTokens || 0) });
 
                             if (!fixResult.ok || !fixResult.edits?.length) {
                                 updateRunAndMeta(runId, { status: 'quality_failed' });
@@ -910,6 +914,7 @@ export async function runPipeline(runId, opts = {}) {
                                             ...(testerResult2.ok && testerResult2.diagramKeys?.length && { diagramKeys: testerResult2.diagramKeys }),
                                             inputTokens: (runAfterTester2?.inputTokens || 0) + (testerResult2.inputTokens || 0),
                                             outputTokens: (runAfterTester2?.outputTokens || 0) + (testerResult2.outputTokens || 0),
+                                            cached_tokens: (runAfterTester2?.cached_tokens || 0) + (testerResult2.cachedTokens || 0),
                                         });
 
                                         const recommendation2 = testerResult2.ok ? parseQualityRecommendation(testerResult2.report) : 'request_changes';
