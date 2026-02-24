@@ -6,15 +6,23 @@ const INFO_EMBED_COLOR = 0x1e88e5;
 
 /**
  * Get the list of stages the current-turn player can ban or select for this session.
+ * Game 1 = starters only. Game 2+ = starters + counterpicks (pool refreshes each game).
  * @param {object} session
  * @returns {{ name: string, aliases: string[] }[]}
  */
 function getAllowedStagesForSession(session) {
   const banned = session.bannedStages || [];
-  const isSelect = session.turnPhase === 'game1_select';
-  const starters = STAGES.starters.filter(s => !banned.includes(s.name));
-  if (isSelect) return starters;
-  if (session.turnPhase && session.turnPhase.includes('game1')) return starters;
+  const phase = session.turnPhase || '';
+  const isGame1Select = phase === 'game1_select';
+  const isGame2Select = phase === 'game2_select';
+  const isGame2Ban = phase === 'game2_ban_3';
+  if (isGame1Select || (phase && phase.includes('game1_ban'))) {
+    return STAGES.starters.filter(s => !banned.includes(s.name));
+  }
+  if (isGame2Ban || isGame2Select) {
+    const pool = [...STAGES.starters, ...STAGES.counterpicks];
+    return pool.filter(s => !banned.includes(s.name));
+  }
   return [];
 }
 

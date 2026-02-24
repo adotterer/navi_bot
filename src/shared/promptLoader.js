@@ -106,6 +106,10 @@ const PROMPT_META = {
         description: '/ban <stage> [match_id] – ban or select a stage during a match',
         variables: []
     },
+    result: {
+        description: '/result winner:<@user> [match_id] – report who won Game 1; the loser must confirm to start Game 2',
+        variables: []
+    },
     cancel_match: {
         description: '/cancel-match [match_id] – cancel your active stage ban match (either player can cancel)',
         variables: []

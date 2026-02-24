@@ -2,6 +2,7 @@ import { EmbedBuilder } from 'discord.js';
 import { getSession, getSessionByCurrentTurn, updateSession } from './banSessionStore.js';
 import { STAGES, findStageByInput } from './stageData.js';
 import { buildStageSelectRow } from './coinflipHandler.js';
+import { buildResultReportRow } from './resultHandler.js';
 
 const INFO_EMBED_COLOR = 0x1e88e5;
 
@@ -37,20 +38,24 @@ function getRemainingStagesForDisplay(phase, bannedList) {
  * Field name for remaining stages (contextual for Game 1).
  */
 function getRemainingStagesFieldName(nextPhase, bansLeft) {
+  if (nextPhase === 'game1_report_result' || nextPhase === 'game2_complete') return null;
   if (nextPhase === 'game2_ban_3') return 'Remaining stages (Game 2 pool)';
-  if (nextPhase.includes('select')) return 'Remaining stages (winner picks 1 for Game 1)';
+  if (nextPhase === 'game2_select') return 'Remaining stages (Game 2 — loser picks 1)';
+  if (nextPhase.includes('select') && nextPhase.includes('game1')) return 'Remaining stages (winner picks 1 for Game 1)';
   if (isGame1Phase(nextPhase) && bansLeft === 2) return 'Remaining stages (opponent bans 2)';
   if (isGame1Phase(nextPhase) && bansLeft === 1) return 'Remaining stages (winner bans 1)';
   return 'Remaining stages';
 }
 
 /**
- * Advance turn and phase after a ban/selection. Game 1: winner bans 1, loser bans 2, winner selects from remaining 2.
+ * Advance turn and phase after a ban/selection.
+ * Game 1: winner bans 1, loser bans 2, winner selects → then game1_report_result (use /result to report winner).
+ * Game 2: after result confirmed, winner bans 3, loser selects 1 (stages refresh).
  * @param {object} session - Current session
  * @returns {{ nextPlayer: string, nextPhase: string }}
  */
 function advanceTurn(session) {
-  const { player1Id, player2Id, coinFlipWinnerId, turnPhase } = session;
+  const { player1Id, player2Id, coinFlipWinnerId, turnPhase, game1WinnerId } = session;
   const winner = coinFlipWinnerId;
   const loser = winner === player1Id ? player2Id : player1Id;
 
@@ -69,7 +74,17 @@ function advanceTurn(session) {
     case 'game1_ban_2_of_2_part2':
       return { nextPlayer: winner, nextPhase: 'game1_select' };
     case 'game1_select':
-      return { nextPlayer: loser, nextPhase: 'game2_ban_3' };
+      return { nextPlayer: winner, nextPhase: 'game1_report_result' };
+    case 'game2_ban_3': {
+      const game2BanCount = (session.bannedStages || []).length;
+      const game1LoserId = game1WinnerId === player1Id ? player2Id : player1Id;
+      if (game2BanCount >= 3) {
+        return { nextPlayer: game1LoserId, nextPhase: 'game2_select' };
+      }
+      return { nextPlayer: game1WinnerId, nextPhase: 'game2_ban_3' };
+    }
+    case 'game2_select':
+      return { nextPlayer: null, nextPhase: 'game2_complete' };
     default:
       return { nextPlayer: session.currentTurn, nextPhase: turnPhase };
   }
@@ -119,14 +134,17 @@ export async function handleBan(interaction) {
       return;
     }
 
-    const isSelectionPhase = session.turnPhase === 'game1_select';
+    const isSelectionPhase = session.turnPhase === 'game1_select' || session.turnPhase === 'game2_select';
     const bannedStages = session.bannedStages || [];
 
     if (isSelectionPhase) {
-      const remainingStarters = STAGES.starters.filter(s => !bannedStages.includes(s.name));
-      if (!remainingStarters.some(s => s.name === stage.name)) {
+      const pool = session.turnPhase === 'game2_select'
+        ? [...STAGES.starters, ...STAGES.counterpicks]
+        : STAGES.starters;
+      const remaining = pool.filter(s => !bannedStages.includes(s.name));
+      if (!remaining.some(s => s.name === stage.name)) {
         await interaction.editReply(
-          `❌ **${stage.name}** is not one of the remaining starters. Choose from: ${remainingStarters.map(s => s.name).join(', ')}`
+          `❌ **${stage.name}** is not one of the remaining stages. Choose from: ${remaining.map(s => s.name).join(', ')}`
         );
         return;
       }
@@ -136,7 +154,7 @@ export async function handleBan(interaction) {
         return;
       }
 
-      if (session.turnPhase.includes('game1')) {
+      if (session.turnPhase && session.turnPhase.includes('game1')) {
         const allowed = STAGES.starters;
         if (!allowed.some(s => s.name === stage.name)) {
           await interaction.editReply(
@@ -148,8 +166,11 @@ export async function handleBan(interaction) {
     }
 
     const updates = { bannedStages: [...bannedStages, stage.name] };
-    if (isSelectionPhase) {
+    if (session.turnPhase === 'game1_select') {
       updates.selectedStage = stage.name;
+    }
+    if (session.turnPhase === 'game2_select') {
+      updates.selectedStageGame2 = stage.name;
     }
 
     const { nextPlayer, nextPhase } = advanceTurn({
@@ -170,17 +191,29 @@ export async function handleBan(interaction) {
       .setTitle(isSelectionPhase ? `Stage selected: ${stage.name}` : `Stage banned: ${stage.name}`)
       .setDescription(
         `**${interaction.user.username}** ${isSelectionPhase ? 'selected' : 'banned'} **${stage.name}**.\n\nBanned/used so far:\n${nextBannedList.map(s => `• ${s}`).join('\n') || '(none)'}`
-      )
-      .addFields({
+      );
+    if (remainingFieldName) {
+      banEmbed.addFields({
         name: remainingFieldName,
         value: remainingForDisplay.map(s => `• ${s.name}`).join('\n') || 'None',
       });
+    }
 
-    const nextMention = nextPlayer === session.player1Id ? `<@${session.player1Id}>` : `<@${session.player2Id}>`;
-    if (nextPhase.includes('select')) {
+    const nextMention = nextPlayer ? (nextPlayer === session.player1Id ? `<@${session.player1Id}>` : `<@${session.player2Id}>`) : null;
+    if (nextPhase === 'game1_report_result') {
+      banEmbed.addFields({
+        name: 'Next step',
+        value: `Stage for Game 1: **${updatedSession.selectedStage}**. Play the game, then **pick who won** from the dropdown below. The loser must confirm.`,
+      });
+    } else if (nextPhase.includes('select') && nextPhase.includes('game1')) {
       banEmbed.addFields({
         name: 'Next step',
         value: `${nextMention}, use \`/ban\` to **select** the stage for Game 1 from the remaining starters.`,
+      });
+    } else if (nextPhase === 'game2_select') {
+      banEmbed.addFields({
+        name: 'Next step',
+        value: `${nextMention} (Game 1 loser), **select the stage for Game 2** from the dropdown or \`/ban stage:<stage>\`.`,
       });
     } else if (nextPhase.includes('ban')) {
       const bansLeft = getBansForPhase(nextPhase);
@@ -190,22 +223,37 @@ export async function handleBan(interaction) {
       });
     } else if (nextPhase === 'game2_ban_3') {
       banEmbed.addFields({
-        name: 'Game 1 complete',
-        value: `Stage for Game 1: **${updatedSession.selectedStage}**. Next: Game 2 counterpick bans (${nextMention} bans 3).`,
+        name: 'Next step',
+        value: `${nextMention} (Game 1 winner), ban **3** stage(s) for Game 2. Match ID: \`${matchId}\``,
+      });
+    } else if (nextPhase === 'game2_complete') {
+      banEmbed.addFields({
+        name: 'Game 2 ready',
+        value: `Stage for Game 2: **${updatedSession.selectedStageGame2}**. Play the game!`,
       });
     }
 
-    await interaction.editReply({ embeds: [banEmbed] });
+    let replyComponents = [];
+    if (nextPhase === 'game1_report_result') {
+      try {
+        const m1 = await interaction.guild.members.fetch(session.player1Id).catch(() => null);
+        const m2 = await interaction.guild.members.fetch(session.player2Id).catch(() => null);
+        replyComponents = [buildResultReportRow(matchId, session.player1Id, session.player2Id, m1?.user?.username ?? 'Player 1', m2?.user?.username ?? 'Player 2')];
+      } catch (_) {}
+    }
+    await interaction.editReply({ embeds: [banEmbed], components: replyComponents });
 
-    try {
-      const nextMember = await interaction.guild.members.fetch(nextPlayer).catch(() => null);
-      if (nextMember) {
-        await nextMember.send(
-          `Your turn in match \`${matchId}\`. Use \`/ban stage:<stage> match_id:${matchId}\` in the server.`
-        );
+    if (nextPhase !== 'game1_report_result' && nextPlayer) {
+      try {
+        const nextMember = await interaction.guild.members.fetch(nextPlayer).catch(() => null);
+        if (nextMember) {
+          await nextMember.send(
+            `Your turn in match \`${matchId}\`. Use \`/ban stage:<stage> match_id:${matchId}\` in the server.`
+          );
+        }
+      } catch (err) {
+        console.warn('[banHandler] Could not DM next player:', err.message);
       }
-    } catch (err) {
-      console.warn('[banHandler] Could not DM next player:', err.message);
     }
   } catch (err) {
     console.error('[banHandler] error:', err);
@@ -244,13 +292,16 @@ export async function handleBanComponent(interaction) {
     return true;
   }
 
-  const isSelectionPhase = session.turnPhase === 'game1_select';
+  const isSelectionPhase = session.turnPhase === 'game1_select' || session.turnPhase === 'game2_select';
   const bannedStages = session.bannedStages || [];
 
   if (isSelectionPhase) {
-    const remainingStarters = STAGES.starters.filter(s => !bannedStages.includes(s.name));
-    if (!remainingStarters.some(s => s.name === stage.name)) {
-      await interaction.followUp({ content: `❌ **${stage.name}** is not one of the remaining starters.`, ephemeral: true }).catch(() => {});
+    const pool = session.turnPhase === 'game2_select'
+      ? [...STAGES.starters, ...STAGES.counterpicks]
+      : STAGES.starters;
+    const remaining = pool.filter(s => !bannedStages.includes(s.name));
+    if (!remaining.some(s => s.name === stage.name)) {
+      await interaction.followUp({ content: `❌ **${stage.name}** is not one of the remaining stages.`, ephemeral: true }).catch(() => {});
       return true;
     }
   } else {
@@ -258,14 +309,15 @@ export async function handleBanComponent(interaction) {
       await interaction.followUp({ content: `❌ **${stage.name}** is already banned.`, ephemeral: true }).catch(() => {});
       return true;
     }
-    if (session.turnPhase.includes('game1') && !STAGES.starters.some(s => s.name === stage.name)) {
+    if (session.turnPhase && session.turnPhase.includes('game1') && !STAGES.starters.some(s => s.name === stage.name)) {
       await interaction.followUp({ content: '❌ For Game 1 use starters only.', ephemeral: true }).catch(() => {});
       return true;
     }
   }
 
   const updates = { bannedStages: [...bannedStages, stage.name] };
-  if (isSelectionPhase) updates.selectedStage = stage.name;
+  if (session.turnPhase === 'game1_select') updates.selectedStage = stage.name;
+  if (session.turnPhase === 'game2_select') updates.selectedStageGame2 = stage.name;
 
   const { nextPlayer, nextPhase } = advanceTurn({ ...session, ...updates });
   updates.currentTurn = nextPlayer;
@@ -282,22 +334,35 @@ export async function handleBanComponent(interaction) {
     .setTitle(isSelectionPhase ? `Stage selected: ${stage.name}` : `Stage banned: ${stage.name}`)
     .setDescription(
       `**${interaction.user.username}** ${isSelectionPhase ? 'selected' : 'banned'} **${stage.name}**.\n\nBanned/used so far:\n${nextBannedList.map(s => `• ${s}`).join('\n') || '(none)'}`
-    )
-    .addFields({
+    );
+  if (remainingFieldName) {
+    banEmbed.addFields({
       name: remainingFieldName,
       value: remainingForDisplay.map(s => `• ${s.name}`).join('\n') || 'None',
     });
+  }
 
-  const nextMention = nextPlayer === session.player1Id ? `<@${session.player1Id}>` : `<@${session.player2Id}>`;
+  const nextMention = nextPlayer ? (nextPlayer === session.player1Id ? `<@${session.player1Id}>` : `<@${session.player2Id}>`) : null;
   let nextPlaceholder = 'Pick a stage';
   try {
-    const nextMember = await interaction.guild.members.fetch(nextPlayer).catch(() => null);
+    const nextMember = nextPlayer ? await interaction.guild.members.fetch(nextPlayer).catch(() => null) : null;
     const nextName = nextMember?.user?.username ?? 'Next player';
-    if (nextPhase.includes('select')) {
+    if (nextPhase === 'game1_report_result') {
+      banEmbed.addFields({
+        name: 'Next step',
+        value: `Stage for Game 1: **${updatedSession.selectedStage}**. Play the game, then **pick who won** from the dropdown below. The loser must confirm.`,
+      });
+    } else if (nextPhase.includes('select') && nextPhase.includes('game1')) {
       nextPlaceholder = `${nextName}: select stage for Game 1`;
       banEmbed.addFields({
         name: 'Next step',
         value: `${nextMention}, **select the stage for Game 1** from the dropdown below.\n*Only ${nextName} can use the dropdown.*`,
+      });
+    } else if (nextPhase === 'game2_select') {
+      nextPlaceholder = `${nextName}: select stage for Game 2`;
+      banEmbed.addFields({
+        name: 'Next step',
+        value: `${nextMention} (Game 1 loser), **select the stage for Game 2** from the dropdown below.\n*Only ${nextName} can use the dropdown.*`,
       });
     } else if (nextPhase.includes('ban')) {
       const bansLeft = getBansForPhase(nextPhase);
@@ -307,35 +372,68 @@ export async function handleBanComponent(interaction) {
         value: `${nextMention}, ban **${bansLeft}** stage(s) from the dropdown below.\n*Only ${nextName} can use the dropdown.*`,
       });
     } else if (nextPhase === 'game2_ban_3') {
+      nextPlaceholder = `${nextName}: ban 3 stages (Game 2)`;
       banEmbed.addFields({
-        name: 'Game 1 complete',
-        value: `Stage for Game 1: **${updatedSession.selectedStage}**. Next: Game 2 counterpick bans (${nextMention} bans 3).`,
+        name: 'Next step',
+        value: `${nextMention} (Game 1 winner), ban **3** stage(s) for Game 2 from the dropdown below.\n*Only ${nextName} can use the dropdown.*`,
+      });
+    } else if (nextPhase === 'game2_complete') {
+      banEmbed.addFields({
+        name: 'Game 2 ready',
+        value: `Stage for Game 2: **${updatedSession.selectedStageGame2}**. Play the game!`,
       });
     }
   } catch (_) {
-    if (nextPhase.includes('select')) {
+    if (nextPhase === 'game1_report_result') {
+      banEmbed.addFields({
+        name: 'Next step',
+        value: `Stage for Game 1: **${updatedSession.selectedStage}**. Play the game, then **pick who won** from the dropdown below. The loser must confirm.`,
+      });
+    } else if (nextPhase.includes('select') && nextPhase.includes('game1')) {
       nextPlaceholder = 'Select stage for Game 1';
       banEmbed.addFields({
         name: 'Next step',
-        value: `${nextMention}, **select** the stage for Game 1 from the dropdown below.\n*Only the player mentioned here can use the dropdown.*`,
+        value: `${nextMention}, **select** the stage for Game 1 from the dropdown below.`,
       });
-    } else if (nextPhase.includes('ban')) {
-      const bansLeft = getBansForPhase(nextPhase);
-      nextPlaceholder = `Ban ${bansLeft} stage(s)`;
+    } else if (nextPhase === 'game2_select') {
+      nextPlaceholder = 'Select stage for Game 2';
       banEmbed.addFields({
         name: 'Next step',
-        value: `${nextMention}, ban **${bansLeft}** stage(s) from the dropdown below.\n*Only the player mentioned here can use the dropdown.*`,
+        value: `${nextMention} (Game 1 loser), **select** the stage for Game 2 from the dropdown below.`,
+      });
+    } else if (nextPhase.includes('ban')) {
+      nextPlaceholder = `Ban ${getBansForPhase(nextPhase)} stage(s)`;
+      banEmbed.addFields({
+        name: 'Next step',
+        value: `${nextMention}, ban stage(s) from the dropdown below.`,
       });
     } else if (nextPhase === 'game2_ban_3') {
+      nextPlaceholder = 'Ban 3 stages (Game 2)';
       banEmbed.addFields({
-        name: 'Game 1 complete',
-        value: `Stage for Game 1: **${updatedSession.selectedStage}**. Next: Game 2 counterpick bans (${nextMention} bans 3).`,
+        name: 'Next step',
+        value: `${nextMention} (Game 1 winner), ban **3** stage(s) for Game 2.`,
+      });
+    } else if (nextPhase === 'game2_complete') {
+      banEmbed.addFields({
+        name: 'Game 2 ready',
+        value: `Stage for Game 2: **${updatedSession.selectedStageGame2}**. Play the game!`,
       });
     }
   }
 
-  const nextRow = buildStageSelectRow(matchId, updatedSession, nextPlaceholder);
-  const footerText = nextRow ? 'Dropdown is only for the player whose turn it is' : null;
+  let nextRow;
+  if (nextPhase === 'game1_report_result') {
+    try {
+      const m1 = await interaction.guild.members.fetch(session.player1Id).catch(() => null);
+      const m2 = await interaction.guild.members.fetch(session.player2Id).catch(() => null);
+      nextRow = buildResultReportRow(matchId, session.player1Id, session.player2Id, m1?.user?.username ?? 'Player 1', m2?.user?.username ?? 'Player 2');
+    } catch (_) {
+      nextRow = null;
+    }
+  } else {
+    nextRow = buildStageSelectRow(matchId, updatedSession, nextPlaceholder);
+  }
+  const footerText = nextRow ? (nextPhase === 'game1_report_result' ? 'Either player can pick who won Game 1' : 'Dropdown is only for the player whose turn it is') : null;
   if (footerText) banEmbed.setFooter({ text: footerText });
 
   await interaction.editReply({
