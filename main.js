@@ -23,6 +23,7 @@ import { getCanonicalCharacterThreads } from './src/matchups/characterAliases.js
 import { setClient } from './src/shared/discordClient.js';
 import { handleCoinFlip } from './src/bans/coinflipHandler.js';
 import { handleBan, handleBanComponent } from './src/bans/banHandler.js';
+import { handleCancelMatch } from './src/bans/cancelMatchHandler.js';
 import { cleanupExpiredSessions } from './src/bans/banSessionStore.js';
 
 dotenv.config();
@@ -97,9 +98,13 @@ client.on("clientReady", async () => {
                     .setDescription('Ban or select a stage during a match')
                     .addStringOption(opt => opt.setName('stage').setDescription('Stage name or alias (e.g. sv, Smashville)').setRequired(true))
                     .addStringOption(opt => opt.setName('match_id').setDescription('Match ID from /coinflip (see embed footer or DM)').setRequired(false)),
+                new SlashCommandBuilder()
+                    .setName('cancel-match')
+                    .setDescription('Cancel your active stage ban match (either player can cancel)')
+                    .addStringOption(opt => opt.setName('match_id').setDescription('Match ID (optional; cancels your current match if omitted)').setRequired(false)),
             ].map(c => c.toJSON());
             await rest.put(Routes.applicationGuildCommands(client.user.id, guildId), { body: commands });
-            console.log('✅ Slash commands registered (/coinflip, /ban)');
+            console.log('✅ Slash commands registered (/coinflip, /ban, /cancel-match)');
         } catch (err) {
             console.error('❌ Failed to register slash commands:', err);
         }
@@ -125,8 +130,10 @@ client.on('interactionCreate', async (interaction) => {
         if (interaction.isChatInputCommand()) {
             if (interaction.commandName === 'coinflip') {
                 await handleCoinFlip(interaction);
-            } else if (interaction.commandName === 'ban') {
+            } else             if (interaction.commandName === 'ban') {
                 await handleBan(interaction);
+            } else if (interaction.commandName === 'cancel-match') {
+                await handleCancelMatch(interaction);
             }
             return;
         }

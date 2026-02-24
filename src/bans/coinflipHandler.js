@@ -91,13 +91,13 @@ export async function handleCoinFlip(interaction) {
         `**${winner.username}** won the coin flip and bans **first**!\n\nAvailable stages:\n${starterList}`
       )
       .addFields({
-        name: 'Next Step',
-        value: `${winner}, pick a stage from the **dropdown below** (or use \`/ban <stage>\`).`,
+        name: 'Next step',
+        value: `${winner}, pick **1 stage to ban** from the dropdown below (or use \`/ban <stage>\`).\n*Only the player mentioned here can use the dropdown.*`,
       })
-      .setFooter({ text: `Match ID: ${matchId}` });
+      .setFooter({ text: `Match: ${matchId} • Dropdown is only for the player whose turn it is` });
 
     const sessionForMenu = { bannedStages: [], turnPhase: 'game1_ban_1' };
-    const row = buildStageSelectRow(matchId, sessionForMenu, 'Ban 1 stage');
+    const row = buildStageSelectRow(matchId, sessionForMenu, `${winner.username}: ban 1 stage`);
     const replyPayload = { embeds: [coinFlipEmbed] };
     if (row) replyPayload.components = [row];
 

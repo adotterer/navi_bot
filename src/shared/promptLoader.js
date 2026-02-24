@@ -105,6 +105,10 @@ const PROMPT_META = {
     ban: {
         description: '/ban <stage> [match_id] – ban or select a stage during a match',
         variables: []
+    },
+    cancel_match: {
+        description: '/cancel-match [match_id] – cancel your active stage ban match (either player can cancel)',
+        variables: []
     }
 };
 
