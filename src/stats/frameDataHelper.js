@@ -5,7 +5,7 @@ import { GoogleGenAI } from '@google/genai';
 import { EmbedBuilder } from 'discord.js';
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
-import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
+import { buildCharacterAliasMap, resolveCharacterFromText, normalizeCharacterText } from '../matchups/characterAliases.js';
 import { listFramedataSections, getFramedataCSVRaw } from '../shared/dataReader.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -504,14 +504,14 @@ async function buildFrameDataContext(question = '', guild = null, limit = 10) {
     let context = '';
     let includedChars = new Set();
 
-    // Try to detect if a specific character is mentioned in the question
+    // Try to detect if a specific character is mentioned in the question (use normalized text so "King K. Rool" etc. match)
     if (question && guild) {
         const aliasMap = buildCharacterAliasMap(guild);
-        const questionLower = question.toLowerCase();
+        const normalizedQuestion = normalizeCharacterText(question);
 
         // Check all aliases to see if they're in the question
         for (const [alias, slug] of aliasMap.entries()) {
-            if (questionLower.includes(alias) && dirs.includes(slug)) {
+            if (normalizedQuestion.includes(alias) && dirs.includes(slug)) {
                 // Add this character first
                 const frameData = await loadCharacterFrameData(slug, alias);
                 if (frameData) {

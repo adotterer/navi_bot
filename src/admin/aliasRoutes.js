@@ -12,7 +12,6 @@ import { generateCsrfToken } from './csrf.js';
 const router = express.Router();
 
 router.get('/', async (req, res) => {
-    let aliases = {};
     let s3InUse = false;
     try {
         const fromS3 = await fetchAliasesFromS3();
@@ -20,16 +19,14 @@ router.get('/', async (req, res) => {
             const data = JSON.parse(fromS3);
             if (data && typeof data === 'object' && !Array.isArray(data)) {
                 fs.writeFileSync(ALIASES_PATH, JSON.stringify(data, null, 2), 'utf8');
-                aliases = data;
                 s3InUse = true;
             }
         }
     } catch (_) {
         // ignore S3 errors, fall back to local
     }
-    if (Object.keys(aliases).length === 0) {
-        aliases = getNicknameAliases();
-    }
+    // Always use merged set (defaults + file/S3) so the table shows everything and save doesn't drop aliases
+    const aliases = getNicknameAliases();
     const entries = Object.entries(aliases).sort((a, b) => a[0].localeCompare(b[0], 'en', { sensitivity: 'base' }));
     const saved = req.query.saved === '1';
     const csrfToken = generateCsrfToken(req, res);

@@ -7,6 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ALIASES_PATH = path.join(__dirname, '../../data/character-aliases.json');
 const CANONICAL_THREADS_PATH = path.join(__dirname, '../../data/canonical-character-threads.json');
+const WEIGHT_CSV_PATH = path.join(__dirname, '../../data/stats/weight.csv');
 
 /** S3 key for canonical character threads (same as in exportHandler). Source of truth across redeploys. */
 export const CANONICAL_THREADS_S3_KEY = 'admin/canonical-character-threads.json';
@@ -182,8 +183,53 @@ export function normalizeCharacterText(text) {
         .trim();
 }
 
+/** Display name (e.g. "King K. Rool") to slug used in stats CSV lookup (e.g. "king-k-rool"). */
+function displayNameToSlug(displayName) {
+    return (displayName || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+}
+
+/** Canonical character names from stats spreadsheets (weight.csv, synced to S3). Every name in the
+ *  Character column is accepted for !stats / !s so users can type e.g. "King K. Rool", "Dr. Mario", "R.O.B.". Cached. */
+let statsCanonicalCache = null;
+function getStatsCanonicalEntries() {
+    if (statsCanonicalCache) return statsCanonicalCache;
+    const entries = [];
+    try {
+        const raw = fs.readFileSync(WEIGHT_CSV_PATH, "utf8");
+        const lines = raw.trim().split("\n");
+        if (lines.length < 2) return entries;
+        const headerLine = lines[0];
+        const charIndex = headerLine.split(",").map((h) => h.trim()).indexOf("Character");
+        if (charIndex === -1) return entries;
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(",").map((v) => v.trim());
+            const displayName = values[charIndex];
+            if (displayName) {
+                const slug = displayNameToSlug(displayName);
+                if (slug) entries.push({ displayName, slug });
+            }
+        }
+        statsCanonicalCache = entries;
+    } catch (_) {
+        // weight.csv missing or unreadable
+    }
+    return entries;
+}
+
 export function buildCharacterAliasMap(guild) {
     const aliasMap = new Map();
+
+    // Seed with every character from stats spreadsheets (weight.csv) so commands accept exact spreadsheet names
+    for (const { displayName, slug } of getStatsCanonicalEntries()) {
+        const normDisplay = normalizeCharacterText(displayName);
+        const normSlug = normalizeCharacterText(slug);
+        if (normDisplay) aliasMap.set(normDisplay, slug);
+        if (normSlug && normSlug !== normDisplay) aliasMap.set(normSlug, slug);
+    }
+
     const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
 
     const matchupChannels = guild.channels.cache.filter(
