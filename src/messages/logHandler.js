@@ -2,9 +2,10 @@
  * Handler for !logs – returns last 100 lines of system log (Moderators/Legend only).
  * Log path: LOG_PATH env or /var/log/web.stdout.log (AWS Elastic Beanstalk default).
  */
+import { EmbedBuilder } from 'discord.js';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { splitMessage, MAX_DISCORD_LENGTH } from '../shared/messageSplitter.js';
+import { INFO_EMBED_COLOR } from './faqAndAliasHandler.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -44,11 +45,21 @@ export async function handleGetLogs(message) {
         return;
     }
 
-    const codeBlock = '```text\n' + (stdout.trim() || '(empty)') + '\n```';
-    const chunks = splitMessage(codeBlock, MAX_DISCORD_LENGTH);
+    const lines = stdout.trim() || '(empty)';
+    const MAX_EMBED_CHARS = 4000;
+    const chunks = [];
+    for (let i = 0; i < lines.length; i += MAX_EMBED_CHARS) {
+        chunks.push(lines.substring(i, i + MAX_EMBED_CHARS));
+    }
+    if (chunks.length === 0) chunks.push('(empty)');
 
     for (let i = 0; i < chunks.length; i++) {
-        await message.reply(chunks[i]).catch(e => {
+        const embed = new EmbedBuilder()
+            .setColor(INFO_EMBED_COLOR)
+            .setTitle(i === 0 ? '📋 System Logs (Last 100 Lines)' : '📋 System Logs (Continued)')
+            .setDescription('```text\n' + chunks[i] + '\n```')
+            .setFooter({ text: `Part ${i + 1} of ${chunks.length}` });
+        await message.channel.send({ embeds: [embed] }).catch(e => {
             console.error('[!logs] send chunk error:', e);
         });
     }
