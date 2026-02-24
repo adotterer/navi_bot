@@ -82,6 +82,10 @@ const PROMPT_META = {
         description: '!modhelp – help command for moderators (Moderators only)',
         variables: []
     },
+    logs: {
+        description: '!logs – fetch the last 100 lines of system logs (Moderators only)',
+        variables: []
+    },
     cleanup: {
         description: '!cleanup – delete all bot messages (Moderators only)',
         variables: []
