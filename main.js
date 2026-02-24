@@ -107,7 +107,6 @@ client.on("messageCreate", async (message) => {
     const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
     const isGtCommand = message.content.toLowerCase().startsWith("!gt ");
     const isSlCommand = message.content.toLowerCase() === "!sl";
-    const isLogsCommand = message.content.toLowerCase() === "!logs";
 
     if (isAskNaviChannel) {
         const adminId = process.env.ADMIN_DISCORD_ID || '596207448935628812';
@@ -124,7 +123,7 @@ client.on("messageCreate", async (message) => {
         }
 
         // Allow MU commands, FDQ, GT, and SL only
-        if (!isMuCommand && !isFdqCommand && !isGtCommand && !isSlCommand && !isLogsCommand) {
+        if (!isMuCommand && !isFdqCommand && !isGtCommand && !isSlCommand) {
             const hasAuthorizedRole = message.member?.roles?.cache?.some(
             role => role.name === "Moderators" || role.name === "Legend"
             );
