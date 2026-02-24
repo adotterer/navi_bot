@@ -633,4 +633,4 @@ Provide your answer:`;
     }
 }
 
-export { parseCharacterAndMove, findMove, normalizeMoveInput, loadCharacterFrameData, clearFrameDataCache };
+export { parseCharacterAndMove, findMove, normalizeMoveInput, loadCharacterFrameData };
