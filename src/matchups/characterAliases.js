@@ -152,18 +152,20 @@ const DEFAULT_NICKNAME_ALIASES = {
     zss: "zero-suit-samus",
 };
 
-/** Returns the current nickname aliases (alias -> canonical). Loaded from data/character-aliases.json when present. */
+/** Returns the current nickname aliases (alias -> canonical). Loaded from data/character-aliases.json when present.
+ *  Defaults are always merged in so built-in aliases (e.g. hero) work even when S3 overwrites the file at startup. */
 export function getNicknameAliases() {
+    const merged = { ...DEFAULT_NICKNAME_ALIASES };
     try {
         const raw = fs.readFileSync(ALIASES_PATH, 'utf8');
         const data = JSON.parse(raw);
         if (data && typeof data === 'object' && !Array.isArray(data)) {
-            return data;
+            Object.assign(merged, data);
         }
     } catch (_) {
-        // File missing or invalid: use defaults
+        // File missing or invalid: use defaults only
     }
-    return { ...DEFAULT_NICKNAME_ALIASES };
+    return merged;
 }
 
 /** @deprecated Use getNicknameAliases() for fresh data. Kept for backward compatibility. */
