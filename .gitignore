@@ -9,6 +9,7 @@ yarn-error.log
 coverage
 data/exports
 logs/
+sessions/
 *.log
 *.tmp
 *.zip

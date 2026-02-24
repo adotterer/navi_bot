@@ -7,7 +7,12 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
+import { createRequire } from 'module';
+import path from 'path';
 import { getSessionConfig } from './admin/auth.js';
+
+const require = createRequire(import.meta.url);
+const FileStore = require('session-file-store')(session);
 import { adminRouter } from './admin/routes.js';
 import { webhookRouter } from './admin/webhookRoutes.js';
 
@@ -79,7 +84,8 @@ export function createApp() {
 
     app.use(express.urlencoded({ extended: true, limit: '50kb' }));
     app.use(express.json({ limit: '50kb' }));
-    app.use(session(getSessionConfig()));
+    const sessionStore = new FileStore({ path: path.join(process.cwd(), 'sessions') });
+    app.use(session(getSessionConfig({ store: sessionStore })));
     app.use(cookieParser());
     app.use('/admin', adminRouter);
 

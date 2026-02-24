@@ -32,9 +32,12 @@ export function is2faBypassed() {
     return process.env.SKIP_2FA_FOR_DEV === 'true' && process.env.NODE_ENV !== 'production';
 }
 
-export function getSessionConfig() {
+/**
+ * @param {{ store?: import('express-session').Store }} opts - Optional session store (e.g. file store) to avoid MemoryStore warning.
+ */
+export function getSessionConfig(opts = {}) {
     const isProduction = process.env.NODE_ENV === 'production';
-    return {
+    const config = {
         secret: process.env.SESSION_SECRET || 'change-me-in-production',
         resave: false,
         saveUninitialized: false,
@@ -46,6 +49,8 @@ export function getSessionConfig() {
             maxAge: 8 * 60 * 60 * 1000, // 8 hours
         },
     };
+    if (opts.store) config.store = opts.store;
+    return config;
 }
 
 /** Sync check for env super-admin only. */
