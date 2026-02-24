@@ -12,6 +12,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const FRAMEDATA_DIR = path.join(__dirname, '../../data/framedata');
 
+/** Map alias-map slugs to framedata directory names where they differ (e.g. stats CSV "R.O.B." → r-o-b but dir is rob). */
+const FRAMEDATA_SLUG_TO_DIR = {
+    'r-o-b': 'rob',
+    'min-min': 'minmin'
+};
+
 const genAI = new GoogleGenAI({
     apiKey: process.env.GOOGLE_API_KEY
 });
@@ -156,6 +162,11 @@ async function loadCharacterFrameData(characterSlug, requestedAlias = null) {
     const ptCharacters = ['squirtle', 'ivysaur', 'charizard'];
     if (ptCharacters.includes(frameDataSlug)) {
         frameDataSlug = `pt-${frameDataSlug}`;
+    }
+
+    // Stats CSV slugs that don't match framedata dir names (e.g. R.O.B. → r-o-b vs dir rob)
+    if (FRAMEDATA_SLUG_TO_DIR[frameDataSlug]) {
+        frameDataSlug = FRAMEDATA_SLUG_TO_DIR[frameDataSlug];
     }
     
     if (frameDataCache[frameDataSlug]) {
@@ -415,7 +426,7 @@ function parseCharacterAndMove(input, guild) {
     return null;
 }
 
-function createMoveEmbed(move, characterName, moveType, arseneMode = false) {
+export function createMoveEmbed(move, characterName, moveType, arseneMode = false) {
     const displayName = arseneMode ? `${characterName} - Arsene` : characterName;
     const embed = new EmbedBuilder()
         .setColor('#36AAD4')
@@ -509,9 +520,10 @@ async function buildFrameDataContext(question = '', guild = null, limit = 10) {
         const aliasMap = buildCharacterAliasMap(guild);
         const normalizedQuestion = normalizeCharacterText(question);
 
-        // Check all aliases to see if they're in the question
+        // Check all aliases to see if they're in the question (slug may map to different dir name, e.g. r-o-b → rob)
         for (const [alias, slug] of aliasMap.entries()) {
-            if (normalizedQuestion.includes(alias) && dirs.includes(slug)) {
+            const frameDataDir = FRAMEDATA_SLUG_TO_DIR[slug] || slug;
+            if (normalizedQuestion.includes(alias) && dirs.includes(frameDataDir)) {
                 // Add this character first
                 const frameData = await loadCharacterFrameData(slug, alias);
                 if (frameData) {
@@ -605,8 +617,12 @@ Provide your answer:`;
             contents: fullPrompt
         });
 
-        const answer = response.text;
-        
+        const answer = (response && (response.text ?? response.candidates?.[0]?.content?.parts?.[0]?.text)) || '';
+        if (!answer.trim()) {
+            await message.channel.send('❌ No response from the model. Try rephrasing your question.');
+            return;
+        }
+
         const embeds = createSplitEmbeds(EmbedBuilder, answer, '#36AAD4', SUMMARY_DISCLAIMER);
         await message.channel.send({ embeds });
         

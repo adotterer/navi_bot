@@ -8,7 +8,7 @@ import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { getPrompt } from '../shared/promptLoader.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
 import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
-import { loadCharacterFrameData, findMove, parseCharacterAndMove } from './frameDataHelper.js';
+import { loadCharacterFrameData, findMove, parseCharacterAndMove, createMoveEmbed } from './frameDataHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -149,33 +149,12 @@ export async function handleStatsLookup(message, args) {
                 const found = findMove(frameData, parsed.move);
                 
                 if (found) {
-                    // Successfully found frame data, use that instead
-                    // Convert slug to display name (capitalize and replace hyphens)
+                    // Use same embed as !fd (includes GIF, notes, etc.)
                     const displayName = parsed.characterSlug
                         .split('-')
                         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                         .join(' ');
-                    
-                    const embed = new EmbedBuilder()
-                        .setColor(INFO_EMBED_COLOR)
-                        .setTitle(`${displayName} - ${found.move['Move Name'] || 'Move'}`)
-                        .setDescription(`*${found.moveType.replace(/_/g, ' ').toUpperCase()}*`)
-                        .addFields(
-                            { name: 'Startup', value: found.move['Startup'] || '--', inline: true },
-                            { name: 'Total Frames', value: found.move['Total Frames'] || '--', inline: true },
-                            { name: 'End Lag', value: found.move['End Lag'] || '--', inline: true },
-                            { name: 'Landing Lag', value: found.move['Landing Lag'] || '--', inline: true },
-                            { name: 'Base Damage', value: found.move['Base Damage'] || '--', inline: true },
-                            { name: 'On Shield', value: found.move['On Shield'] || '--', inline: true },
-                            { name: 'Shield Lag', value: found.move['Shield Lag'] || '--', inline: true },
-                            { name: 'Shield Stun', value: found.move['Shield Stun'] || '--', inline: true },
-                            { name: 'Active Frames', value: found.move['Active Frames'] || '--', inline: true }
-                        );
-                    
-                    if (found.move['Notes'] && found.move['Notes'] !== '--') {
-                        embed.addFields({ name: 'Notes', value: found.move['Notes'] });
-                    }
-                    
+                    const embed = createMoveEmbed(found.move, displayName, found.moveType, parsed.arseneMode ?? false);
                     return message.reply({ embeds: [embed] });
                 }
             }
