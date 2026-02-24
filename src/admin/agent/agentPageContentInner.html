@@ -1095,7 +1095,7 @@
         populateDocsPanel(data);
         if (data.edits && data.edits.length) showFileBrowser(data.edits);
         else filesArea.classList.add('hidden');
-        if (data.prUrl || data.error || (data.runMode === 'audit' && data.auditReport) || (data.runMode === 'ask' && data.askResponse) || (data.runMode === 'review' && data.reviewReport)) {
+        if (data.prUrl || data.error || (data.runMode === 'audit' && data.auditReport) || (data.runMode === 'ask' && data.askResponse) || (data.runMode === 'review' && data.reviewReport) || (data.status === 'quality_failed' && (data.prUrl || data.reviewReport))) {
           showResult(data.prUrl, data.error, data);
         } else {
           resultArea.classList.add('hidden');
@@ -1607,11 +1607,12 @@
             updateTokenDisplay(entry.inputTokens, entry.outputTokens);
             loadPastRunsList();
             var runId = currentRunId;
+            var doneStatus = entry.status || (entry.cancelled ? 'cancelled' : 'done');
             if (runId) {
               _adminFetch('/admin/agent/run/' + encodeURIComponent(runId), { credentials: 'same-origin' })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
-                  if (data.error) { runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created'; showResult(entry.prUrl, entry.error); return; }
+                  if (data.error) { runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created'; showResult(entry.prUrl, entry.error, data); return; }
                   runStatus.textContent = data.status === 'cancelled' ? 'Cancelled' : data.status === 'quality_failed' ? 'Quality failed' : (data.runMode === 'audit' ? 'Done — Audit report' : data.runMode === 'ask' ? 'Done — Answer' : data.runMode === 'review' ? 'Done — Review report' : data.reviewReport ? 'Done — PR created — Review report' : 'Done — PR created');
                   if (data.logs && data.logs.length && logContainer) {
                     var modelLabel = abbreviateModel(data.model || currentModel);
@@ -1622,12 +1623,12 @@
                     });
                     logContainer.scrollTop = logContainer.scrollHeight;
                   }
-                  showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error, data);
+                  showResult(data.prUrl != null ? data.prUrl : entry.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error, data);
                 })
-                .catch(function() { runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created'; showResult(entry.prUrl, entry.error); });
+                .catch(function() { runStatus.textContent = doneStatus === 'cancelled' ? 'Cancelled' : doneStatus === 'quality_failed' ? 'Quality failed' : 'Done — PR created'; showResult(entry.prUrl, entry.error, { status: doneStatus, prUrl: entry.prUrl }); });
             } else {
-              runStatus.textContent = entry.cancelled ? 'Cancelled' : 'Done — PR created';
-              showResult(entry.prUrl, entry.error);
+              runStatus.textContent = doneStatus === 'cancelled' ? 'Cancelled' : doneStatus === 'quality_failed' ? 'Quality failed' : 'Done — PR created';
+              showResult(entry.prUrl, entry.error, { status: doneStatus, prUrl: entry.prUrl });
             }
           } else if (entry.type === 'error') {
             runStatus.textContent = 'Error';

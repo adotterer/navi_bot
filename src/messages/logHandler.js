@@ -58,7 +58,8 @@ export async function handleGetLogs(message) {
             .setColor(INFO_EMBED_COLOR)
             .setTitle(i === 0 ? '📋 System Logs (Last 100 Lines)' : '📋 System Logs (Continued)')
             .setDescription('```text\n' + chunks[i] + '\n```')
-            .setFooter({ text: `Part ${i + 1} of ${chunks.length}` });
+            .setFooter({ text: `Part ${i + 1} of ${chunks.length}` })
+            .setTimestamp();
         await message.channel.send({ embeds: [embed] }).catch(e => {
             console.error('[!logs] send chunk error:', e);
         });

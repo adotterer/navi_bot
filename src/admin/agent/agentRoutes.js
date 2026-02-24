@@ -572,10 +572,11 @@ router.get('/stream/:runId', (req, res) => {
     res.write('data: ' + JSON.stringify({ type: 'status', status: run.status, inputTokens: run.inputTokens || 0, outputTokens: run.outputTokens || 0, model: run.model || '' }) + '\n\n');
     res.flush?.();
 
-    if (run.status === 'done' || run.status === 'error' || run.status === 'cancelled') {
+    if (run.status === 'done' || run.status === 'error' || run.status === 'cancelled' || run.status === 'quality_failed') {
         res.write('data: ' + JSON.stringify({
             type: 'done',
             prUrl: run.prUrl,
+            status: run.status,
             error: run.status === 'cancelled' ? 'Run stopped by user.' : run.error,
             cancelled: run.status === 'cancelled',
             inputTokens: run.inputTokens || 0,
@@ -604,13 +605,14 @@ router.get('/stream/:runId', (req, res) => {
 
     const checkDone = setInterval(() => {
         const r = getRun(runId);
-        if (r && (r.status === 'done' || r.status === 'error' || r.status === 'cancelled')) {
+        if (r && (r.status === 'done' || r.status === 'error' || r.status === 'cancelled' || r.status === 'quality_failed')) {
             clearInterval(checkDone);
             clearInterval(heartbeat);
             unsub();
             res.write('data: ' + JSON.stringify({
                 type: 'done',
                 prUrl: r.prUrl,
+                status: r.status,
                 error: r.status === 'cancelled' ? 'Run stopped by user.' : r.error,
                 cancelled: r.status === 'cancelled',
                 inputTokens: r.inputTokens || 0,
