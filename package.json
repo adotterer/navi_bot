@@ -9,6 +9,7 @@
     "admin": "node server-admin.js",
     "dev:admin": "nodemon server-admin.js",
     "build:admin-css": "tailwindcss -i src/admin/input.css -o public/admin.css",
+    "upload-framedata-images": "node local_app_only/uploadFrameDataImages.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -24,7 +25,6 @@
     "@octokit/rest": "^22.0.1",
     "axios": "^1.13.4",
     "chart.js": "^4.4.7",
-    "cheerio": "^1.2.0",
     "cookie-parser": "^1.4.7",
     "csrf-csrf": "^4.0.3",
     "discord.js": "^14.25.1",
@@ -36,7 +36,6 @@
     "multer": "^1.4.5-lts.1",
     "node-cron": "^4.2.1",
     "p-limit": "^7.3.0",
-    "playwright": "^1.58.2",
     "session-file-store": "^1.5.0",
     "simple-git": "^3.31.1"
   },

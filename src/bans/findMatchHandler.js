@@ -1,8 +1,51 @@
 /**
  * /findmatch: Open-ended matchmaking. Challenger posts; anyone in the thread can click "Accept Match" to become the opponent.
  * Challenger picks BO3/BO5 from dropdown. When both someone has accepted and format is chosen, coinflip + stage ban starts.
+ *
+ * /findmatch infers which role to ping from the thread/channel name (e.g. "⭐・arch・mage" → @arch-mage, "evoker" → @evoker).
+ * Tier commands (/evoker, /acolyte, etc.) pass roleName explicitly.
  */
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';
+
+/** Role names we can ping for find-match. Maps normalized thread/channel patterns to the actual role name. */
+const THREAD_TO_ROLE = [
+  { patterns: ['acolyte'], roleName: 'acolyte' },
+  { patterns: ['evoker'], roleName: 'evoker' },
+  { patterns: ['conjurer'], roleName: 'conjurer' },
+  { patterns: ['sorcerer'], roleName: 'sorcerer' },
+  { patterns: ['archmage', 'arch-mage'], roleName: 'arch-mage' },
+  { patterns: ['3framemod', '3-frame-mod', '3fr'], roleName: '3-Frame Mod' },
+];
+
+/**
+ * Normalize thread/channel name for role matching: strip emojis, ・→-, collapse separators, lowercase.
+ * E.g. "⭐・arch・mage" → "arch-mage", "evoker" → "evoker"
+ */
+function normalizeThreadName(name) {
+  if (!name || typeof name !== 'string') return '';
+  let s = name
+    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B50}\u{FE00}-\u{FE0F}\u{1F1E0}-\u{1F1FF}]/gu, '') // emojis including ⭐
+    .replace(/\u{30FB}/gu, '-')                                                // ・ (katakana middle dot)
+    .replace(/[\s_·•\u00B7]+/g, '-')                                           // spaces, underscores, middle dots
+    .replace(/-+/g, '-')                                                       // collapse hyphens
+    .replace(/^-|-$/g, '')                                                     // trim
+    .toLowerCase();
+  return s;
+}
+
+/**
+ * Infer role name from thread/channel name. Returns role name for pinging, or null if no match.
+ */
+function inferRoleFromThreadName(name) {
+  const normalized = normalizeThreadName(name);
+  if (!normalized) return null;
+  for (const { patterns, roleName } of THREAD_TO_ROLE) {
+    if (patterns.some(p => normalized === p || normalized.includes(p))) {
+      return roleName;
+    }
+  }
+  return null;
+}
 import { createSession, updateSession, getActiveSessionForPlayer } from './banSessionStore.js';
 import { buildStageSelectRow } from './coinflipHandler.js';
 import { STAGES } from './stageData.js';
@@ -160,8 +203,13 @@ export async function handleFindMatch(interaction, options = {}) {
     }
 
     let content = null;
-    if (options.roleName && interaction.guild) {
-      const role = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === options.roleName.toLowerCase());
+    let roleName = options.roleName;
+    if (!roleName && interaction.channel && interaction.guild) {
+      const channelOrThreadName = interaction.channel.name || '';
+      roleName = inferRoleFromThreadName(channelOrThreadName);
+    }
+    if (roleName && interaction.guild) {
+      const role = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === roleName.toLowerCase());
       if (role) {
         content = `<@&${role.id}>`;
       }

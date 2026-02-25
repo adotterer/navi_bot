@@ -426,13 +426,38 @@ function parseCharacterAndMove(input, guild) {
     return null;
 }
 
+const ULTIMATE_FRAMEDATA_HOST = 'ultimateframedata.com';
+
+/**
+ * Resolve frame data image URL to self-hosted version when available.
+ * Images from ultimateframedata.com are served from our S3 bucket (assets/framedata/) so they work if the source site goes down.
+ */
+function resolveFrameDataImageUrl(url) {
+    if (!url || typeof url !== 'string') return url;
+    const u = url.trim();
+    if (!u) return url;
+    try {
+        const parsed = new URL(u);
+        const host = (parsed.hostname || '').toLowerCase();
+        if (host !== ULTIMATE_FRAMEDATA_HOST && !host.endsWith('.' + ULTIMATE_FRAMEDATA_HOST)) {
+            return url;
+        }
+        const pathPart = (parsed.pathname || '').replace(/^\/+/, '');
+        if (!pathPart) return url;
+        const baseUrl = (process.env.APP_BASE_URL || `http://localhost:${process.env.PORT || 8080}`).replace(/\/$/, '');
+        return `${baseUrl}/assets/framedata/${pathPart}`;
+    } catch (_) {
+        return url;
+    }
+}
+
 function parseGifUrls(move, arseneMode) {
     if (arseneMode && move['ARSENE GIF'] && move['ARSENE GIF'].trim()) {
-        return [move['ARSENE GIF'].trim()];
+        return [resolveFrameDataImageUrl(move['ARSENE GIF'].trim())];
     }
     const raw = (move['GIF URL'] || '').trim();
     if (!raw) return [];
-    return raw.split('|').map(u => u.trim()).filter(Boolean);
+    return raw.split('|').map((u) => resolveFrameDataImageUrl(u.trim())).filter(Boolean);
 }
 
 export function createMoveEmbeds(move, characterName, moveType, arseneMode = false) {

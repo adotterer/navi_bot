@@ -130,7 +130,7 @@ client.on("clientReady", async () => {
                     .addUserOption(opt => opt.setName('opponent').setDescription('Your opponent').setRequired(true)),
                 new SlashCommandBuilder()
                     .setName('findmatch')
-                    .setDescription('Post an open match: you pick BO3/BO5; anyone who sees it can click Accept Match to play'),
+                    .setDescription('Post find-match in this thread: pings the role for this tier (from thread name); you pick BO3/BO5; anyone can Accept Match'),
                 new SlashCommandBuilder()
                     .setName('acolyte')
                     .setDescription('Ping @acolyte and start find-match: you pick BO3/BO5; anyone can Accept Match'),

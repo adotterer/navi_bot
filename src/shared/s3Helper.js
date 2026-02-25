@@ -1,7 +1,7 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 // Env names: prefer .env.example (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME)
-const AWS_REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-west-1';
+const AWS_REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || process.env.AUTH_DYNAMODB_REGION || 'us-west-1';
 const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || process.env.BUCKET_NAME;
 // Prefer main AWS keys; fall back to DynamoDB auth keys (same IAM may have S3 + DynamoDB permissions)
 const ACCESS_KEY = process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY || process.env.AUTH_DYNAMODB_ID;

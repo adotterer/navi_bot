@@ -10,6 +10,9 @@ import { generateCsrfToken } from './csrf.js';
 /** All uploads go under this prefix in the bucket (keeps assets separate from JSON etc.). */
 const ASSETS_PREFIX = 'assets/';
 
+/** Subfolder for frame data hitbox images (self-hosted from Ultimate Frame Data). Excluded from listing to keep Assets UI focused on user uploads. */
+const ASSETS_FRAMEDATA_PREFIX = 'assets/framedata/';
+
 /** Sanitize key for delete: only allow keys under ASSETS_PREFIX (safe chars). */
 function sanitizeKeyForDelete(raw) {
     if (typeof raw !== 'string') return '';
@@ -94,7 +97,9 @@ router.get('/', async (req, res) => {
     let listHtml = '';
     try {
         const allKeys = await listAllS3KeysWithPrefix(ASSETS_PREFIX, 5000);
-        const keys = allKeys.sort((a, b) => (a.Key || '').localeCompare(b.Key || ''));
+        const keys = allKeys
+            .filter((e) => !(e.Key || '').startsWith(ASSETS_FRAMEDATA_PREFIX))
+            .sort((a, b) => (a.Key || '').localeCompare(b.Key || ''));
         const imageExt = /\.(png|jpe?g|gif|webp|svg)$/i;
         const extToLabel = { '.pdf': 'PDF', '.svg': 'SVG' };
         function previewCell(key, viewUrl) {
