@@ -38,10 +38,11 @@ function validateEditPath(relativePath) {
  * @param {object} opts
  * @param {string} [opts.prompt]
  * @param {Array<{ path: string, content: string }>} [opts.edits]
+ * @param {string[]} [opts.fileManifest]
  * @returns {Promise<{ ok: boolean, prUrl?: string, error?: string }>}
  */
 export async function createPr(runId, opts = {}) {
-    const { prompt = '', edits = [], title: runTitle = '' } = opts;
+    const { prompt = '', edits = [], title: runTitle = '', fileManifest = [] } = opts;
     const token = process.env.GITHUB_TOKEN;
     if (!token) {
         return { ok: true }; // no-op when not configured
@@ -50,12 +51,19 @@ export async function createPr(runId, opts = {}) {
     if (!edits.length) {
         return { ok: false, error: 'No edits to apply' };
     }
+    if (Array.isArray(fileManifest) && fileManifest.length) {
+        const writtenPaths = new Set((edits || []).map((e) => e.path).filter(Boolean));
+        const missing = fileManifest.filter((p) => p && !writtenPaths.has(p));
+        if (missing.length) {
+            return { ok: false, error: 'Manifest files missing from edits: ' + missing.join(', ') };
+        }
+    }
 
     const branchName = 'agent/' + runId.replace(/[^a-z0-9-]/gi, '-').slice(0, 80);
 
     const useApiOnly = process.env.AGENT_NO_LOCAL_GIT === 'true' || process.env.AGENT_NO_LOCAL_GIT === '1';
     if (useApiOnly || !hasGitClone()) {
-        return createPrViaApi(runId, { prompt, edits, branchName, token, runTitle });
+        return createPrViaApi(runId, { prompt, edits, branchName, token, runTitle, fileManifest });
     }
 
     const git = simpleGit({ baseDir: WORKSPACE_ROOT });

@@ -13,6 +13,8 @@ const EXCLUDED_DIRS = new Set(['.git', 'node_modules', '.env', 'dist', 'coverage
 
 /** Max file size to read (bytes). */
 const MAX_FILE_SIZE = 256 * 1024;
+/** Higher cap for Coder context reads, used to avoid accidental partial context on large files. */
+const CODER_CONTEXT_MAX_FILE_SIZE = 1024 * 1024;
 
 /** Text extensions we allow for read_file (others are treated as binary). */
 const TEXT_EXTENSIONS = new Set([
@@ -146,9 +148,11 @@ export async function listDirectory(dirPath) {
 /**
  * Read file contents (text only; binary and oversized files rejected).
  * @param {string} filePath - Path relative to workspace (e.g. 'src/app.js').
+ * @param {{ forCoderContext?: boolean }} [opts]
  * @returns {Promise<{ ok: true, content: string } | { ok: false, error: string }>}
  */
-export async function readFile(filePath) {
+export async function readFile(filePath, opts = {}) {
+    const maxFileSize = opts.forCoderContext ? CODER_CONTEXT_MAX_FILE_SIZE : MAX_FILE_SIZE;
     if (GITHUB_MODE) {
         const v = validateRelativePath(filePath);
         if (!v.ok) return v;
@@ -166,7 +170,7 @@ export async function readFile(filePath) {
             let content = data.content;
             if (data.encoding === 'base64') content = Buffer.from(content, 'base64').toString('utf8');
             else if (typeof content !== 'string') content = String(content ?? '');
-            if (Buffer.byteLength(content, 'utf8') > MAX_FILE_SIZE) return { ok: false, error: 'File too large (max 256KB)' };
+            if (Buffer.byteLength(content, 'utf8') > maxFileSize) return { ok: false, error: `File too large (max ${Math.floor(maxFileSize / 1024)}KB)` };
             if (/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(content)) return { ok: false, error: 'Binary or unsupported file type' };
             return { ok: true, content };
         } catch (err) {
@@ -179,7 +183,7 @@ export async function readFile(filePath) {
     try {
         const stat = fs.statSync(resolved.absolute);
         if (!stat.isFile()) return { ok: false, error: 'Not a file' };
-        if (stat.size > MAX_FILE_SIZE) return { ok: false, error: 'File too large (max 256KB)' };
+        if (stat.size > maxFileSize) return { ok: false, error: `File too large (max ${Math.floor(maxFileSize / 1024)}KB)` };
         const ext = path.extname(resolved.absolute).slice(1).toLowerCase();
         if (ext && !TEXT_EXTENSIONS.has(ext)) return { ok: false, error: 'Binary or unsupported file type' };
         const content = fs.readFileSync(resolved.absolute, 'utf8');

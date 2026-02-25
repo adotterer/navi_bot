@@ -156,6 +156,12 @@
                   <div id="pipeline-inner" class="flex flex-wrap items-center gap-2 text-sm"></div>
                   <p id="pipeline-hint" class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 hidden"></p>
                 </div>
+                <div id="run-summary-area" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-3 py-2.5 hidden">
+                  <div class="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">Run summary</div>
+                  <div id="run-summary-meta" class="text-xs text-slate-500 dark:text-slate-400 mb-2"></div>
+                  <ul id="run-summary-manifest" class="text-xs text-slate-600 dark:text-slate-300 space-y-0.5"></ul>
+                  <ul id="run-summary-warnings" class="text-xs text-amber-700 dark:text-amber-300 mt-2 space-y-0.5"></ul>
+                </div>
                 <div id="result-area" class="rounded-lg border border-slate-200 dark:border-slate-600 bg-emerald-50/50 dark:bg-slate-800 dark:border-emerald-800/50 p-4 hidden mt-2">
                   <a id="pr-link" href="#" target="_blank" rel="noopener" class="text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-medium underline">Open PR</a>
                   <div id="pr-actions" class="mt-2 flex flex-wrap gap-2 hidden">
@@ -468,6 +474,10 @@
   var filesList = document.getElementById('files-list');
   var filesContentHeader = document.getElementById('files-content-header');
   var filesContent = document.getElementById('files-content');
+  var runSummaryArea = document.getElementById('run-summary-area');
+  var runSummaryMeta = document.getElementById('run-summary-meta');
+  var runSummaryManifest = document.getElementById('run-summary-manifest');
+  var runSummaryWarnings = document.getElementById('run-summary-warnings');
 
   var docsPanel = document.getElementById('docs-panel');
   var docsSaveBtn = document.getElementById('docs-save-btn');
@@ -1094,6 +1104,7 @@
         updatePipeline(data.status || 'done', { flightPlan: data.flightPlan, stepResults: data.stepResults, runMode: data.runMode });
         updateResumeButton(data);
         populateDocsPanel(data);
+        renderRunSummary(data);
         if (data.edits && data.edits.length) showFileBrowser(data.edits);
         else filesArea.classList.add('hidden');
         if (data.prUrl || data.error || (data.runMode === 'audit' && data.auditReport) || (data.runMode === 'ask' && data.askResponse) || (data.runMode === 'review' && data.reviewReport) || (data.status === 'quality_failed' && (data.prUrl || data.reviewReport))) {
@@ -1211,6 +1222,49 @@
     if (!e) return;
     filesContentHeader.textContent = e.path;
     renderCodeBlock(filesContent, e.content, e.path);
+  }
+
+  function renderRunSummary(data) {
+    if (!runSummaryArea || !runSummaryMeta || !runSummaryManifest || !runSummaryWarnings) return;
+    var summary = data && data.runSummary ? data.runSummary : null;
+    var manifest = (data && data.fileManifest) ? data.fileManifest : [];
+    if (!summary && (!manifest || !manifest.length)) {
+      runSummaryArea.classList.add('hidden');
+      runSummaryMeta.textContent = '';
+      runSummaryManifest.innerHTML = '';
+      runSummaryWarnings.innerHTML = '';
+      return;
+    }
+    var edits = (data && data.edits) ? data.edits : [];
+    var written = {};
+    edits.forEach(function(e) { if (e && e.path) written[e.path] = true; });
+    runSummaryMeta.textContent = 'Manifest: ' + (summary ? summary.manifestTotal : manifest.length)
+      + ' • Written: ' + (summary ? summary.writtenCount : edits.length)
+      + ' • Missing: ' + (summary && summary.missingFromManifest ? summary.missingFromManifest.length : 0)
+      + ' • Truncation warnings: ' + (summary ? summary.truncationCount : 0)
+      + ' • Conflicts: ' + (summary ? summary.conflictCount : 0);
+    runSummaryManifest.innerHTML = (manifest || []).map(function(p) {
+      var ok = !!written[p];
+      return '<li>' + (ok ? '✓' : '✗') + ' ' + escapeHtml(p) + '</li>';
+    }).join('');
+    var warnings = [];
+    var trunc = (data && data.truncationWarnings) ? data.truncationWarnings : [];
+    var conflicts = (data && data.conflictWarnings) ? data.conflictWarnings : [];
+    var stepResults = (data && data.stepResults) ? data.stepResults : [];
+    var failedDueToTruncation = stepResults.some(function(r) {
+      return r && r.status === 'failed' && (r.reason || '').toLowerCase().indexOf('truncat') !== -1;
+    });
+    trunc.forEach(function(w) {
+      warnings.push('Truncation: ' + (w.path || 'unknown') + ' (' + (w.reason || 'warning') + ')');
+    });
+    conflicts.forEach(function(w) {
+      warnings.push('Conflict: ' + (w.path || 'unknown') + ' written by steps ' + ((w.stepIndices || []).join(', ')));
+    });
+    if (trunc.length > 0 || failedDueToTruncation) {
+      warnings.push('Tip: For large file rewrites, re-run with a smaller scope (e.g. one audit section at a time) or split the mission into multiple runs to avoid truncation.');
+    }
+    runSummaryWarnings.innerHTML = warnings.map(function(w) { return '<li>• ' + escapeHtml(w) + '</li>'; }).join('');
+    runSummaryArea.classList.remove('hidden');
   }
 
   function renderAuditMarkdown(md) {
@@ -1393,6 +1447,7 @@
           updatePipeline(fetched.status || 'done', { flightPlan: fetched.flightPlan, stepResults: fetched.stepResults, runMode: fetched.runMode });
           updateResumeButton(fetched);
           populateDocsPanel(fetched);
+          renderRunSummary(fetched);
           if (fetched.edits && fetched.edits.length) showFileBrowser(fetched.edits);
           if (fetched.stepResults && fetched.stepResults.length) {
             var area = document.getElementById('step-results-area');
@@ -1596,6 +1651,7 @@
                 resumeBtn && resumeBtn.classList.add('hidden');
                 loadPastRunsList();
                 showResult(data.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error, data);
+                renderRunSummary(data);
                 return;
               }
               // Run is still active — keep stop button enabled and try to reconnect
@@ -1674,6 +1730,7 @@
                     logContainer.scrollTop = logContainer.scrollHeight;
                   }
                   showResult(data.prUrl != null ? data.prUrl : entry.prUrl, data.status === 'cancelled' ? 'Run stopped by user.' : data.error, data);
+                  renderRunSummary(data);
                 })
                 .catch(function() { runStatus.textContent = doneStatus === 'cancelled' ? 'Cancelled' : doneStatus === 'quality_failed' ? 'Quality failed' : 'Done — PR created'; showResult(entry.prUrl, entry.error, { status: doneStatus, prUrl: entry.prUrl }); });
             } else {

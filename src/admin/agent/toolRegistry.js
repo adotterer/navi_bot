@@ -28,9 +28,12 @@ function registerBuiltIn() {
     register({
         name: 'read_file',
         description: 'Read full text contents of a file.',
-        parameters: { path: { type: 'string', description: 'File path relative to repo root' } },
+        parameters: {
+            path: { type: 'string', description: 'File path relative to repo root' },
+            forCoderContext: { type: 'boolean', description: 'Use larger read limits for coder context' },
+        },
         async invoke(args) {
-            const r = await codebaseTools.readFile(args.path ?? '');
+            const r = await codebaseTools.readFile(args.path ?? '', { forCoderContext: !!args.forCoderContext });
             if (!r.ok) return { ok: false, error: r.error };
             return { ok: true, result: r.content };
         },

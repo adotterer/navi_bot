@@ -10,7 +10,7 @@ import { Octokit } from '@octokit/rest';
 import { WORKSPACE_ROOT } from './codebaseTools.js';
 
 const EXCLUDED_DIRS = new Set(['.git', 'node_modules']);
-const MAX_FILE_SIZE = 512 * 1024;
+const MAX_FILE_SIZE = 1024 * 1024;
 /** Max size of combined diff text returned (chars) to avoid token overflow. */
 const MAX_DIFF_CHARS = 100 * 1024;
 

@@ -8,7 +8,7 @@ const MAX_RUNS_RETAINED = 50;
 
 const DEFAULT_DOCS = { overview: '', requirements: '', architecture: '', decisions: '', notes: '' };
 
-/** @type {Map<string, { runId: string, status: string, logs: Array<{ role: string, stage: string, message: string, timestamp: string }>, flightPlan?: any, steps?: Array<{ step: object, task: object }>, docs?: object, stepResults?: any[], edits?: any[], prUrl?: string, error?: string, createdAt: number, prompt?: string }>} */
+/** @type {Map<string, { runId: string, status: string, logs: Array<{ role: string, stage: string, message: string, timestamp: string }>, flightPlan?: any, steps?: Array<{ step: object, task: object }>, docs?: object, stepResults?: any[], edits?: any[], fileManifest?: string[], fileRegistry?: Record<string, { content: string, lastWrittenByStepIndex?: number }>, truncationWarnings?: Array<{ stepIndex: number, path: string, reason: string }>, conflictWarnings?: Array<{ path: string, stepIndices: number[] }>, prUrl?: string, error?: string, createdAt: number, prompt?: string }>} */
 const runs = new Map();
 /** @type {string[]} */
 const runOrder = [];
@@ -57,6 +57,10 @@ function createRun(opts = {}) {
         docs: { ...DEFAULT_DOCS },
         stepResults: [],
         edits: undefined,
+        fileManifest: [],
+        fileRegistry: {},
+        truncationWarnings: [],
+        conflictWarnings: [],
         prUrl: undefined,
         error: undefined,
         createdAt: Date.now(),
@@ -134,6 +138,10 @@ function updateRun(runId, updates) {
     if (updates.steps != null) run.steps = updates.steps;
     if (updates.stepResults != null) run.stepResults = updates.stepResults;
     if (updates.edits != null) run.edits = updates.edits;
+    if (Array.isArray(updates.fileManifest)) run.fileManifest = updates.fileManifest;
+    if (updates.fileRegistry != null && typeof updates.fileRegistry === 'object') run.fileRegistry = updates.fileRegistry;
+    if (Array.isArray(updates.truncationWarnings)) run.truncationWarnings = updates.truncationWarnings;
+    if (Array.isArray(updates.conflictWarnings)) run.conflictWarnings = updates.conflictWarnings;
     if (Array.isArray(updates.logs)) run.logs = updates.logs;
     if (updates.docs != null) {
         run.docs = run.docs || { ...DEFAULT_DOCS };
@@ -276,6 +284,10 @@ function hydrateRun(runId, snapshot, opts = {}) {
             : { ...DEFAULT_DOCS },
         stepResults: Array.isArray(snapshot.stepResults) ? snapshot.stepResults : [],
         edits: snapshot.edits,
+        fileManifest: Array.isArray(snapshot.fileManifest) ? snapshot.fileManifest : [],
+        fileRegistry: snapshot.fileRegistry && typeof snapshot.fileRegistry === 'object' ? snapshot.fileRegistry : {},
+        truncationWarnings: Array.isArray(snapshot.truncationWarnings) ? snapshot.truncationWarnings : [],
+        conflictWarnings: Array.isArray(snapshot.conflictWarnings) ? snapshot.conflictWarnings : [],
         prUrl: snapshot.prUrl,
         error: snapshot.error,
         createdAt: snapshot.createdAt ?? Date.now(),

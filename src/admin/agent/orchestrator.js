@@ -15,6 +15,7 @@ import { runResearcher, runPlanner, runCoder, validateCoderStep, runReviewer, ru
 import { callTool } from './toolRegistry.js';
 import { getFileTree } from './codebaseTools.js';
 import { getBranchDiff, getDiffForPullRequest } from './repoBrowser.js';
+import { detectTruncation } from './truncationCheck.js';
 
 function updateRunAndMeta(runId, updates) {
     updateRun(runId, updates);
@@ -37,7 +38,6 @@ function parseQualityRecommendation(report) {
  * @param {object} opts
  * @param {string} opts.prompt
  * @param {number} [opts.maxParallelPlanners]
- * @param {number} [opts.maxParallelCoders]
  */
 function checkCancelled(runId, log) {
     if (isRunCancelled(runId)) {
@@ -207,11 +207,14 @@ async function validateImportPaths(aggregatedEdits) {
     return warnings;
 }
 
-/** Build run-wide allowed path set: grep paths + all task hints from flight plan. */
-function buildAllowedPaths(flightPlan, grepPaths) {
+/** Build run-wide allowed path set: grep paths + all task hints from flight plan + planner manifest. */
+function buildAllowedPaths(flightPlan, grepPaths, fileManifest = []) {
     const pathSet = new Set(grepPaths || []);
     for (const task of flightPlan || []) {
         for (const p of parseHintPaths(task)) pathSet.add(p);
+    }
+    for (const p of fileManifest || []) {
+        if (p) pathSet.add(p);
     }
     return pathSet;
 }
@@ -240,8 +243,89 @@ async function buildFileContextForTask(task, grepPaths, maxChars = 52000) {
     return parts.join('\n');
 }
 
+function buildFileManifest(allSteps) {
+    return Array.from(new Set(
+        (allSteps || [])
+            .flatMap(({ step }) => Array.isArray(step?.files) ? step.files : [])
+            .map((p) => String(p || '').trim())
+            .filter(Boolean)
+    ));
+}
+
+async function seedFileRegistry(paths) {
+    const registry = {};
+    for (const p of paths || []) {
+        const r = await callTool('read_file', { path: p, forCoderContext: true });
+        if (r.ok && typeof r.result === 'string') {
+            registry[p] = { content: r.result };
+        }
+    }
+    return registry;
+}
+
+async function readPathWithRegistry(fileRegistry, filePath) {
+    if (fileRegistry[filePath] && typeof fileRegistry[filePath].content === 'string') {
+        return { ok: true, content: fileRegistry[filePath].content };
+    }
+    const r = await callTool('read_file', { path: filePath, forCoderContext: true });
+    if (r.ok && typeof r.result === 'string') {
+        fileRegistry[filePath] = { content: r.result };
+        return { ok: true, content: r.result };
+    }
+    return { ok: false, error: r.error || 'File not found' };
+}
+
+async function resolveCoderEditsToContents(edits, fileRegistry, log, stepIndex) {
+    const byPathPatches = new Map();
+    const byPathContent = new Map();
+    for (const e of edits || []) {
+        if (!e.path) continue;
+        const sourceStepIndex = typeof e._stepIndex === 'number' ? e._stepIndex : stepIndex;
+        if (e.search !== undefined) {
+            if (!byPathPatches.has(e.path)) byPathPatches.set(e.path, []);
+            byPathPatches.get(e.path).push({ search: e.search, replace: e.replace ?? '', stepIndex: sourceStepIndex });
+        } else {
+            byPathContent.set(e.path, { content: e.content ?? '', stepIndex: sourceStepIndex });
+        }
+    }
+
+    const resolved = [];
+    for (const [path, payload] of byPathContent.entries()) {
+        resolved.push({ path, content: payload.content, stepIndex: payload.stepIndex });
+    }
+
+    for (const [filePath, patches] of byPathPatches.entries()) {
+        if (byPathContent.has(filePath)) continue;
+        const readResult = await readPathWithRegistry(fileRegistry, filePath);
+        let content = '';
+        if (readResult.ok) {
+            content = readResult.content;
+        } else {
+            const hasNewFileMarker = patches.some((p) => p.search === '');
+            if (!hasNewFileMarker) {
+                log('system', 'coding', `[patch] Could not read ${filePath} for patching: ${readResult.error}\n`);
+                continue;
+            }
+        }
+        let lastPatchStepIndex = stepIndex;
+        for (const { search, replace, stepIndex: patchStepIndex } of patches) {
+            lastPatchStepIndex = patchStepIndex;
+            if (search === '') {
+                content = replace ?? '';
+            } else if (content.includes(search)) {
+                content = content.replace(search, replace ?? '');
+            } else {
+                log('system', 'coding', `[patch] Search text not found in ${filePath} — patch skipped\n`);
+            }
+        }
+        resolved.push({ path: filePath, content, stepIndex: lastPatchStepIndex });
+    }
+
+    return resolved;
+}
+
 export async function runPipeline(runId, opts = {}) {
-    const { maxParallelPlanners = 2, maxParallelCoders = 3 } = opts;
+    const { maxParallelPlanners = 2 } = opts;
     const run = getRun(runId);
     const resume = !!opts.resume;
     const prompt = (opts.prompt ?? run?.prompt ?? '').trim();
@@ -424,38 +508,24 @@ export async function runPipeline(runId, opts = {}) {
         }
 
         const { grepText: grepContext, grepPaths } = await buildGrepContext(prompt);
-        const allowedPaths = buildAllowedPaths(flightPlan, grepPaths);
-        // New Discord commands need main.js (routing); grep only searches src/ so add it when mission mentions a command.
-        if (/![a-z][a-zA-Z0-9-]*|discord command|new command/i.test(prompt || '')) {
-            allowedPaths.add('main.js');
-        }
         // Missions control panel: main page HTML+script in agentPageContentInner.html; models API in agentRoutes.js.
         const AGENT_ROUTES_PATH = 'src/admin/agent/agentRoutes.js';
         const AGENT_PAGE_INNER_PATH = 'src/admin/agent/agentPageContentInner.html';
-        if (/\/admin\/agent|missions control panel|model dropdown|model menu|agent page|model selector|mission prompt form|mode selection|mode pill|pill.*mode|mobile.*ux|ux.*mobile/i.test(prompt || '')) {
-            allowedPaths.add(AGENT_ROUTES_PATH);
-            allowedPaths.add(AGENT_PAGE_INNER_PATH);
-        }
         // Admin commands page: single file (route + table HTML) at commandRoutes.js; no separate template.
         const COMMAND_ROUTES_PATH = 'src/admin/commandRoutes.js';
-        if (/\/admin\/commands|admin commands|command list|synchronize.*command|commands (ui|dashboard|panel)|documenting commands/i.test(prompt || '')) {
-            allowedPaths.add(COMMAND_ROUTES_PATH);
-        }
         // Home page (route "/"): restyle to match admin — root route is in app.js; admin look is in layout.js.
         const APP_JS_PATH = 'src/app.js';
         const LAYOUT_JS_PATH = 'src/admin/layout.js';
-        if (/home page|root page|landing page|route ["']\/["']|match admin|theme disconnect|look and feel/i.test(prompt || '')) {
-            allowedPaths.add(APP_JS_PATH);
-            allowedPaths.add(LAYOUT_JS_PATH);
-        }
 
         const allEdits = [];
+        let fileManifest = Array.isArray(run?.fileManifest) ? run.fileManifest : [];
+        let fileRegistry = run?.fileRegistry && typeof run.fileRegistry === 'object' ? { ...run.fileRegistry } : {};
+        const truncationWarnings = Array.isArray(run?.truncationWarnings) ? [...run.truncationWarnings] : [];
+        const conflictWarnings = Array.isArray(run?.conflictWarnings) ? [...run.conflictWarnings] : [];
         const isClaude = typeof model === 'string' && model.trim().toLowerCase().startsWith('claude-');
         // Claude org limit 30k input tokens/min: run planners and coders one at a time to avoid 429s.
         const plannersConcurrency = isClaude ? 1 : Math.max(1, Math.min(5, maxParallelPlanners));
-        const codersConcurrency = isClaude ? 1 : Math.max(1, Math.min(10, maxParallelCoders));
         const limitPlanners = pLimit(plannersConcurrency);
-        const limitCoders = pLimit(codersConcurrency);
 
         const shouldRunPlanning = !resume || !allSteps?.length;
         if (shouldRunPlanning) {
@@ -510,6 +580,36 @@ export async function runPipeline(runId, opts = {}) {
             await persistRunToS3(runId);
         }
 
+        if (!fileManifest.length) {
+            fileManifest = buildFileManifest(allSteps);
+        }
+        if (!fileManifest.length) {
+            log('system', 'planning', 'Warning: Planner manifest is empty; continuing with hint-based allowlist.\n');
+        }
+        updateRun(runId, { fileManifest });
+
+        if (!Object.keys(fileRegistry).length && fileManifest.length) {
+            fileRegistry = await seedFileRegistry(fileManifest);
+            updateRun(runId, { fileRegistry });
+        }
+
+        const allowedPaths = buildAllowedPaths(flightPlan, grepPaths, fileManifest);
+        // New Discord commands need main.js (routing); grep only searches src/ so add it when mission mentions a command.
+        if (/![a-z][a-zA-Z0-9-]*|discord command|new command/i.test(prompt || '')) {
+            allowedPaths.add('main.js');
+        }
+        if (/\/admin\/agent|missions control panel|model dropdown|model menu|agent page|model selector|mission prompt form|mode selection|mode pill|pill.*mode|mobile.*ux|ux.*mobile/i.test(prompt || '')) {
+            allowedPaths.add(AGENT_ROUTES_PATH);
+            allowedPaths.add(AGENT_PAGE_INNER_PATH);
+        }
+        if (/\/admin\/commands|admin commands|command list|synchronize.*command|commands (ui|dashboard|panel)|documenting commands/i.test(prompt || '')) {
+            allowedPaths.add(COMMAND_ROUTES_PATH);
+        }
+        if (/home page|root page|landing page|route ["']\/["']|match admin|theme disconnect|look and feel/i.test(prompt || '')) {
+            allowedPaths.add(APP_JS_PATH);
+            allowedPaths.add(LAYOUT_JS_PATH);
+        }
+
         if (checkCancelled(runId, log)) return;
         updateRunAndMeta(runId, { status: 'coding' });
 
@@ -518,95 +618,91 @@ export async function runPipeline(runId, opts = {}) {
             return !existing || existing.status !== 'done';
         });
 
-        const coderResults = await Promise.all(
-            allSteps.map(({ step, task }, j) =>
-                limitCoders(async () => {
-                    if (!stepsToRunIndices.includes(j)) {
-                        return { step, task, coderResult: null, stepIndex: j, useExisting: true, existing: existingStepResults[j] };
-                    }
-                    log('system', 'coding', `Coder: ${step.what}\n`);
-                    const fileContext = {};
-                    for (const p of step.files || []) {
-                        const r = await callTool('read_file', { path: p });
-                        if (r.ok && typeof r.result === 'string') fileContext[p] = r.result;
-                    }
-                    if (Object.keys(fileContext).length === 0) {
-                        for (const p of parseHintPaths(task)) {
-                            const r = await callTool('read_file', { path: p });
-                            if (r.ok && typeof r.result === 'string') fileContext[p] = r.result;
-                        }
-                    }
-                    // If the step or mission references Discord commands, inject promptLoader.js and main.js
-                    // so the Coder sees how commands are registered and can add PROMPT_META / routing.
-                    const stepText = ((step.what || '') + ' ' + (step.changeDescription || '') + ' ' + prompt).toLowerCase();
-                    const isDiscordCommandStep = /!mu|!mq|!export|!fd|!latest|![\w-]+|discord command|register.*command/i.test(stepText);
-                    const PROMPT_LOADER_PATH = 'src/shared/promptLoader.js';
-                    const MAIN_PATH = 'main.js';
-                    if (isDiscordCommandStep) {
-                        if (!fileContext[PROMPT_LOADER_PATH]) {
-                            const r = await callTool('read_file', { path: PROMPT_LOADER_PATH });
-                            if (r.ok && typeof r.result === 'string') fileContext[PROMPT_LOADER_PATH] = r.result;
-                        }
-                        if (!fileContext[MAIN_PATH]) {
-                            const r = await callTool('read_file', { path: MAIN_PATH });
-                            if (r.ok && typeof r.result === 'string') fileContext[MAIN_PATH] = r.result;
-                        }
-                    }
-                    // Missions UI: main page form + script live in agentPageContentInner.html; model API in agentRoutes.js.
-                    const isMissionsUiStep = /\/admin\/agent|missions control panel|model dropdown|model menu|agent page|model selector|modelmeta|model meta|mission prompt form|mode selection|mode pill|pill.*mode|mobile.*ux|ux.*mobile/i.test(stepText);
-                    const isFormTextareaStep = /textarea|tip|help line|help text|mission prompt/i.test(stepText)
-                        && !/model dropdown|model selector|model menu|modelmeta|model meta/i.test(stepText);
-                    if (isMissionsUiStep && !fileContext[AGENT_PAGE_INNER_PATH]) {
-                        const r = await callTool('read_file', { path: AGENT_PAGE_INNER_PATH });
-                        if (r.ok && typeof r.result === 'string') {
-                            let content = r.result;
-                            const INNER_TRUNCATE_LINES = 280;
-                            if (isFormTextareaStep && content.split('\n').length > INNER_TRUNCATE_LINES) {
-                                const lines = content.split('\n');
-                                content = lines.slice(0, INNER_TRUNCATE_LINES).join('\n')
-                                    + `\n\n<!-- ... (file truncated; ${lines.length} lines total). Mission prompt textarea (id=prompt) and form are above. -->\n`;
-                            }
-                            fileContext[AGENT_PAGE_INNER_PATH] = content;
-                        }
-                    }
-                    if (isMissionsUiStep && !fileContext[AGENT_ROUTES_PATH] && /model dropdown|model selector|modelmeta|model meta/i.test(stepText)) {
-                        const r = await callTool('read_file', { path: AGENT_ROUTES_PATH });
-                        if (r.ok && typeof r.result === 'string') fileContext[AGENT_ROUTES_PATH] = r.result;
-                    }
-                    // Admin commands page: single file (route + table); ensure Coder sees commandRoutes.js.
-                    const isAdminCommandsStep = /\/admin\/commands|admin commands|command list|synchronize.*command|commands (ui|dashboard|panel)|documenting commands/i.test(stepText);
-                    if (isAdminCommandsStep && !fileContext[COMMAND_ROUTES_PATH]) {
-                        const r = await callTool('read_file', { path: COMMAND_ROUTES_PATH });
-                        if (r.ok && typeof r.result === 'string') fileContext[COMMAND_ROUTES_PATH] = r.result;
-                    }
-                    // Home page (route "/"): ensure Coder sees app.js and optionally layout.js for "match admin" styling.
-                    const isHomePageStep = /home page|root page|landing page|route ["']\/["']|match admin|theme disconnect|look and feel/i.test(stepText);
-                    if (isHomePageStep && !fileContext[APP_JS_PATH]) {
-                        const r = await callTool('read_file', { path: APP_JS_PATH });
-                        if (r.ok && typeof r.result === 'string') fileContext[APP_JS_PATH] = r.result;
-                    }
-                    if (isHomePageStep && !fileContext[LAYOUT_JS_PATH]) {
-                        const r = await callTool('read_file', { path: LAYOUT_JS_PATH });
-                        if (r.ok && typeof r.result === 'string') fileContext[LAYOUT_JS_PATH] = r.result;
-                    }
-                    const coderResult = await runCoder(step, fileContext, { signal, missionPrompt: prompt, model });
-                    return { step, task, coderResult, stepIndex: j, useExisting: false };
-                })
-            )
-        );
-
         const stepResults = [];
-        for (const entry of coderResults) {
-            const { step, stepIndex: j, useExisting, existing } = entry;
-            const coderResult = entry.coderResult;
-
-            if (useExisting) {
+        for (let j = 0; j < allSteps.length; j++) {
+            const { step, task } = allSteps[j];
+            const existing = existingStepResults[j];
+            if (!stepsToRunIndices.includes(j)) {
                 stepResults.push(existing || { step, status: 'failed', reason: 'No existing result' });
                 if (existing?.status === 'done' && existing.edits?.length) {
                     const allowed = existing.edits.filter((e) => e.path && allowedPaths.has(e.path));
-                    allEdits.push(...allowed);
+                    allEdits.push(...allowed.map((e) => ({ ...e, _stepIndex: j })));
                 }
                 continue;
+            }
+
+            log('system', 'coding', `Coder: ${step.what}\n`);
+            const fileContext = {};
+            for (const p of step.files || []) {
+                const read = await readPathWithRegistry(fileRegistry, p);
+                if (read.ok && typeof read.content === 'string') fileContext[p] = read.content;
+            }
+            if (Object.keys(fileContext).length === 0) {
+                for (const p of parseHintPaths(task)) {
+                    const read = await readPathWithRegistry(fileRegistry, p);
+                    if (read.ok && typeof read.content === 'string') fileContext[p] = read.content;
+                }
+            }
+
+            const stepText = ((step.what || '') + ' ' + (step.changeDescription || '') + ' ' + prompt).toLowerCase();
+            const isDiscordCommandStep = /!mu|!mq|!export|!fd|!latest|![\w-]+|discord command|register.*command/i.test(stepText);
+            const PROMPT_LOADER_PATH = 'src/shared/promptLoader.js';
+            const MAIN_PATH = 'main.js';
+            if (isDiscordCommandStep) {
+                if (!fileContext[PROMPT_LOADER_PATH]) {
+                    const read = await readPathWithRegistry(fileRegistry, PROMPT_LOADER_PATH);
+                    if (read.ok) fileContext[PROMPT_LOADER_PATH] = read.content;
+                }
+                if (!fileContext[MAIN_PATH]) {
+                    const read = await readPathWithRegistry(fileRegistry, MAIN_PATH);
+                    if (read.ok) fileContext[MAIN_PATH] = read.content;
+                }
+            }
+
+            const isMissionsUiStep = /\/admin\/agent|missions control panel|model dropdown|model menu|agent page|model selector|modelmeta|model meta|mission prompt form|mode selection|mode pill|pill.*mode|mobile.*ux|ux.*mobile/i.test(stepText);
+            if (isMissionsUiStep && !fileContext[AGENT_PAGE_INNER_PATH]) {
+                const read = await readPathWithRegistry(fileRegistry, AGENT_PAGE_INNER_PATH);
+                if (read.ok) fileContext[AGENT_PAGE_INNER_PATH] = read.content;
+            }
+            if (isMissionsUiStep && !fileContext[AGENT_ROUTES_PATH] && /model dropdown|model selector|modelmeta|model meta/i.test(stepText)) {
+                const read = await readPathWithRegistry(fileRegistry, AGENT_ROUTES_PATH);
+                if (read.ok) fileContext[AGENT_ROUTES_PATH] = read.content;
+            }
+            const isAdminCommandsStep = /\/admin\/commands|admin commands|command list|synchronize.*command|commands (ui|dashboard|panel)|documenting commands/i.test(stepText);
+            if (isAdminCommandsStep && !fileContext[COMMAND_ROUTES_PATH]) {
+                const read = await readPathWithRegistry(fileRegistry, COMMAND_ROUTES_PATH);
+                if (read.ok) fileContext[COMMAND_ROUTES_PATH] = read.content;
+            }
+            const isHomePageStep = /home page|root page|landing page|route ["']\/["']|match admin|theme disconnect|look and feel/i.test(stepText);
+            if (isHomePageStep && !fileContext[APP_JS_PATH]) {
+                const read = await readPathWithRegistry(fileRegistry, APP_JS_PATH);
+                if (read.ok) fileContext[APP_JS_PATH] = read.content;
+            }
+            if (isHomePageStep && !fileContext[LAYOUT_JS_PATH]) {
+                const read = await readPathWithRegistry(fileRegistry, LAYOUT_JS_PATH);
+                if (read.ok) fileContext[LAYOUT_JS_PATH] = read.content;
+            }
+
+            let coderResult = null;
+            let attempt = 0;
+            let lastTruncations = [];
+            while (attempt < 3) {
+                const reviewFeedback = attempt > 0
+                    ? 'Your previous output appears truncated: ' + lastTruncations.map((x) => `${x.path} (${x.reason})`).join(', ')
+                      + '. Output COMPLETE file content from the beginning; do not use ellipsis or placeholders.'
+                    : undefined;
+                coderResult = await runCoder(step, fileContext, { reviewFeedback, signal, missionPrompt: prompt, model });
+                if (!coderResult?.ok) break;
+                lastTruncations = (coderResult.edits || [])
+                    .filter((e) => e.path && allowedPaths.has(e.path))
+                    .map((e) => ({
+                        path: e.path,
+                        check: detectTruncation(e, fileRegistry[e.path]?.content || ''),
+                    }))
+                    .filter((x) => x.check.truncated)
+                    .map((x) => ({ path: x.path, reason: x.check.reason || 'unknown' }));
+                if (!lastTruncations.length) break;
+                attempt++;
             }
 
             if (!coderResult?.ok) {
@@ -614,81 +710,82 @@ export async function runPipeline(runId, opts = {}) {
                 log('system', 'coding', `Coder: ${step.what} — failed: ${coderResult?.error || 'No result'}\n`);
                 continue;
             }
+
             const validation = await validateCoderStep(step, prompt, coderResult.edits || [], { allowedPaths, signal, model });
             updateRun(runId, {
                 inputTokens: (coderResult.inputTokens || 0) + (validation.inputTokens || 0),
                 outputTokens: (coderResult.outputTokens || 0) + (validation.outputTokens || 0),
                 cached_tokens: (coderResult.cachedTokens || 0) + (validation.cachedTokens || 0),
             });
+
+            // If output was still truncated after retries, do not write — treat as step failure so we never commit broken files.
+            const truncationStillPresent = lastTruncations.length > 0;
+            const stepFailedDueToTruncation = validation.status === 'done' && truncationStillPresent;
+            const effectiveStatus = stepFailedDueToTruncation ? 'failed' : validation.status;
+            const effectiveReason = stepFailedDueToTruncation
+                ? 'Output truncated after retries (unbalanced braces or too short). Try a smaller scope or split the mission into multiple runs.'
+                : validation.reason;
+
             stepResults.push({
                 step,
-                status: validation.status,
-                edits: validation.status === 'done' ? coderResult.edits : undefined,
-                reason: validation.reason,
+                status: effectiveStatus,
+                edits: effectiveStatus === 'done' ? coderResult.edits : undefined,
+                reason: effectiveReason,
             });
-            if (validation.status === 'done') {
+            if (effectiveStatus === 'done') {
                 const allowed = (coderResult.edits || []).filter((e) => e.path && allowedPaths.has(e.path));
+                const stepResolved = await resolveCoderEditsToContents(allowed, fileRegistry, log, j);
+                for (const edit of stepResolved) {
+                    fileRegistry[edit.path] = {
+                        content: edit.content,
+                        lastWrittenByStepIndex: j,
+                    };
+                }
+                if (stepResolved.length) {
+                    updateRun(runId, { fileRegistry });
+                }
+
+                if (attempt > 0 && lastTruncations.length) {
+                    for (const t of lastTruncations) {
+                        truncationWarnings.push({ stepIndex: j, path: t.path, reason: t.reason });
+                    }
+                }
+
                 const n = allowed.length;
                 log('system', 'coding', `Coder: ${step.what} — done (${n} edit(s))\n`);
-                allEdits.push(...allowed);
+                allEdits.push(...allowed.map((e) => ({ ...e, _stepIndex: j })));
             } else {
-                log('system', 'coding', `Coder: ${step.what} — failed${validation.reason ? ': ' + validation.reason : ''}\n`);
+                log('system', 'coding', `Coder: ${step.what} — failed${effectiveReason ? ': ' + effectiveReason : ''}\n`);
             }
         }
 
         const runRef = getRun(runId);
         if (runRef) runRef.stepResults = stepResults;
 
-        // Aggregate edits by path.
-        // Patch edits ({path, search, replace}) accumulate as a list.
-        // Full-content edits ({path, content}) override everything for that path.
-        const byPathPatches = new Map(); // path -> [{search, replace}]
-        const byPathContent = new Map(); // path -> string (full content, takes precedence)
-        for (const e of allEdits) {
-            if (!e.path) continue;
-            if (e.search !== undefined) {
-                if (!byPathPatches.has(e.path)) byPathPatches.set(e.path, []);
-                byPathPatches.get(e.path).push({ search: e.search, replace: e.replace ?? '' });
-            } else {
-                byPathContent.set(e.path, e.content ?? '');
+        const resolvedAll = await resolveCoderEditsToContents(allEdits, fileRegistry, log, -1);
+        const seenByPath = new Map();
+        for (const resolved of resolvedAll) {
+            if (!seenByPath.has(resolved.path)) seenByPath.set(resolved.path, []);
+            const steps = seenByPath.get(resolved.path);
+            if (typeof resolved.stepIndex === 'number' && resolved.stepIndex >= 0) {
+                steps.push(resolved.stepIndex);
+            }
+        }
+        for (const [path, stepIndices] of seenByPath.entries()) {
+            const uniq = Array.from(new Set(stepIndices));
+            if (uniq.length > 1) {
+                conflictWarnings.push({ path, stepIndices: uniq });
             }
         }
 
-        // Resolve patch edits: read current file, apply search/replace, produce full content.
-        const resolvedPatches = [];
-        for (const [filePath, patches] of byPathPatches.entries()) {
-            if (byPathContent.has(filePath)) continue; // full-content edit takes precedence
-            const readResult = await callTool('read_file', { path: filePath });
-            let content = '';
-            if (readResult.ok) {
-                content = readResult.result;
-            } else {
-                // File doesn't exist yet — only valid if at least one patch creates it from scratch (search === '')
-                const hasNewFileMarker = patches.some((p) => p.search === '');
-                if (!hasNewFileMarker) {
-                    log('system', 'coding', `[patch] Could not read ${filePath} for patching: ${readResult.error}\n`);
-                    continue;
-                }
-            }
-            for (const { search, replace } of patches) {
-                if (search === '') {
-                    content = replace ?? '';
-                } else if (content.includes(search)) {
-                    content = content.replace(search, replace ?? '');
-                } else {
-                    log('system', 'coding', `[patch] Search text not found in ${filePath} — patch skipped\n`);
-                }
-            }
-            resolvedPatches.push({ path: filePath, content });
+        const byPathFinal = new Map();
+        for (const r of resolvedAll) {
+            byPathFinal.set(r.path, r.content ?? '');
         }
-
-        const aggregatedEdits = [
-            ...Array.from(byPathContent.entries()).map(([path, content]) => ({ path, content })),
-            ...resolvedPatches,
-        ];
+        const aggregatedEdits = Array.from(byPathFinal.entries()).map(([path, content]) => ({ path, content }));
 
         if (runRef) runRef.edits = aggregatedEdits;
-        updateRun(runId, { stepResults, edits: aggregatedEdits });
+        updateRun(runId, { stepResults, edits: aggregatedEdits, fileRegistry, fileManifest, truncationWarnings, conflictWarnings });
         await persistRunToS3(runId);
 
         if (aggregatedEdits.length === 0) {
@@ -718,6 +815,9 @@ export async function runPipeline(runId, opts = {}) {
             const reviewResult = await runReviewer(editsToReview, prompt, {
                 model,
                 importWarnings: reviewRound === 0 ? importWarnings : [],
+                fileManifest,
+                truncationWarnings,
+                conflictWarnings,
                 signal,
             });
             updateRun(runId, { inputTokens: reviewResult.inputTokens || 0, outputTokens: reviewResult.outputTokens || 0, cached_tokens: reviewResult.cachedTokens || 0 });
@@ -775,7 +875,12 @@ export async function runPipeline(runId, opts = {}) {
         updateRunAndMeta(runId, { status: 'creating_pr' });
         log('system', 'creating_pr', `Collected ${editsToReview.length} file edit(s). Creating PR…\n`);
 
-        const prResult = await createPrIfConfigured(runId, { prompt, edits: editsToReview, title: getRun(runId)?.title || '' });
+        const prResult = await createPrIfConfigured(runId, {
+            prompt,
+            edits: editsToReview,
+            title: getRun(runId)?.title || '',
+            fileManifest,
+        });
         if (prResult.ok && prResult.prUrl) {
             await notifyAuditLog(getRun(runId)?.title, prompt, prResult.prUrl, editsToReview.map((e) => e.path));
             if (checkCancelled(runId, log)) return;
@@ -837,6 +942,9 @@ export async function runPipeline(runId, opts = {}) {
                         const reviewResult = await runReviewer(editsToReview, prompt, {
                             qualityReport: testerResult.report,
                             model: testerModel,
+                            fileManifest,
+                            truncationWarnings,
+                            conflictWarnings,
                             signal,
                         });
                         updateRun(runId, { inputTokens: (currentRunForTester?.inputTokens || 0) + (reviewResult.inputTokens || 0), outputTokens: (currentRunForTester?.outputTokens || 0) + (reviewResult.outputTokens || 0), cached_tokens: (currentRunForTester?.cached_tokens || 0) + (reviewResult.cachedTokens || 0) });

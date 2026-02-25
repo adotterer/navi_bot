@@ -404,7 +404,21 @@ router.get('/run/:runId', async (req, res) => {
         run = getRun(req.params.runId);
     }
     if (!run) return res.status(404).json({ error: 'Run not found' });
-    const { runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits, model, runMode, auditReport, auditReportImageKey, askResponse, askResponseImageKey, reviewReport, reviewReportError, diagramKeys } = run;
+    const {
+        runId, status, logs, flightPlan, steps, docs, stepResults, prUrl, error, createdAt, prompt, title, edits, model, runMode,
+        auditReport, auditReportImageKey, askResponse, askResponseImageKey, reviewReport, reviewReportError, diagramKeys,
+        fileManifest, truncationWarnings, conflictWarnings,
+    } = run;
+    const manifestList = Array.isArray(fileManifest) ? fileManifest : [];
+    const writtenSet = new Set((Array.isArray(edits) ? edits : []).map((e) => e.path).filter(Boolean));
+    const missingManifest = manifestList.filter((p) => p && !writtenSet.has(p));
+    const runSummary = {
+        manifestTotal: manifestList.length,
+        writtenCount: writtenSet.size,
+        missingFromManifest: missingManifest,
+        truncationCount: Array.isArray(truncationWarnings) ? truncationWarnings.length : 0,
+        conflictCount: Array.isArray(conflictWarnings) ? conflictWarnings.length : 0,
+    };
     res.json({
         runId,
         status,
@@ -428,6 +442,10 @@ router.get('/run/:runId', async (req, res) => {
         title: title || '',
         edits: edits || [],
         model: model || '',
+        fileManifest: manifestList,
+        truncationWarnings: truncationWarnings || [],
+        conflictWarnings: conflictWarnings || [],
+        runSummary,
     });
 });
 

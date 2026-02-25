@@ -368,42 +368,62 @@ export async function runResearcher(missionPrompt, opts = {}) {
     }
     const userContent = `Mission:\n${missionPrompt}${treeInfo}${docsBlock}\n\nProduce the flight plan as a single JSON array.`;
 
-    try {
-        const result = await withTimeout(
-            (async () => {
-                const response = await generateContentStream({
-                    model,
-                    systemPrompt,
-                    userContent,
-                    maxOutputTokens: 4096,
-                    responseMimeType: 'application/json',
-                    signal,
-                    onChunk,
-                });
-                let fullText = '';
-                let lastChunkUsage = null;
-                for await (const chunk of response) {
-                    if (signal?.aborted) break;
-                    const text = chunk.text ?? '';
-                    fullText += text;
-                    if (onChunk && text) onChunk(text);
-                    if (chunk.usageMetadata) lastChunkUsage = chunk.usageMetadata;
-                }
-                const flightPlan = parseFlightPlan(fullText);
-                if (!flightPlan.length) {
-                    const snippet = fullText.trim().slice(0, 400).replace(/\n/g, ' ');
-                    throw new Error('Could not parse flight plan from response. Reply was not valid JSON array (or tasks/flightPlan wrapper). First 400 chars: ' + (snippet || '(empty)'));
-                }
-                const usage = lastChunkUsage ?? response.usageMetadata;
-                return { ok: true, flightPlan, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0, cachedTokens: usage?.cachedTokens ?? 0 };
-            })(),
-            GEMINI_TIMEOUT_MS,
-            'Researcher timed out'
-        );
-        return result;
-    } catch (err) {
-        return { ok: false, error: err.message || String(err) };
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    let totalCachedTokens = 0;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const attemptUserContent = attempt === 0
+                ? userContent
+                : `${userContent}\n\nIMPORTANT: Your previous response was not valid JSON for this pipeline. Reply with only a valid JSON array of tasks (or an object with tasks/flightPlan array), no markdown, no commentary.`;
+            const result = await withTimeout(
+                (async () => {
+                    const response = await generateContentStream({
+                        model,
+                        systemPrompt,
+                        userContent: attemptUserContent,
+                        maxOutputTokens: 4096,
+                        responseMimeType: 'application/json',
+                        signal,
+                        onChunk,
+                    });
+                    let fullText = '';
+                    let lastChunkUsage = null;
+                    for await (const chunk of response) {
+                        if (signal?.aborted) break;
+                        const text = chunk.text ?? '';
+                        fullText += text;
+                        if (onChunk && text) onChunk(text);
+                        if (chunk.usageMetadata) lastChunkUsage = chunk.usageMetadata;
+                    }
+                    const usage = lastChunkUsage ?? response.usageMetadata;
+                    totalInputTokens += usage?.promptTokenCount ?? 0;
+                    totalOutputTokens += usage?.candidatesTokenCount ?? 0;
+                    totalCachedTokens += usage?.cachedTokens ?? 0;
+                    const flightPlan = parseFlightPlan(fullText);
+                    if (!flightPlan.length) {
+                        const snippet = fullText.trim().slice(0, 400).replace(/\n/g, ' ');
+                        throw new Error('Could not parse flight plan from response. Reply was not valid JSON array (or tasks/flightPlan wrapper). First 400 chars: ' + (snippet || '(empty)'));
+                    }
+                    return { ok: true, flightPlan };
+                })(),
+                GEMINI_TIMEOUT_MS,
+                'Researcher timed out'
+            );
+            return {
+                ok: true,
+                flightPlan: result.flightPlan,
+                inputTokens: totalInputTokens,
+                outputTokens: totalOutputTokens,
+                cachedTokens: totalCachedTokens,
+            };
+        } catch (err) {
+            if (attempt === 2) {
+                return { ok: false, error: err.message || String(err) };
+            }
+        }
     }
+    return { ok: false, error: 'Researcher failed after retries' };
 }
 
 /**
@@ -628,42 +648,62 @@ export async function runPlanner(task, opts = {}) {
     if (fileContext) userContent += `\n\nRelevant file contents (for context only):\n${fileContext}`;
     userContent += '\n\nProduce the implementation steps as a single JSON array.';
 
-    try {
-        const result = await withTimeout(
-            (async () => {
-                const response = await generateContentStream({
-                    model,
-                    systemPrompt,
-                    userContent,
-                    maxOutputTokens: 8192,
-                    responseMimeType: 'application/json',
-                    signal,
-                    onChunk,
-                });
-                let fullText = '';
-                let lastChunkUsage = null;
-                for await (const chunk of response) {
-                    if (signal?.aborted) break;
-                    const text = chunk.text ?? '';
-                    fullText += text;
-                    if (onChunk && text) onChunk(text);
-                    if (chunk.usageMetadata) lastChunkUsage = chunk.usageMetadata;
-                }
-                const steps = parsePlannerSteps(fullText);
-                if (!steps.length) {
-                    console.error('[Planner] Parse failed. Raw response (first 400):', fullText.slice(0, 400));
-                    throw new Error('Could not parse implementation steps');
-                }
-                const usage = lastChunkUsage ?? response.usageMetadata;
-                return { ok: true, steps, inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0, cachedTokens: usage?.cachedTokens ?? 0 };
-            })(),
-            GEMINI_TIMEOUT_MS,
-            'Planner timed out'
-        );
-        return result;
-    } catch (err) {
-        return { ok: false, error: err.message || String(err) };
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    let totalCachedTokens = 0;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const attemptUserContent = attempt === 0
+                ? userContent
+                : `${userContent}\n\nIMPORTANT: Your previous response was not valid planner JSON. Reply with only a valid JSON array of steps; no markdown, no commentary.`;
+            const result = await withTimeout(
+                (async () => {
+                    const response = await generateContentStream({
+                        model,
+                        systemPrompt,
+                        userContent: attemptUserContent,
+                        maxOutputTokens: 8192,
+                        responseMimeType: 'application/json',
+                        signal,
+                        onChunk,
+                    });
+                    let fullText = '';
+                    let lastChunkUsage = null;
+                    for await (const chunk of response) {
+                        if (signal?.aborted) break;
+                        const text = chunk.text ?? '';
+                        fullText += text;
+                        if (onChunk && text) onChunk(text);
+                        if (chunk.usageMetadata) lastChunkUsage = chunk.usageMetadata;
+                    }
+                    const usage = lastChunkUsage ?? response.usageMetadata;
+                    totalInputTokens += usage?.promptTokenCount ?? 0;
+                    totalOutputTokens += usage?.candidatesTokenCount ?? 0;
+                    totalCachedTokens += usage?.cachedTokens ?? 0;
+                    const steps = parsePlannerSteps(fullText);
+                    if (!steps.length) {
+                        console.error('[Planner] Parse failed. Raw response (first 400):', fullText.slice(0, 400));
+                        throw new Error('Could not parse implementation steps');
+                    }
+                    return { ok: true, steps };
+                })(),
+                GEMINI_TIMEOUT_MS,
+                'Planner timed out'
+            );
+            return {
+                ok: true,
+                steps: result.steps,
+                inputTokens: totalInputTokens,
+                outputTokens: totalOutputTokens,
+                cachedTokens: totalCachedTokens,
+            };
+        } catch (err) {
+            if (attempt === 2) {
+                return { ok: false, error: err.message || String(err) };
+            }
+        }
     }
+    return { ok: false, error: 'Planner failed after retries' };
 }
 
 /** Try JSON.parse; if it fails, try trailing-comma fix, truncation recovery, and last-complete-object recovery. */
@@ -1064,11 +1104,14 @@ export async function validateCoderStep(step, missionSummary, edits, opts = {}) 
  * @param {object} opts
  * @param {string} [opts.qualityReport] - Markdown report from Quality step; reviewer translates it into FIX: for the coder
  * @param {string[]} [opts.importWarnings]
+ * @param {string[]} [opts.fileManifest]
+ * @param {Array<{ stepIndex: number, path: string, reason: string }>} [opts.truncationWarnings]
+ * @param {Array<{ path: string, stepIndices: number[] }>} [opts.conflictWarnings]
  * @param {(chunk: string) => void} [opts.onChunk]
  * @returns {Promise<{ ok: true, feedback: string|null } | { ok: false, error: string }>}
  */
 export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
-    const { importWarnings = [], qualityReport, signal, model: modelOverride } = opts;
+    const { importWarnings = [], qualityReport, fileManifest = [], truncationWarnings = [], conflictWarnings = [], signal, model: modelOverride } = opts;
     const model = modelOverride && modelOverride.trim() ? modelOverride.trim() : MODEL;
     const editSummary = (aggregatedEdits || [])
         .map((e) => `--- ${e.path} ---\n${(e.content || '').slice(0, 8000)}${(e.content || '').length > 8000 ? '\n... (truncated)' : ''}`)
@@ -1077,7 +1120,21 @@ export async function runReviewer(aggregatedEdits, prompt, opts = {}) {
     const warningsSection = importWarnings.length > 0
         ? `\n\nSTATIC ANALYSIS WARNINGS (pre-detected issues you must address):\n${importWarnings.map((w) => '- ' + w).join('\n')}`
         : '';
-    let userContent = `Mission: ${(prompt || '').slice(0, 1000)}${warningsSection}\n\nProposed changes:\n${editSummary}`;
+    const writtenPaths = new Set((aggregatedEdits || []).map((e) => e.path).filter(Boolean));
+    const missingManifest = (fileManifest || []).filter((p) => p && !writtenPaths.has(p));
+    const manifestSection = (fileManifest && fileManifest.length)
+        ? `\n\nPLANNED FILE MANIFEST:\n${fileManifest.map((p) => '- ' + p + (writtenPaths.has(p) ? ' (written)' : ' (missing)')).join('\n')}`
+        : '';
+    const truncationSection = truncationWarnings.length
+        ? `\n\nTRUNCATION WARNINGS:\n${truncationWarnings.map((w) => `- step ${w.stepIndex}: ${w.path} (${w.reason})`).join('\n')}`
+        : '';
+    const conflictSection = conflictWarnings.length
+        ? `\n\nFILE CONFLICT WARNINGS:\n${conflictWarnings.map((w) => `- ${w.path} written by steps ${w.stepIndices.join(', ')}`).join('\n')}`
+        : '';
+    const missingManifestSection = missingManifest.length
+        ? `\n\nMISSING MANIFEST FILES:\n${missingManifest.map((p) => '- ' + p).join('\n')}`
+        : '';
+    let userContent = `Mission: ${(prompt || '').slice(0, 1000)}${warningsSection}${manifestSection}${missingManifestSection}${truncationSection}${conflictSection}\n\nProposed changes:\n${editSummary}`;
     if (qualityReport && qualityReport.trim()) {
         userContent += `\n\nQUALITY REPORT (from the PR review — translate into one FIX: instruction for the coder):\n${qualityReport.slice(0, 12000)}${qualityReport.length > 12000 ? '\n... (truncated)' : ''}`;
     }

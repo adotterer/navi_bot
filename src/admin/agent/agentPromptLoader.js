@@ -75,6 +75,8 @@ Output format: Your response is parsed by the pipeline; output only a valid JSON
 9. HOME PAGE VS DASHBOARD: When the mission refers to "home page", "root page", "page at /", or "landing page", the UI to change is the root route in src/app.js (the handler for app.get('/', ...)), not the admin dashboard. The admin dashboard is at /admin and is rendered in src/admin/routes.js. For "match admin styling" or "same look as admin", the step must edit the root route in app.js (and may reference layout.js or admin CSS patterns).
 10. CANONICAL THREAD NAMES: When the mission involves matchup channels, !export, or character thread names, use ONLY these exact channel names (do not invent or alter spellings; e.g. use peach︱daisy not peach|daisy): ${CANONICAL_CHARACTER_THREAD_NAMES.join(', ')}.
 11. NEW DISCORD COMMANDS: When the mission adds a new !command, include a step that edits main.js. The step must add the command check and handler invocation in the **second** messageCreate listener (where isModHelpCommand, isSlCommand, etc. are defined and routed). If the command is allowed in ask-navi, add a matching step or changeDescription to also add the command boolean to the **first** messageCreate listener (the allowlist). The 'files' array for the main.js step must include main.js; if a new handler file is created (e.g. src/messages/logHandler.js), include that path in the same or a prior step.
+12. BINDING FILE COVERAGE: Your steps must collectively include every file that must be created or modified for this task, including glue files (route registries, exports, constants, imports). If a file must change, it must appear in at least one step's "files" array.
+13. LARGE SINGLE-FILE REWRITES: When the mission requires many changes to one file (e.g. a full admin page with new data aggregation, summary cards, tables, and charts), split into multiple steps so each step touches one logical part (e.g. "Add daily aggregation and return sortedDailyArray", then "Add summary cards and daily table to the Cost page HTML"). One step that rewrites the entire file can hit output limits and truncate; multiple smaller steps avoid that.
 
 Output ONLY a valid JSON array of steps. Each step: "what" (one line), "files" (array of file paths, e.g. ["src/app.js"]), "changeDescription" (optional, ONE sentence max — do not write multi-line prose). Example:
 [{"what":"Add GET /health handler","files":["src/app.js"],"changeDescription":"Add app.get('/health', ...) returning { status: 'ok' }"}]`,
@@ -90,6 +92,12 @@ Work only from the context you are given: use "Current file contents" and "Files
 
 Output format: Your response is parsed by the pipeline. Output only a valid JSON array — no markdown code fences, no text before or after. Start with [ and end with ].
 
+COMPLETENESS (non-negotiable):
+- Never output ellipsis ("..."), placeholders like "rest of file unchanged", or any truncation markers in "replace" or "content".
+- Ensure every opened function/class/block is closed and syntactically complete.
+- Include all required imports for the resulting file content.
+- If a change cannot be represented safely as a tiny patch, emit a full-file edit for that path ("search": "", "replace": "<complete file content>").
+
 RULES:
 - "search" must be unique within the file and copy the existing text character-for-character from "Current file contents".
 - "replace" may be empty string "" to delete lines.
@@ -98,6 +106,7 @@ RULES:
 - Use escaped newlines (\\n) inside all string values — never literal line breaks.
 - KEEP SEARCH STRINGS SHORT: "search" must be 2–6 lines maximum — just enough to uniquely identify the insertion/replacement point. Never copy large blocks of existing code into "search". Find the smallest unique anchor near your change.
 - KEEP REPLACE STRINGS FOCUSED: only include lines that are changing plus minimal context. Do not re-emit large unchanged sections of the file.
+- In "replace", do not use "..." or "rest unchanged" placeholders. Output real code only.
 - CITE YOUR SOURCES: Any specific names, descriptions, labels, text content, or data values you write in "replace" must be copied verbatim from the mission prompt or the file contents shown above. Never invent descriptions, command names, or other content that does not appear in those sources. When the step involves matchup channel names or character threads, use the exact spellings from the mission or file contents (e.g. peach︱daisy not peach|daisy; banjo・and・kazooie with ・ not hyphens).
 
 IMPORT PATH RULES — incorrect imports will break the app:
@@ -127,6 +136,9 @@ Example (imports change + function change in one file, two separate patches):
 6. SCOPE VS MISSION — If the mission explicitly lists multiple pages or components (e.g. "Data, Aliases, Prompts, Emojis") and the diff only changes one of them, report FIX unless the change is in a shared file that affects all.
 7. WIRING — If a new flag or function is introduced (e.g. "abortRun"), verify it is actually called somewhere in the pipeline (e.g. the orchestrator or equivalent loop checks it). A flag that is set but never read is a FIX.
 8. HANDLER WIRING — If the mission or the diff introduces a new handler (e.g. for DMs), verify it is called from the appropriate place (e.g. main.js messageCreate). If the new handler is never invoked, report FIX.
+9. MANIFEST COVERAGE — If a planned file manifest is provided, every manifest path marked "missing" is an automatic FIX. Missing manifest files must block acceptance.
+10. TRUNCATION — If truncation warnings are provided (ellipsis markers, unbalanced braces/brackets, or suspiciously short output), report FIX and require complete file output.
+11. CONFLICTS — If conflict warnings show the same path written by multiple steps, report FIX and require a single reconciled final version.
 
 If ALL checks pass, reply with exactly: OK
 If any check fails, reply with FIX: followed by ONE short, actionable sentence describing the most critical issue (e.g. "Fix: import path in routes.js should be './agent/runStore.js' not '../agent/runStore.js'").
