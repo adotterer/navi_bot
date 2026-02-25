@@ -275,8 +275,11 @@ client.on("messageCreate", async (message) => {
     }
 
 
+    // Check channel name (and parent for threads, e.g. forum posts in ⭐・ask・navi™)
     const channelName = message.channel?.name?.toLowerCase() || '';
-    const normalizedChannelName = channelName.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+    const parentName = message.channel?.parent?.name?.toLowerCase() || '';
+    const nameToCheck = channelName + ' ' + parentName;
+    const normalizedChannelName = nameToCheck.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
     const isAskNaviChannel = normalizedChannelName.includes('ask') && normalizedChannelName.includes('navi');
     const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu") ||
@@ -285,8 +288,11 @@ client.on("messageCreate", async (message) => {
         message.content.toLowerCase().startsWith("!muq") ||
         message.content.toLowerCase().startsWith("!mq");
     const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
+    const isFdCommand = message.content.toLowerCase().startsWith("!fd ");
     const isGtCommand = message.content.toLowerCase().startsWith("!gt ");
     const isSlCommand = message.content.toLowerCase() === "!sl";
+    const isQuestionCommand = message.content.toLowerCase().startsWith("!q ");
+    const isSqCommand = message.content.toLowerCase().startsWith("!sq ");
 
     if (isAskNaviChannel) {
         const adminId = process.env.ADMIN_DISCORD_ID || '596207448935628812';
@@ -302,8 +308,8 @@ client.on("messageCreate", async (message) => {
             }
         }
 
-        // Allow MU commands, FDQ, GT, and SL only
-        if (!isMuCommand && !isFdqCommand && !isGtCommand && !isSlCommand) {
+        // Allow MU, FDQ, FD, GT, SL, general questions (!q), and stats questions (!sq)
+        if (!isMuCommand && !isFdqCommand && !isFdCommand && !isGtCommand && !isSlCommand && !isQuestionCommand && !isSqCommand) {
             const hasAuthorizedRole = message.member?.roles?.cache?.some(
             role => role.name === "Moderators" || role.name === "Legend"
             );
@@ -357,8 +363,11 @@ client.on("messageCreate", async (message) => {
         return;
     }
 
+    // Check channel name (and parent for threads, e.g. forum posts in ⭐・ask・navi™)
     const channelName = message.channel?.name?.toLowerCase() || '';
-    const normalizedChannelName = channelName.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+    const parentName = message.channel?.parent?.name?.toLowerCase() || '';
+    const nameToCheck = channelName + ' ' + parentName;
+    const normalizedChannelName = nameToCheck.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
     const isAskNaviChannel = normalizedChannelName.includes('ask') && normalizedChannelName.includes('navi');
     const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu") ||
