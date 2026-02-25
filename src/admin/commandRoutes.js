@@ -2,6 +2,11 @@ import express from 'express';
 import { requireAdmin } from './auth.js';
 import { adminHead, adminNav, adminContainer } from './layout.js';
 
+/**
+ * This table documents commands for /admin/commands.
+ * The ask-navi allowlist (which commands are not deleted there) lives in
+ * src/shared/askNaviAllowlist.js — keep that in sync when adding ask-navi commands.
+ */
 const router = express.Router();
 
 router.get('/', requireAdmin, (req, res) => {

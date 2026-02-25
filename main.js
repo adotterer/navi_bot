@@ -21,6 +21,7 @@ import { handleDocs, handleFaq, handleAliases, INFO_EMBED_COLOR } from './src/me
 import { handleAddAlias } from './src/messages/addAliasCommand.js';
 import { getCanonicalCharacterThreads } from './src/matchups/characterAliases.js';
 import { setClient } from './src/shared/discordClient.js';
+import { isAllowedInAskNavi } from './src/shared/askNaviAllowlist.js';
 import { handleCoinFlip } from './src/bans/coinflipHandler.js';
 import { handleResult, handleResultConfirm, handleResultDispute, handleResultReportComponent } from './src/bans/resultHandler.js';
 import { handleBan, handleBanComponent } from './src/bans/banHandler.js';
@@ -32,6 +33,13 @@ import { handleFindMatch, handleFindMatchFormat, handleFindMatchAccept, handleCa
 import { cleanupExpiredSessions } from './src/bans/banSessionStore.js';
 
 dotenv.config();
+
+// Startup check: ensure allowlist recognizes key commands (catches drift from /admin/commands)
+const ALLOWLIST_SAMPLES = ['!q foo', '!sq bar', '!fd mario fair', '!mu falco', '!fdq x', '!sl', '!docs'];
+const bad = ALLOWLIST_SAMPLES.filter((s) => !isAllowedInAskNavi(s));
+if (bad.length) {
+    console.error(`[startup] ask-navi allowlist missing: ${bad.join(', ')}`);
+}
 
 // App-owned log file for !logs: create and mirror stdout/stderr when LOG_PATH is unset
 if (!process.env.LOG_PATH) {
@@ -281,18 +289,6 @@ client.on("messageCreate", async (message) => {
     const nameToCheck = channelName + ' ' + parentName;
     const normalizedChannelName = nameToCheck.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
     const isAskNaviChannel = normalizedChannelName.includes('ask') && normalizedChannelName.includes('navi');
-    const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
-        message.content.toLowerCase().startsWith("!mu") ||
-        message.content.toLowerCase().startsWith("!mu-question") ||
-        message.content.toLowerCase().startsWith("!mu-q") ||
-        message.content.toLowerCase().startsWith("!muq") ||
-        message.content.toLowerCase().startsWith("!mq");
-    const isFdqCommand = message.content.toLowerCase().startsWith("!fdq ");
-    const isFdCommand = message.content.toLowerCase().startsWith("!fd ");
-    const isGtCommand = message.content.toLowerCase().startsWith("!gt ");
-    const isSlCommand = message.content.toLowerCase() === "!sl";
-    const isQuestionCommand = message.content.toLowerCase().startsWith("!q ");
-    const isSqCommand = message.content.toLowerCase().startsWith("!sq ");
 
     if (isAskNaviChannel) {
         const adminId = process.env.ADMIN_DISCORD_ID || '596207448935628812';
@@ -308,8 +304,8 @@ client.on("messageCreate", async (message) => {
             }
         }
 
-        // Allow MU, FDQ, FD, GT, SL, general questions (!q), and stats questions (!sq)
-        if (!isMuCommand && !isFdqCommand && !isFdCommand && !isGtCommand && !isSlCommand && !isQuestionCommand && !isSqCommand) {
+        // Allow only commands from the shared allowlist (sync with /admin/commands)
+        if (!isAllowedInAskNavi(message.content)) {
             const hasAuthorizedRole = message.member?.roles?.cache?.some(
             role => role.name === "Moderators" || role.name === "Legend"
             );
