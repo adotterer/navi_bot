@@ -51,9 +51,20 @@ function buildFindMatchComponents(pendingId, formatSet) {
     new ButtonBuilder()
       .setCustomId(`findmatch_accept:${pendingId}`)
       .setLabel('Accept Match')
-      .setStyle(ButtonStyle.Success)
+      .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId(`findmatch_cancel:${pendingId}`)
+      .setLabel('Cancel')
+      .setStyle(ButtonStyle.Secondary)
   );
   return [row1, row2];
+}
+
+function buildCancelledEmbed() {
+  return new EmbedBuilder()
+    .setColor(0x9e9e9e)
+    .setTitle('Find-match cancelled')
+    .setDescription('This matchmaking request was cancelled (e.g. challenger found a match elsewhere).');
 }
 
 /**
@@ -171,11 +182,12 @@ export async function handleFindMatch(interaction, options = {}) {
     const embed = buildFindMatchEmbed(pending, challengerName, null, null);
     const components = buildFindMatchComponents(pendingId, null);
 
-    await interaction.editReply({
+    const message = await interaction.editReply({
       content: content ?? undefined,
       embeds: [embed],
       components,
     });
+    pending.messageId = message.id;
   } catch (err) {
     console.error('[findMatchHandler] handleFindMatch error:', err);
     try {
@@ -268,5 +280,71 @@ export async function handleFindMatchAccept(interaction) {
   const embed = buildFindMatchEmbed(pending, challengerName, opponentName, null);
   const components = buildFindMatchComponents(pendingId, null);
   await interaction.update({ embeds: [embed], components });
+  return true;
+}
+
+/**
+ * Edit the find-match message to "Cancelled" and remove from pending map. Used by both slash and button.
+ */
+async function doCancelPendingFindMatch(pending, client) {
+  pendingFindMatches.delete(pending.id);
+  if (!pending.messageId || !pending.channelId) return;
+  try {
+    const channel = await client.channels.fetch(pending.channelId).catch(() => null);
+    if (!channel) return;
+    const message = await channel.messages.fetch(pending.messageId).catch(() => null);
+    if (!message) return;
+    await message.edit({
+      content: null,
+      embeds: [buildCancelledEmbed()],
+      components: [],
+    });
+  } catch (err) {
+    console.warn('[findMatchHandler] doCancelPendingFindMatch:', err?.message);
+  }
+}
+
+/**
+ * Handle /cancel-findmatch slash: cancel the user's pending find-match in this server (e.g. found a match elsewhere).
+ */
+export async function handleCancelFindMatch(interaction) {
+  const userId = interaction.user.id;
+  const guildId = interaction.guildId;
+  const pending = [...pendingFindMatches.values()].find(
+    p => p.challengerId === userId && p.guildId === guildId
+  );
+  if (!pending) {
+    await interaction.reply({
+      content: "You don't have a pending find-match in this server. Use /findmatch or a tier command (e.g. /acolyte) to start one.",
+      ephemeral: true,
+    });
+    return;
+  }
+  await doCancelPendingFindMatch(pending, interaction.client);
+  await interaction.reply({
+    content: 'Your find-match request has been cancelled.',
+    ephemeral: true,
+  });
+}
+
+/**
+ * Handle Cancel button on find-match message: only the challenger can cancel.
+ */
+export async function handleFindMatchCancel(interaction) {
+  const pendingId = interaction.customId.replace('findmatch_cancel:', '');
+  const pending = pendingFindMatches.get(pendingId);
+  if (!pending) {
+    await interaction.reply({ content: '❌ This match request already expired or was cancelled.', ephemeral: true }).catch(() => {});
+    return true;
+  }
+  if (interaction.user.id !== pending.challengerId) {
+    await interaction.reply({ content: '❌ Only the challenger can cancel this find-match request.', ephemeral: true }).catch(() => {});
+    return true;
+  }
+  pendingFindMatches.delete(pendingId);
+  await interaction.update({
+    embeds: [buildCancelledEmbed()],
+    components: [],
+  });
   return true;
 }

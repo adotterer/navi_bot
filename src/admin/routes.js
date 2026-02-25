@@ -337,7 +337,6 @@ function loginPage(opts = {}) {
     <div class="w-full max-w-sm">
       <div class="text-center mb-8">
         <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Navi Admin</h1>
-        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Sign in with your username (super admin) or email (invited admin)</p>
       </div>
       ${success}
       ${error}

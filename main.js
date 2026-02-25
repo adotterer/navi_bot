@@ -28,7 +28,7 @@ import { handleCancelMatch } from './src/bans/cancelMatchHandler.js';
 import { handleAnotherMatch, handleEndSession } from './src/bans/resultHandler.js';
 import { handleEnd } from './src/bans/endHandler.js';
 import { handleCoinFlipFormat } from './src/bans/coinflipHandler.js';
-import { handleFindMatch, handleFindMatchFormat, handleFindMatchAccept } from './src/bans/findMatchHandler.js';
+import { handleFindMatch, handleFindMatchFormat, handleFindMatchAccept, handleCancelFindMatch, handleFindMatchCancel } from './src/bans/findMatchHandler.js';
 import { cleanupExpiredSessions } from './src/bans/banSessionStore.js';
 
 dotenv.config();
@@ -149,9 +149,12 @@ client.on("clientReady", async () => {
                 new SlashCommandBuilder()
                     .setName('3fr')
                     .setDescription('Ping @3-Frame Mod and start find-match: you pick BO3/BO5; anyone can Accept Match'),
+                new SlashCommandBuilder()
+                    .setName('cancel-findmatch')
+                    .setDescription('Cancel your pending find-match request (e.g. if you found a match in another tier or server)'),
             ].map(c => c.toJSON());
             await rest.put(Routes.applicationGuildCommands(client.user.id, guildId), { body: commands });
-            console.log('✅ Slash commands registered (/coinflip, /ban, /result, /cancel-match, /end, /bo3, /bo5, /ft5, /findmatch, /acolyte, /evoker, /conjurer, /sorcerer, /arch-mage, /3fr)');
+            console.log('✅ Slash commands registered (/coinflip, /ban, /result, /cancel-match, /end, /bo3, /bo5, /ft5, /findmatch, /acolyte, /evoker, /conjurer, /sorcerer, /arch-mage, /3fr, /cancel-findmatch)');
         } catch (err) {
             console.error('❌ Failed to register slash commands:', err);
         }
@@ -205,6 +208,8 @@ client.on('interactionCreate', async (interaction) => {
                 await handleFindMatch(interaction, { roleName: 'arch-mage' });
             } else if (interaction.commandName === '3fr') {
                 await handleFindMatch(interaction, { roleName: '3-Frame Mod' });
+            } else if (interaction.commandName === 'cancel-findmatch') {
+                await handleCancelFindMatch(interaction);
             }
             return;
         }
@@ -240,6 +245,10 @@ client.on('interactionCreate', async (interaction) => {
             }
             if (customId.startsWith('findmatch_accept:')) {
                 const handled = await handleFindMatchAccept(interaction);
+                if (handled) return;
+            }
+            if (customId.startsWith('findmatch_cancel:')) {
+                const handled = await handleFindMatchCancel(interaction);
                 if (handled) return;
             }
         }
