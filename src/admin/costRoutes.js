@@ -9,6 +9,9 @@ import { listS3KeysWithPrefix } from '../shared/s3Helper.js';
 
 const router = express.Router();
 
+/** Closing script tag for safe use inside template literals (see .cursor/rules/html-script-tag-gotcha.mdc). */
+const S = '</script>';
+
 // Pricing per 1M tokens (list price; actual billing may differ). Source: https://docs.anthropic.com/en/docs/about-claude/pricing
 const GEMINI_FLASH_INPUT_PER_1M = 0.075;
 const GEMINI_FLASH_OUTPUT_PER_1M = 0.3;
@@ -121,11 +124,12 @@ async function getAggregatedUsage() {
         byModel[modelId].cost += cost;
 
         const dateStr = r.createdAt ? new Date(r.createdAt).toISOString().split('T')[0] : 'unknown';
-        if (!byDate[dateStr]) byDate[dateStr] = { inputTokens: 0, outputTokens: 0, runs: 0, cost: 0 };
+        if (!byDate[dateStr]) byDate[dateStr] = { inputTokens: 0, outputTokens: 0, runs: 0, cost: 0, byProvider: { gemini: 0, anthropic: 0 } };
         byDate[dateStr].inputTokens += r.inputTokens || 0;
         byDate[dateStr].outputTokens += r.outputTokens || 0;
         byDate[dateStr].runs += 1;
         byDate[dateStr].cost += cost;
+        byDate[dateStr].byProvider[provider] += cost;
 
         const mission = r.title || 'No Title';
         if (!byMission[mission]) byMission[mission] = { inputTokens: 0, outputTokens: 0, runs: 0, cost: 0 };
@@ -163,10 +167,13 @@ async function getAggregatedUsage() {
         d.setDate(d.getDate() + i);
         const dateStr = d.toISOString().split('T')[0];
         const entry = byDate[dateStr];
+        const bp = entry?.byProvider || { gemini: 0, anthropic: 0 };
         sortedDailyArray.push({
             date: dateStr,
             totalCost: entry ? entry.cost : 0,
             runs: entry ? entry.runs : 0,
+            geminiCost: bp.gemini || 0,
+            anthropicCost: bp.anthropic || 0,
         });
     }
 
@@ -246,14 +253,9 @@ router.get('/', async (req, res) => {
 
     const fmt = (n) => (n || 0).toLocaleString();
     const costFmt = (c) => '$' + (Number(c) || 0).toFixed(4);
-    const dailyMap = {};
-    runs.forEach((r) => {
-        const d = new Date(r.createdAt || Date.now()).toISOString().split('T')[0];
-        dailyMap[d] = (dailyMap[d] || 0) + (r.cost || 0);
-    });
-    const sortedDates = Object.keys(dailyMap).sort().slice(-14);
-    const chartLabels = JSON.stringify(sortedDates);
-    const chartValues = JSON.stringify(sortedDates.map((d) => dailyMap[d]));
+    const sortedDaily = usage.sortedDailyArray || [];
+    const chartLabels = JSON.stringify(sortedDaily.map((d) => d.date));
+    const chartValues = JSON.stringify(sortedDaily.map((d) => d.totalCost));
     const nonce = res.locals.nonce || '';
     const scriptNonce = nonce ? ` nonce="${escapeHtml(nonce)}"` : '';
 
@@ -285,9 +287,13 @@ router.get('/', async (req, res) => {
             }
         }
         const stripe = i % 2 === 1 ? 'bg-slate-50 dark:bg-slate-800/50' : '';
+        const geminiCost = entry.geminiCost != null ? entry.geminiCost : 0;
+        const anthropicCost = entry.anthropicCost != null ? entry.anthropicCost : 0;
         return '<tr class="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 ' + stripe + '">' +
             '<td class="py-2 px-4 font-mono text-slate-700 dark:text-slate-300">' + escapeHtml(entry.date) + '</td>' +
             '<td class="py-2 px-4 text-slate-700 dark:text-slate-300">' + costFmt(entry.totalCost) + '</td>' +
+            '<td class="py-2 px-4 text-slate-600 dark:text-slate-400">' + costFmt(geminiCost) + '</td>' +
+            '<td class="py-2 px-4 text-slate-600 dark:text-slate-400">' + costFmt(anthropicCost) + '</td>' +
             '<td class="py-2 px-4">' + changeCel + '</td>' +
             '</tr>';
     }).join('');
@@ -377,6 +383,8 @@ router.get('/', async (req, res) => {
         <tr class="border-b border-slate-200 dark:border-slate-700 text-left text-slate-500 dark:text-slate-400">
           <th class="py-2 px-4 font-medium">Date</th>
           <th class="py-2 px-4 font-medium">Total Cost</th>
+          <th class="py-2 px-4 font-medium">Gemini</th>
+          <th class="py-2 px-4 font-medium">Anthropic</th>
           <th class="py-2 px-4 font-medium">Change</th>
         </tr>
       </thead>
@@ -436,7 +444,7 @@ router.get('/', async (req, res) => {
         }
       });
     }
-  </script>
+  ${S}
 </body>
 </html>`);
 });
