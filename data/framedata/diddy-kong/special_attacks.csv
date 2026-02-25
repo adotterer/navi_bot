@@ -7,6 +7,6 @@ Side B (Monkey Flip),18,47/61,26,"First total frames is in the air, second is al
 "Monkey Flip, Grab Success",11/29/59...,--,,,,,,,,,,https://ultimateframedata.com/hitboxes/diddy_kong/DiddyKongMonkeyFlipStick.gif
 "Monkey Flip, Grab Attack",18/21,36,,,,,,,,,,https://ultimateframedata.com/hitboxes/diddy_kong/DiddyKongMonkeyFlipStickAttack.gif
 "Monkey Flip, Grab Jump",18/27,42,,,,,,,,,,
-Up B (Rocketbarrel Boost),8—68,--,30,Touching a solid surface during boost activates explosion,10.0/8.0/6.0,8/7/6,10/8/6,Early/Late/Later,,8—9(10—16/17—35),,https://ultimateframedata.com/hitboxes/diddy_kong/DiddyKongRocketBarrels.gif
+Up B (Rocketbarrel Boost),8—68,--,30,Touching a solid surface during boost activates explosion,10.0/8.0/6.0,8/7/6,10/8/6,Early/Late/Later,,8—9(10—16/17—35),,https://ultimateframedata.com/hitboxes/diddy_kong/DiddyKongRocketBarrels.gif|https://ultimateframedata.com/hitboxes/diddy_kong/DiddyKongRocketBarrels.png
 "Rocketbarrel Boost, Explosion",1,57-59,,"Total frames assumes exploding on level ground, Diddy does not suffer hitlag from explosion",18.0,11,6,,-39 to -41,1—2,55,https://ultimateframedata.com/hitboxes/diddy_kong/DiddyKongRocketBarrelsExplosion.png
-Down B (Banana Peel),--,39,,Item generated on frame 20,,6,6,,,20 (banana appears),,https://ultimateframedata.com/hitboxes/diddy_kong/DiddyKongBanana.png
+Down B (Banana Peel),--,39,,Item generated on frame 20,,6,6,,,20 (banana appears),,https://ultimateframedata.com/hitboxes/diddy_kong/DiddyKongBanana.png|https://ultimateframedata.com/hitboxes/diddy_kong/DiddyKongBanana.gif

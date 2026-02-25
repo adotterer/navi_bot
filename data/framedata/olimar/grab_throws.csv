@@ -1,12 +1,12 @@
 Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
-Red/Blue/Yellow Grabs,12,41/47/56,,Total frames depends on having one/two/three pikmin,,,,,,12—23,18,https://ultimateframedata.com//hitboxes/olimar/OlimarGrabRBY1.gif
-White Grabs,12,41/47/56,,Total frames depends on having one/two/three pikmin,,,,,,12—23,,https://ultimateframedata.com//hitboxes/olimar/OlimarGrabWhite1.gif
-Purple Grabs,12,41/47/56,,Total frames depends on having one/two/three pikmin.,,,,,,12—23,,https://ultimateframedata.com//hitboxes/olimar/OlimarGrabPurple1.gif
-Grab Range Comparison,12,41/47/56,,"Grabs have increased range when standing right at the ledge. The increase in range, which is proportional to the number of Pikmin, makes P3 outrage RBY1. Total frames depends on having one/two/three pikmin.",,,,,,12—23,,https://ultimateframedata.com//hitboxes/olimar/OlimarGrab.png
+Red/Blue/Yellow Grabs,12,41/47/56,,Total frames depends on having one/two/three pikmin,,,,,,12—23,18,https://ultimateframedata.com/hitboxes/olimar/OlimarGrabRBY1.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarGrabRBY2.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarGrabRBY3.gif
+White Grabs,12,41/47/56,,Total frames depends on having one/two/three pikmin,,,,,,12—23,,https://ultimateframedata.com/hitboxes/olimar/OlimarGrabWhite1.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarGrabWhite2.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarGrabWhite3.gif
+Purple Grabs,12,41/47/56,,Total frames depends on having one/two/three pikmin.,,,,,,12—23,,https://ultimateframedata.com/hitboxes/olimar/OlimarGrabPurple1.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarGrabPurple2.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarGrabPurple3.gif
+Grab Range Comparison,12,41/47/56,,"Grabs have increased range when standing right at the ledge. The increase in range, which is proportional to the number of Pikmin, makes P3 outrage RBY1. Total frames depends on having one/two/three pikmin.",,,,,,12—23,,https://ultimateframedata.com/hitboxes/olimar/OlimarGrab.png
 Dash Grab,12,49/57/68,,Total frames depends on having one/two/three pikmin,,,,,,12—23,,
 Pivot Grab,12,44/51/60,,Total frames depends on having one/two/three pikmin,,,,,,12—23,,
-Pummel,1,16,,Total frames includes 10 frames of hitlag,1.0,,,,,,,https://ultimateframedata.com//hitboxes/olimar/OlimarPummel.gif
-Forward Throw,19,35,,,5.6/7.0/11.9/7.0/7.0,,,,,,,https://ultimateframedata.com//hitboxes/olimar/OlimarFThrow.gif
-Backward Throw,22,39,,,7.2/9.0/15.3/9.0/9.0,,,,,,,https://ultimateframedata.com//hitboxes/olimar/OlimarBThrow.gif
-Up Throw,22/23,49,,,6.4/8.0/13.5/8.0/8.0,,,,,,,https://ultimateframedata.com//hitboxes/olimar/OlimarUThrow.gif
-Down Throw,23/32,41,,,6.6/8.0/12.9/7.8/8.6,,,,,,,https://ultimateframedata.com//hitboxes/olimar/OlimarDThrow.gif
+Pummel,1,16,,Total frames includes 10 frames of hitlag,1.0,,,,,,,https://ultimateframedata.com/hitboxes/olimar/OlimarPummel.gif
+Forward Throw,19,35,,,5.6/7.0/11.9/7.0/7.0,,,,,,,https://ultimateframedata.com/hitboxes/olimar/OlimarFThrow.gif
+Backward Throw,22,39,,,7.2/9.0/15.3/9.0/9.0,,,,,,,https://ultimateframedata.com/hitboxes/olimar/OlimarBThrow.gif
+Up Throw,22/23,49,,,6.4/8.0/13.5/8.0/8.0,,,,,,,https://ultimateframedata.com/hitboxes/olimar/OlimarUThrow.gif
+Down Throw,23/32,41,,,6.6/8.0/12.9/7.8/8.6,,,,,,,https://ultimateframedata.com/hitboxes/olimar/OlimarDThrow.gif

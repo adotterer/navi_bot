@@ -1,6 +1,6 @@
 Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
-Neutral Air,8,50,13,autocancels on frame 1-7 and 38 onward. Landing hitbox on frame 1.,2.0/3.0/2.0,7,3,Multi/Final/Landing,-10,8—13(rehit: 3)(14—19),31,https://ultimateframedata.com/hitboxes/Mythra/MythraNAir.gif
+Neutral Air,8,50,13,autocancels on frame 1-7 and 38 onward. Landing hitbox on frame 1.,2.0/3.0/2.0,7,3,Multi/Final/Landing,-10,8—13(rehit: 3)(14—19),31,https://ultimateframedata.com/hitboxes/Mythra/MythraNAir.gif|https://ultimateframedata.com/hitboxes/Mythra/MythraNAirLanding.gif
 Forward Air,8,37,10,autocancels on frame 1-3 and 36 onward,7.0,7,3,,-7,8—11,26,https://ultimateframedata.com/hitboxes/Mythra/MythraFAir.gif
 Back Air,10,33,10,autocancels on frame 1-3 and 26 onward,7.5/6.5,7,3,Early/Late,-7,10—11(12),21,https://ultimateframedata.com/hitboxes/Mythra/MythraBAir.gif
 Up Air,9,30,8,autocancels on frame 16 onward,6.0,6,3,,-5,9—13,17,https://ultimateframedata.com/hitboxes/Mythra/MythraUAir.gif
-Down Air,13,40,11,autocancels on frame 1-4 and 29 onward,8.0/6.0,7,4,Early/Late,-7,13—15(16),24,https://ultimateframedata.com/hitboxes/Mythra/MythraDAir.gif
+Down Air,13,40,11,autocancels on frame 1-4 and 29 onward,8.0/6.0,7,4,Early/Late,-7,13—15(16),24,https://ultimateframedata.com/hitboxes/Mythra/MythraDAir.gif|https://ultimateframedata.com/hitboxes/Mythra/MythraDAirInterpolated.gif

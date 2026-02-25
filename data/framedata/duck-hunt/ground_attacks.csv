@@ -4,7 +4,7 @@ Jab 2,5,27,,Transitions to jab 3 as early as frame 8 and rapid jab as early as f
 Jab 3,6,33,,,5.0,12,6,,-21,6—7,26,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntJab3.gif
 Rapid Jab,5/7/9/...,,,,0.4,4,3,,,,,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntJabRapid.gif
 Rapid Jab Finisher,5,45,,,3.0,10,4,,-36,5,40,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntJabRapidEnd.gif
-Forward Tilt,8,31,,,8.0,7,8,,-15,8—11,20,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntFTilt.gif
+Forward Tilt,8,31,,,8.0,7,8,,-15,8—11,20,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntFTilt.gif|https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntFTiltUp.gif|https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntFTiltDown.gif
 Up Tilt,7,27,,,7.0,7,7,,-13,7—11,16,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntUTilt.gif
 Down Tilt,6,27,,,8.0,7,8,,-13,6—7,20,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntDTilt.gif
 Dash Attack,10,43,,,10.0/7.0,8/7,10/7,Early/Late,-23,10—13(14—19),24,https://ultimateframedata.com/hitboxes/duck_hunt/DuckHuntDashAttack.gif

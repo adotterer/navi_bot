@@ -5,7 +5,7 @@ Neutral B (Frizz/Frizzle/Kafrizz),[10(+7)]  [11(+25)]  [16(2/8/14/20)],43/51/67,
 "Side B, (Zap/Zapple/Kazap)",[9/13(+7)]  [10/15(+16)]  [43/50/72/75/81],30/50/126,**,"Zap: 7 frames to enter charge state. Bolt does not occur on block. Cost: 8MP
 		Zapple: Takes 16 frames to reach this level of charge. Second hit does not occur on block. Cost: 18 MP
 		Kazap: Final hit does not occur on a blocking opponent. Cost: 42MP. Bolt generated on frame 37 (+7 charge). 15% heavy armor on frames 43—78. Psych Up only affects first hit (another 0.8%). Oomph affects all but the last hit (another 14%).",4.0,11/17 / 9 / 14/9/12,6/4 / 6 / 4/**/4,"close/far/bolt / first/second bolt / ""first/second/
-third/bolt""",-12/-25/-29,[9—13/1—8]  [10—15/1—8]  [43—49/50/72/75/81—83/1—8],,https://ultimateframedata.com/hitboxes/hero/HeroZapNoMana.gif
+third/bolt""",-12/-25/-29,[9—13/1—8]  [10—15/1—8]  [43—49/50/72/75/81—83/1—8],,https://ultimateframedata.com/hitboxes/hero/HeroZapNoMana.gif|https://ultimateframedata.com/hitboxes/hero/HeroZap.gif|https://ultimateframedata.com/hitboxes/hero/HeroZapple.gif|https://ultimateframedata.com/hitboxes/hero/HeroKazap.gif
 Up B (Woosh/Swoosh/Kaswoosh),[4(+3)]  [6/13/20/27(+13)]  [39/49/59/69/79/89],,12/23/29,"Woosh: Takes 3 frames to enter charge state. Cost: 5MP
 		Swoosh: Takes 13 frames to reach this level of charge. Cost: 9MP
 		Kaswoosh: Cost: 18 MP. Failing to cast any level of charge results in 12 landing lag.",7.0 / 3.0/4.0 / 3.0/4.0,7 / 5/5 / 5/5,3 / 2/2 / 2/2,Multi/Final,**,,,

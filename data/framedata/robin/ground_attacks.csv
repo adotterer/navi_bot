@@ -8,6 +8,6 @@ Forward Tilt,9,32,,,7.5,7,8,,-15,9—10,22,https://ultimateframedata.com/hitboxe
 Up Tilt,6,32,,,6.0,6,6,,-20,6—14,18,https://ultimateframedata.com/hitboxes/Robin/RobinUTilt.gif
 Down Tilt,7,21,,,6.0,6,6,,-8,7—8,13,https://ultimateframedata.com/hitboxes/Robin/RobinDTilt.gif
 Dash Attack,8,41,,,10.0/6.0,9/7,10/6,Early/Late,-23,8—10(11—18),23,https://ultimateframedata.com/hitboxes/Robin/RobinDashAttack.gif
-Forward Smash,16,57,,Charge hold is frame 6,16.0/10.0/9.6,15/12/8,11/7/7,Early/Late/Bronze,-30/-34,16—18(19—27),30,https://ultimateframedata.com/hitboxes/Robin/RobinFSmashLevin.gif
-Up Smash,12,52,,Charge hold is frame 5,10.0/15.0/9.0,12/15/7,7/10/7,Close/Far/Bronze,-33/-30/-33,"12,13—16(17—32)",20,https://ultimateframedata.com/hitboxes/Robin/RobinUSmashLevin.gif
-Down Smash,16,56,,Sparks generate on frame 20 for levin version. Charge hold is frame 3,15.0/12.0/8.0,15/13/7,-/8/6,Sword/spark/bronze,-28/-34,16—17(19—22/23—28),28,https://ultimateframedata.com/hitboxes/Robin/RobinDSmashLevin.gif
+Forward Smash,16,57,,Charge hold is frame 6,16.0/10.0/9.6,15/12/8,11/7/7,Early/Late/Bronze,-30/-34,16—18(19—27),30,https://ultimateframedata.com/hitboxes/Robin/RobinFSmashLevin.gif|https://ultimateframedata.com/hitboxes/Robin/RobinFSmashBronze.gif
+Up Smash,12,52,,Charge hold is frame 5,10.0/15.0/9.0,12/15/7,7/10/7,Close/Far/Bronze,-33/-30/-33,"12,13—16(17—32)",20,https://ultimateframedata.com/hitboxes/Robin/RobinUSmashLevin.gif|https://ultimateframedata.com/hitboxes/Robin/RobinUSmashBronze.gif
+Down Smash,16,56,,Sparks generate on frame 20 for levin version. Charge hold is frame 3,15.0/12.0/8.0,15/13/7,-/8/6,Sword/spark/bronze,-28/-34,16—17(19—22/23—28),28,https://ultimateframedata.com/hitboxes/Robin/RobinDSmashLevin.gif|https://ultimateframedata.com/hitboxes/Robin/RobinDSmashBronze.gif

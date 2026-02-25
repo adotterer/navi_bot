@@ -2,7 +2,7 @@ Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield S
 Jab 1,4,19,,Transitions to jab 2 as early as frame 7,2.0,7,3,,-12,4,15,https://ultimateframedata.com/hitboxes/pac_man/PacManJab1.gif
 Jab 2,4,21,,Transitions to jab 3 as early as frame 7,2.0,5,3,,-14,4,17,https://ultimateframedata.com/hitboxes/pac_man/PacManJab2.gif
 Jab 3,4,33,,,4.0,11,5,,-24,4—5,28,https://ultimateframedata.com/hitboxes/pac_man/PacManJab3.gif
-Forward Tilt,5,30,,,8.0,7,8,,-17,5—7,23,https://ultimateframedata.com/hitboxes/pac_man/PacManFTilt.gif
+Forward Tilt,5,30,,,8.0,7,8,,-17,5—7,23,https://ultimateframedata.com/hitboxes/pac_man/PacManFTilt.gif|https://ultimateframedata.com/hitboxes/pac_man/PacManFTiltUp.gif|https://ultimateframedata.com/hitboxes/pac_man/PacManFTiltDown.gif
 Up Tilt,7,24,,Arm intangibile on frame 7-10,6.5,6,7,,-10,7—10,14,https://ultimateframedata.com/hitboxes/pac_man/PacManUTilt.gif
 Down Tilt,7,26,,,6.0,6,6,,-13,7—9,17,https://ultimateframedata.com/hitboxes/pac_man/PacManDTilt.gif
 Dash Attack,10/19/28/37,45,,,2.0 / 4.0,4/11,3/5,Multi/Final,-3,10—11/19—20/28—29/37,8,https://ultimateframedata.com/hitboxes/pac_man/PacManDashAttack.gif

@@ -1,6 +1,6 @@
 Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
 Jab,2,17,,Transitions to next Jab as early as frame 7,1.4/1.2,4/4,3/2,,-12/-13,2—3,14,https://ultimateframedata.com/hitboxes/pikachu/PikachuJab.gif
-Forward Tilt,6,29,,,9.0/8.0/10.0,11/11/12,9/8/10,Neutral/Down/Up,-14/-15/-13,6—8,21,https://ultimateframedata.com/hitboxes/pikachu/PikachuFTilt.gif
+Forward Tilt,6,29,,,9.0/8.0/10.0,11/11/12,9/8/10,Neutral/Down/Up,-14/-15/-13,6—8,21,https://ultimateframedata.com/hitboxes/pikachu/PikachuFTilt.gif|https://ultimateframedata.com/hitboxes/pikachu/PikachuFTiltUp.gif|https://ultimateframedata.com/hitboxes/pikachu/PikachuFTiltDown.gif
 Up Tilt,7,26,,,5.0,6,6,,-13,7—13,13,https://ultimateframedata.com/hitboxes/pikachu/PikachuUTilt.gif
 Down Tilt,7,18,,,6.0,6,7,,-4,7—8,10,https://ultimateframedata.com/hitboxes/pikachu/PikachuDTilt.gif
 Dash Attack,6,35,,,11.0/6.0,13/9,18/10,Early/Late,-11,6—8(9—12),23,https://ultimateframedata.com/hitboxes/pikachu/PikachuDashAttack.gif

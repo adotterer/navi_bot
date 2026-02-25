@@ -9,6 +9,6 @@ Up Tilt,10,37,,,10.0/2.0,8,10,Ball/Chain,-17,10—22,15,https://ultimateframedat
 Down Tilt 1,7,44,,Can cancel hitlag from first hit with second.,5.0,6,6,,-31,7—23,21,https://ultimateframedata.com/hitboxes/richter/RichterDTilt1.gif
 Down Tilt 2,8,57/43,,Total frames is 57 on level ground. 43 if you go over an edge.,7.0/3.5,8/5,7/4,Early/Late,-42/-28,8—19/20—28,29,https://ultimateframedata.com/hitboxes/richter/RichterDTilt2.gif
 Dash Attack,10/13/16/19/22/24,54,,,2.0/3.5,4/5,-/4,,-26,10/13/16/19/22/24,30,https://ultimateframedata.com/hitboxes/richter/RichterDashAttack.gif
-Forward Smash,24,62,,Charge hold is frame 5,14.0/16.0/18.0,11/13,10/12,Chain/Ball,-28/-26,24—25,37,https://ultimateframedata.com/hitboxes/richter/RichterFSmash.gif
+Forward Smash,24,62,,Charge hold is frame 5,14.0/16.0/18.0,11/13,10/12,Chain/Ball,-28/-26,24—25,37,https://ultimateframedata.com/hitboxes/richter/RichterFSmash.gif|https://ultimateframedata.com/hitboxes/richter/RichterFSmashUp.gif|https://ultimateframedata.com/hitboxes/richter/RichterFSmashDown.gif
 Up Smash,16,53,,Charge hold is frame 2,16.0/14.0,10/10,10/11,Ball/Chain,-27/-26,16—18,35,https://ultimateframedata.com/hitboxes/richter/RichterUSmash.gif
 Down Smash,14/20,55,,Charge hold is frame 2,12.0/14.0/16.0,9/10,8/11,Chain/Ball,-33/-30/-27/-24,14—15/20—21,34,https://ultimateframedata.com/hitboxes/richter/RichterDSmash.gif

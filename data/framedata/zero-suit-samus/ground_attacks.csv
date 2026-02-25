@@ -2,10 +2,10 @@ Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield S
 Jab 1,1,23,,Transitions to Jab 2 as early as frame 6,1.5,8,3,,-19,1,22,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusJab1.gif
 Jab 2,2,25,,Transitions to Jab 3 as early as frame 6,1.5,8,3,,-20,2,23,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusJab2.gif
 Jab 3,3,34,,,3.0,9,4,,-27,3—4,30,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusJab3.gif
-Forward Tilt,6,28,,,7.0/8.0,7/7,7/8,no angle/angled,-15/-14,6—8,20,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFTilt.gif
+Forward Tilt,6,28,,,7.0/8.0,7/7,7/8,no angle/angled,-15/-14,6—8,20,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFTilt.gif|https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFTiltUp.gif|https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFTiltDown.gif
 Up Tilt,3/9,45,,,5.0/7.0,7/8,6/7,,-36/-29,3—4/9—10,35,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusUTilt.gif
 Down Tilt,8,29,,,8.0/6.0,7,8,,-13,8—9,20,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusDTilt.gif
 Dash Attack,7,51,,,8.0/5.0,7/6,8/6,Early/Late,-36,7—9(10—19),32,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusDashAttack.gif
-Forward Smash,13/26,64,,Charge hold is frame 9,5.0/11.0/11.0,6/8/14,4/8/8,first/second/second far,-30,13—14/26—28,36,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFSmash.gif
+Forward Smash,13/26,64,,Charge hold is frame 9,5.0/11.0/11.0,6/8/14,4/8/8,first/second/second far,-30,13—14/26—28,36,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFSmash.gif|https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFSmashUp.gif|https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFSmashDown.gif
 Up Smash,10/14/17/20/23/26/28,48,,Charge hold is frame 4,4.0/0.8/3.0,8/6/7,4/2/3,First/multi/Final,-17,10—11/14/17/20/23/26/28—29,19,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusUSmash.gif
 Down Smash,20,41,,Charge hold is frame 15,8.0/6.0,7/6,6/5,Close/Far,-15/-16,20—24,17,https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusDSmash.gif

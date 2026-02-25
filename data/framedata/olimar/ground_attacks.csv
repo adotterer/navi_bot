@@ -1,10 +1,10 @@
 Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
-Jab 1,4,19,,Transitions to Jab 2 as early as frame 7,3.0 / 4.0,8/9,4/5,Early/Late,-11/-10,4(5),14,https://ultimateframedata.com//hitboxes/olimar/OlimarJab1.gif
-Jab 2,4,17,,,3.0/4.0,5/5,4/5,Close/Far,-9/-8,4—5,12,https://ultimateframedata.com//hitboxes/olimar/OlimarJab2.gif
-Forward Tilt,15,35,,,11.0,8,10,,-10,15—17,18,https://ultimateframedata.com//hitboxes/olimar/OlimarFTilt.gif
-Up Tilt,6/8/10/12/14/16,38,,,0.6/4.0,4/5,2/5,Multi/Final,-17,6/8/10/12/14/16,22,https://ultimateframedata.com//hitboxes/olimar/OlimarUTilt.gif
-Down Tilt,6,29,,,6.0,6,6,,-17,6—12,17,https://ultimateframedata.com//hitboxes/olimar/OlimarDTilt.gif
-Dash Attack,8/11,37,,,7.0 / 4.0,7/5,-/5,,-21,8—10/11—14,23,https://ultimateframedata.com//hitboxes/olimar/OlimarDashAttack.gif
+Jab 1,4,19,,Transitions to Jab 2 as early as frame 7,3.0 / 4.0,8/9,4/5,Early/Late,-11/-10,4(5),14,https://ultimateframedata.com/hitboxes/olimar/OlimarJab1.gif
+Jab 2,4,17,,,3.0/4.0,5/5,4/5,Close/Far,-9/-8,4—5,12,https://ultimateframedata.com/hitboxes/olimar/OlimarJab2.gif
+Forward Tilt,15,35,,,11.0,8,10,,-10,15—17,18,https://ultimateframedata.com/hitboxes/olimar/OlimarFTilt.gif
+Up Tilt,6/8/10/12/14/16,38,,,0.6/4.0,4/5,2/5,Multi/Final,-17,6/8/10/12/14/16,22,https://ultimateframedata.com/hitboxes/olimar/OlimarUTilt.gif
+Down Tilt,6,29,,,6.0,6,6,,-17,6—12,17,https://ultimateframedata.com/hitboxes/olimar/OlimarDTilt.gif
+Dash Attack,8/11,37,,,7.0 / 4.0,7/5,-/5,,-21,8—10/11—14,23,https://ultimateframedata.com/hitboxes/olimar/OlimarDashAttack.gif
 Forward Smash,11,39,,Charge hold is frame 6. Olimar does not suffer hitlag from this attack. But Pikmin do.,"Early: 20.314.514.511.623.2
 		Late: 14.010.010.08.016.0
 		Later: 8.46.06.04.89.6","Early: 121510914
@@ -14,7 +14,7 @@ Forward Smash,11,39,,Charge hold is frame 6. Olimar does not suffer hitlag from 
 		Later: 33334",,"Early: -13-11-16-18-10
 		Late: -14-13-17-19-14
 		Later: -12-10-13-13-10","11—13(14-19/20—29)
-		Purple: 11—13(14—18/19—24)",10,https://ultimateframedata.com//hitboxes/olimar/OlimarFSmashRBW.gif
+		Purple: 11—13(14—18/19—24)",10,https://ultimateframedata.com/hitboxes/olimar/OlimarFSmashRBW.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarFSmashY.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarFSmashP.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarFSmash.png
 Up Smash,12,39,,Charge hold is frame 4. Olimar does not suffer hitlag from this attack. But Pikmin do.,"Early: 18.213.013.010.420.8
 		Far: 14.010.010.08.016.0
 		Late: 15.411.011.08.817.6","Early: 11149813
@@ -23,10 +23,10 @@ Up Smash,12,39,,Charge hold is frame 4. Olimar does not suffer hitlag from this 
 		Far: 54435
 		Late: 54446",,"Early: -10-8-13-15-8
 		Far: -12-11-15-17-12
-		Late: -8-6-11-12-6",12—13(14—16/17—22),17,https://ultimateframedata.com//hitboxes/olimar/OlimarUSmashRBW.gif
+		Late: -8-6-11-12-6",12—13(14—16/17—22),17,https://ultimateframedata.com/hitboxes/olimar/OlimarUSmashRBW.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarUSmashY.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarUSmashP.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarUSmash.png
 Down Smash,10,38,,Charge hold is frame 6. Olimar does not suffer hitlag from this attack. But Pikmin do.,"Early: 15.411.011.08.817.6
 		Late: 12.69.09.07.214.4","Early: 10138711
 		Late: 911779","Early: 54446
 		Late: 44435",,"Early: -13-11-16-17-11
 		Late: -11-9-13-14-10","10—13/14—18
-		Purple: 10—13/14—15",20,https://ultimateframedata.com//hitboxes/olimar/OlimarDSmashRBW.gif
+		Purple: 10—13/14—15",20,https://ultimateframedata.com/hitboxes/olimar/OlimarDSmashRBW.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarDSmashY.gif|https://ultimateframedata.com/hitboxes/olimar/OlimarDSmashP.gif|https://ultimateframedata.com/hitboxes/olimar/OLIMARANDHISTWOBIGNUTS.png

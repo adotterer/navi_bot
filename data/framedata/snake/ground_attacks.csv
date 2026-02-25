@@ -8,5 +8,5 @@ Up Tilt,6,37,,,14.5/13.5,10/9,13/12,Early/Late,-18/**,6—8/9—13,24,https://ul
 Down Tilt,6,30,,,12.0,9,11,,-13,6—7,23,https://ultimateframedata.com/hitboxes/snake/SnakeDTilt.gif
 Dash Attack,5,41,,Arm intangibility on frame 5-12,11.0/9.0/8.0/6.0,8/7,10/8,Early/Late,-26/**,5—8/9—12,29,https://ultimateframedata.com/hitboxes/snake/SnakeDashAttack.gif
 Forward Smash,41,73,,Charge hold is frame 38,22.0,13,14,,-18,41—43,30,https://ultimateframedata.com/hitboxes/snake/SnakeFSmash.gif
-Up Smash,11/35,54,,Charge hold is frame 24. Projectile generated on frame 35. Projectile explosion is active for 5 frames.,4.0/14.0,5/10,4/10,Initial/Projectile,-39/+1,11—12/35—**,,https://ultimateframedata.com/hitboxes/snake/SnakeUSmash.gif
+Up Smash,11/35,54,,Charge hold is frame 24. Projectile generated on frame 35. Projectile explosion is active for 5 frames.,4.0/14.0,5/10,4/10,Initial/Projectile,-39/+1,11—12/35—**,,https://ultimateframedata.com/hitboxes/snake/SnakeUSmash.gif|https://ultimateframedata.com/hitboxes/snake/SnakeUSmashExplosion.png|https://ultimateframedata.com/hitboxes/snake/SnakeUSmashSearch.png
 Down Smash,8/20,44,,Charge hold is frame 5,12.0/14.0,9/10,8/10,,-28/-14,8—10/20—22,22,https://ultimateframedata.com/hitboxes/snake/SnakeDSmash.gif

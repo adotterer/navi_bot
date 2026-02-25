@@ -2,10 +2,10 @@ Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield S
 Jab 1,2,19,,Transitions to Jab 2 as early as frame 5,2.9,9,4,,-13,2—3,16,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioJab1.gif
 Jab 2,2,21,,Transitions to Jab 3 as early as frame 6,1.7,5,3,,-16,2—3,18,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioJab2.gif
 Jab 3,3,33,,,4.7,12,5,,-25,3—4,29,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioJab3.gif
-Forward Tilt,5,25,,,10.5,7,8,,-12,5—7,18,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioFTilt.gif
+Forward Tilt,5,25,,,10.5,7,8,,-12,5—7,18,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioFTilt.gif|https://ultimateframedata.com/hitboxes/dr_mario/DrMarioFTiltUp.gif|https://ultimateframedata.com/hitboxes/dr_mario/DrMarioFTiltDown.gif
 Up Tilt,5,29,,,7.4,7,7,,-17,5—11,18,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioUTilt.gif
 Down Tilt,5,27,,,8.2/5.8,7/6,8/6,Close/Far,-14/-16,5—7,20,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioDTilt.gif
 Dash Attack,6,37,,,11.5/7.0,9/7,19/12,Early/Late,-12,6—9/10—25,12,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioDashAttack.gif
-Forward Smash,15,47,,Charge hold is frame 5.,20.9/17.2,16/15,14/12,Close/Far,-18/-20,15—17,30,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioFSmash.gif
+Forward Smash,15,47,,Charge hold is frame 5.,20.9/17.2,16/15,14/12,Close/Far,-18/-20,15—17,30,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioFSmash.gif|https://ultimateframedata.com/hitboxes/dr_mario/DrMarioFSmashUp.gif|https://ultimateframedata.com/hitboxes/dr_mario/DrMarioFSmashDown.gif
 Up Smash,9,39,,Head Invulnerability on frame 9-13. Charge hold is frame 6.,16.4,11,11,,-19,9—13,26,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioUSmash.gif
 Down Smash,5/14,43,,Charge hold is frame 2.,11.7/14.1,9/10,8/10,First/Second,-30/-19,5—6/14,29,https://ultimateframedata.com/hitboxes/dr_mario/DrMarioDSmash.gif

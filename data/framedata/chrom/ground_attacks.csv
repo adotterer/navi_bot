@@ -1,5 +1,5 @@
 Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
-Jab,5,22,,,6.5,9,7,,-10,5—7,15,https://ultimateframedata.com/hitboxes/chrom/ChromJab.gif
+Jab,5,22,,,6.5,9,7,,-10,5—7,15,https://ultimateframedata.com/hitboxes/chrom/ChromJab.gif|https://ultimateframedata.com/hitboxes/chrom/ChromJabInterpolated.gif
 Forward Tilt,8,33,,,10.9,8,10,,-15,8—10,23,https://ultimateframedata.com/hitboxes/chrom/ChromFTilt.gif
 Up Tilt,6,38,,,10.4,8,10,Early/Normal/Late,-22,6/7—8/9—11,27,https://ultimateframedata.com/hitboxes/chrom/ChromUTilt.gif
 Down Tilt,7,21,,,9.0,7,9,,-5,7—8,13,https://ultimateframedata.com/hitboxes/chrom/ChromDTilt.gif

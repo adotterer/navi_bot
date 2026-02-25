@@ -2,7 +2,7 @@ Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield S
 Jab 1,4,23,,Transitions to Jab 2 as early as frame 9,2.5,8,4,,-15,4—5,18,https://ultimateframedata.com/hitboxes/ike/IkeJab1.gif
 Jab 2,3,27,,Transitions to jab 3 as early as frame 9,2.5,6,4,,-20,3—4,23,https://ultimateframedata.com/hitboxes/ike/IkeJab2.gif
 Jab 3,5,40,,Attack hits directly above Ike on frame 5 only.,5.0,12,6,,-29,5—8,32,https://ultimateframedata.com/hitboxes/ike/IkeJab3.gif
-Forward Tilt,12,41,,,12.5,9,12,,-17,12—13,28,https://ultimateframedata.com/hitboxes/ike/IkeFTilt.gif
+Forward Tilt,12,41,,,12.5,9,12,,-17,12—13,28,https://ultimateframedata.com/hitboxes/ike/IkeFTilt.gif|https://ultimateframedata.com/hitboxes/ike/IkeFTiltUp.gif|https://ultimateframedata.com/hitboxes/ike/IkeFTiltDown.gif
 Up Tilt,11,39,,,12.0/8.0,9,11,Early/Late,-17,11—16/17—21,18,https://ultimateframedata.com/hitboxes/ike/IkeUTilt.gif
 Down Tilt,7,28,,,8.0,7,8,,-13,7—8,20,https://ultimateframedata.com/hitboxes/ike/IkeDTilt.gif
 Dash Attack,15,47,,,14.0,12,15,,-17,15—16/17—19,28,https://ultimateframedata.com/hitboxes/ike/IkeDashAttack.gif

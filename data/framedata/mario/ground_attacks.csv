@@ -2,10 +2,10 @@ Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield S
 Jab 1,2,19,,Transitions to Jab 2 as early as frame 5,2.2,8,3,,-14,2—3,16,https://ultimateframedata.com/hitboxes/mario/MarioJab1.gif
 Jab 2,2,21,,Transitions to Jab 3 as early as frame 6,1.7,5,3,,-16,2—3,18,https://ultimateframedata.com/hitboxes/mario/MarioJab2.gif
 Jab 3,3,33,,,4.0,11,5,,-25,3—4,29,https://ultimateframedata.com/hitboxes/mario/MarioJab3.gif
-Forward Tilt,5,25,,,7.0,7,7,,-13,5—7,18,https://ultimateframedata.com/hitboxes/mario/MarioFTilt.gif
+Forward Tilt,5,25,,,7.0,7,7,,-13,5—7,18,https://ultimateframedata.com/hitboxes/mario/MarioFTilt.gif|https://ultimateframedata.com/hitboxes/mario/MarioFTiltUp.gif|https://ultimateframedata.com/hitboxes/mario/MarioFTiltDown.gif
 Up Tilt,5,29,,,5.5,6,6,,-18,5—11,18,https://ultimateframedata.com/hitboxes/mario/MarioUTilt.gif
 Down Tilt,5,27,,,7.0/5.0,7/6,7/6,Close/Far,-15/-16,5—7,20,https://ultimateframedata.com/hitboxes/mario/MarioDTilt.gif
 Dash Attack,6,37,,,8.0/6.0,9/8,14/11,Early/Late,-17,6—9(10—25),12,https://ultimateframedata.com/hitboxes/mario/MarioDashAttack.gif
-Forward Smash,15,47,,Charge hold is frame 5.,17.7/14.6,11/10,12/10,Far/Close,-22/-20,15—17,30,https://ultimateframedata.com/hitboxes/mario/MarioFSmash.gif
+Forward Smash,15,47,,Charge hold is frame 5.,17.7/14.6,11/10,12/10,Far/Close,-22/-20,15—17,30,https://ultimateframedata.com/hitboxes/mario/MarioFSmash.gif|https://ultimateframedata.com/hitboxes/mario/MarioFSmashUp.gif|https://ultimateframedata.com/hitboxes/mario/MarioFSmashDown.gif
 Up Smash,9,39,,Head Invulnerability on frame 9-12. Charge hold is frame 6.,14.0,10,10,,-20,9—12,27,https://ultimateframedata.com/hitboxes/mario/MarioUSmash.gif
 Down Smash,5/14,43,,Charge hold is frame 2.,10.0/12.0,8/9,8/9,First/Second,-30/-20,5—6/14,29,https://ultimateframedata.com/hitboxes/mario/MarioDSmash.gif

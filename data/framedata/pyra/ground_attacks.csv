@@ -5,9 +5,9 @@ Jab 3,5,35,,,5.0,9,6,,-24,5—7,28,https://ultimateframedata.com/hitboxes/Pyra/P
 Rapid Jab,9/13/17...,--,,,0.6,4,4,,,9/13/17...,,https://ultimateframedata.com/hitboxes/Pyra/PyraJabRapid.gif
 Rapid Jab Finisher,6,37,,,5.0,11,6,,-25,6—7,30,https://ultimateframedata.com/hitboxes/Pyra/PyraJabRapidFinisher.gif
 Forward Tilt,12,37,,,11.5,10,15,Early/Late,-10/-9,12—13,24,https://ultimateframedata.com/hitboxes/Pyra/PyraFTilt.gif
-Up Tilt,11,39,,,9.5,10,9,,-19,11—16,23,https://ultimateframedata.com/hitboxes/Pyra/PyraUTilt.gif
+Up Tilt,11,39,,,9.5,10,9,,-19,11—16,23,https://ultimateframedata.com/hitboxes/Pyra/PyraUTilt.gif|https://ultimateframedata.com/hitboxes/Pyra/PyraUTiltInterpolated.gif
 Down Tilt,9,26,,,6.0/8.0,8/9,6/8,Close/Far,-11/-9,9—11,15,https://ultimateframedata.com/hitboxes/Pyra/PyraDTilt.gif
 Dash Attack,17,52,,,10.5/12.5,*/10,*/17,Closest/Far,-18,17—18,34,https://ultimateframedata.com/hitboxes/Pyra/PyraDashAttack.gif
-Forward Smash,20,67,,charge hold on frame 5,20.0,16,13,,-34,20—23,44,https://ultimateframedata.com/hitboxes/Pyra/PyraFSmash.gif
+Forward Smash,20,67,,charge hold on frame 5,20.0,16,13,,-34,20—23,44,https://ultimateframedata.com/hitboxes/Pyra/PyraFSmash.gif|https://ultimateframedata.com/hitboxes/Pyra/PyraFSmashInterpolated.gif
 Up Smash,15/17,66,,Charge hold is frame 6,3.5/13.5/12.0,5/10,4/9,hit 1/early hit 2/late hit 2,-47/-40,15—16/17—23/24—33,33,https://ultimateframedata.com/hitboxes/Pyra/PyraUSmash.gif
 Down Smash,12/18,47,,"Charge hold on frame 2. Blade and leg can both hit the same shield. Third and fourth advantage assume this scenario, first and second are single, far hits.",11.0/13.5/8.0/10.0,10/11/9/10,8/9/6/7,blade close/far / leg close/far,-26/-28/-20/-22,12—14/18—20,27,https://ultimateframedata.com/hitboxes/Pyra/PyraDSmash.gif

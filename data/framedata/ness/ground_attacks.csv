@@ -2,10 +2,10 @@ Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield S
 Jab 1,3,19,,Transitions to Jab 2 as early as frame 5,2.0,8,3,,-13,3,16,https://ultimateframedata.com/hitboxes/ness/NessJab1.gif
 Jab 2,3,19,,Transitions to Jab 3 as early as frame 6,1.5,5,3,,-13,3,16,https://ultimateframedata.com/hitboxes/ness/NessJab2.gif
 Jab 3,6,29,,,4.0,11,5,,-18,6—7,22,https://ultimateframedata.com/hitboxes/ness/NessJab3.gif
-Forward Tilt,7,34,,,10.0,8,10,,-17,7—10,24,https://ultimateframedata.com/hitboxes/ness/NessFTilt.gif
+Forward Tilt,7,34,,,10.0,8,10,,-17,7—10,24,https://ultimateframedata.com/hitboxes/ness/NessFTilt.gif|https://ultimateframedata.com/hitboxes/ness/NessFTiltUp.gif|https://ultimateframedata.com/hitboxes/ness/NessFTiltDown.gif
 Up Tilt,5,28,,,9.0/7.0,8/6,9/7,Close/Far,-14/-16,5—6(7—8),20,https://ultimateframedata.com/hitboxes/ness/NessUTilt.gif
 Down Tilt,3,11,,Can transition to another Dtilt as early as frame 6.,4.5/3.0,5/5,5/4,Far/Close,-3/-4,3—4,7,https://ultimateframedata.com/hitboxes/ness/NessDTilt.gif
 Dash Attack,8/15/23,39,,,4.0/2.0/6.0,5/4/10,5/3/7,,-10,8/15—16/23—24,15,https://ultimateframedata.com/hitboxes/ness/NessDashAttack.gif
 Forward Smash,21,54,,Reflects on frame 18-30. Charge hold is frame 10.,18.0/20.0/22.0,11/12/15,12/13/14,close/med/far,-21/-20/-19,21—22,32,https://ultimateframedata.com/hitboxes/ness/NessFSmash.gif
-Up Smash,10,52,,Charge hold on frame 10 and also creates a hitbox hitting every 6 frames,13.0,4/9,2/9,charging/launch,-33,10—32,20,https://ultimateframedata.com/hitboxes/ness/NessUSmash.gif
-Down Smash,12/17/23/31,45,,Charge hold on frame 12 and also creates a hitbox hitting every 6 frames,1.0/10.0,4/8,2/7,weak/strong,-21/-7,12—15(17—18)/23—25(31—32),13,https://ultimateframedata.com/hitboxes/ness/NessDSmash.gif
+Up Smash,10,52,,Charge hold on frame 10 and also creates a hitbox hitting every 6 frames,13.0,4/9,2/9,charging/launch,-33,10—32,20,https://ultimateframedata.com/hitboxes/ness/NessUSmash.gif|https://ultimateframedata.com/hitboxes/ness/NessUSmashCharge.png
+Down Smash,12/17/23/31,45,,Charge hold on frame 12 and also creates a hitbox hitting every 6 frames,1.0/10.0,4/8,2/7,weak/strong,-21/-7,12—15(17—18)/23—25(31—32),13,https://ultimateframedata.com/hitboxes/ness/NessDSmash.gif|https://ultimateframedata.com/hitboxes/ness/NessDSmashCharge.png

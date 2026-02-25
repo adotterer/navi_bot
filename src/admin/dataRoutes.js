@@ -476,26 +476,33 @@ function csvEditPage(type, body, saved, title, param1, param2, s3InUse = false, 
         if (isGif) {
           td.classList.add('cell-gif');
           var gifVal = rawVal.trim();
-          if (isUrlLike(gifVal)) {
-            var img = document.createElement('img');
-            img.src = gifVal;
-            img.alt = 'GIF';
-            img.onerror = function() { this.style.display = 'none'; };
-            td.appendChild(img);
-          }
+          var urls = gifVal ? gifVal.split('|').map(function(u) { return u.trim(); }).filter(Boolean) : [];
+          urls.forEach(function(url) {
+            if (isUrlLike(url)) {
+              var img = document.createElement('img');
+              img.src = url;
+              img.alt = 'GIF';
+              img.onerror = function() { this.style.display = 'none'; };
+              td.appendChild(img);
+            }
+          });
           var fnSpan = document.createElement('div');
           fnSpan.className = 'gif-filename';
-          fnSpan.textContent = gifVal ? filenameFromUrl(gifVal) : '';
+          fnSpan.textContent = urls.length > 1 ? urls.length + ' images' : (urls[0] ? filenameFromUrl(urls[0]) : '');
           fnSpan.title = gifVal || '';
           td.appendChild(fnSpan);
           var inp = document.createElement('input');
           inp.type = 'text';
           inp.value = rawVal;
           inp.className = 'cell-input gif-url-input w-full min-w-0 mt-1';
-          inp.placeholder = 'Paste GIF URL';
+          inp.placeholder = 'Paste GIF URL (use | to separate multiple)';
           inp.title = rawVal || 'GIF URL';
           inp.addEventListener('input', markDirty);
-          inp.addEventListener('blur', function() { fnSpan.textContent = filenameFromUrl(inp.value); fnSpan.title = inp.value; });
+          inp.addEventListener('blur', function() {
+            var u = inp.value ? inp.value.split('|').map(function(x) { return x.trim(); }).filter(Boolean) : [];
+            fnSpan.textContent = u.length > 1 ? u.length + ' images' : (u[0] ? filenameFromUrl(u[0]) : '');
+            fnSpan.title = inp.value;
+          });
           td.appendChild(inp);
           continue;
         }

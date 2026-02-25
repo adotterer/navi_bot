@@ -5,6 +5,6 @@ Forward Tilt,8,33,,,9.0/12.0,7/11,9/11,Close/tipper,-16/-14,8—11,22,https://ul
 Up Tilt,6,33,,,5.0/6.0/10.0/,6/9,6/9,Closest/Close/Tipper,-21/-18,6—8/9—12,21,https://ultimateframedata.com/hitboxes/marth/MarthUTilt.gif
 Down Tilt,7,23,,,7.0/10.0,7/10,7/10,Close/tipper,-9/-6,7—8,15,https://ultimateframedata.com/hitboxes/marth/MarthDTilt.gif
 Dash Attack,13,49,,,9.0/10.0/13.0,8/14,14/16,Closest/Close/Tipper,-22/-20,13—16,33,https://ultimateframedata.com/hitboxes/marth/MarthDashAttack.gif
-Forward Smash,10,51,,Charge hold is frame 3.,13.0/18.0,9/15,9/12,Close/tipper,-32/-29,10—13,38,https://ultimateframedata.com/hitboxes/marth/MarthFSmash.gif
+Forward Smash,10,51,,Charge hold is frame 3.,13.0/18.0,9/15,9/12,Close/tipper,-32/-29,10—13,38,https://ultimateframedata.com/hitboxes/marth/MarthFSmash.gif|https://ultimateframedata.com/hitboxes/marth/MarthFSmashInterpolated.gif
 Up Smash,13,58,,Launcher and sword hits generate on the same frame. Charge hold is frame 5,3.0/13.0/17.0,0/9/?,4/9/?,Body Launcher/Close/Tipper,-41/-36,13—14/13—17,41,https://ultimateframedata.com/hitboxes/marth/MarthUSmash.gif
 Down Smash,6/21,55,,Charge hold is frame 4.,8.0/12.0/12.0/17.0,7/13/9/15,6/8/8/11,"Close/tipper, close/tipper",-43/-41/-26/-23,6—7/21—23,32,https://ultimateframedata.com/hitboxes/marth/MarthDSmash.gif

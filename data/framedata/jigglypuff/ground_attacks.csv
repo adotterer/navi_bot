@@ -1,7 +1,7 @@
 Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
 Jab 1,5,16,,Transitions to Jab 2 as early as frame 7.,3.0,6,4,,-7,5—6,10,https://ultimateframedata.com/hitboxes/jigglypuff/JigglypuffJab1.gif
 Jab 2,5,16,,,3.0,9,4,,-7,5—6,10,https://ultimateframedata.com/hitboxes/jigglypuff/JigglypuffJab2.gif
-Forward Tilt,7,24,,,10.0,8,10,,-7,7—10,14,https://ultimateframedata.com/hitboxes/jigglypuff/JigglypuffFTilt.gif
+Forward Tilt,7,24,,,10.0,8,10,,-7,7—10,14,https://ultimateframedata.com/hitboxes/jigglypuff/JigglypuffFTilt.gif|https://ultimateframedata.com/hitboxes/jigglypuff/JigglypuffFTiltUp.gif|https://ultimateframedata.com/hitboxes/jigglypuff/JigglypuffFTiltDown.gif
 Up Tilt,9,24,,,9.0/8.0,7/7,9/8,Early/Late,-6,9—10(11—13),11,https://ultimateframedata.com/hitboxes/jigglypuff/JigglypuffUTilt.gif
 Down Tilt,10,30,,,10.0,8,10,,-10,10—12,18,https://ultimateframedata.com/hitboxes/jigglypuff/JigglypuffDTilt.gif
 Dash Attack,5,39,,,12.0/8.0,9/7,12/8,Early/Late,-22/-23,5—7(8—20),19,https://ultimateframedata.com/hitboxes/jigglypuff/JigglypuffDashAttack.gif

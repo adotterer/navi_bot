@@ -17,8 +17,8 @@ Down Tilt,5,32,,,5.5,8,6,,-22,5—8,24,https://ultimateframedata.com/hitboxes/ro
 Down Tilt (Luma),8,--,,,5.2,9(+5),3,,-26,8—13,,https://ultimateframedata.com/hitboxes/rosalina_and_luma/LumaDTilt.gif
 Dash Attack,6/17,40,,,3.0/4.0,6/7,4/5,,-31/-19,6—9/17—19,21,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaDashAttack.gif
 Dash Attack (Luma),6,--,,,4.5,8(+5),2,,-31/-25,6—8,,https://ultimateframedata.com/hitboxes/rosalina_and_luma/LumaDashAttack.gif
-Forward Smash,16,51,,Charge hold is frame 9,12.0,11,8,Normal/Sour,-36/-32,16—18,33,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaFSmash.gif
-Forward Smash (Luma),17,--,,Charge hold is frame 9,10.5,14(+2),4,,-21,17—18,,https://ultimateframedata.com/hitboxes/rosalina_and_luma/LumaFSmash.gif
+Forward Smash,16,51,,Charge hold is frame 9,12.0,11,8,Normal/Sour,-36/-32,16—18,33,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaFSmash.gif|https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaFSmashUp.gif|https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaFSmashDown.gif
+Forward Smash (Luma),17,--,,Charge hold is frame 9,10.5,14(+2),4,,-21,17—18,,https://ultimateframedata.com/hitboxes/rosalina_and_luma/LumaFSmash.gif|https://ultimateframedata.com/hitboxes/rosalina_and_luma/LumaFSmashUp.gif|https://ultimateframedata.com/hitboxes/rosalina_and_luma/LumaFSmashDown.gif
 Up Smash,8,47,,Head intangible on frame 7-16. Charge hold is frame 3,12.0,9,8,,-34,8—16,31,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaUSmash.gif
 Up Smash (Luma),10,--,,Charge hold is frame 3,9.0,11(+4),4,,-34,10—12/13—17,,https://ultimateframedata.com/hitboxes/rosalina_and_luma/LumaUSmash.gif
 Down Smash,6/17,41,,Charge hold is frame 3,7.0/9.0,10/11,6/7,,-30/-18,6—7/17—18,23,https://ultimateframedata.com/hitboxes/rosalina_and_luma/RosalinaDSmash.gif

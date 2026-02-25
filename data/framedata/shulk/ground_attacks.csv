@@ -6,6 +6,6 @@ Forward Tilt,12,43,,,13.5/12.0,9/9,12/11,Blade/Beam,-19/-20,12—13,30,https://u
 Up Tilt,11,39,,,10.0/9.0,8/7,10/9,Blade/Beam,-18/-19,11—12/13—23,16,https://ultimateframedata.com/hitboxes/shulk/ShulkUTilt.gif
 Down Tilt,10,31,,,9.5/7.5,8/7,9/8,Blade/Beam,-12/-13,10—11,20,https://ultimateframedata.com/hitboxes/shulk/ShulkDTilt.gif
 Dash Attack,12,40,,,12.5/11.0,9/8,12/10,Blade/Beam,-16/-18,12—13,27,https://ultimateframedata.com/hitboxes/shulk/ShulkDashAttack.gif
-Forward Smash,14/23,67,,Charge hold is frame 8,5.5/13.0/11.5,9/16/15,5/9/8,First/Blade/Beam,-35/-36,14—15/23 (Angled: 14—16/23),44,https://ultimateframedata.com/hitboxes/shulk/ShulkFSmash.gif
+Forward Smash,14/23,67,,Charge hold is frame 8,5.5/13.0/11.5,9/16/15,5/9/8,First/Blade/Beam,-35/-36,14—15/23 (Angled: 14—16/23),44,https://ultimateframedata.com/hitboxes/shulk/ShulkFSmash.gif|https://ultimateframedata.com/hitboxes/shulk/ShulkFSmashUp.gif|https://ultimateframedata.com/hitboxes/shulk/ShulkFSmashDown.gif
 Up Smash,18/30,67,,Charge hold is frame 10,4.5/13.5,5/9,4/9,First/Second,-28,(18—21/22—29)/(30—33),34,https://ultimateframedata.com/hitboxes/shulk/ShulkUSmash.gif
 Down Smash,18/23/28/35/41,82,,Charge hold is frame 4,14.0 / 11.0 / 12.0 / 10.0 / 10.0 / 8.0 / 8.0 / 6.0 / 6.0 / 4.0,10/8/9/8/8/ 7/7/6/6/5,-/8/8/7/7/ 6/6/5/5/4,"1st blade/beam, 2nd blade/beam, 3rd blade/beam, 4th blade/beam, 5th blade/beam",-/-56/-51/-52/-47/-48/-41/-42/-36/-37,18—19/23—24/28—29/35—36/41—42,40,https://ultimateframedata.com/hitboxes/shulk/ShulkDSmash.gif

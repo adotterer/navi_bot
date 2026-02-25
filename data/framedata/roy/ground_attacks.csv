@@ -1,5 +1,5 @@
 Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
-Jab,5,22,,,7.5/4.8,9/6,8/5,Close/Far,-9/-12,5—7,15,https://ultimateframedata.com/hitboxes/roy/RoyJab.gif
+Jab,5,22,,,7.5/4.8,9/6,8/5,Close/Far,-9/-12,5—7,15,https://ultimateframedata.com/hitboxes/roy/RoyJab.gif|https://ultimateframedata.com/hitboxes/roy/RoyJabInterpolated.gif
 Forward Tilt,8,33,,,12.5/9.0/8.0,12/7/7,12/9/8,Close/Far,-13/-16/-17,8—10,23,https://ultimateframedata.com/hitboxes/roy/RoyFTilt.gif
 Up Tilt,6,38,,,12.0/7.0,12/7,11/7,Close/Far,-21/-25,6/7—8/9—11,27,https://ultimateframedata.com/hitboxes/roy/RoyUTilt.gif
 Down Tilt,7,21,,,11.0/6.5,11/6,10/7,Close/Far,-3/-7,7—8,13,https://ultimateframedata.com/hitboxes/roy/RoyDTilt.gif

@@ -7,7 +7,7 @@ Side B (Spin Dash),17,--,,"Invulnerable frame 17-22. Startup is 1 from a chargin
 		After release cancels into:
 		-Spin dash jump
 		-double jump (aerial only)
-		Check out this image for more information on Spin Dash and Spin Charge.",5.0/7.0—10.9,6/7—8,6/7—10,,"+6 (hop)+8 (grounded, no charge)+11 (grounded, full charge)+11 (aerial, any)",,,https://ultimateframedata.com/hitboxes/sonic/SonicSpinDash.png
+		Check out this image for more information on Spin Dash and Spin Charge.",5.0/7.0—10.9,6/7—8,6/7—10,,"+6 (hop)+8 (grounded, no charge)+11 (grounded, full charge)+11 (aerial, any)",,,https://ultimateframedata.com/hitboxes/sonic/SonicSpinDash.png|https://ultimateframedata.com/hitboxes/sonic/SonicSpinDashAerial.gif|https://ultimateframedata.com/hitboxes/sonic/SonicSpinDashHop.png
 "Spin Dash, Jump",3,--,,"Cancelable into:
 		-Up/Neutral special
 		-All aerials
@@ -17,6 +17,6 @@ Down B (Spin Charge),15/17/19/21,59,-,"Startup and total frames refer to minimum
 		Startup/charge cancelable starting f7 into:
 		- spin dash jump
 		- double jump (air only)
-		Check out this image for more information on Spin Dash and Spin Charge.",1.7—2.5/4.0,4—5/5,-/5,Multi/Final,-33,,,https://ultimateframedata.com/hitboxes/sonic/SonicSpinCharge.png
+		Check out this image for more information on Spin Dash and Spin Charge.",1.7—2.5/4.0,4—5/5,-/5,Multi/Final,-33,,,https://ultimateframedata.com/hitboxes/sonic/SonicSpinCharge.png|https://ultimateframedata.com/hitboxes/sonic/SonicSpinChargeFinal.png
 "Spin Charge, Jump",3,10,-,Jumping from an air version generates no hitbox or endlag.,3.0/6.0,5/6,4/6,,-1,,,https://ultimateframedata.com/hitboxes/sonic/SonicSpinChargeJump.gif
 "Spin Charge, Aerial",3,10,-,Jumping from an air version generates no hitbox or endlag.,3.0/6.0,5/6,4/6,,-1,,,https://ultimateframedata.com/hitboxes/sonic/SonicSpinChargeAerial.gif

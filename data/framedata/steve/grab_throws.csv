@@ -6,4 +6,4 @@ Pummel,1,20,,Total frames includes 14 frames of hitlag.,1.5,,,,,,,https://ultima
 Forward Throw,13(14),49,,Throw hitbox on 13-14. Throws on 14.,3.0/6.0,,,,,,,https://ultimateframedata.com/hitboxes/steve/SteveFThrow.gif
 Backward Throw,24,34,,,10.0,,,,,,,https://ultimateframedata.com/hitboxes/steve/SteveBThrow.gif
 Up Throw,18(19),47,,Throw hitbox on 18-19. Throws on 19.,3.0/8.0,,,,,,,https://ultimateframedata.com/hitboxes/steve/SteveUThrow.gif
-Down Throw,15(20),29,,"Anvil active 15—22 but throws on frame 20. Without iron, the data is identical except for anvil's absense.",7.0/8.0 (anvil) // (8.0 no anvil),,,,,,,https://ultimateframedata.com/hitboxes/steve/SteveDThrowAnvil.gif
+Down Throw,15(20),29,,"Anvil active 15—22 but throws on frame 20. Without iron, the data is identical except for anvil's absense.",7.0/8.0 (anvil) // (8.0 no anvil),,,,,,,https://ultimateframedata.com/hitboxes/steve/SteveDThrowAnvil.gif|https://ultimateframedata.com/hitboxes/steve/SteveDThrow.gif

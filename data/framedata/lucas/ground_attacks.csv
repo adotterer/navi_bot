@@ -2,7 +2,7 @@ Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield S
 Jab 1,2,19,,Transitions to Jab 2 as early as frame 5,2.5,8,4,,-13,2,17,https://ultimateframedata.com/hitboxes/lucas/LucasJab1.gif
 Jab 2,3,19,,Transitions to Jab 3 as early as frame 5,1.5,8,3,,-13,3,16,https://ultimateframedata.com/hitboxes/lucas/LucasJab2.gif
 Jab 3,6,29,,,3.5,11,4,,-19,6—7,22,https://ultimateframedata.com/hitboxes/lucas/LucasJab3.gif
-Forward Tilt,7,25,,,7.5/11.0,7/13,8/10,Cose/far,-10/-8,7—9,16,https://ultimateframedata.com/hitboxes/lucas/LucasFTilt.gif
+Forward Tilt,7,25,,,7.5/11.0,7/13,8/10,Cose/far,-10/-8,7—9,16,https://ultimateframedata.com/hitboxes/lucas/LucasFTilt.gif|https://ultimateframedata.com/hitboxes/lucas/LucasFTiltUp.gif|https://ultimateframedata.com/hitboxes/lucas/LucasFTiltDown.gif
 Up Tilt,4/7,33,,,1.5/8.0/5.0,7/11/9,-/8/6,first/second/late,-18,4/7—10(11—14/15—16),17,https://ultimateframedata.com/hitboxes/lucas/LucasUTilt.gif
 Down Tilt,3,15,,,5.0,6,6,,-6,3—4,11,https://ultimateframedata.com/hitboxes/lucas/LucasDTilt.gif
 Dash Attack,13,37,,,9.0/13.0,11/15,9/12,Close/Far,-15/-12,13—17,20,https://ultimateframedata.com/hitboxes/lucas/LucasDashAttack.gif

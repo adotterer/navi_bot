@@ -1,15 +1,15 @@
 Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
-Charge Blast,3(+12),39,,Startup is 3 from charge state. 12 frames to enter charge state. 4 to cancel charge with shield. Takes 132 frames to reach full charge,4.0—26.0,8—23,2—8,,-27 to -6,3—62,,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerChargeBlastMin.gif
+Charge Blast,3(+12),39,,Startup is 3 from charge state. 12 frames to enter charge state. 4 to cancel charge with shield. Takes 132 frames to reach full charge,4.0—26.0,8—23,2—8,,-27 to -6,3—62,,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerChargeBlastMin.gif|https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerChargeBlastMax.gif
 Laser Blaze,10,42,,Fire rate is one shot per 22 frames,5.0,6,3,,-24,10—33,9,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerLaserBlaze.gif
-Grenade Launch,32,53,,Explosion hits are: 1/6/11/16/18,1.3/6.5,4/6,-/3,Multi/Final,+6,32—111,,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerGrenadeLauncher.png
-Flame Pillar,21,63,,Eruption hits: 1/9/17/25/33. Will not erupt on shields,2.2/2.7,4,2,Multi/Final,-37,21—40,23,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerFlamePillarG.gif
+Grenade Launch,32,53,,Explosion hits are: 1/6/11/16/18,1.3/6.5,4/6,-/3,Multi/Final,+6,32—111,,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerGrenadeLauncher.png|https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerGrenadeLauncherExplosion.png|https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerGrenadeLaunch.gif
+Flame Pillar,21,63,,Eruption hits: 1/9/17/25/33. Will not erupt on shields,2.2/2.7,4,2,Multi/Final,-37,21—40,23,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerFlamePillarG.gif|https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerFlamePillarA.gif|https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerFlamePillar.gif
 Stealth Burst,36—66,70—105,,Startup is 5 from release.,12.1—18.0,9—11,4—6,,-22/-17/-22,"Min: 36—38
-		Max: 66—68",2,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerStealthBurstMin.gif
+		Max: 66—68",2,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerStealthBurstMin.gif|https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerStealthBurstMax.gif
 Gunner Missile (Homing),27,46,,,7.5,7,3,,-10,27—121,,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerMiiMissile.png
 Gunner Missle (Super),23,49,,,14.5,10,5,,-12,23—93,,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerSuperMissile.png
 Lunar Launch,10,--,18,,7.0,7,3,,,10—25,,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerLunarLaunch.gif
-Cannon Jump Kick,6/10,--,28,Invulnerable on frames 5—7 on the ground.,9.0/8.0/6.0,16/15/13,9/8/6,first/second/late,**,6—7/(10—15/16—30),,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerCannonJumpKickG.gif
+Cannon Jump Kick,6/10,--,28,Invulnerable on frames 5—7 on the ground.,9.0/8.0/6.0,16/15/13,9/8/6,first/second/late,**,6—7/(10—15/16—30),,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerCannonJumpKickG.gif|https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerCannonJumpKickA.gif
 Arm Rocket,,--,14,,,,,,,,,
-Echo Reflector,3 (4 is Start of Reflector),38,,Reflects on 4. Total frames is the minimum usage. Endlag is 15 frames otherwise.,2.0,7,3,,-32,,,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerEchoReflectorStart.gif
-Bomb Drop,18—133,53,,Auto detonates on 134. Or six frames after contact,2.0/9.0,4/7,-/4,contact/explosion,-14,18—133/1—4,,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerBombDrop.png
+Echo Reflector,3 (4 is Start of Reflector),38,,Reflects on 4. Total frames is the minimum usage. Endlag is 15 frames otherwise.,2.0,7,3,,-32,,,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerEchoReflectorStart.gif|https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerEchoReflector.gif
+Bomb Drop,18—133,53,,Auto detonates on 134. Or six frames after contact,2.0/9.0,4/7,-/4,contact/explosion,-14,18—133/1—4,,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerBombDrop.png|https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerBombDropExplosion.png
 Absorbing Vortex,7,24,,Endlag from extended use is 6. Total frames is the minimum use. Absorbs on frame 7.,4.0,5,5,,-12,7—11,13,https://ultimateframedata.com/hitboxes/mii_gunner/MiiGunnerAbsorbingVortex.gif

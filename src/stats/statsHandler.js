@@ -8,7 +8,7 @@ import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { getPrompt } from '../shared/promptLoader.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
 import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
-import { loadCharacterFrameData, findMove, parseCharacterAndMove, createMoveEmbed } from './frameDataHelper.js';
+import { loadCharacterFrameData, findMove, parseCharacterAndMove, createMoveEmbeds } from './frameDataHelper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -154,8 +154,8 @@ export async function handleStatsLookup(message, args) {
                         .split('-')
                         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                         .join(' ');
-                    const embed = createMoveEmbed(found.move, displayName, found.moveType, parsed.arseneMode ?? false);
-                    return message.reply({ embeds: [embed] });
+                    const embeds = createMoveEmbeds(found.move, displayName, found.moveType, parsed.arseneMode ?? false);
+                    return message.reply({ embeds });
                 }
             }
         }

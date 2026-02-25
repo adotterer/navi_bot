@@ -2,10 +2,10 @@ Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield S
 Jab,5,21,,Transitions to Rapid Jab as early as frame 12.,3.0,9,4,,-12,5—6,15,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoJab.gif
 Rapid Jab,5/8/11...,--,,,0.8,4,4,,,,,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoJabRapid.gif
 Rapid Jab Finisher,6,40,,,2.5,10,4,,-30,6—7,33,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoJabRapidEnd.gif
-Forward Tilt,10,35,,,11.0/10.0/9.0,10/8/7,10/10/9,Close/Med/Far,-15/-15/-16,10—11,24,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoFTilt.gif
+Forward Tilt,10,35,,,11.0/10.0/9.0,10/8/7,10/10/9,Close/Med/Far,-15/-15/-16,10—11,24,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoFTilt.gif|https://ultimateframedata.com/hitboxes/mewtwo/MewtwoFTiltUp.gif|https://ultimateframedata.com/hitboxes/mewtwo/MewtwoFTiltDown.gif
 Up Tilt,8,29,,,"7.0/6.0/5.5, 5.0/4.0","7/6/6, 6/5","7/6/6, 6/5","Early close/med/far, Late med/far",-14/-15/-15,8(9—13),16,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoUTilt.gif
 Down Tilt,6,23,,,5.0/4.5/4.0,6/5/5,6/5/5,Close/med/far,-11/-12/-12,6—7,16,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoDTilt.gif
 Dash Attack,10,38,,,12.0/6.0,11/8,14/8,Early/Late,-14,10—11(12—20),18,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoDashAttack.gif
-Forward Smash,19,52,,Charge hold is frame 12,16.0/20.0,10/15,11/13,Close/Far,-20/-18,19—22,30,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoFSmash.gif
+Forward Smash,19,52,,Charge hold is frame 12,16.0/20.0,10/15,11/13,Close/Far,-20/-18,19—22,30,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoFSmash.gif|https://ultimateframedata.com/hitboxes/mewtwo/MewtwoFSmashUp.gif|https://ultimateframedata.com/hitboxes/mewtwo/MewtwoFSmashDown.gif
 Up Smash,9/14/18/22,68,,Charge hold is frame 2,2.0/10.0,4/8,3/7,Multi/Final,-39,9(10—11)/14—15/18—19/22—25,43,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoUSmash.gif
 Down Smash,21,40,,Charge hold is frame 15,16.0,14,11,,-8,21—23,17,https://ultimateframedata.com/hitboxes/mewtwo/MewtwoDSmash.gif

@@ -1,15 +1,15 @@
 Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
-Jab 1,9,31,,Transitions to jab 2 as early as frame 15,1.4,4,3,,-19,9—12,19,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJab1.gif
-Jab 2,7,31,,Transitions to jab 3 as early as frame 14,1.4,4,3,,-21,7—8,23,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJab2.gif
-Jab 3,7,39,,Transitions to rapid jab as early as frame 17,2.2,6,3,,-29,7—8,31,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJab3.gif
-Rapid Jab,6/10/14,--,,,0.5/0.2,4,4,,**,,,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJabRapid.gif
-Rapid Jab Finisher,4/11,62,,,5.0,10,6,,-45,4—5/11—12,50,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJabRapidEnd.gif
-Forward Tilt 1,12,31,,Transitions to next hit as early as frame 16,3.0,5,4,,-15,12,19,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFTilt1.gif
-Forward Tilt 2,12,39,,Transitions to next hit as early as frame 16,3.0,5,4,,-23,12,27,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFTilt2.gif
-Forward Tilt 3,14,39,,,7.0,7,7,,-21,14—15,24,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFTilt3.gif
-Up Tilt,7/10/13,29,,,1.5/6.0,,4/9,3/6,-19/-10,7—9(10—12)/13—15,14,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaUTilt.gif
-Down Tilt,7,28,,,5.0/6.0,6/6,6/6,Close/Far,-15,7—8,20,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaDTilt.gif
-Dash Attack,15,42,,,10.0/8.0,8/7,10/8,Early/Late,-17,15—20(21—26),16,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaDashAttack.gif
-Forward Smash,17,66,,Charge hold is frame 2,16.0/14.0,14/10,11/10,Far/Close,-38/-39,17—21,45,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFSmash.gif
-Up Smash,18,64,,Charge hold is frame 6,17.0/16.0/15.0,11/10/10,11/11/10,Early/Late/Later,-35,18—19(20—21/22—23),41,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaUSmash.gif
-Down Smash,17/22,65,,First hit refers to Bayonetta's stomp and is ground only. Charge hold is frame 8.,5.0/16.0/15.0,6/13/12,4/11/10,Stomp/Early/Late,-32,17—18/22(23—25),40,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaDSmash.gif
+Jab 1,9,31,,Transitions to jab 2 as early as frame 15,1.4,4,3,,-19,9—12,19,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJab1.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJab1BulletArts.png
+Jab 2,7,31,,Transitions to jab 3 as early as frame 14,1.4,4,3,,-21,7—8,23,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJab2.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJab2BulletArts.png
+Jab 3,7,39,,Transitions to rapid jab as early as frame 17,2.2,6,3,,-29,7—8,31,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJab3.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJab3BulletArts.gif
+Rapid Jab,6/10/14,--,,,0.5/0.2,4,4,,**,,,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJabRapid.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJabRapidBulletArts.gif
+Rapid Jab Finisher,4/11,62,,,5.0,10,6,,-45,4—5/11—12,50,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJabRapidEnd.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaJabRapidFinisherBulletArts.png
+Forward Tilt 1,12,31,,Transitions to next hit as early as frame 16,3.0,5,4,,-15,12,19,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFTilt1.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFTilt1BulletArts.png
+Forward Tilt 2,12,39,,Transitions to next hit as early as frame 16,3.0,5,4,,-23,12,27,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFTilt2.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFTilt2BulletArts.png
+Forward Tilt 3,14,39,,,7.0,7,7,,-21,14—15,24,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFTilt3.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFTilt3BulletArts.png
+Up Tilt,7/10/13,29,,,1.5/6.0,,4/9,3/6,-19/-10,7—9(10—12)/13—15,14,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaUTilt.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaUTiltBulletArts.png
+Down Tilt,7,28,,,5.0/6.0,6/6,6/6,Close/Far,-15,7—8,20,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaDTilt.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaDTiltBulletArts.gif
+Dash Attack,15,42,,,10.0/8.0,8/7,10/8,Early/Late,-17,15—20(21—26),16,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaDashAttack.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaDashAttackBulletArts.png
+Forward Smash,17,66,,Charge hold is frame 2,16.0/14.0,14/10,11/10,Far/Close,-38/-39,17—21,45,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFSmash.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaFSmashBulletArts.png
+Up Smash,18,64,,Charge hold is frame 6,17.0/16.0/15.0,11/10/10,11/11/10,Early/Late/Later,-35,18—19(20—21/22—23),41,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaUSmash.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaUSmashBulletArts.gif
+Down Smash,17/22,65,,First hit refers to Bayonetta's stomp and is ground only. Charge hold is frame 8.,5.0/16.0/15.0,6/13/12,4/11/10,Stomp/Early/Late,-32,17—18/22(23—25),40,https://ultimateframedata.com/hitboxes/bayonetta/BayonettaDSmash.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaDSmashStomp.gif|https://ultimateframedata.com/hitboxes/bayonetta/BayonettaDSmashBulletArts.gif

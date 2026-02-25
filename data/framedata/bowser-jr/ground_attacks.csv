@@ -3,10 +3,10 @@ Jab 1,4,19,,Transitions to jab 2 as early as frame 7,2.0,7,3,,-12,4—5,14,https
 Jab 2,4,29,,Transitions to rapid jab as early as frame 7,2.0,5,3,,-22,4—5,24,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrJab2.gif
 Rapid Jab,4/7/10...,--,,,0.5,4,5,,,,,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrJabRapid.gif
 Rapid Jab Finisher,6,42,,,3.0,10,4,,-32,6—7,35,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrJabRapidEnd.gif
-Forward Tilt,7,31,,,6.0/8.0,6/7,6/8,Close/Far,-18/-16,7—9,22,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrFTilt.gif
+Forward Tilt,7,31,,,6.0/8.0,6/7,6/8,Close/Far,-18/-16,7—9,22,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrFTilt.gif|https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrFTiltUp.gif|https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrFTiltDown.gif
 Up Tilt,7,30,,,6.0,7,6,,-19,7—14,16,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrUTilt.gif
 Down Tilt,4/12/23,40,,,2.0/6.0,4/7,3/6,Multi/Final,-11,4—6/12—14/23—25,15,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrDTilt.gif
 Dash Attack,8/11/14/17/20/25,47,,,1.8/4.0,4/8,3/5,Multi/Final,-17,8/11/14/17/20/25—26,21,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrDashAttack.gif
-Forward Smash,18/21/24/27/30/35,55,,Charge hold is frame 5,1.0/11.0,4/13,2/8,Multi/Final,-12,18/21/24/27/30/35—37,18,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrFSmash.gif
+Forward Smash,18/21/24/27/30/35,55,,Charge hold is frame 5,1.0/11.0,4/13,2/8,Multi/Final,-12,18/21/24/27/30/35—37,18,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrFSmash.gif|https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrFSmashUp.gif|https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrFSmashDown.gif
 Up Smash,7/9/12/15/18/22,53,,Charge hold is frame 4,1.0/1.7/1.4/6.0,4/4/11,-/2/5,Hit 1/Multihits/Penultimate/Final,-26,7—8/9/12/15/18/22—23,30,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrUSmash.gif
 Down Smash,12,59,,Charge hold is frame 2,18.0,14,12,,-32,12—14,45,https://ultimateframedata.com/hitboxes/bowser_jr/BowserJrDSmash.gif

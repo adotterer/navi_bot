@@ -1,5 +1,5 @@
 Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
 Neutral B (Pikmin Pluck),--,8,,32 frame failure animation when your squad is full.,,,,,,1,7,
-Side B (Pikmin Throw),9,24,,"A latched pikmin hits on frame 18, then every 36 frames after that (counting Pikmin's hitlag)",Purple: 6.0,Purple: 6,Purple: 3,,Purple: -6,9—128(9—108),,https://ultimateframedata.com//hitboxes/olimar/RedPikminThrow.gif
+Side B (Pikmin Throw),9,24,,"A latched pikmin hits on frame 18, then every 36 frames after that (counting Pikmin's hitlag)",Purple: 6.0,Purple: 6,Purple: 3,,Purple: -6,9—128(9—108),,https://ultimateframedata.com/hitboxes/olimar/RedPikminThrow.gif|https://ultimateframedata.com/hitboxes/olimar/YellowPikminThrow.gif|https://ultimateframedata.com/hitboxes/olimar/BluePikminThrow.gif|https://ultimateframedata.com/hitboxes/olimar/WhitePikminThrow.gif|https://ultimateframedata.com/hitboxes/olimar/PurplePikminThrow.gif
 Up B (Winged Pikmin),--,--,30/19,30 landing lag if the pikmin let go of you. Frame 30 is the earliest you can cancel the move.,,,,,,--,,
-Down B (Pikmin Order/Whistle),2 (Start of Super Armor),17,,Super armor on frame 2-7,,,,,,2—7 (armor),,https://ultimateframedata.com//hitboxes/olimar/OlimarPikminOrder.gif
+Down B (Pikmin Order/Whistle),2 (Start of Super Armor),17,,Super armor on frame 2-7,,,,,,2—7 (armor),,https://ultimateframedata.com/hitboxes/olimar/OlimarPikminOrder.gif

@@ -8,6 +8,6 @@ Forward Tilt,8,34,,,11.0,8,10,,-15,8—10,24,https://ultimateframedata.com/hitbo
 Up Tilt,9,34,,,10.0,8,10,,-15,9—15,19,https://ultimateframedata.com/hitboxes/byleth/BylethUTilt.gif
 Down Tilt,13,35,,,8.0,7,8,,-14,13—15,20,https://ultimateframedata.com/hitboxes/byleth/BylethDTilt.gif
 Dash Attack,9,44,,,9.0/13.0,7/13,9/12,Sour/Sweet,-26/-23,9—11,33,https://ultimateframedata.com/hitboxes/byleth/BylethDashAttack.gif
-Forward Smash,23,63,,Charge Hold is frame 14. The up-angled version is the most powerful.,Normal: 12.0/18.0 || Down: 11.5/17.25 || Up: 13.0/19.5,9/15 || 9/16 || 9/15,**,Normal/Down/Up (Sour/Sweet for each),-31/-27 || -32/-28 || -32/-28,23—25,38,https://ultimateframedata.com/hitboxes/byleth/BylethFSmash.gif
+Forward Smash,23,63,,Charge Hold is frame 14. The up-angled version is the most powerful.,Normal: 12.0/18.0 || Down: 11.5/17.25 || Up: 13.0/19.5,9/15 || 9/16 || 9/15,**,Normal/Down/Up (Sour/Sweet for each),-31/-27 || -32/-28 || -32/-28,23—25,38,https://ultimateframedata.com/hitboxes/byleth/BylethFSmash.gif|https://ultimateframedata.com/hitboxes/byleth/BylethFSmashDown.gif|https://ultimateframedata.com/hitboxes/byleth/BylethFSmashUp.gif
 Up Smash,13,56,,Charge hold is frame 7.,2.0/2.0/2.0/10.0,5/4/8,3/3/7,First/Multi/Final,-22,13—16(rehit: 7)/17—27(rehit: 4)/28—29,27,https://ultimateframedata.com/hitboxes/byleth/BylethUSmash.gif
 Down Smash,19/29,74,,Charge hold is frame 3. 8 Shield Damage.,23.0/23.0,18,15,First/Second,-40/-30,19—21/29—31,43,https://ultimateframedata.com/hitboxes/byleth/BylethDSmash.gif

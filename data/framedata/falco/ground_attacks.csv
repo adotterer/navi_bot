@@ -3,7 +3,7 @@ Jab 1,2,22,,Transitions to Jab 2 as early as frame 5.,1.5,7,3,,-17,2,20,https://
 Jab 2,3,25,,Transitions to Rapid Jab as early as frame 7.,1.5,7,3,,-19,3—4,21,https://ultimateframedata.com/hitboxes/falco/FalcoJab2.gif
 Rapid Jab,5/7/9/...,--,,,0.3,4,3,,,,,https://ultimateframedata.com/hitboxes/falco/FalcoJabRapid.gif
 Rapid Jab Finisher,5,40,,,3.0,10,4,,-31,5—6,34,https://ultimateframedata.com/hitboxes/falco/FalcoJabRapidEnd.gif
-Forward Tilt,6,24,,,6.0,6,6,,-11,6—8,16,https://ultimateframedata.com/hitboxes/falco/FalcoFTilt.gif
+Forward Tilt,6,24,,,6.0,6,6,,-11,6—8,16,https://ultimateframedata.com/hitboxes/falco/FalcoFTilt.gif|https://ultimateframedata.com/hitboxes/falco/FalcoFTiltUp.gif|https://ultimateframedata.com/hitboxes/falco/FalcoFTiltDown.gif
 Up Tilt,5/12,29,,,3.5/2.7/4.0,5/5/8,4/4/5,first (early/late)/second,-12,5(6—9)/12(13—16),13,https://ultimateframedata.com/hitboxes/falco/FalcoUTilt.gif
 Down Tilt,8,29,,,13.0/12.0/10.5,9/9/8,12/11/10,Close/far/farthest,-9/-10/-11,8—10,19,https://ultimateframedata.com/hitboxes/falco/FalcoDTilt.gif
 Dash Attack,8,39,,,9.0/6.0,8/6,10/6,Early/Late,-21,8—11(12—18),21,https://ultimateframedata.com/hitboxes/falco/FalcoDashAttack.gif

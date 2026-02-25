@@ -4,7 +4,7 @@ Jab 2,4,24,,Transitions to Jab 3 as early as frame 10 or Rapid on 9.,2.2,7,3,,-1
 Jab 3,5,31,,,3.8,10,5,,-21,5—7,24,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieJab3.gif
 Rapid Jab,5/7/9...,--,,,0.4,4,3,,,,,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieJabRapid.gif
 Rapid Jab Finisher,7,41,,,1.6,9,3,,-31,7—8,33,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieJabRapidEnd.gif
-Forward Tilt,7,28,,,9.0/7.0,8/7,9/7,Far/Close,-12/-14,7—9,19,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieFTilt.gif
+Forward Tilt,7,28,,,9.0/7.0,8/7,9/7,Far/Close,-12/-14,7—9,19,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieFTilt.gif|https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieFTiltUp.gif|https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieFTiltDown.gif
 Up Tilt,11,31,,Kazooie has hurtboxes on frames 1—24.,10.0,8,10,,-10,11—14,17,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieUTilt.gif
 Down Tilt,12,37,,,6.0/5.0/4.0,7/6/6,6/6/5,Far/Close/Late,-19/-19,12—17(18—21),16,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieDTilt.gif
 Dash Attack,9,36,,,12.0/8.0,10/7,11/8,Early/Late,-16,9—12(13—20),16,https://ultimateframedata.com/hitboxes/banjo_and_kazooie/Banjo_KazooieDashAttack.gif

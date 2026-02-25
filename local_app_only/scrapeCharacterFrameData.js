@@ -111,8 +111,17 @@ function parseFrameDataSection($, sectionElement) {
     const activeFrames = $container.find('.activeframes').text().trim();
     const endLag = $container.find('.endlag').text().trim();
     
-    // Extract GIF URL from data-src attribute
-    const gifUrl = $container.find('img[data-src]').attr('data-src') || '';
+    // Extract all GIF URLs from data-src attributes (some moves have multiple hitbox images)
+    const gifUrls = [];
+    $container.find('img[data-src]').each((_, img) => {
+      const src = $(img).attr('data-src');
+      if (!src) return;
+      const full = /^https?:\/\//i.test(src.trim())
+        ? src.trim()
+        : `${BASE_URL}/${src.replace(/^\//, '')}`;
+      gifUrls.push(full);
+    });
+    const gifUrl = [...new Set(gifUrls)].join('|');
     
     // Only add if we have a move name
     if (moveName) {
@@ -129,7 +138,7 @@ function parseFrameDataSection($, sectionElement) {
         onShield: advantage === '--' ? '' : advantage,
         activeFrames: activeFrames === '**' ? '' : activeFrames,
         endLag: endLag.trim() === '--' ? '' : endLag.trim(),
-        gifUrl: gifUrl ? `${BASE_URL}/${gifUrl}` : ''
+        gifUrl: gifUrl || ''
       });
     }
   });

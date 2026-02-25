@@ -1,6 +1,6 @@
 Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
 Neutral Air,4,41,8,Autocancels on frame 1-3 and 35 onward,10.0/7.0,8/7,4/3,Early/Late,-4/-5,4—6/7—26,15,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleNAir.gif
 Forward Air,5,35,6,Autocancels on frame 1-4 and 35 onward,7.0/6.0,7/6,3/3,Early/Late,-3/-3,5—6/7—14,21,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleFAir.gif
-Back Air,5...,35,18,Landing hit on frame 1. Autocancels on frame 1-4 and 22 onward,1.0/6.0/2.0,4/7/9,2/3/3,Multi/Final/Landing,-15,5—14/15—16 (rehit: 2),19,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleBAir.gif
+Back Air,5...,35,18,Landing hit on frame 1. Autocancels on frame 1-4 and 22 onward,1.0/6.0/2.0,4/7/9,2/3/3,Multi/Final/Landing,-15,5—14/15—16 (rehit: 2),19,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleBAir.gif|https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleBAirLanding.gif
 Up Air,5,29,6,Autocancels on frame 20 onward,7.0,7,3,,-3,5—9,20,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleUAir.gif
 Down Air,6...,44,16,Autocancels on frame 1-5 and 35 onward,1.5/4.0,4/11,2/3,Multi/Final,-14/-13,6—20/22 (rehit: 3),22,https://ultimateframedata.com/hitboxes/pt_squirtle/SquirtleDAir.gif

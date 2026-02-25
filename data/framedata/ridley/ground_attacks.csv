@@ -4,7 +4,7 @@ Jab 2,5,26,,Transitions to Jab 3 on frame 10. Rapid on frame 9.,1.5,5,3,,-18,5�
 Jab 3,4,35,,,5.0,11,6,,-25,4—5,30,https://ultimateframedata.com/hitboxes/ridley/RidleyJab3.gif
 Rapid Jab,4/7/10...,--,,,0.7,4,,,**,,,https://ultimateframedata.com/hitboxes/ridley/RidleyJabRapid.gif
 Rapid Jab Finisher,4,45,,,2.0,9,3,,-38,4—5,40,https://ultimateframedata.com/hitboxes/ridley/RidleyJabRapidEnd.gif
-Forward Tilt,10,32,,,10.0/13.0,8/11,10/12,Close/Far,-12/-10,10—11,21,https://ultimateframedata.com/hitboxes/ridley/RidleyFTilt.gif
+Forward Tilt,10,32,,,10.0/13.0,8/11,10/12,Close/Far,-12/-10,10—11,21,https://ultimateframedata.com/hitboxes/ridley/RidleyFTilt.gif|https://ultimateframedata.com/hitboxes/ridley/RidleyFTiltUp.gif|https://ultimateframedata.com/hitboxes/ridley/RidleyFTiltDown.gif
 Up Tilt,8,29,,Head and arm intangibility on frame 8-9. Wing intangibility on frame 8-12,7.0/9.0,7/7,7/9,,-14/-12,8—12,17,https://ultimateframedata.com/hitboxes/ridley/RidleyUTilt.gif
 Down Tilt,9,30,,,6.0/9.0,6/7,6/9,Close/Far,-15/-12,9—11,19,https://ultimateframedata.com/hitboxes/ridley/RidleyDTilt.gif
 Dash Attack,12,39,,,12.0,10,11,,-16,12—13,26,https://ultimateframedata.com/hitboxes/ridley/RidleyDashAttack.gif

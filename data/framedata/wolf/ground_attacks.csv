@@ -2,7 +2,7 @@ Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield S
 Jab 1,4,21,,Transitions to Jab 2 as early as frame 7.,2.0,7,3,,-14,4,17,https://ultimateframedata.com/hitboxes/wolf/WolfJab1.gif
 Jab 2,4,21,,Transitions to Jab 3 as early as frame 7.,2.0,5,3,,-14,4,17,https://ultimateframedata.com/hitboxes/wolf/WolfJab2.gif
 Jab 3,4,34,,,4.0,11,5,,-25,4,30,https://ultimateframedata.com/hitboxes/wolf/WolfJab3.gif
-Forward Tilt,8/9,34,,,5.0/6.0,11/6,-/6,,-19,8/9—10,24,https://ultimateframedata.com/hitboxes/wolf/WolfFTilt.gif
+Forward Tilt,8/9,34,,,5.0/6.0,11/6,-/6,,-19,8/9—10,24,https://ultimateframedata.com/hitboxes/wolf/WolfFTilt.gif|https://ultimateframedata.com/hitboxes/wolf/WolfFTiltUp.gif|https://ultimateframedata.com/hitboxes/wolf/WolfFTiltDown.gif
 Up Tilt,7,35,,,10.0/8.0/9.0/10.0,8,10,Early Front/Tip/Mid/Close,-18,7—11,24,https://ultimateframedata.com/hitboxes/wolf/WolfUTilt.gif
 Down Tilt,5,27,,,6.0,6,6,,-16,5—6,21,https://ultimateframedata.com/hitboxes/wolf/WolfDTilt.gif
 Dash Attack,11,37,,,11.0/8.0,8/7,10/8,Early/Late,-16,11—14/15—18,19,https://ultimateframedata.com/hitboxes/wolf/WolfDashAttack.gif

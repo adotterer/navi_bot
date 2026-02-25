@@ -426,12 +426,26 @@ function parseCharacterAndMove(input, guild) {
     return null;
 }
 
-export function createMoveEmbed(move, characterName, moveType, arseneMode = false) {
+function parseGifUrls(move, arseneMode) {
+    if (arseneMode && move['ARSENE GIF'] && move['ARSENE GIF'].trim()) {
+        return [move['ARSENE GIF'].trim()];
+    }
+    const raw = (move['GIF URL'] || '').trim();
+    if (!raw) return [];
+    return raw.split('|').map(u => u.trim()).filter(Boolean);
+}
+
+export function createMoveEmbeds(move, characterName, moveType, arseneMode = false) {
     const displayName = arseneMode ? `${characterName} - Arsene` : characterName;
-    const embed = new EmbedBuilder()
+    const title = `${displayName || 'Character'} - ${move['Move Name'] || 'Move'}`;
+    const desc = `*${moveType.replace(/_/g, ' ').toUpperCase()}*`;
+    const gifUrls = parseGifUrls(move, arseneMode);
+    const maxEmbeds = 10;
+
+    const baseEmbed = new EmbedBuilder()
         .setColor('#36AAD4')
-        .setTitle(`${displayName || 'Character'} - ${move['Move Name'] || 'Move'}`)
-        .setDescription(`*${moveType.replace(/_/g, ' ').toUpperCase()}*`)
+        .setTitle(title)
+        .setDescription(desc)
         .addFields(
             { name: 'Startup', value: `-# > ${move['Startup'] || '--'}`, inline: true },
             { name: 'Total Frames', value: `-# > ${move['Total Frames'] || '--'}`, inline: true },
@@ -443,24 +457,31 @@ export function createMoveEmbed(move, characterName, moveType, arseneMode = fals
             { name: 'Shield Stun', value: `-# > ${move['Shield Stun'] || '--'}`, inline: true },
             { name: 'Active Frames', value: `-# > ${move['Active Frames'] || '--'}`, inline: true }
         );
-    
-    // Add GIF image - prefer Arsene GIF if in Arsene mode and available
-    let gifUrl = null;
-    if (arseneMode && move['ARSENE GIF'] && move['ARSENE GIF'].trim()) {
-        gifUrl = move['ARSENE GIF'];
-    } else if (move['GIF URL'] && move['GIF URL'].trim()) {
-        gifUrl = move['GIF URL'];
-    }
-    
-    if (gifUrl) {
-        embed.setImage(gifUrl);
-    }
-    
+
     if (move['Notes'] && move['Notes'] !== '--') {
-        embed.addFields({ name: 'Notes', value: move['Notes'] });
+        baseEmbed.addFields({ name: 'Notes', value: move['Notes'] });
     }
-    
-    return embed;
+
+    const embeds = [];
+    if (gifUrls.length === 0) {
+        embeds.push(baseEmbed);
+    } else {
+        const urlsToShow = gifUrls.slice(0, maxEmbeds);
+        baseEmbed.setImage(urlsToShow[0]);
+        embeds.push(baseEmbed);
+        for (let i = 1; i < urlsToShow.length; i++) {
+            embeds.push(new EmbedBuilder()
+                .setColor('#36AAD4')
+                .setTitle(urlsToShow.length > 2 ? `${title} — Hitbox ${i + 1}` : title)
+                .setImage(urlsToShow[i]));
+        }
+    }
+    return embeds;
+}
+
+/** @deprecated Use createMoveEmbeds for multiple GIF support */
+export function createMoveEmbed(move, characterName, moveType, arseneMode = false) {
+    return createMoveEmbeds(move, characterName, moveType, arseneMode)[0];
 }
 
 export async function handleFrameDataLookup(message, args) {
@@ -499,8 +520,8 @@ export async function handleFrameDataLookup(message, args) {
             return;
         }
         
-        const embed = createMoveEmbed(found.move, displayName, found.moveType, parsed.arseneMode);
-        await message.reply({ embeds: [embed] });
+        const embeds = createMoveEmbeds(found.move, displayName, found.moveType, parsed.arseneMode);
+        await message.reply({ embeds });
     } catch (error) {
         console.error('Error in handleFrameDataLookup:', error);
         await message.reply('❌ Error retrieving frame data: ' + error.message);
@@ -638,8 +659,8 @@ Provide your answer:`;
                         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                         .join(' ');
                     
-                    const moveEmbed = createMoveEmbed(found.move, displayName, found.moveType);
-                    await message.channel.send({ embeds: [moveEmbed] });
+                    const moveEmbeds = createMoveEmbeds(found.move, displayName, found.moveType);
+                    await message.channel.send({ embeds: moveEmbeds });
                 }
             }
         }
