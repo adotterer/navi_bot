@@ -242,7 +242,7 @@ router.get('/', async (req, res) => {
         weekOverWeekTrend: 0,
     };
     try { usage = await getAggregatedUsage(); } catch (_) {}
-    const { byProvider, byModel, byDate, byMission, runs, periodTotal, dailyAverage, todayCost, weekOverWeekTrend } = usage;
+    const { byProvider, byModel, byDate, byMission, runs, periodTotal, dailyAverage, todayCost, weekOverWeekTrend, peakDay, rolling7dayAvg } = usage;
 
     const fmt = (n) => (n || 0).toLocaleString();
     const costFmt = (c) => '$' + (Number(c) || 0).toFixed(4);
@@ -335,6 +335,18 @@ router.get('/', async (req, res) => {
     <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Trend</p>
     <p class="text-2xl font-semibold ${trendColor}">${trendArrow} ${Math.abs(trendPct).toFixed(1)}%</p>
     <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Week-over-week</p>
+  </div>
+</div>
+<div class="grid gap-4 sm:grid-cols-2 mb-8">
+  <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Peak Day (30d)</p>
+    <p class="text-2xl font-semibold text-slate-800 dark:text-slate-100">${costFmt((peakDay && peakDay.totalCost) || 0)}</p>
+    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">${(peakDay && peakDay.date) ? escapeHtml(peakDay.date) : '&mdash;'}</p>
+  </div>
+  <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">7-Day Avg</p>
+    <p class="text-2xl font-semibold text-slate-800 dark:text-slate-100">${costFmt(rolling7dayAvg || 0)}</p>
+    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Rolling 7-day average</p>
   </div>
 </div>
 <div class="grid gap-4 sm:grid-cols-2 mb-8">
