@@ -264,7 +264,7 @@ client.on('interactionCreate', async (interaction) => {
     }
 });
 // ========== MESSAGE HANDLERS ==========
-// Handler 1: "should have" → "could have" + Arena LAN warning
+//
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
 
@@ -273,21 +273,7 @@ client.on("messageCreate", async (message) => {
         const ch = message.channel;
         console.log(`[messageCreate] no guild | channelId=${ch?.id} type=${ch?.type} isDMBased=${typeof ch?.isDMBased === 'function' ? ch.isDMBased() : 'N/A'} content=${(message.content || '').slice(0, 40)}`);
     }
-    // DMs: isDMBased() for full/partial DM channels, or no guild (fallback) 
-    // (doesn't work)
-    // const isDM = message.channel?.isDMBased?.() || !message.guild;
-    // if (isDM) {
-    //     console.log(`📩 DM from ${message.author.tag}: ${(message.content || '').slice(0, 80)}`);
-    //     try {
-    //         await handleDMMessage(message);
-    //     } catch (err) {
-    //         console.error('[DM] handleDMMessage error:', err);
-    //         try {
-    //             await message.reply('Something went wrong. Try again or use !docs for help.').catch(() => {});
-    //         } catch (_) {}
-    //     }
-    //     return;
-    // }
+
 
     const channelName = message.channel?.name?.toLowerCase() || '';
     const normalizedChannelName = channelName.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -337,14 +323,14 @@ client.on("messageCreate", async (message) => {
     
     console.log(`📨 Message received from ${message.author.tag} in #${message.channel.name}: ${message.content}`);
 
-    // Check for "should have" trigger
+    // PASSIVE TRIGGER: "SHOULD HAVE" mentality guidance 
     if (await handleShouldHave(message, followupResponses)) return;
 
-    // Check for arena is up/ready trigger
+    // PASSIVE TRIGGER: Check for Arena is up/ready trigger
     if (await handleArenaIsUp(message, lanWarningResponses)) return;
 });
 
-// Handler 2: Commands (!export, !match-up-notes, !mu-question) + Refinement replies
+
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
     if (message.channel?.type === ChannelType.DM) return;
