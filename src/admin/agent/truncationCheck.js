@@ -73,8 +73,10 @@ export function detectTruncation(edit, sourceContent = '') {
     }
 
     const baselineLen = String(sourceContent || '').length;
-    const isNewFile = isPatch && String(edit.search ?? '') === '';
-    if (!isNewFile && baselineLen > 200 && candidate.length < Math.floor(baselineLen * 0.5)) {
+    // Length check only applies to {path, content} format (full-file content writes).
+    // For patch format (search/replace), the replace is intentionally shorter than the source file —
+    // applying a length comparison here causes false-positive truncation signals for targeted patches.
+    if (!isPatch && baselineLen > 200 && candidate.length < Math.floor(baselineLen * 0.5)) {
         return { truncated: true, reason: 'output significantly shorter than source file' };
     }
 

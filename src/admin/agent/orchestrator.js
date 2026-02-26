@@ -227,7 +227,7 @@ async function buildFileContextForTask(task, grepPaths, maxChars = 52000) {
     if (grepPaths && grepPaths.size) {
         grepPaths.forEach((p) => pathSet.add(p));
     }
-    const pathList = Array.from(pathSet).filter((p) => /\.(js|ts|json|mjs|cjs|tsx|jsx|yml|yaml|html|css)$/i.test(p));
+    const pathList = Array.from(pathSet).filter((p) => /\.(js|ts|json|md|mjs|cjs|tsx|jsx|yml|yaml|html|css)$/i.test(p));
     let total = 0;
     const perFileMax = 14000;
     const parts = [];
@@ -315,7 +315,14 @@ async function resolveCoderEditsToContents(edits, fileRegistry, log, stepIndex) 
             } else if (content.includes(search)) {
                 content = content.replace(search, replace ?? '');
             } else {
-                log('system', 'coding', `[patch] Search text not found in ${filePath} — patch skipped\n`);
+                // Fallback: normalize \r\n to \n (common cause of mismatch when Coder uses \n)
+                const searchNorm = search.replace(/\r\n/g, '\n');
+                const contentNorm = content.replace(/\r\n/g, '\n');
+                if (contentNorm.includes(searchNorm)) {
+                    content = contentNorm.replace(searchNorm, replace ?? '');
+                } else {
+                    log('system', 'coding', `[patch] Search text not found in ${filePath} — patch skipped\n`);
+                }
             }
         }
         resolved.push({ path: filePath, content, stepIndex: lastPatchStepIndex });
@@ -668,7 +675,8 @@ export async function runPipeline(runId, opts = {}) {
                 const read = await readPathWithRegistry(fileRegistry, AGENT_ROUTES_PATH);
                 if (read.ok) fileContext[AGENT_ROUTES_PATH] = read.content;
             }
-            const isAdminCommandsStep = /\/admin\/commands|admin commands|command list|synchronize.*command|commands (ui|dashboard|panel)|documenting commands/i.test(stepText);
+            const isAdminCommandsStep = /\/admin\/commands|admin commands(?!\s*documentation)|command list(?!\s*documentation)|commands (ui|dashboard|panel)/i.test(stepText)
+                || (step.files || []).some((f) => String(f).includes('commandRoutes'));
             if (isAdminCommandsStep && !fileContext[COMMAND_ROUTES_PATH]) {
                 const read = await readPathWithRegistry(fileRegistry, COMMAND_ROUTES_PATH);
                 if (read.ok) fileContext[COMMAND_ROUTES_PATH] = read.content;
@@ -687,9 +695,15 @@ export async function runPipeline(runId, opts = {}) {
             let attempt = 0;
             let lastTruncations = [];
             while (attempt < 3) {
+                const hasPatchTruncation = lastTruncations.some((t) => {
+                    const edit = (coderResult?.edits || []).find((e) => e.path === t.path);
+                    return edit && edit.search !== undefined && String(edit.search) !== '';
+                });
                 const reviewFeedback = attempt > 0
                     ? 'Your previous output appears truncated: ' + lastTruncations.map((x) => `${x.path} (${x.reason})`).join(', ')
-                      + '. Output COMPLETE file content from the beginning; do not use ellipsis or placeholders.'
+                      + (hasPatchTruncation
+                          ? '. Ensure each patch replace string is syntactically complete and self-contained. Do not switch to a full-file write — keep using targeted search/replace patches.'
+                          : '. Output COMPLETE file content from the beginning; do not use ellipsis or placeholders.')
                     : undefined;
                 coderResult = await runCoder(step, fileContext, { reviewFeedback, signal, missionPrompt: prompt, model });
                 if (!coderResult?.ok) break;
@@ -812,10 +826,13 @@ export async function runPipeline(runId, opts = {}) {
             updateRunAndMeta(runId, { status: 'reviewing' });
             log('system', 'reviewing', reviewRound === 0 ? 'Running Reviewer…\n' : `Review round ${reviewRound + 1}…\n`);
 
+            // Use effective manifest (only paths we have edits for) to avoid Reviewer failing
+            // on "missing" files that the Planner over-scoped but we never produced edits for.
+            const effectiveManifest = Array.from(new Set(editsToReview.map((e) => e.path).filter(Boolean)));
             const reviewResult = await runReviewer(editsToReview, prompt, {
                 model,
                 importWarnings: reviewRound === 0 ? importWarnings : [],
-                fileManifest,
+                fileManifest: effectiveManifest,
                 truncationWarnings,
                 conflictWarnings,
                 signal,
@@ -875,11 +892,14 @@ export async function runPipeline(runId, opts = {}) {
         updateRunAndMeta(runId, { status: 'creating_pr' });
         log('system', 'creating_pr', `Collected ${editsToReview.length} file edit(s). Creating PR…\n`);
 
+        // Use effective manifest (only paths we have edits for) so PR creation doesn't fail
+        // on "missing" files that the Planner over-scoped but we never produced edits for.
+        const effectiveManifestForPr = Array.from(new Set(editsToReview.map((e) => e.path).filter(Boolean)));
         const prResult = await createPrIfConfigured(runId, {
             prompt,
             edits: editsToReview,
             title: getRun(runId)?.title || '',
-            fileManifest,
+            fileManifest: effectiveManifestForPr,
         });
         if (prResult.ok && prResult.prUrl) {
             await notifyAuditLog(getRun(runId)?.title, prompt, prResult.prUrl, editsToReview.map((e) => e.path));

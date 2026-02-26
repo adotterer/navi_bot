@@ -529,7 +529,7 @@ router.patch('/run/:runId/docs', express.json(), (req, res) => {
 
 // ----- POST /admin/agent/run – start run (returns runId, runs orchestrator in background) -----
 router.post('/run', express.json(), (req, res) => {
-    const { prompt = '', model = '', mode = 'pr', depth = 'medium', maxParallelPlanners = 2, maxParallelCoders = 3, seedDocs } = req.body || {};
+    const { prompt = '', model = '', mode = 'pr', depth = 'medium', maxParallelPlanners = 2, seedDocs } = req.body || {};
     const runId = createRun({ prompt, model, mode, depth });
     if (seedDocs && typeof seedDocs === 'object') {
         updateRun(runId, { docs: seedDocs });
@@ -539,7 +539,7 @@ router.post('/run', express.json(), (req, res) => {
     res.json({ runId });
 
     setImmediate(() => {
-        runPipeline(runId, { prompt, model, depth, maxParallelPlanners, maxParallelCoders });
+        runPipeline(runId, { prompt, model, depth, maxParallelPlanners });
     });
 });
 
@@ -567,7 +567,7 @@ router.post('/run/:runId/resume', async (req, res) => {
     }
 
     res.json({ ok: true });
-    setImmediate(() => runPipeline(runId, { prompt: run.prompt, model: run.model, maxParallelPlanners: 2, maxParallelCoders: 3, resume: true }));
+        setImmediate(() => runPipeline(runId, { prompt: run.prompt, model: run.model, maxParallelPlanners: 2, resume: true }));
 });
 
 // ----- GET /admin/agent/stream/:runId – SSE -----

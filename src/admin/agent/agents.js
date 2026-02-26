@@ -864,7 +864,7 @@ export async function runCoder(step, fileContext, opts = {}) {
                     model,
                     systemPrompt,
                     userContent,
-                    maxOutputTokens: 16384,
+                    maxOutputTokens: 32768,
                     responseMimeType: 'application/json',
                     signal,
                     onChunk,
@@ -890,7 +890,8 @@ export async function runCoder(step, fileContext, opts = {}) {
                 if (isEmptyArray) {
                     return { ok: true, edits: [], inputTokens: usage?.promptTokenCount ?? 0, outputTokens: usage?.candidatesTokenCount ?? 0, cachedTokens: cached };
                 }
-                console.error('[Coder] Parse failed. Raw response (first 400):', fullText.slice(0, 400));
+                console.error('[Coder] Parse failed. fullText.length:', fullText.length, 'outputTokens:', usage?.candidatesTokenCount);
+                console.error('[Coder] Raw response (first 400):', fullText.slice(0, 400));
                 console.error('[Coder] Raw response (last 200):', fullText.slice(-200));
                 throw new Error('Could not parse edits from response');
             })(),
