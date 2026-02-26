@@ -134,6 +134,8 @@ export function createApp() {
             if (!result) {
                 return res.status(404).send('Not found');
             }
+            // Long-lived cache: assets (GIFs, images) are immutable; reduces S3 GET requests
+            res.set('Cache-Control', 'public, max-age=31536000, immutable');
             res.type(result.contentType).send(result.body);
         } catch (err) {
             console.error('[assets]', key, err.message || err);
