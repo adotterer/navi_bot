@@ -18,6 +18,7 @@ const FileStore = require('session-file-store')(session);
 import { adminRouter } from './admin/routes.js';
 import { webhookRouter } from './admin/webhookRoutes.js';
 import { fetchFromS3Buffer } from './shared/s3Helper.js';
+import { getEmojiLibrary, fetchEmojisFromS3 } from './shared/emojiSync.js';
 
 const ENFORCE_HTTPS = process.env.ENFORCE_HTTPS === 'true' || process.env.ENFORCE_HTTPS === '1';
 const isProduction = process.env.NODE_ENV === 'production';
@@ -148,87 +149,148 @@ export function createApp() {
     });
 
     // Root landing page (primary application entry point).
-    app.get('/', (req, res) => {
+    // Public commands: anyone can use (Any channel or ask-navi). Excludes Mod/Legend-only.
+    // emoji: label from admin emojis – shown inline in "What it does"
+    const PUBLIC_COMMANDS = [
+        { section: 'Query Commands', commands: [
+            { cmd: '!mu', desc: 'Generate full matchup summary for a character', where: 'ask-navi or Mod/Legend', emoji: 'Nayru tip' },
+            { cmd: '!mq', desc: 'Ask a specific matchup question', where: 'ask-navi or Mod/Legend', emoji: 'Din tip' },
+            { cmd: '!q', desc: 'General question using glossary and fundamentals', where: 'ask-navi or Mod/Legend', emoji: 'Farore tip' },
+            { cmd: '!sq', desc: 'Stats question', where: 'ask-navi or Mod/Legend', emoji: 'Nayru tip' },
+            { cmd: '!fd', desc: 'Frame data lookup for a move', where: 'Any channel', emoji: 'Navi bullet' },
+            { cmd: '!fdq', desc: 'Frame data question (AI-powered)', where: 'ask-navi or Mod/Legend', emoji: 'Farore tip' },
+            { cmd: '!gt', desc: 'General tips for your character vs opponent (e.g. !gt mario falco)', where: 'ask-navi or Mod/Legend', emoji: 'Din tip' },
+            { cmd: '!sl', desc: 'Show stage lists used in the game', where: 'Any channel', emoji: 'Ganon hazard' },
+        ]},
+        { section: 'Info Commands', commands: [
+            { cmd: '!stats', desc: 'Character stats lookup', where: 'Any channel', emoji: 'Navi bullet' },
+            { cmd: '!docs', desc: 'Show documentation and help', where: 'Any channel', emoji: 'Nayru tip' },
+            { cmd: '!faq', desc: 'Show frequently asked questions', where: 'Any channel', emoji: 'Farore tip' },
+            { cmd: '!aliases', desc: 'Show character aliases and names', where: 'Any channel', emoji: 'Navi bullet' },
+            { cmd: '!canonical', desc: 'Show canonical character threads', where: 'Any channel', emoji: 'Navi bullet' },
+        ]},
+        { section: 'Stage Ban (Slash Commands)', commands: [
+            { cmd: '/coinflip', desc: 'Start a stage ban match; opponent required; 24h expiry', where: 'Any channel', emoji: 'Din hazard' },
+            { cmd: '/findmatch', desc: 'Open matchmaking: pick BO3/BO5; anyone can Accept Match, then coinflip + stage ban', where: 'Any channel', emoji: 'Farore hazard' },
+            { cmd: '/bo3, /bo5, /ft5', desc: 'Start a match with set format (first to 2 / 3 / 5); opponent required', where: 'Any channel', emoji: 'Nayru hazard' },
+            { cmd: '/ban', desc: 'Ban or select a stage', where: 'Any channel', emoji: 'Ganon hazard' },
+            { cmd: '/result', desc: 'Report who won a game (loser confirms)', where: 'Any channel', emoji: 'Din tip' },
+            { cmd: '/end', desc: 'End the stage ban session', where: 'Any channel', emoji: 'Nayru hazard' },
+            { cmd: '/cancel-match', desc: 'Cancel your active stage ban match', where: 'Any channel', emoji: 'Farore hazard' },
+        ]},
+    ];
+
+    function emojiCodeToUrl(code) {
+        const m = code && code.match(/<(a?):([^:]+):(\d+)>/);
+        if (!m) return null;
+        const ext = m[1] === 'a' ? 'gif' : 'png';
+        return `https://cdn.discordapp.com/emojis/${m[3]}.${ext}`;
+    }
+
+    app.get('/', async (req, res) => {
+        let emojis = getEmojiLibrary();
+        try {
+            const fromS3 = await fetchEmojisFromS3();
+            if (fromS3 != null && fromS3.trim()) {
+                const data = JSON.parse(fromS3);
+                if (Array.isArray(data) && data.length > 0) {
+                    emojis = data.filter((e) => e && typeof e.label === 'string' && typeof e.code === 'string');
+                }
+            }
+        } catch (_) {
+            /* fall back to local */
+        }
+        const emojiMap = Object.fromEntries(
+            emojis.map(({ label, code }) => [label, emojiCodeToUrl(code)]).filter(([, url]) => url)
+        );
+        const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const descWithEmoji = (desc, emojiLabel) => {
+            const url = emojiLabel && emojiMap[emojiLabel];
+            if (!url) return esc(desc);
+            return `${esc(desc)} <img src="${esc(url)}" alt="" class="inline-block w-5 h-6 object-contain align-middle ml-1" loading="lazy">`;
+        };
+
+        const tableRows = PUBLIC_COMMANDS.flatMap(({ section, commands }) => [
+            `<tr class="bg-blue-50 dark:bg-blue-900/20"><td colspan="3" class="px-4 py-2 text-sm font-semibold text-blue-800 dark:text-blue-200">${esc(section)}</td></tr>`,
+            ...commands.map(c => `<tr class="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-4 py-3"><code class="text-emerald-700 dark:text-emerald-400 font-mono text-sm">${esc(c.cmd)}</code></td><td class="px-4 py-3 text-slate-700 dark:text-slate-300">${descWithEmoji(c.desc, c.emoji)}</td><td class="px-4 py-3 text-slate-500 dark:text-slate-400 text-sm whitespace-nowrap">${esc(c.where)}</td></tr>`),
+        ]).join('');
+
+        const nonce = res.locals.nonce || '';
+        const scriptNonce = nonce ? ` nonce="${nonce.replace(/"/g, '&quot;')}"` : '';
+        const S = '</script>';
+
         res.send(`
 <!DOCTYPE html>
-<html>
+<html lang="en" class="antialiased">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Navi Bot</title>
-    <style>
-        :root {
-            --status-online: #15803d; --status-offline: #b91c1c; --admin-bg: #1d4ed8;
-            --bg: #f0f2f5; --card-bg: white; --text: #333; --border: #eee; --header-bg: #fafafa;
-        }
-        .dark {
-            --status-online: #4ade80; --status-offline: #f87171; --admin-bg: #60a5fa;
-            --bg: #1a1a1a; --card-bg: #2d2d2d; --text: #f0f0f0; --border: #444; --header-bg: #333;
-        }
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: var(--bg); color: var(--text); }
-        #status { padding: 15px 30px; border-radius: 30px; color: white; font-weight: bold; font-size: 1.2em; min-width: 120px; text-align: center; }
-        .dark #status, .dark .admin-btn { color: #000; }
-        .online { background-color: var(--status-online); }
-        .offline { background-color: var(--status-offline); }
-        .admin-btn { margin-top: 20px; padding: 10px 20px; background: var(--admin-bg); color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        table { margin-top: 30px; border-collapse: collapse; font-size: 0.9em; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        th, td { padding: 8px 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #fafafa; font-weight: bold; color: #666; }
-        .dark body { background: #1a1a1b; color: #d7dadc; }
-        .dark table { background: #272729; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-        .dark th, .dark td { border-bottom: 1px solid #343435; }
-        .dark th { background: #343435; color: #818384; }
-        .dark #sun-icon { display: block !important; }
-        .dark #moon-icon { display: none !important; }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="/admin.css" rel="stylesheet">
+    <script${scriptNonce}>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>
 </head>
-<body>
-    <button id="theme-toggle" style="position: absolute; top: 20px; right: 20px; background: none; border: none; cursor: pointer; padding: 8px;">
-        <svg id="sun-icon" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="display: none; color: #f1c40f;"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zM2 13h2a1 1 0 100-2H2a1 1 0 100 2zm18 0h2a1 1 0 100-2h-2a1 1 0 100 2zM11 2v2a1 1 0 100 2V2a1 1 0 100-2zm0 18v2a1 1 0 100 2v-2a1 1 0 100-2zM5.99 4.58a1 1 0 111.41 1.41L5.99 4.58zm12.02 12.02a1 1 0 111.41 1.41l-1.41-1.41zm-12.02 0l-1.41 1.41a1 1 0 111.41-1.41zm12.02-12.02l1.41-1.41a1 1 0 11-1.41 1.41z"/></svg>
-        <svg id="moon-icon" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" style="color: #2c3e50;"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-    </button>
-    <h1>Navi Bot 🧚</h1>
-    <div id="status">Checking...</div>
-    <a href="/admin" class="admin-btn">Admin</a>
-    <table>
-        <thead>
-            <tr><th>Command</th></tr>
-        </thead>
-        <tbody>
-            <tr><td><code>!mu</code></td></tr>
-            <tr><td><code>!mq</code></td></tr>
-            <tr><td><code>!export</code></td></tr>
-            <tr><td><code>!fd</code></td></tr>
-        </tbody>
-    </table>
-    <script>
-        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
-        async function updateStatus() {
-            const el = document.getElementById('status');
-            try {
-                const res = await fetch('/health');
-                if (res.ok) {
-                    el.textContent = 'Online';
-                    el.className = 'online';
-                } else {
-                    el.textContent = 'Offline';
-                    el.className = 'offline';
+<body class="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50 overflow-x-hidden">
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-100">Navi Bot 🧚</h1>
+            <button id="theme-toggle" type="button" class="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-2 rounded-lg transition-colors border border-slate-200 dark:border-slate-700" title="Toggle theme">
+                <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+            </button>
+        </div>
+    </header>
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 font-sans">
+        <div class="mb-6">
+            <div id="status" class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-white bg-slate-500">Checking...</div>
+            <p class="mt-3 text-slate-600 dark:text-slate-400 text-sm max-w-xl">Use these commands in our Discord server. Join us and type in any channel or in #ask-navi where noted.</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
+                        <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Command</th>
+                        <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">What it does</th>
+                        <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Where to use</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    </main>
+    <script${scriptNonce}>
+        (function() {
+            var d = document.getElementById('theme-toggle-dark-icon');
+            var l = document.getElementById('theme-toggle-light-icon');
+            var b = document.getElementById('theme-toggle');
+            if (b && d && l) {
+                function up() {
+                    if (document.documentElement.classList.contains('dark')) { d.classList.add('hidden'); l.classList.remove('hidden'); }
+                    else { d.classList.remove('hidden'); l.classList.add('hidden'); }
                 }
-            } catch (e) {
-                el.textContent = 'Offline';
-                el.className = 'offline';
+                up();
+                b.addEventListener('click', function() {
+                    var is = document.documentElement.classList.toggle('dark');
+                    localStorage.setItem('theme', is ? 'dark' : 'light');
+                    up();
+                });
             }
+        })();
+        async function updateStatus() {
+            var el = document.getElementById('status');
+            if (!el) return;
+            try {
+                var res = await fetch('/health');
+                if (res.ok) { el.textContent = 'Online'; el.className = 'inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-white bg-emerald-600 dark:bg-emerald-500 dark:text-emerald-950'; }
+                else { el.textContent = 'Offline'; el.className = 'inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-white bg-red-600 dark:bg-red-500'; }
+            } catch (e) { el.textContent = 'Offline'; el.className = 'inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-white bg-red-600 dark:bg-red-500'; }
         }
         updateStatus();
         setInterval(updateStatus, 5000);
-        document.getElementById('theme-toggle').addEventListener('click', () => {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        });
-    </script>
+    ${S}
 </body>
 </html>
         `);
