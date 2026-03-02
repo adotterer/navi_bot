@@ -113,6 +113,8 @@ const DEFAULT_NICKNAME_ALIASES = {
     "min min": "min-min",
     minmin: "min-min",
     mk: "meta-knight",
+    megaman: "mega-man",
+    "mega man": "mega-man",
     "Mr. G&W": "mr-game-and-watch",
     "mr g&w": "mr-game-and-watch",
     "mr-game-and-watch": "mr-game-and-watch",
