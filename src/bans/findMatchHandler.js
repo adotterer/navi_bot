@@ -2,47 +2,24 @@
  * /findmatch: Open-ended matchmaking. Challenger posts; anyone in the thread can click "Accept Match" to become the opponent.
  * Challenger picks BO3/BO5 from dropdown. When both someone has accepted and format is chosen, coinflip + stage ban starts.
  *
- * /findmatch infers which role to ping from the thread/channel name (e.g. "⭐・arch・mage" → @arch-mage, "evoker" → @evoker).
- * Tier commands (/evoker, /acolyte, etc.) pass roleName explicitly.
+ * Role to ping is the challenger's highest matchmaking role (single matchmaking channel; no channel-per-tier).
+ * Tier commands (/evoker, /acolyte, etc.) can pass roleName explicitly to override.
  */
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';
 
-/** Role names we can ping for find-match. Maps normalized thread/channel patterns to the actual role name. */
-const THREAD_TO_ROLE = [
-  { patterns: ['acolyte'], roleName: 'acolyte' },
-  { patterns: ['evoker'], roleName: 'evoker' },
-  { patterns: ['conjurer'], roleName: 'conjurer' },
-  { patterns: ['sorcerer'], roleName: 'sorcerer' },
-  { patterns: ['archmage', 'arch-mage'], roleName: 'arch-mage' },
-  { patterns: ['3framemod', '3-frame-mod', '3fr'], roleName: '3-Frame Mod' },
-];
+/** Matchmaking role hierarchy: most skilled first. Used to pick the challenger's highest role for pinging. */
+const MATCHMAKING_ROLE_HIERARCHY = ['arch-mage', 'sorcerer', 'conjurer', 'evoker', 'acolyte'];
 
 /**
- * Normalize thread/channel name for role matching: strip emojis, ・→-, collapse separators, lowercase.
- * E.g. "⭐・arch・mage" → "arch-mage", "evoker" → "evoker"
+ * Get the challenger's highest matchmaking role (first in hierarchy they have). Returns role name for pinging, or null.
+ * @param {import('discord.js').GuildMember | null} member
+ * @returns {string | null}
  */
-function normalizeThreadName(name) {
-  if (!name || typeof name !== 'string') return '';
-  let s = name
-    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2B50}\u{FE00}-\u{FE0F}\u{1F1E0}-\u{1F1FF}]/gu, '') // emojis including ⭐
-    .replace(/\u{30FB}/gu, '-')                                                // ・ (katakana middle dot)
-    .replace(/[\s_·•\u00B7]+/g, '-')                                           // spaces, underscores, middle dots
-    .replace(/-+/g, '-')                                                       // collapse hyphens
-    .replace(/^-|-$/g, '')                                                     // trim
-    .toLowerCase();
-  return s;
-}
-
-/**
- * Infer role name from thread/channel name. Returns role name for pinging, or null if no match.
- */
-function inferRoleFromThreadName(name) {
-  const normalized = normalizeThreadName(name);
-  if (!normalized) return null;
-  for (const { patterns, roleName } of THREAD_TO_ROLE) {
-    if (patterns.some(p => normalized === p || normalized.includes(p))) {
-      return roleName;
-    }
+function getHighestMatchmakingRoleName(member) {
+  if (!member?.roles?.cache) return null;
+  const roleNames = new Set(member.roles.cache.map(r => r.name.toLowerCase()));
+  for (const name of MATCHMAKING_ROLE_HIERARCHY) {
+    if (roleNames.has(name.toLowerCase())) return name;
   }
   return null;
 }
@@ -203,11 +180,7 @@ export async function handleFindMatch(interaction, options = {}) {
     }
 
     let content = null;
-    let roleName = options.roleName;
-    if (!roleName && interaction.channel && interaction.guild) {
-      const channelOrThreadName = interaction.channel.name || '';
-      roleName = inferRoleFromThreadName(channelOrThreadName);
-    }
+    const roleName = options.roleName ?? getHighestMatchmakingRoleName(interaction.member);
     if (roleName && interaction.guild) {
       const role = interaction.guild.roles.cache.find(r => r.name.toLowerCase() === roleName.toLowerCase());
       if (role) {
