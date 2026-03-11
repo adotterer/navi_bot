@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { EmbedBuilder } from 'discord.js';
-import { buildCharacterAliasMap, resolveCharacterFromText } from '../matchups/characterAliases.js';
+import { buildCharacterAliasMap, getDisplayNameForStatsSlug, resolveCharacterFromText } from '../matchups/characterAliases.js';
 import { createSplitEmbeds } from '../shared/messageSplitter.js';
 import { getPrompt } from '../shared/promptLoader.js';
 import { SUMMARY_DISCLAIMER } from '../shared/responseNotices.js';
@@ -221,8 +221,9 @@ export async function handleStatsLookup(message, args) {
             return message.reply(`❌ Stat not found.\n\n**Available stats:**\n${availableStats}\n\nExample: \`!stats air-acceleration falco\`. For full docs, see https://discord.com/channels/1010002260786430052/1471283194706788362/1471283541357756590`);
         }
         
-        // Find the character in the data
-        const characterData = findCharacterInCSV(csvData.data, resolvedSlug);
+        // Find the character in the data (use stats display name when available so slug forms like "banjo-kazooie" match CSV "Banjo & Kazooie")
+        const nameForCSV = getDisplayNameForStatsSlug(resolvedSlug) ?? resolvedSlug;
+        const characterData = findCharacterInCSV(csvData.data, nameForCSV);
         
         console.log(`📊 Character data found: ${characterData ? 'yes' : 'no'}`);
         
