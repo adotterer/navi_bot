@@ -221,11 +221,21 @@ function getStatsCanonicalEntries() {
     return entries;
 }
 
-/** Display name from stats spreadsheets for a given slug (e.g. "banjo-kazooie" → "Banjo & Kazooie").
+/** Normalize slug to a comparable key so "banjo-kazooie" and "banjo-and-kazooie" match the same character. */
+function slugKeyForStatsMatch(s) {
+    return (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').replace(/and/g, '');
+}
+
+/** Display name from stats spreadsheets for a given slug (e.g. "banjo-kazooie" or "banjo-and-kazooie" → "Banjo & Kazooie").
  *  Used so CSV lookups match the Character column exactly when the alias map uses a different slug form. */
 export function getDisplayNameForStatsSlug(slug) {
     if (!slug) return null;
-    const entry = getStatsCanonicalEntries().find((e) => e.slug === slug);
+    const entries = getStatsCanonicalEntries();
+    let entry = entries.find((e) => e.slug === slug);
+    if (!entry) {
+        const key = slugKeyForStatsMatch(slug);
+        if (key) entry = entries.find((e) => slugKeyForStatsMatch(e.slug) === key);
+    }
     return entry ? entry.displayName : null;
 }
 
