@@ -115,15 +115,16 @@ function findCharacterInCSV(data, characterName) {
     // Normalize character name for comparison
     const normalized = characterName.toLowerCase().replace(/[^a-z0-9]/g, '');
     
+    // Prefer exact match so "Dr. Mario" (drmario) does not match "Mario" (mario)
     for (const row of data) {
         const rowChar = row.Character.toLowerCase().replace(/[^a-z0-9]/g, '');
-        
-        // Check if character name matches (handle variations like "Samus/Dark Samus")
-        if (rowChar.includes(normalized) || normalized.includes(rowChar)) {
-            return row;
-        }
+        if (rowChar === normalized) return row;
     }
-    
+    // Else: row name must contain the search term (e.g. "samus" matches "Dark Samus"); never use normalized.includes(rowChar) or we match Mario when searching Dr. Mario
+    for (const row of data) {
+        const rowChar = row.Character.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (rowChar.includes(normalized)) return row;
+    }
     return null;
 }
 
