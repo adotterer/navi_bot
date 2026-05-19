@@ -248,6 +248,54 @@ function moveDataToCsv(moves) {
 }
 
 /**
+ * Write scraped sections to CSV files for one character
+ */
+function writeCharacterCsvFiles(characterSlug, sections) {
+  const characterDir = path.join(OUTPUT_DIR, characterSlug.replace(/_/g, '-'));
+  if (!fs.existsSync(characterDir)) {
+    fs.mkdirSync(characterDir, { recursive: true });
+  }
+
+  let filesCreated = 0;
+  for (const [sectionKey, sectionData] of Object.entries(sections)) {
+    const moves = parseFrameDataSection(sectionData.$, sectionData.element);
+    if (moves.length === 0) {
+      console.log(`  ⚠️  No moves found in ${sectionKey}`);
+      continue;
+    }
+
+    const filename = `${sectionKey}.csv`;
+    const filepath = path.join(characterDir, filename);
+    fs.writeFileSync(filepath, moveDataToCsv(moves), 'utf8');
+    console.log(`  ✅ Created ${characterSlug}/${filename} (${moves.length} moves)`);
+    filesCreated++;
+  }
+  return filesCreated;
+}
+
+/**
+ * Scrape one character by URL slug (e.g. "sora")
+ */
+async function scrapeSingleCharacter(slug) {
+  const characterSlug = slug.replace(/_/g, '-');
+  const characterUrl = `${BASE_URL}/${slug.replace(/-/g, '_')}`;
+  const displayName = characterSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+  if (!fs.existsSync(OUTPUT_DIR)) {
+    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  }
+
+  console.log(`\n👤 ${displayName} (${characterUrl})\n`);
+  const sections = await scrapeCharacterFrameData(characterUrl, displayName);
+  if (!sections || Object.keys(sections).length === 0) {
+    console.log('  ⚠️  No frame data found');
+    return 0;
+  }
+
+  return writeCharacterCsvFiles(characterSlug, sections);
+}
+
+/**
  * Main scraper function
  */
 async function scrapeAllCharacterFrameData() {
@@ -280,38 +328,11 @@ async function scrapeAllCharacterFrameData() {
           continue;
         }
         
-        // Create character directory
         const characterSlug = character.slug.replace(/_/g, '-');
-        const characterDir = path.join(OUTPUT_DIR, characterSlug);
-        if (!fs.existsSync(characterDir)) {
-          fs.mkdirSync(characterDir, { recursive: true });
-        }
-        
-        // Process each section and create CSV files
-        for (const [sectionKey, sectionData] of Object.entries(sections)) {
-          try {
-            // Don't reload cheerio, just use the element directly
-            const moves = parseFrameDataSection(sectionData.$, sectionData.element);
-            
-            if (moves.length === 0) {
-              console.log(`  ⚠️  No moves found in ${sectionKey}`);
-              continue;
-            }
-            
-            // Create filename: section.csv inside character directory
-            const filename = `${sectionKey}.csv`;
-            const filepath = path.join(characterDir, filename);
-            
-            // Write CSV file
-            const csv = moveDataToCsv(moves);
-            fs.writeFileSync(filepath, csv, 'utf8');
-            
-            console.log(`  ✅ Created ${characterSlug}/${filename} (${moves.length} moves)`);
-            totalFilesCreated++;
-          } catch (sectionError) {
-            console.error(`  ⚠️  Error processing ${sectionKey}:`, sectionError.message);
-            continue;
-          }
+        try {
+          totalFilesCreated += writeCharacterCsvFiles(characterSlug, sections);
+        } catch (sectionError) {
+          console.error(`  ⚠️  Error writing CSVs:`, sectionError.message);
         }
       } catch (charError) {
         console.error(`❌ Error processing ${character.name}:`, charError.message);
@@ -325,5 +346,14 @@ async function scrapeAllCharacterFrameData() {
   }
 }
 
-// Run the scraper
-scrapeAllCharacterFrameData();
+const singleSlug = process.argv[2];
+if (singleSlug) {
+  scrapeSingleCharacter(singleSlug)
+    .then((count) => console.log(`\n✨ Complete! Created ${count} CSV files in ${OUTPUT_DIR}/${singleSlug.replace(/_/g, '-')}`))
+    .catch((error) => {
+      console.error('❌ Fatal error:', error.message);
+      process.exit(1);
+    });
+} else {
+  scrapeAllCharacterFrameData();
+}

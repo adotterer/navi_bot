@@ -1,0 +1,19 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral B (Firaga),16,41,,Can fire additional shots every 36 frames. Windbox on frames 14—15.,5.6/5.2/4.8,6/6/6,6/6/6,Early/Late/Latest,-14,16—25/26—35/36—55,,https://ultimateframedata.com/hitboxes/sora/SoraMagicFiraga.gif
+Neutral B (Thundaga),30/44/58,69,,Startup refers to when the lightning bolts become active.,5.2,9,3,,**,"Ground: 30—52/44—66/58—80 
+		Air: 29—52/43—66/58—80",,https://ultimateframedata.com/hitboxes/sora/SoraThundagaG.gif|https://ultimateframedata.com/hitboxes/sora/SoraThundagaA.gif
+Neutral B (Blizzaga),15...,55,,"Windbox starts on 13. 
+		Active frame notes: each line is a different ice shard. First line is Windbox/Final, the shards are Early/Mid/Late (except last one). Only size and knockback changes. 
+		13-14/35-36
+		15-17/18-20/21-27
+		18-20/21-23/24-30
+		20-22/23-25/26-32
+		23-25/26-28/29-35
+		25-27/28-30/31-37
+		28-30/31-33/34-40
+		30-32/33-35/36-42
+		33-37/38-47",2.4/3.6/1.8,*/*/5,*/*/2,Shard/Final Shard/Final,-17,... see notes :),,https://ultimateframedata.com/hitboxes/sora/SoraMagicBlizzaga.gif
+Side B (Sonic Blade),17/45/73,48/88/120,20,"Total frames refers to travel along the ground. Second and third lunges are voluntary. Hit 1 always does 5.2 damage, hit 2/3 do 5.2 if homing or 3.0 when manually aiming.",5.2 (5.2/3.0),6/5/5,6/4/4,First/Second/Third,-25/-39/-43,,,https://ultimateframedata.com/hitboxes/sora/SoraSonicBlade1.gif|https://ultimateframedata.com/hitboxes/sora/SoraSonicBlade2.gif|https://ultimateframedata.com/hitboxes/sora/SoraSonicBlade3.gif
+Up B (Aerial Sweep),9...,,21,Can cancel into Sonic Blade on frame 50,3.8/2.1/4.6,5/4/6,5/3/5,First/Multi/Final,**,(9/10-11)/17-19/20-22/24-26/27-29/31-33/41-43,,https://ultimateframedata.com/hitboxes/sora/SoraAerialSweep.gif
+Down B (Counterattack),7,51,-,Full intangibility on frames 7-8. Counters on frames 8—25. Sora must be facing the attacker.,**,**,**,**,**,7—25 (counter),,https://ultimateframedata.com/hitboxes/sora/SoraCounterAttack.gif
+"Down B (Counterattack, Success)",25,49,-,"Full intangibility on frame 1-29 (not including freeze frames). When countering a projectile, the first 22 frames of startup are skipped. When turning around, is active on frames 31—35 with 55 total frames and full intangibility on 1-35.",**,**,**,**,**,25—29,20,https://ultimateframedata.com/hitboxes/sora/SoraCounterAttackHit.gif

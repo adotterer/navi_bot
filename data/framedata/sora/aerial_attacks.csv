@@ -1,0 +1,10 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Neutral Air,8,41,9,Transitions to N-air 2 as early as frame 23. Autocancels on frame 30 onward.,3.8,5,3,,-6,8—20,21,https://ultimateframedata.com/hitboxes/sora/SoraNAir1.gif
+Neutral Air 2,6,33,10,Transitions to N-air 3 as early as frame 20. Autocancels on frame 28 onward,3.5,5,2,,-8,6—10,23,https://ultimateframedata.com/hitboxes/sora/SoraNAir2.gif
+Neutral Air 3,8,41,11,Autocancels on frame 36 onward,6.8,6,3,,-8,9—13,28,https://ultimateframedata.com/hitboxes/sora/SoraNAir3.gif
+Forward Air,10,43,12,Transitions to F-air 2 as early as frame 23. Autocancels on frame 1-2 and 38 onward,4.8,6,3,,-9,10—15,28,https://ultimateframedata.com/hitboxes/sora/SoraFAir1.gif
+Forward Air 2,6,33,13,Transitions to F-Air 3 as early as frame 20. Autocancels on frame 28 onward,4.0,5,3,,-10,6—10,23,https://ultimateframedata.com/hitboxes/sora/SoraFAir2.gif
+Forward Air 3,8,41,14,Autocancels on frame 36 onward,6.8,6,3,,-11,9—13,28,https://ultimateframedata.com/hitboxes/sora/SoraFAir3.gif
+Back Air,13,37,11,Autocancels on frame 1-4 and 37 onward,13.2,9,5,,-6,13—15,22,https://ultimateframedata.com/hitboxes/sora/SoraBAir.gif
+Up Air,10,41,10,Autocancels on frame 32 onward. Scoop active 10-11.,12.2,9,5,,-5,10—18,23,https://ultimateframedata.com/hitboxes/sora/SoraUAir.gif
+Down Air,15,57,28,Landing hit on frames 1-2. Autocancels on frame 46 onward.,9.8/5.5,8/6,11/6,Falling/Landing,-21,15—44,13,https://ultimateframedata.com/hitboxes/sora/SoraDAir.gif|https://ultimateframedata.com/hitboxes/sora/SoraDAirLanding.gif

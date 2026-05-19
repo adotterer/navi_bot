@@ -1,0 +1,13 @@
+Move Name,Startup,Total Frames,Landing Lag,Notes,Base Damage,Shield Lag,Shield Stun,Property 1,On Shield,Active Frames,End Lag,GIF URL
+Jab 1,5,36,,The blade is only hitting directly above at frame 5. Transitions to jab 2 as early as frame 19.,2.8,5,8,,-22,5—12,24,https://ultimateframedata.com/hitboxes/sora/SoraJab1.gif
+Jab 2,7,37,,Transitions to Jab 3 as early as frame 18,2.6,5,8,,-22,7—10,27,https://ultimateframedata.com/hitboxes/sora/SoraJab2.gif
+Jab 3,10,45,,,4.2,5,12,,-23,10—17,28,https://ultimateframedata.com/hitboxes/sora/SoraJab3.gif
+Forward Tilt (Strong/Single),13,41,,,7.2,7,15,,-12,13—17,24,https://ultimateframedata.com/hitboxes/sora/SoraFTilt.gif
+FTilt 1 > FTilt 2 Combo,"13, 7","40, 35",,,"5.2, 3.6","5, 5","14, 10","First Hit, Second Hit",-17,"13—17, 7—10",27,https://ultimateframedata.com/hitboxes/sora/SoraFTilt1.gif|https://ultimateframedata.com/hitboxes/sora/SoraFTilt2.gif
+Forward Tilt 3,10,45,,,6.4,6,14,,-23,10—14,31,https://ultimateframedata.com/hitboxes/sora/SoraFTilt3.gif
+Up Tilt,8/12/16/20/24/28/33,53,,**,0.8/1.2/4.6,4/4/6,2/2/5,,-13,8—9/12—13/16—17/20—21/24—25/28—29/33—36,17,https://ultimateframedata.com/hitboxes/sora/SoraUTilt.gif
+Down Tilt,9,31,,,5.2,6,6,,-16,9—10,21,https://ultimateframedata.com/hitboxes/sora/SoraDTilt.gif
+Dash Attack,7,47,,Lower leg intangibility on 7-18. Extra hurtbox between Sora's legs on 22-39.,9.6/7.6/7.2,8/7,18/15,Early/Late,-21,7—12(13—18/19—24),23,https://ultimateframedata.com/hitboxes/sora/SoraDashAttack.gif
+Forward Smash,16,52,,Charge hold on frame 5.,13.8/15.4,12,19,Early/Late,-16,16—17(18—20),32,https://ultimateframedata.com/hitboxes/sora/SoraFSmash.gif
+Up Smash,11/16,52,,Charge hold on frame 6.,0.6/14.6,0/10,3/10,**,-26,11—12/16—19,33,https://ultimateframedata.com/hitboxes/sora/SoraUSmash.gif
+Down Smash,20,55,,Fully intangible on frame 3-6. Lower body intangibility on frame 7-10. Charge hold on frame 2.,15.2/14.2,10/10,10/10,Close/Far,-24,20—23(20—22),32,https://ultimateframedata.com/hitboxes/sora/SoraDSmash.gif
