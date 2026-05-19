@@ -426,29 +426,28 @@ function parseCharacterAndMove(input, guild) {
     return null;
 }
 
-const ULTIMATE_FRAMEDATA_HOST = 'ultimateframedata.com';
+function appBaseUrl() {
+    return (process.env.APP_BASE_URL || `http://localhost:${process.env.PORT || 8080}`).replace(/\/$/, '');
+}
 
 /**
- * Resolve frame data image URL to self-hosted version when available.
- * Images from ultimateframedata.com are served from our S3 bucket (assets/framedata/) so they work if the source site goes down.
+ * Resolve a GIF URL for Discord embeds using the value stored in the spreadsheet.
+ * - Full https URLs (ultimateframedata.com, S3, APP_BASE_URL, etc.) are used as-is.
+ * - Relative paths are mapped to the self-hosted /assets/framedata/ proxy.
  */
 function resolveFrameDataImageUrl(url) {
-    if (!url || typeof url !== 'string') return url;
+    if (!url || typeof url !== 'string') return '';
     const u = url.trim();
-    if (!u) return url;
-    try {
-        const parsed = new URL(u);
-        const host = (parsed.hostname || '').toLowerCase();
-        if (host !== ULTIMATE_FRAMEDATA_HOST && !host.endsWith('.' + ULTIMATE_FRAMEDATA_HOST)) {
-            return url;
-        }
-        const pathPart = (parsed.pathname || '').replace(/^\/+/, '');
-        if (!pathPart) return url;
-        const baseUrl = (process.env.APP_BASE_URL || `http://localhost:${process.env.PORT || 8080}`).replace(/\/$/, '');
-        return `${baseUrl}/assets/framedata/${pathPart}`;
-    } catch (_) {
-        return url;
+    if (!u) return '';
+
+    if (/^https?:\/\//i.test(u)) {
+        return u;
     }
+
+    const assetsMatch = u.match(/^\/?assets\/framedata\/(.+)$/i);
+    const pathPart = (assetsMatch ? assetsMatch[1] : u).replace(/^\/+/, '');
+    if (!pathPart) return '';
+    return `${appBaseUrl()}/assets/framedata/${pathPart}`;
 }
 
 function parseGifUrls(move, arseneMode) {
