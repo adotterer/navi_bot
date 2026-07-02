@@ -173,7 +173,7 @@ client.on("clientReady", async () => {
     await cleanupExpiredSessions();
 
     // Initialize weekly export scheduler
-    initializeScheduler(client);
+    // initializeScheduler(client);
     setClient(client);
 
     client.user.setPresence({
