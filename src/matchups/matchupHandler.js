@@ -8,6 +8,16 @@ import { EmbedBuilder } from 'discord.js';
 import { buildMatchupReferenceData } from '../shared/promptDataHelper.js';
 import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 import { createRun, updateRun } from '../admin/agent/runStore.js';
+import { getMatchupChannelSlugs } from '../export/exportHandler.js';
+
+/** Ask-Navi channel name where !mu-all posts every character's matchup guide. */
+const ASK_NAVI_CHANNEL_NAME = '⭐・ask・navi™';
+/** Delay between characters in !mu-all so we don't hammer the Gemini API or hit Discord rate limits. */
+const MU_ALL_DELAY_MS = 5000;
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
     defaultModel: process.env.GEMINI_MODEL || 'gemini-3-flash-preview'
@@ -161,6 +171,116 @@ export async function handleMatchupNotes(message) {
             await message.reply("❌ Error generating match-up notes: " + error.message);
         }
     }
+}
+
+/**
+ * Generates matchup notes for a single character slug and posts the embeds directly to a channel
+ * (no reply target — used by !mu-all to dump every character into ask-navi).
+ * Returns { displayName, posted, reason? }.
+ */
+async function generateAndPostMatchupNotes(channel, characterSlug) {
+    const displayName = characterSlug.replace("|", "/");
+    const { messages } = await fetchMultiCharacterData(characterSlug);
+
+    if (!messages || messages.length === 0) {
+        return { displayName, posted: false, reason: 'no messages found' };
+    }
+
+    const katyparryMessages = messages.filter(msg => msg.author === 'katyparry');
+    const otherMessages = messages.filter(msg => msg.author !== 'katyparry');
+    const referenceData = await buildMatchupReferenceData({
+        opponentSlug: characterSlug,
+        opponentAlias: characterSlug,
+        messages,
+        question: null
+    });
+
+    const prompt = await getPrompt('mu_notes', {
+        displayName,
+        priorityMessages: katyparryMessages.map(formatMessageForPrompt).join('\n\n'),
+        otherMessages: otherMessages.map(formatMessageForPrompt).join('\n\n'),
+        referenceData: referenceData || 'None found'
+    });
+
+    const run = createRun({ mode: 'command', mission: `!mu-all ${characterSlug}` });
+    const response = await genAI.models.generateContent({
+        model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
+        contents: prompt
+    });
+    if (response.usageMetadata) {
+        updateRun(run.id, {
+            usage: {
+                promptTokenCount: response.usageMetadata.promptTokenCount,
+                candidatesTokenCount: response.usageMetadata.candidatesTokenCount,
+                cachedContentTokenCount: response.usageMetadata.cachedContentTokenCount
+            }
+        });
+    }
+
+    const summary = response.text;
+    await channel.send(`**${displayName}**`);
+    const embeds = createSplitEmbeds(EmbedBuilder, summary, INFO_EMBED_COLOR, SUMMARY_DISCLAIMER);
+    await channel.send({ embeds });
+
+    return { displayName, posted: true };
+}
+
+/**
+ * !mu-all: generates matchup notes for every character with a Match Ups thread and posts them,
+ * one at a time with a throttling delay, to the ask-navi channel. Moderators/Legend only —
+ * gated in main.js since it fires one Gemini call per character.
+ */
+export async function handleMatchupAll(message) {
+    const guild = message.guild;
+    if (!guild) {
+        await message.reply("❌ This command must be used in a server.");
+        return;
+    }
+
+    const askNaviChannel = guild.channels.cache.find(ch => ch.name === ASK_NAVI_CHANNEL_NAME);
+    if (!askNaviChannel) {
+        await message.reply(`❌ Could not find the ${ASK_NAVI_CHANNEL_NAME} channel.`);
+        return;
+    }
+
+    const slugs = getMatchupChannelSlugs(guild);
+    if (slugs.length === 0) {
+        await message.reply("❌ No character matchup channels found.");
+        return;
+    }
+
+    await message.reply(`⏳ Posting MU guides for **${slugs.length} characters** to ${askNaviChannel}. This will take a while (throttled ~${MU_ALL_DELAY_MS / 1000}s between characters)...`);
+
+    let posted = 0;
+    const failed = [];
+
+    for (const slug of slugs) {
+        try {
+            const result = await generateAndPostMatchupNotes(askNaviChannel, slug);
+            if (result.posted) {
+                posted++;
+                console.log(`✅ [!mu-all] Posted MU guide for ${slug}`);
+            } else {
+                failed.push(`${slug} (${result.reason})`);
+                console.warn(`⚠️ [!mu-all] Skipped ${slug}: ${result.reason}`);
+            }
+        } catch (error) {
+            if (isModelOverloaded(error)) {
+                failed.push(`${slug} (model overloaded)`);
+                console.warn(`⚠️ [!mu-all] Model overloaded on ${slug}, backing off...`);
+                await sleep(MU_ALL_DELAY_MS * 2);
+            } else {
+                failed.push(`${slug} (${error.message})`);
+                console.error(`❌ [!mu-all] Error generating notes for ${slug}:`, error);
+            }
+        }
+
+        await sleep(MU_ALL_DELAY_MS);
+    }
+
+    const summary = `✅ **!mu-all complete.** Posted **${posted}/${slugs.length}** MU guides to ${askNaviChannel}.` +
+        (failed.length > 0 ? `\n⚠️ Failed/skipped (${failed.length}): ${failed.slice(0, 15).join(', ')}${failed.length > 15 ? '…' : ''}` : '');
+    await message.channel.send(summary);
 }
 
 export async function handleMuQuestion(message) {

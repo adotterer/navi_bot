@@ -6,7 +6,7 @@ import fs from 'fs';
 // Import handlers
 import { handleExportCharacter, handleExportMatchups, handleListThreadCounts } from './src/export/exportHandler.js';
 import { handleDMMessage } from './src/messages/dmHandler.js';
-import { handleMatchupNotes, handleMuQuestion, handleRefinement } from './src/matchups/matchupHandler.js';
+import { handleMatchupNotes, handleMuQuestion, handleRefinement, handleMatchupAll } from './src/matchups/matchupHandler.js';
 import { handleGeneralTips } from './src/matchups/generalTipsHandler.js';
 import { handleQuestion } from './src/messages/questionHandler.js';
 import { handleShouldHave, handleArenaIsUp, followupResponses, lanWarningResponses } from './src/messages/messageHandlers.js';
@@ -365,6 +365,7 @@ client.on("messageCreate", async (message) => {
     const nameToCheck = channelName + ' ' + parentName;
     const normalizedChannelName = nameToCheck.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
     const isAskNaviChannel = normalizedChannelName.includes('ask') && normalizedChannelName.includes('navi');
+    const isMuAllCommand = message.content.toLowerCase().startsWith("!mu-all");
     const isMuCommand = message.content.toLowerCase().startsWith("!mu-notes") ||
         message.content.toLowerCase().startsWith("!mu") ||
         message.content.toLowerCase().startsWith("!mu-question") ||
@@ -406,6 +407,12 @@ client.on("messageCreate", async (message) => {
     // Add alias: Moderators + Legend only (updates S3, refreshes cache)
     if (isAddAliasCommand) {
         await handleAddAlias(message);
+        return;
+    }
+
+    // MU-all: Moderators + Legend only, any channel (fires one Gemini call per character)
+    if (isMuAllCommand && !hasAuthorizedRole) {
+        await message.reply("❌ Only Moderators or Legend members can run !mu-all.");
         return;
     }
 
@@ -664,6 +671,12 @@ client.on("messageCreate", async (message) => {
         const output = `📁 **${categoryName}** (${channelNames.length})\n` +
             channelNames.map(name => `• ${name}`).join("\n");
         await sendInChunks(output);
+        return;
+    }
+
+    // ===== MATCH-UP NOTES: ALL CHARACTERS =====
+    if (isMuAllCommand) {
+        await handleMatchupAll(message);
         return;
     }
 
