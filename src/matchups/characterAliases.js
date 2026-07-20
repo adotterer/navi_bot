@@ -253,7 +253,7 @@ export function buildCharacterAliasMap(guild) {
     const categoryNames = ["Match Ups (B-L)", "Match Ups (M-Z)"];
 
     const matchupChannels = guild.channels.cache.filter(
-        ch => ch.parent && categoryNames.includes(ch.parent.name)
+        ch => ch.parent && categoryNames.some(name => ch.parent.name.endsWith(name))
     );
 
     for (const channel of matchupChannels.values()) {

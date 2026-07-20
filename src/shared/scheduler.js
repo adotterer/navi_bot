@@ -30,7 +30,7 @@ export function initializeScheduler(client) {
             const startTime = new Date();
 
             for (const categoryName of categoryNames) {
-                const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
+                const category = guild.channels.cache.find(ch => ch.children && ch.name.endsWith(categoryName));
                 
                 if (!category) {
                     console.log(`⚠️  Category '${categoryName}' not found`);

@@ -15,7 +15,7 @@ const EXPORTS_DIR = path.join(process.cwd(), 'data', 'exports');
 const CANONICAL_THREADS_S3_KEY = 'admin/canonical-character-threads.json';
 const CANONICAL_THREADS_PATH = path.join(process.cwd(), 'data', 'canonical-character-threads.json');
 
-const MATCHUP_CATEGORY_NAMES = ['Match Ups (B-L)', 'Match Ups (M-Z)'];
+export const MATCHUP_CATEGORY_NAMES = ['Match Ups (B-L)', 'Match Ups (M-Z)'];
 
 /** Channel names to exclude from matchup export and canonical list (e.g. ask-navi in the category). */
 export const EXCLUDED_MATCHUP_CHANNEL_NAMES = ['⭐・ask・navi™'];
@@ -24,16 +24,22 @@ function isExcludedMatchupChannel(name) {
     return EXCLUDED_MATCHUP_CHANNEL_NAMES.includes(name);
 }
 
+/** Matches by suffix (not exact equality) so a category rename like "Zelda: Match Ups (B-L)" still resolves. */
+function findMatchupCategory(guild, categoryName) {
+    return guild.channels.cache.find(ch => ch.children && ch.name.endsWith(categoryName));
+}
+
 /**
  * Collect all text channel names from the Match Ups (B-L) and (M-Z) categories.
  * Returns a sorted array of slugs (channel names), e.g. ["banjo-and-kazooie", "mr-game-and-watch", "peach | daisy"].
  * Use this for a canonical list of character threads; also written to data/canonical-character-threads.json when exports run.
+ * Pass `categoryNames` to restrict to a subset (e.g. just ['Match Ups (B-L)']); defaults to both.
  */
-export function getMatchupChannelSlugs(guild) {
+export function getMatchupChannelSlugs(guild, categoryNames = MATCHUP_CATEGORY_NAMES) {
     if (!guild || !guild.channels?.cache) return [];
     const slugs = [];
-    for (const categoryName of MATCHUP_CATEGORY_NAMES) {
-        const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
+    for (const categoryName of categoryNames) {
+        const category = findMatchupCategory(guild, categoryName);
         if (!category) continue;
         for (const [, ch] of category.children.cache.filter(ch => ch.isTextBased() && !isExcludedMatchupChannel(ch.name))) {
             slugs.push(ch.name);
@@ -99,7 +105,7 @@ export async function handleExportFalco(message) {
 
 function findMatchupChannel(guild, slug) {
     for (const categoryName of MATCHUP_CATEGORY_NAMES) {
-        const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
+        const category = findMatchupCategory(guild, categoryName);
         if (!category) continue;
         const channel = category.children.cache.find(
             ch => ch.isTextBased() && ch.name === slug
@@ -187,7 +193,7 @@ export async function handleExportMatchups(message) {
         const exportedFiles = [];
         
         for (const categoryName of MATCHUP_CATEGORY_NAMES) {
-            const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
+            const category = findMatchupCategory(guild, categoryName);
             
             if (!category) {
                 console.log(`⚠️  Category '${categoryName}' not found`);
@@ -346,7 +352,7 @@ export async function handleListThreadCounts(message) {
         await message.reply({ embeds: [buildEmbed("⏳ Counting messages in each character thread...")] });
 
         for (const categoryName of MATCHUP_CATEGORY_NAMES) {
-            const category = guild.channels.cache.find(ch => ch.children && ch.name === categoryName);
+            const category = findMatchupCategory(guild, categoryName);
             if (!category) continue;
 
             const channels = category.children.cache.filter(ch => ch.isTextBased() && !isExcludedMatchupChannel(ch.name));

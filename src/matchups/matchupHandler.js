@@ -8,7 +8,7 @@ import { EmbedBuilder } from 'discord.js';
 import { buildMatchupReferenceData } from '../shared/promptDataHelper.js';
 import { INFO_EMBED_COLOR } from '../messages/faqAndAliasHandler.js';
 import { createRun, updateRun } from '../admin/agent/runStore.js';
-import { getMatchupChannelSlugs } from '../export/exportHandler.js';
+import { getMatchupChannelSlugs, MATCHUP_CATEGORY_NAMES } from '../export/exportHandler.js';
 
 /** Ask-Navi channel name where !mu-all posts every character's matchup guide. */
 const ASK_NAVI_CHANNEL_NAME = '⭐・ask・navi™';
@@ -225,10 +225,16 @@ async function generateAndPostMatchupNotes(channel, characterSlug) {
     return { displayName, posted: true };
 }
 
+/** Maps a !mu-all argument (e.g. "b-l", "bl") to the matching category name from MATCHUP_CATEGORY_NAMES. */
+function resolveCategoryArg(arg) {
+    const normalized = (arg || '').toLowerCase().replace(/[^a-z]/g, '');
+    return MATCHUP_CATEGORY_NAMES.find(name => name.toLowerCase().replace(/[^a-z]/g, '').includes(normalized)) || null;
+}
+
 /**
- * !mu-all: generates matchup notes for every character with a Match Ups thread and posts them,
- * one at a time with a throttling delay, to the ask-navi channel. Moderators/Legend only —
- * gated in main.js since it fires one Gemini call per character.
+ * !mu-all [b-l|m-z]: generates matchup notes for every character with a Match Ups thread (or just
+ * one category if specified) and posts them, one at a time with a throttling delay, to the ask-navi
+ * channel. Moderators/Legend only — gated in main.js since it fires one Gemini call per character.
  */
 export async function handleMatchupAll(message) {
     const guild = message.guild;
@@ -243,13 +249,27 @@ export async function handleMatchupAll(message) {
         return;
     }
 
-    const slugs = getMatchupChannelSlugs(guild);
+    const categoryArg = message.content.trim().split(/\s+/).slice(1).join(' ');
+    let categoryNames;
+    let scopeLabel = 'all characters';
+
+    if (categoryArg) {
+        const matchedCategory = resolveCategoryArg(categoryArg);
+        if (!matchedCategory) {
+            await message.reply(`❌ Unknown category \`${categoryArg}\`. Use \`!mu-all\`, \`!mu-all b-l\`, or \`!mu-all m-z\`.`);
+            return;
+        }
+        categoryNames = [matchedCategory];
+        scopeLabel = matchedCategory;
+    }
+
+    const slugs = getMatchupChannelSlugs(guild, categoryNames);
     if (slugs.length === 0) {
         await message.reply("❌ No character matchup channels found.");
         return;
     }
 
-    await message.reply(`⏳ Posting MU guides for **${slugs.length} characters** to ${askNaviChannel}. This will take a while (throttled ~${MU_ALL_DELAY_MS / 1000}s between characters)...`);
+    await message.reply(`⏳ Posting MU guides for **${slugs.length} characters** (${scopeLabel}) to ${askNaviChannel}. This will take a while (throttled ~${MU_ALL_DELAY_MS / 1000}s between characters)...`);
 
     let posted = 0;
     const failed = [];
@@ -278,7 +298,7 @@ export async function handleMatchupAll(message) {
         await sleep(MU_ALL_DELAY_MS);
     }
 
-    const summary = `✅ **!mu-all complete.** Posted **${posted}/${slugs.length}** MU guides to ${askNaviChannel}.` +
+    const summary = `✅ **!mu-all complete (${scopeLabel}).** Posted **${posted}/${slugs.length}** MU guides to ${askNaviChannel}.` +
         (failed.length > 0 ? `\n⚠️ Failed/skipped (${failed.length}): ${failed.slice(0, 15).join(', ')}${failed.length > 15 ? '…' : ''}` : '');
     await message.channel.send(summary);
 }
