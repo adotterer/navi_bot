@@ -6,8 +6,7 @@ import { zeldaPage, zeldaHeader } from './zeldaLayout.js';
 import { requireSiteAuth, requireModOrLegend, checkRecruiterPassword } from '../shared/siteAuth.js';
 import { getAuthorizeUrl, exchangeCodeForToken, getDiscordUser } from '../shared/discordOAuth.js';
 import { getGuildMemberRoles, getGuildRoleNameMap, hasAnyRoleName, getMatchupChannelMap, fetchAllChannelMessages } from '../shared/discordRest.js';
-import { getCanonicalCharacterThreads } from '../matchups/characterAliases.js';
-import { channelNameToUrlSlug, channelNameToDisplayName, resolveUrlSlugToChannelName } from './zeldaSlugs.js';
+import { channelNameToUrlSlug, channelNameToDisplayName, resolveUrlSlugToChannelName, getAllMatchupChannelNames } from './zeldaSlugs.js';
 import { getCachedGuide, saveGuide } from './zeldaGuideStore.js';
 import { renderGuideHtml } from './renderGuideHtml.js';
 import { buildMatchupReferenceData } from '../shared/promptDataHelper.js';
@@ -106,7 +105,7 @@ zeldaRouter.post('/logout', express.urlencoded({ extended: true }), (req, res) =
 });
 
 zeldaRouter.get('/', requireSiteAuth, async (req, res) => {
-    const channelNames = await getCanonicalCharacterThreads();
+    const channelNames = await getAllMatchupChannelNames();
     const entries = await Promise.all(
         channelNames.map(async (name) => {
             const guide = await getCachedGuide(name).catch(() => null);

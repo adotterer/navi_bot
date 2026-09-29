@@ -1,4 +1,4 @@
-import { getCanonicalCharacterThreads } from '../matchups/characterAliases.js';
+import { getMatchupChannelMap } from '../shared/discordRest.js';
 
 /** Lossy, display-only transform: real channel name -> URL-safe path segment. */
 export function channelNameToUrlSlug(name) {
@@ -16,10 +16,21 @@ export function channelNameToDisplayName(name) {
 }
 
 /**
- * Resolves a URL slug back to the real channel name by comparing against the live canonical
- * list (rather than trying to reverse the lossy transform) — one source of truth.
+ * Resolves a URL slug back to the real channel name by comparing against the live REST-fetched
+ * channel list (rather than trying to reverse the lossy transform, or relying on the S3-cached
+ * canonical-character-threads.json snapshot, which is only refreshed when someone runs
+ * !export matchups and can go stale) — one source of truth, always current.
  */
 export async function resolveUrlSlugToChannelName(slug) {
-    const channelNames = await getCanonicalCharacterThreads();
-    return channelNames.find((name) => channelNameToUrlSlug(name) === slug) || null;
+    const channelMap = await getMatchupChannelMap(process.env.GUILD_ID);
+    for (const name of channelMap.keys()) {
+        if (channelNameToUrlSlug(name) === slug) return name;
+    }
+    return null;
+}
+
+/** All matchup channel names, live from Discord (not the possibly-stale S3 canonical snapshot). */
+export async function getAllMatchupChannelNames() {
+    const channelMap = await getMatchupChannelMap(process.env.GUILD_ID);
+    return [...channelMap.keys()];
 }
