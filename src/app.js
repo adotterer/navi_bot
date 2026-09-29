@@ -204,7 +204,98 @@ export function createApp() {
 
     app.use('/zelda', zeldaRouter);
 
-    app.get('/', async (req, res) => {
+    // Root landing page (primary application entry point).
+    // Introduces the current project (Zelda MU Guides web app) and links to /legacy
+    // for the original always-on Discord bot's command reference.
+    app.get('/', (req, res) => {
+        const nonce = res.locals.nonce || '';
+        const scriptNonce = nonce ? ` nonce="${nonce.replace(/"/g, '&quot;')}"` : '';
+        const S = '</script>';
+
+        res.send(`
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Navi — Zelda Matchup Guides</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="/admin.css" rel="stylesheet">
+    <script${scriptNonce}>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>
+</head>
+<body class="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50 overflow-x-hidden">
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-100">Navi 🧚</h1>
+            <button id="theme-toggle" type="button" class="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-2 rounded-lg transition-colors border border-slate-200 dark:border-slate-700" title="Toggle theme">
+                <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+            </button>
+        </div>
+    </header>
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 py-16">
+        <div class="mb-3">
+            <span id="status" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white bg-slate-500">Checking...</span>
+        </div>
+        <h2 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">Zelda Matchup Guides</h2>
+        <p class="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+            A community tool for a Super Smash Bros. Ultimate Discord server. Each page is an AI-generated
+            matchup summary for Zelda vs. a specific character, sourced from years of the community's own
+            Discord discussion. Guides are cached and only regenerated on demand — a moderator clicks
+            "Fetch latest" to pull fresh Discord messages and re-run the summary, rather than the AI
+            re-running on every page view.
+        </p>
+        <p class="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+            Access is gated by Discord OAuth2 and a live role check against the server (a paid "Coaching Pass"
+            role to view, Moderator/Legend to regenerate) — no separate account system. The whole app runs on
+            a single $5/month box (no load balancer, no idle compute) with GitHub Actions deploying on every push.
+        </p>
+        <a href="/zelda" class="inline-flex items-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-3 mb-10">View the Matchup Guides &rarr;</a>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+            This project began as an always-on Discord bot (stage-ban tools, tournament tracking, frame-data
+            lookups). Those commands are parked for now, not removed — see the
+            <a href="/legacy" class="underline">legacy command reference</a> for what they did.
+        </p>
+    </main>
+    <script${scriptNonce}>
+        (function() {
+            var d = document.getElementById('theme-toggle-dark-icon');
+            var l = document.getElementById('theme-toggle-light-icon');
+            var b = document.getElementById('theme-toggle');
+            if (b && d && l) {
+                function up() {
+                    if (document.documentElement.classList.contains('dark')) { d.classList.add('hidden'); l.classList.remove('hidden'); }
+                    else { d.classList.remove('hidden'); l.classList.add('hidden'); }
+                }
+                up();
+                b.addEventListener('click', function() {
+                    var is = document.documentElement.classList.toggle('dark');
+                    localStorage.setItem('theme', is ? 'dark' : 'light');
+                    up();
+                });
+            }
+        })();
+        async function updateStatus() {
+            var el = document.getElementById('status');
+            if (!el) return;
+            try {
+                var res = await fetch('/health');
+                if (res.ok) { el.textContent = 'Online'; el.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white bg-emerald-600 dark:bg-emerald-500 dark:text-emerald-950'; }
+                else { el.textContent = 'Offline'; el.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white bg-red-600 dark:bg-red-500'; }
+            } catch (e) { el.textContent = 'Offline'; el.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white bg-red-600 dark:bg-red-500'; }
+        }
+        updateStatus();
+        setInterval(updateStatus, 5000);
+    ${S}
+</body>
+</html>
+        `);
+    });
+
+    // Legacy landing page — the original always-on Discord bot's command reference, kept for
+    // posterity in case any of these features (stage bans, tournaments, frame data) get revived.
+    app.get('/legacy', async (req, res) => {
         let emojis = getEmojiLibrary();
         try {
             const fromS3 = await fetchEmojisFromS3();
@@ -243,7 +334,7 @@ export function createApp() {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>Navi Bot</title>
+    <title>Navi Bot — Legacy Commands</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="/admin.css" rel="stylesheet">
     <script${scriptNonce}>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');})();</script>
@@ -251,7 +342,7 @@ export function createApp() {
 <body class="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50 overflow-x-hidden">
     <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-            <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-100">Navi Bot 🧚</h1>
+            <a href="/" class="text-xl font-semibold text-slate-900 dark:text-slate-100">Navi Bot 🧚</a>
             <button id="theme-toggle" type="button" class="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-2 rounded-lg transition-colors border border-slate-200 dark:border-slate-700" title="Toggle theme">
                 <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
                 <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
@@ -260,8 +351,12 @@ export function createApp() {
     </header>
     <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 font-sans">
         <div class="mb-6">
-            <div id="status" class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-white bg-slate-500">Checking...</div>
-            <p class="mt-3 text-slate-600 dark:text-slate-400 text-sm max-w-xl">Use these commands in our Discord server. Join us and type in any channel or in #ask-navi where noted.</p>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white bg-amber-600 dark:bg-amber-500">Legacy — not currently running</span>
+            <p class="mt-3 text-slate-600 dark:text-slate-400 text-sm max-w-xl">
+                These were the commands for the original always-on Discord bot version of this project.
+                They're parked, not deleted, in case some get revived later. The current live project is the
+                <a href="/" class="underline">Zelda matchup guides web app</a>.
+            </p>
         </div>
         <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
             <table class="w-full text-sm">
@@ -296,17 +391,6 @@ export function createApp() {
                 });
             }
         })();
-        async function updateStatus() {
-            var el = document.getElementById('status');
-            if (!el) return;
-            try {
-                var res = await fetch('/health');
-                if (res.ok) { el.textContent = 'Online'; el.className = 'inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-white bg-emerald-600 dark:bg-emerald-500 dark:text-emerald-950'; }
-                else { el.textContent = 'Offline'; el.className = 'inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-white bg-red-600 dark:bg-red-500'; }
-            } catch (e) { el.textContent = 'Offline'; el.className = 'inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold text-white bg-red-600 dark:bg-red-500'; }
-        }
-        updateStatus();
-        setInterval(updateStatus, 5000);
     ${S}
 </body>
 </html>

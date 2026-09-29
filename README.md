@@ -1,41 +1,28 @@
-# Navi Bot 🧚
+# Navi 🧚
 
-A full-stack Discord bot for the Zelda competitive community: it exports matchup discussion data, powers AI-driven matchup guides and frame-data lookups, and runs an Express-based admin dashboard with **Missions**—a multi-agent pipeline that turns natural-language prompts into GitHub PRs.
+**Live: [navi.adotterer.com](https://navi.adotterer.com)**
 
----
+A web app that turns years of a Super Smash Bros. Ultimate Discord community's matchup discussion into AI-generated, cached matchup guides — with Discord OAuth2 for access control instead of a separate account system, and a deploy pipeline built around actually needing to run on a $5/month box.
 
-## Overview
-
-- **Discord bot:** Commands for exporting channels to S3, AI matchup summaries (`!mu`, `!mq`), frame data (`!fd`, `!fdq`), stats, stage bans (slash commands), tournament checks, and moderation helpers.
-- **Express server:** Landing page, health check, admin dashboard (auth, prompts, data, aliases, emojis, commands), GitHub webhook, and proxy of S3-backed assets (e.g. frame data GIFs).
-- **Missions (gen code):** In the admin UI, a “mission” prompt is turned into a **flight plan** by a Researcher agent, then implemented by Planner + Coder agents; results are validated and opened as a GitHub PR.
+This started as an always-on Discord bot on Elastic Beanstalk. EB auto-provisions a load balancer and NAT Gateway, which billed 24/7 for a side project with well under 20 active users — so the bot was rebuilt as a small on-demand web app instead, and the always-on infrastructure was retired entirely. That rewrite is the current, actively maintained part of this repo; the original bot's commands are parked (not deleted) and documented separately below.
 
 ---
 
-## Features
+## What it does
 
-### Bot
+- **`/zelda/<character>`** — a cached, AI-generated summary of the Zelda-vs-`<character>` matchup, sourced from the Discord community's own discussion in that character's thread.
+- **No AI call on page view.** Every page renders whatever was last saved. A moderator clicks **"Fetch latest & regenerate"** to pull fresh Discord messages and re-run the summary — the only time an AI call or a Discord fetch happens is on that explicit click.
+- **Discord OAuth2 for access, not a login system.** Visiting a guide requires signing in with Discord; the app checks (via the bot's own token, live, at login time) whether that account holds a paid **"Coaching Pass"** role in the server. The regenerate button additionally requires **Moderators**/**Legend** — the exact same role check the original bot used for its moderator-only commands.
+- A gated **demo-access code** bypasses Discord OAuth entirely for portfolio/interview review — same access level as a real login, without needing a Discord account with the right role.
 
-- 📤 Export Discord channels (single character or all matchups) to S3
-- ☁️ S3-backed storage for exports, prompts, stats, framedata, and character aliases
-- 🤖 AI matchup analysis (Google Gemini) for `!mu` / `!mq` / `!q` / `!fdq` / `!sq`
-- 🎮 Frame data lookup (`!fd`, `!stats` for moves) with self-hosted GIFs from S3
-- 🏆 Tournament checks (Start.gg) for tracked Zelda players; scheduled once daily
-- ⚔️ Stage ban flow: `/findmatch`, `/coinflip`, `/ban`, `/result`, `/end` with BO3/BO5
-- 📝 Positive reinforcement triggers (e.g. “could” vs “should”) and docs/FAQ/aliases commands
+---
 
-### Express server
+## Why this is interesting from an infra standpoint
 
-- **Public:** `/` (command list + status), `/health`, `/exports/<file>`, `/assets/*` (S3 proxy with long-lived cache), `/robots.txt`
-- **Admin (session + optional 2FA):** Dashboard, prompts, stats/framedata CSVs, character aliases, emojis, command reference, cost view
-- **Integrations:** GitHub webhook for deploy notifications to Discord
-- **Security:** Helmet CSP, CSRF, rate limits on login/webhook, cookie-based session (file store)
-
-### Missions (gen code)
-
-- **Flow:** You submit a mission (e.g. “Add a !logs command that posts last 100 log lines as an embed”). A **Researcher** agent produces a structured flight plan (tasks + hints). **Planners** break tasks into steps; a **Coder** applies edits; a **Validator** checks satisfaction. On success, a **GitHub PR** is created from the mission branch.
-- **Location:** `/admin/agent` in the admin UI. Optional: run without local git via `AGENT_NO_LOCAL_GIT=1` (branch/PR via GitHub API only).
-- **Models:** Gemini and Claude models selectable in the UI; token usage and cost visible at `/admin/cost`.
+- **No persistent Discord connection in production.** Discord message history and role membership don't require a Gateway/websocket session — they're plain REST calls (`GET /channels/{id}/messages`, `GET /guilds/{id}/members/{id}`) authenticated with the bot token. `server.js`, the production entry point, never calls `client.login()`.
+- **One tiny box, not serverless, and not EB.** A $5/month AWS Lightsail instance (512MB, no load balancer, no NAT Gateway) runs the whole thing under `pm2`, behind `Caddy` for automatic Let's Encrypt HTTPS. Chosen over serverless specifically because the app needs a stateful session (Discord OAuth + role cache) and running that behind Lambda@Edge/Cognito would've been more infra for less benefit at this scale.
+- **Push-to-deploy via SSH, not an API-based deploy.** GitHub Actions SSHes into the box and does `git fetch` + hard reset + `npm ci --omit=dev` + `pm2 restart` — found and fixed a real production bug this way: `npm ci` OOM-killed itself on the 512MB box (zero swap by default on a fresh Lightsail image), corrupting `node_modules` mid-deploy. Fixed with a 1GB swap file, persisted in `/etc/fstab`.
+- **Generated content is cached in S3**, the same pattern already used for prompts/aliases/stats in the original bot — no database, one storage layer for everything regeneratable.
 
 ---
 
@@ -43,13 +30,17 @@ A full-stack Discord bot for the Zelda competitive community: it exports matchup
 
 | Component | Role |
 |-----------|------|
-| `main.js` | Entry point: Discord client + Express app (single process). |
-| `server-admin.js` | Express-only entry point for local admin (no Discord token). |
-| `src/app.js` | Express app factory: middleware, static, routes, `/assets` → S3 proxy. |
-| `src/admin/*` | Admin routes (login, prompts, data, aliases, emojis, commands, agent, cost). |
-| `src/admin/agent/` | Missions pipeline: researcher, planner, coder, validator, run store, GitHub PR. |
+| `server.js` | **Production entry point.** Express-only, no Discord Client/Gateway ever instantiated. |
+| `src/app.js` | Express app factory: middleware, static assets, mounts `/zelda` and `/admin`. |
+| `src/zelda/` | Routes, S3-backed guide cache, Gemini-output-to-HTML renderer, slug handling. |
+| `src/shared/discordRest.js` | Stateless bot-token REST helpers (channels, roles, member lookup, message history). |
+| `src/shared/discordOAuth.js` | User-facing Discord OAuth2 login (`identify` scope only). |
+| `src/shared/siteAuth.js` | Session gates: Coaching Pass to view, Moderators/Legend to regenerate. |
+| `main.js` | **Legacy.** The original always-on Discord bot (Gateway client + slash commands) — parked, not deleted. |
+| `server-admin.js` | Express-only entry point for local admin-panel testing (no Discord token). |
+| `src/admin/*` | Admin dashboard: login, prompts, data, aliases, emojis, commands, Missions, cost. |
 
-The same Express app is created by `createApp()` in `src/app.js` and mounted in both `main.js` and `server-admin.js`; admin routes are under `/admin` with session and CSRF.
+`createApp()` in `src/app.js` is shared by `server.js`, `main.js`, and `server-admin.js` — same middleware, same `/admin` panel, regardless of which entry point is running.
 
 ---
 
@@ -58,34 +49,13 @@ The same Express app is created by `createApp()` in `src/app.js` and mounted in 
 | Layer | Technologies |
 |-------|---------------|
 | **Runtime** | Node.js (ESM) |
-| **Bot** | Discord.js |
-| **Web** | Express, Helmet, express-session (session-file-store), cookie-parser, csrf-csrf, multer |
-| **AI** | Google Generative AI (Gemini), Anthropic (Claude, for Missions) |
-| **AWS** | S3 (exports, admin data, assets), DynamoDB (agent run metadata), SES (optional email) |
-| **Missions** | @google/genai, @anthropic-ai/sdk, @octokit/rest, simple-git (optional) |
-| **Scheduling** | node-cron (weekly export, daily tournament check, America/New_York) |
-| **Front-end (admin)** | Tailwind CSS, vanilla JS, Chart.js (cost), Prism (code in agent UI) |
-
----
-
-## Bot commands (summary)
-
-> Most commands require **Moderators** or **Legend**; `!fd`, `!sl`, `!stats`, `!docs`, `!faq`, `!aliases`, `!canonical` are allowed in any channel.
-
-| Command | Description |
-|---------|-------------|
-| `!export <character>` / `!export matchups` | Export channel(s) to S3. |
-| `!mu <character>` / `!mu-notes` | AI matchup summary for a character. |
-| `!mu-q <question>` / `!mq` | AI answer using matchup notes + frame data. |
-| `!fd <character> <move>` | Frame data for a move (e.g. `!fd mario fair`). |
-| `!fdq <question>` | AI frame-data question. |
-| `!stats` / `!sq` | Stats lookup / stats question. |
-| `!matches-today` | Today’s tournaments for tracked Zelda players. |
-| `!add-zelda` / `!list-zelda` | Manage Zelda player list (Start.gg). |
-| `!docs` / `!faq` / `!aliases` / `!canonical` | Docs, FAQ, alias list, canonical threads. |
-| `/findmatch`, `/coinflip`, `/ban`, `/result`, `/end` | Stage ban matchmaking and flow. |
-
-Full command list and permissions are documented in the admin UI at `/admin/commands` and in [COMMANDS_AND_PROMPTS.md](COMMANDS_AND_PROMPTS.md).
+| **Web** | Express, Helmet, express-session (file store), cookie-parser |
+| **Auth** | Discord OAuth2 (`identify`), live role verification via bot token REST calls |
+| **AI** | Google Gemini (`@google/genai`) |
+| **AWS** | S3 (guide cache, exports, prompts, aliases), DynamoDB (optional multi-admin), SES (optional 2FA email) |
+| **Infra** | AWS Lightsail ($5/mo, 512MB + 1GB swap), Caddy (automatic HTTPS), pm2 (process supervision) |
+| **CI/CD** | GitHub Actions → SSH deploy (`appleboy/ssh-action`) |
+| **Legacy bot** | Discord.js (Gateway client, slash commands, stage-ban flow) |
 
 ---
 
@@ -94,76 +64,66 @@ Full command list and permissions are documented in the admin UI at `/admin/comm
 ### Environment variables
 
 ```env
-# Required for bot + web
+# Discord (REST-only in production; same token used for the legacy Gateway bot if revived)
 DISCORD_TOKEN=...
-PORT=8080
-APP_BASE_URL=https://your-domain.com   # for Discord embeds and asset URLs
+GUILD_ID=...
+DISCORD_CLIENT_ID=...
+DISCORD_CLIENT_SECRET=...
+DISCORD_OAUTH_REDIRECT_URI=https://your-domain.com/zelda/oauth/callback
+COACHING_PASS_ROLE_NAME=Coaching Pass
+RECRUITER_PASSWORD=...            # demo-access bypass; keep this out of git, share it directly
 
-# AWS (S3, optional DynamoDB/SES)
+# AWS
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
 AWS_REGION=us-west-1
 S3_BUCKET_NAME=...
 
 # AI
-GOOGLE_API_KEY=...                    # Gemini (bot + Missions)
-GEMINI_MODEL=gemini-3-flash-preview    # or your preferred model
-ANTHROPIC_SECRET=...                   # optional, for Claude in Missions
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-3-flash-preview
 
-# Admin dashboard
+# Web
+PORT=8080
+NODE_ENV=production
 SESSION_SECRET=...
+
+# Admin dashboard (legacy features live here too)
 ADMIN_USERNAME=...
 ADMIN_PASSWORD=...
-# Optional: 2FA (e.g. TOTP), SES for email
-
-# Missions (optional)
-GITHUB_TOKEN=...                       # for PR creation
-GITHUB_REPO=owner/repo
-# AGENT_NO_LOCAL_GIT=1                 # use GitHub API only (no local git)
 ```
 
 ### Local development
 
 ```bash
 npm install
-npm run dev          # Discord bot + Express (main.js)
+npm run admin        # Express only, port 8081 — no Discord token needed, safest for local dev
+node server.js        # Full production entry point (needs DISCORD_TOKEN + GEMINI_API_KEY for /zelda)
 ```
 
-### Admin only (Express, no Discord)
+Build admin CSS once (or whenever Tailwind classes change), then commit the output — the deploy pipeline doesn't rebuild it (Tailwind's a devDependency, not installed in production):
 
 ```bash
-npm run admin        # Express on port 8081; open http://localhost:8081/admin
-npm run dev:admin    # same with nodemon
+npm run build:admin-css
 ```
-
-Login with `ADMIN_USERNAME` / `ADMIN_PASSWORD`. Set AWS env vars if you want to save prompts/data/aliases to S3. Build admin CSS once (or when you change Tailwind): `npm run build:admin-css`.
 
 ### Deployment
 
-- **Elastic Beanstalk:** `eb deploy` (or your preferred Node host). Ensure `PORT` and `APP_BASE_URL` are set in the environment.
-- **Data:** Exports and admin data live in S3; local `data/` and `data/exports/` are used when S3 is unavailable or for initial seed.
+Push to `main` — GitHub Actions SSHes into the Lightsail box and runs `git fetch` + `git reset --hard origin/main` + `npm ci --omit=dev` + `pm2 restart navi-web`. See `.github/workflows/deploy.yml`.
 
 ---
 
-## Data storage
+## Legacy: the original Discord bot
 
-- **Exports:** Uploaded to S3; also served via HTTP at `/exports/{character}.json` when the app has access to the exports directory.
-- **Admin:** Prompts, stats CSVs, framedata CSVs, character aliases, and emoji library are stored in S3 (e.g. `admin/prompts/`, `admin/data/stats/`, `admin/character-aliases.json`). The bot reads from local files synced at startup or from S3 overrides.
-- **Assets:** Images/GIFs (e.g. frame data) are in S3 under `assets/` and served by the app at `/assets/*` with long-lived cache headers.
+Before the rewrite, this was an always-on Discord bot: AI matchup summaries and frame-data lookups triggered by typing commands directly in Discord, plus a stage-ban matchmaking flow, tournament tracking, and an admin dashboard with **Missions** (a multi-agent pipeline that turns natural-language prompts into GitHub PRs). None of it was deleted — `main.js` still runs the full Gateway-connected bot if started directly, it's just not part of the production deploy anymore.
 
----
+- 📤 Export Discord channels (single character or all matchups) to S3
+- 🤖 AI matchup analysis (`!mu` / `!mq` / `!q` / `!fdq` / `!sq`) — the same Gemini prompt the new `/zelda/<character>` pages now use
+- 🎮 Frame data lookup (`!fd`, `!stats`) with self-hosted GIFs from S3
+- 🏆 Daily tournament checks (Start.gg) for tracked players
+- ⚔️ Stage ban flow: `/findmatch`, `/coinflip`, `/ban`, `/result`, `/end` (BO3/BO5)
+- 🧠 **Missions:** natural-language prompt → Researcher/Planner/Coder/Validator agent pipeline → GitHub PR, in the admin UI at `/admin/agent`
 
-## Documentation
+Full command list and permissions: `/legacy` on the live site, `/admin/commands` in the admin UI, and [COMMANDS_AND_PROMPTS.md](COMMANDS_AND_PROMPTS.md). Module layout: [CODE_STRUCTURE.md](CODE_STRUCTURE.md). Known pitfalls: [docs/gotchas.md](docs/gotchas.md).
 
-- **[CODE_STRUCTURE.md](CODE_STRUCTURE.md)** – Module layout, entry points, and API/route table.
-- **[COMMANDS_AND_PROMPTS.md](COMMANDS_AND_PROMPTS.md)** – Command behavior and prompt context.
-- **[docs/gotchas.md](docs/gotchas.md)** – Pitfalls (e.g. script tags in templates) for contributors and agent runs.
-
----
-
-## Notes
-
-- The bot fetches messages in batches (e.g. 100) for large channels.
-- AI answers are constrained to provided sources (matchup notes, frame data, stats); the bot does not fabricate data.
-- Tournament check runs once daily at 2:00 PM America/New_York; results use a 12h cache to limit start.gg API usage.
-- Stage ban and matchmaking logic live in `src/bans/` (coinflip, findmatch, ban, result, end).
+To run the legacy bot locally: `npm run dev` (nodemon + `main.js`, needs `DISCORD_TOKEN`).
