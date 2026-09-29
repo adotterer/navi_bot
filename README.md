@@ -11,8 +11,8 @@ This started as an always-on Discord bot on Elastic Beanstalk. EB auto-provision
 ## What it does
 
 - **`/zelda/<character>`** — a cached, AI-generated summary of the Zelda-vs-`<character>` matchup, sourced from the Discord community's own discussion in that character's thread.
-- **No AI call on page view.** Every page renders whatever was last saved. A moderator clicks **"Fetch latest & regenerate"** to pull fresh Discord messages and re-run the summary — the only time an AI call or a Discord fetch happens is on that explicit click.
-- **Discord OAuth2 for access, not a login system.** Visiting a guide requires signing in with Discord; the app checks (via the bot's own token, live, at login time) whether that account holds a paid **"Coaching Pass"** role in the server. The regenerate button additionally requires **Moderators**/**Legend** — the exact same role check the original bot used for its moderator-only commands.
+- **No AI call on page view.** Every page renders whatever was last saved. Anyone with the Coaching Pass role can click **"Fetch latest & regenerate"** to pull fresh Discord messages and re-run the summary — the only time an AI call or a Discord fetch happens is on that explicit click.
+- **Discord OAuth2 for access, not a login system.** Visiting a guide, and clicking "Fetch latest & regenerate", both require signing in with Discord; the app checks (via the bot's own token, live, at login time) whether that account holds a paid **"Coaching Pass"** role in the server. Every login and every guide view/regenerate is posted to the server's `#audit-logs` channel — who accessed what, and when.
 - A gated **demo-access code** bypasses Discord OAuth entirely for portfolio/interview review — same access level as a real login, without needing a Discord account with the right role.
 
 ---
@@ -35,7 +35,7 @@ This started as an always-on Discord bot on Elastic Beanstalk. EB auto-provision
 | `src/zelda/` | Routes, S3-backed guide cache, Gemini-output-to-HTML renderer, slug handling. |
 | `src/shared/discordRest.js` | Stateless bot-token REST helpers (channels, roles, member lookup, message history). |
 | `src/shared/discordOAuth.js` | User-facing Discord OAuth2 login (`identify` scope only). |
-| `src/shared/siteAuth.js` | Session gates: Coaching Pass to view, Moderators/Legend to regenerate. |
+| `src/shared/siteAuth.js` | Session gate: Coaching Pass role required to view and regenerate. |
 | `main.js` | **Legacy.** The original always-on Discord bot (Gateway client + slash commands) — parked, not deleted. |
 | `server-admin.js` | Express-only entry point for local admin-panel testing (no Discord token). |
 | `src/admin/*` | Admin dashboard: login, prompts, data, aliases, emojis, commands, Missions, cost. |

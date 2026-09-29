@@ -3,9 +3,9 @@ import express from 'express';
 import { GoogleGenAI } from '@google/genai';
 import { escapeHtml } from '../admin/layout.js';
 import { zeldaPage, zeldaHeader } from './zeldaLayout.js';
-import { requireSiteAuth, requireModOrLegend, checkRecruiterPassword } from '../shared/siteAuth.js';
+import { requireSiteAuth, checkRecruiterPassword } from '../shared/siteAuth.js';
 import { getAuthorizeUrl, exchangeCodeForToken, getDiscordUser } from '../shared/discordOAuth.js';
-import { getGuildMemberRoles, getGuildRoleNameMap, hasAnyRoleName, getMatchupChannelMap, fetchAllChannelMessages } from '../shared/discordRest.js';
+import { getGuildMemberRoles, getGuildRoleNameMap, hasAnyRoleName, getMatchupChannelMap, fetchAllChannelMessages, logToAuditChannel } from '../shared/discordRest.js';
 import { channelNameToUrlSlug, channelNameToDisplayName, resolveUrlSlugToChannelName, getAllMatchupChannelNames } from './zeldaSlugs.js';
 import { getCachedGuide, saveGuide } from './zeldaGuideStore.js';
 import { renderGuideHtml } from './renderGuideHtml.js';
@@ -55,13 +55,14 @@ ${zeldaHeader(null)}
     res.send(zeldaPage({ title: 'Log in', nonce, body }));
 });
 
-zeldaRouter.post('/login/demo', express.urlencoded({ extended: true }), (req, res) => {
+zeldaRouter.post('/login/demo', express.urlencoded({ extended: true }), async (req, res) => {
     if (!checkRecruiterPassword(req.body.password)) {
         return res.redirect('/zelda/login?error=no-access');
     }
     req.session.hasCoachingPass = true;
     req.session.isModOrLegend = true;
     req.session.discordUser = { id: null, username: 'Demo Access' };
+    await logToAuditChannel(process.env.GUILD_ID, '🔐 **Demo/Recruiter access** logged in to the Zelda MU site.');
     res.redirect('/zelda');
 });
 
@@ -90,6 +91,10 @@ zeldaRouter.get('/oauth/callback', async (req, res) => {
         req.session.discordUser = { id: discordUser.id, username: discordUser.username };
         req.session.hasCoachingPass = true;
         req.session.isModOrLegend = hasAnyRoleName(roleIds, roleNameMap, MOD_ROLE_NAMES);
+
+        const modNote = req.session.isModOrLegend ? ' (Moderator/Legend)' : '';
+        await logToAuditChannel(guildId, `🔐 **${discordUser.username}**${modNote} logged in to the Zelda MU site via Discord OAuth.`);
+
         res.redirect(req.query.next || '/zelda');
     } catch (err) {
         console.error('[zelda oauth]', err?.response?.data || err.message || err);
@@ -138,7 +143,8 @@ zeldaRouter.get('/:slug', requireSiteAuth, async (req, res) => {
 
     const guide = await getCachedGuide(channelName);
     const displayName = channelNameToDisplayName(channelName);
-    const canFetch = !!req.session.isModOrLegend;
+
+    logToAuditChannel(process.env.GUILD_ID, `👀 **${userLabel(req)}** viewed the **${displayName}** matchup guide.`);
 
     const body = `
 ${zeldaHeader(userLabel(req))}
@@ -146,7 +152,7 @@ ${zeldaHeader(userLabel(req))}
     <a href="/zelda" class="text-sm text-slate-500 hover:underline">&larr; All matchups</a>
     <h1 class="text-2xl font-semibold mt-2 mb-1">Zelda vs ${escapeHtml(displayName)}</h1>
     <p class="text-sm text-slate-400 mb-6">${guide ? 'Last generated ' + new Date(guide.generatedAt).toLocaleString() + ' (' + guide.sourceMessageCount + ' messages)' : 'Not generated yet.'}</p>
-    ${canFetch ? `<form method="POST" action="/zelda/${req.params.slug}/regenerate" class="mb-6"><button type="submit" class="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2">Fetch latest &amp; regenerate</button></form>` : ''}
+    <form method="POST" action="/zelda/${req.params.slug}/regenerate" class="mb-6"><button type="submit" class="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2">Fetch latest &amp; regenerate</button></form>
     <div class="prose dark:prose-invert max-w-none">
         ${guide ? renderGuideHtml(guide.summary) : '<p class="text-slate-500">No guide generated yet.</p>'}
     </div>
@@ -154,7 +160,7 @@ ${zeldaHeader(userLabel(req))}
     res.send(zeldaPage({ title: displayName, nonce: res.locals.nonce, body }));
 });
 
-zeldaRouter.post('/:slug/regenerate', requireSiteAuth, requireModOrLegend, async (req, res) => {
+zeldaRouter.post('/:slug/regenerate', requireSiteAuth, async (req, res) => {
     const channelName = await resolveUrlSlugToChannelName(req.params.slug);
     if (!channelName) return res.status(404).send('Character not found.');
 
@@ -189,6 +195,7 @@ zeldaRouter.post('/:slug/regenerate', requireSiteAuth, requireModOrLegend, async
         });
 
         await saveGuide(channelName, { summary: response.text, sourceMessageCount: messages.length });
+        await logToAuditChannel(guildId, `🔄 **${userLabel(req)}** fetched a new summary for **${displayName}** (${messages.length} messages).`);
         res.redirect(`/zelda/${req.params.slug}`);
     } catch (err) {
         console.error('[zelda regenerate]', channelName, err);

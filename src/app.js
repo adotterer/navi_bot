@@ -248,7 +248,7 @@ export function createApp() {
         </p>
         <p class="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
             Access is gated by Discord OAuth2 and a live role check against the server (a paid "Coaching Pass"
-            role to view, Moderator/Legend to regenerate) — no separate account system. The whole app runs on
+            role) — no separate account system. The whole app runs on
             a single $5/month box (no load balancer, no idle compute) with GitHub Actions deploying on every push.
         </p>
         <a href="/zelda" class="inline-flex items-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-3 mb-10">View the Matchup Guides &rarr;</a>

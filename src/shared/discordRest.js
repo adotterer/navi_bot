@@ -6,6 +6,9 @@ import { REST, Routes } from 'discord.js';
 import { MATCHUP_CATEGORY_NAMES, EXCLUDED_MATCHUP_CHANNEL_NAMES } from '../export/exportHandler.js';
 
 const CATEGORY_CHANNEL_TYPE = 4;
+const AUDIT_LOGS_CHANNEL_NAME = 'audit-logs';
+
+let auditLogsChannelIdCache = null;
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
@@ -134,4 +137,36 @@ export async function fetchAllChannelMessages(channelId) {
         before = batch[batch.length - 1].id;
     }
     return messages.reverse();
+}
+
+/** POST /channels/{id}/messages with a plain text body. */
+export async function postChannelMessage(channelId, content) {
+    return rest.post(Routes.channelMessages(channelId), { body: { content } });
+}
+
+/** Finds the #audit-logs text channel id in the guild's channel list. Cached (piggybacks on getGuildChannels). */
+async function getAuditLogsChannelId(guildId) {
+    if (auditLogsChannelIdCache) return auditLogsChannelIdCache;
+    const channels = await getGuildChannels(guildId);
+    const channel = channels.find((ch) => ch.name === AUDIT_LOGS_CHANNEL_NAME);
+    if (!channel) return null;
+    auditLogsChannelIdCache = channel.id;
+    return channel.id;
+}
+
+/**
+ * Posts a message to #audit-logs. Best-effort: logs a warning and does not throw on failure,
+ * so a Discord/permissions hiccup never breaks the actual page load or regenerate action.
+ */
+export async function logToAuditChannel(guildId, content) {
+    try {
+        const channelId = await getAuditLogsChannelId(guildId);
+        if (!channelId) {
+            console.warn('[audit-log] #audit-logs channel not found');
+            return;
+        }
+        await postChannelMessage(channelId, content);
+    } catch (err) {
+        console.warn('[audit-log] failed to post:', err?.message || err);
+    }
 }
