@@ -16,6 +16,7 @@ import { isModelOverloaded } from '../shared/s3Helper.js';
 
 const COACHING_PASS_ROLE_NAME = process.env.COACHING_PASS_ROLE_NAME || 'Coaching Pass';
 const MOD_ROLE_NAMES = ['Moderators', 'Legend'];
+const DEMO_ALERT_DISCORD_ID = process.env.DEMO_ALERT_DISCORD_ID || '';
 
 const genAI = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -27,6 +28,23 @@ export const zeldaRouter = express.Router();
 function userLabel(req) {
     const user = req.session?.discordUser;
     return user ? user.username : null;
+}
+
+/** Display identity for audit-log lines: "Name (Company)" for demo sessions, Discord username otherwise. */
+function auditIdentity(req) {
+    const user = req.session?.discordUser;
+    if (!user) return 'Unknown';
+    return user.isDemo ? `${user.username} (${user.company})` : user.username;
+}
+
+/** Only demo sessions get the real-time ping — regular community logins would make this spam. */
+function auditMentionIds(req) {
+    return req.session?.discordUser?.isDemo && DEMO_ALERT_DISCORD_ID ? [DEMO_ALERT_DISCORD_ID] : [];
+}
+
+function auditMentionPrefix(req) {
+    const ids = auditMentionIds(req);
+    return ids.length ? ids.map((id) => `<@${id}>`).join(' ') + ' ' : '';
 }
 
 zeldaRouter.get('/login', (req, res) => {
@@ -44,11 +62,17 @@ ${zeldaHeader(null)}
     ${error === 'ratelimit' ? '<p class="text-red-600 mb-4">Too many attempts. Try again shortly.</p>' : ''}
     ${error === 'no-access' ? `<p class="text-red-600 mb-4">Your Discord account doesn't have the ${escapeHtml(COACHING_PASS_ROLE_NAME)} role.</p>` : ''}
     <a href="${authorizeUrl}" class="block text-center w-full rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-3 mb-8">Log in with Discord</a>
-    <details class="text-sm text-slate-500 dark:text-slate-400">
+    <details class="text-sm text-slate-500 dark:text-slate-400"${error === 'demo-invalid' || error === 'demo-missing-info' ? ' open' : ''}>
         <summary class="cursor-pointer">Demo login</summary>
-        <form method="POST" action="/zelda/login/demo" class="mt-3 flex gap-2">
-            <input type="password" name="password" placeholder="Demo access code" class="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" required>
-            <button type="submit" class="rounded-lg bg-slate-700 hover:bg-slate-800 text-white text-sm px-4 py-2">Enter</button>
+        ${error === 'demo-invalid' ? '<p class="text-red-600 mt-2">Incorrect demo access code.</p>' : ''}
+        ${error === 'demo-missing-info' ? '<p class="text-red-600 mt-2">Name, company, and access code are all required.</p>' : ''}
+        <form method="POST" action="/zelda/login/demo" class="mt-3 space-y-2">
+            <input type="text" name="name" placeholder="Your name" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" required>
+            <input type="text" name="company" placeholder="Company" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" required>
+            <div class="flex gap-2">
+                <input type="password" name="password" placeholder="Demo access code" class="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" required>
+                <button type="submit" class="rounded-lg bg-slate-700 hover:bg-slate-800 text-white text-sm px-4 py-2">Enter</button>
+            </div>
         </form>
     </details>
 </main>`;
@@ -56,13 +80,24 @@ ${zeldaHeader(null)}
 });
 
 zeldaRouter.post('/login/demo', express.urlencoded({ extended: true }), async (req, res) => {
+    const name = (req.body.name || '').trim().slice(0, 80);
+    const company = (req.body.company || '').trim().slice(0, 80);
+    if (!name || !company) {
+        return res.redirect('/zelda/login?error=demo-missing-info');
+    }
     if (!checkRecruiterPassword(req.body.password)) {
-        return res.redirect('/zelda/login?error=no-access');
+        return res.redirect('/zelda/login?error=demo-invalid');
     }
     req.session.hasCoachingPass = true;
     req.session.isModOrLegend = true;
-    req.session.discordUser = { id: null, username: 'Demo Access' };
-    await logToAuditChannel(process.env.GUILD_ID, '🔐 **Demo/Recruiter access** logged in to the Zelda MU site.');
+    req.session.discordUser = { id: null, username: name, company, isDemo: true };
+
+    await logToAuditChannel(
+        process.env.GUILD_ID,
+        `${auditMentionPrefix(req)}🔐 **${auditIdentity(req)}** logged in via demo access.`,
+        auditMentionIds(req)
+    );
+
     res.redirect('/zelda');
 });
 
@@ -128,13 +163,66 @@ zeldaRouter.get('/', requireSiteAuth, async (req, res) => {
         )
         .join('');
 
+    const nonce = res.locals.nonce || '';
+    const scriptNonce = nonce ? ` nonce="${nonce.replace(/"/g, '&quot;')}"` : '';
+
     const body = `
 ${zeldaHeader(userLabel(req))}
 <main class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+    <div id="a2hs-banner" class="hidden mb-4 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 px-4 py-3 text-sm flex items-center justify-between gap-3 lg:hidden">
+        <span id="a2hs-text">Add this to your home screen for quick access during tournaments.</span>
+        <div class="flex items-center gap-2 shrink-0">
+            <button id="a2hs-install-btn" class="hidden rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-1.5">Add to Home Screen</button>
+            <button id="a2hs-dismiss-btn" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg leading-none" aria-label="Dismiss">&times;</button>
+        </div>
+    </div>
     <h1 class="text-xl font-semibold mb-4">All matchups</h1>
     <ul>${rows}</ul>
-</main>`;
-    res.send(zeldaPage({ title: 'All matchups', nonce: res.locals.nonce, body }));
+</main>
+<script${scriptNonce}>
+(function() {
+    var KEY = 'a2hsDismissed';
+    try { if (localStorage.getItem(KEY) === '1') return; } catch (e) {}
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) return;
+
+    var banner = document.getElementById('a2hs-banner');
+    var text = document.getElementById('a2hs-text');
+    var installBtn = document.getElementById('a2hs-install-btn');
+    var dismissBtn = document.getElementById('a2hs-dismiss-btn');
+    if (!banner || !text || !installBtn || !dismissBtn) return;
+
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    var deferredPrompt = null;
+
+    if (isIOS) {
+        text.textContent = 'Add this to your home screen: tap the Share icon, then "Add to Home Screen".';
+        banner.classList.remove('hidden');
+    } else {
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.classList.remove('hidden');
+            banner.classList.remove('hidden');
+        });
+    }
+
+    installBtn.addEventListener('click', function() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.finally(function() {
+            deferredPrompt = null;
+            banner.classList.add('hidden');
+        });
+    });
+
+    dismissBtn.addEventListener('click', function() {
+        banner.classList.add('hidden');
+        try { localStorage.setItem(KEY, '1'); } catch (e) {}
+    });
+})();
+</script>`;
+    res.send(zeldaPage({ title: 'All matchups', nonce, body }));
 });
 
 zeldaRouter.get('/:slug', requireSiteAuth, async (req, res) => {
@@ -144,7 +232,11 @@ zeldaRouter.get('/:slug', requireSiteAuth, async (req, res) => {
     const guide = await getCachedGuide(channelName);
     const displayName = channelNameToDisplayName(channelName);
 
-    logToAuditChannel(process.env.GUILD_ID, `👀 **${userLabel(req)}** viewed the **${displayName}** matchup guide.`);
+    logToAuditChannel(
+        process.env.GUILD_ID,
+        `${auditMentionPrefix(req)}👀 **${auditIdentity(req)}** viewed the **${displayName}** matchup guide.`,
+        auditMentionIds(req)
+    );
 
     const nonce = res.locals.nonce || '';
     const scriptNonce = nonce ? ` nonce="${nonce.replace(/"/g, '&quot;')}"` : '';
@@ -163,6 +255,7 @@ ${zeldaHeader(userLabel(req))}
             </svg>
             <span id="regenerate-label">Fetch latest &amp; regenerate</span>
         </button>
+        <p id="regenerate-hint" class="hidden text-xs text-slate-400 mt-2">Pulling fresh Discord messages and generating a new summary.</p>
     </form>
     <div class="prose dark:prose-invert max-w-none">
         ${guide ? renderGuideHtml(guide.summary) : '<p class="text-slate-500">No guide generated yet.</p>'}
@@ -175,13 +268,15 @@ ${zeldaHeader(userLabel(req))}
     var spinner = document.getElementById('regenerate-spinner');
     var label = document.getElementById('regenerate-label');
     var hint = document.getElementById('regenerate-hint');
-    if (!form || !btn || !spinner || !label || !hint) return;
+    // Only form/btn/spinner/label are required — hint is a nice-to-have and must never gate the
+    // whole feature off if a future markup edit drops it (that's exactly what broke this before).
+    if (!form || !btn || !spinner || !label) return;
     form.addEventListener('submit', function() {
         if (btn.disabled) return;
         btn.disabled = true;
         spinner.classList.remove('hidden');
         label.textContent = 'Fetching & regenerating…';
-        hint.classList.remove('hidden');
+        if (hint) hint.classList.remove('hidden');
     });
 })();
 </script>`;
@@ -223,7 +318,11 @@ zeldaRouter.post('/:slug/regenerate', requireSiteAuth, async (req, res) => {
         });
 
         await saveGuide(channelName, { summary: response.text, sourceMessageCount: messages.length });
-        await logToAuditChannel(guildId, `🔄 **${userLabel(req)}** fetched a new summary for **${displayName}** (${messages.length} messages).`);
+        await logToAuditChannel(
+            guildId,
+            `${auditMentionPrefix(req)}🔄 **${auditIdentity(req)}** fetched a new summary for **${displayName}** (${messages.length} messages).`,
+            auditMentionIds(req)
+        );
         res.redirect(`/zelda/${req.params.slug}`);
     } catch (err) {
         console.error('[zelda regenerate]', channelName, err);

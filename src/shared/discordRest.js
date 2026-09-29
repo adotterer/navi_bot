@@ -139,9 +139,15 @@ export async function fetchAllChannelMessages(channelId) {
     return messages.reverse();
 }
 
-/** POST /channels/{id}/messages with a plain text body. */
-export async function postChannelMessage(channelId, content) {
-    return rest.post(Routes.channelMessages(channelId), { body: { content } });
+/**
+ * POST /channels/{id}/messages with a plain text body. `mentionUserIds` explicitly allowlists which
+ * @mentions in the content actually notify — everything else (parse: []) is suppressed, so free-typed
+ * text (e.g. a demo visitor's own name/company) can never trigger an accidental @everyone/@here/role ping.
+ */
+export async function postChannelMessage(channelId, content, mentionUserIds = []) {
+    return rest.post(Routes.channelMessages(channelId), {
+        body: { content, allowed_mentions: { parse: [], users: mentionUserIds } },
+    });
 }
 
 /** Finds the #audit-logs text channel id in the guild's channel list. Cached (piggybacks on getGuildChannels). */
@@ -158,14 +164,14 @@ async function getAuditLogsChannelId(guildId) {
  * Posts a message to #audit-logs. Best-effort: logs a warning and does not throw on failure,
  * so a Discord/permissions hiccup never breaks the actual page load or regenerate action.
  */
-export async function logToAuditChannel(guildId, content) {
+export async function logToAuditChannel(guildId, content, mentionUserIds = []) {
     try {
         const channelId = await getAuditLogsChannelId(guildId);
         if (!channelId) {
             console.warn('[audit-log] #audit-logs channel not found');
             return;
         }
-        await postChannelMessage(channelId, content);
+        await postChannelMessage(channelId, content, mentionUserIds);
     } catch (err) {
         console.warn('[audit-log] failed to post:', err?.message || err);
     }

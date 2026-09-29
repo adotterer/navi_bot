@@ -26,7 +26,10 @@ function renderInline(text) {
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     // The prompt wraps hyperlinks in <> so Discord doesn't auto-embed them; that convention
     // doesn't apply on a webpage, so turn them into real links instead of showing literal brackets.
-    html = html.replace(/&lt;(https?:\/\/[^\s&]+?)&gt;/g, '<a href="$1" class="underline" target="_blank" rel="noopener">$1</a>');
+    // URLs with query strings (e.g. YouTube's ?v=...&t=28s) contain a & that escapeHtml already
+    // turned into &amp; — allow that escaped form inside the match, not just bare non-& characters,
+    // or the lazy quantifier stops short at the first & and leaves the brackets unconverted.
+    html = html.replace(/&lt;(https?:\/\/(?:&amp;|[^\s&])+?)&gt;/g, '<a href="$1" class="underline" target="_blank" rel="noopener">$1</a>');
     return html;
 }
 

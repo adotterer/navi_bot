@@ -1,0 +1,13 @@
+{
+    "name": "Zelda MU Guides",
+    "short_name": "Navi",
+    "description": "Zelda matchup guides for our Smash Ultimate Discord community",
+    "start_url": "/zelda",
+    "scope": "/zelda",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#4f46e5",
+    "icons": [
+        { "src": "/icons/icon.png", "sizes": "250x250", "type": "image/png" }
+    ]
+}
