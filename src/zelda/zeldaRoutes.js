@@ -146,18 +146,46 @@ zeldaRouter.get('/:slug', requireSiteAuth, async (req, res) => {
 
     logToAuditChannel(process.env.GUILD_ID, `👀 **${userLabel(req)}** viewed the **${displayName}** matchup guide.`);
 
+    const nonce = res.locals.nonce || '';
+    const scriptNonce = nonce ? ` nonce="${nonce.replace(/"/g, '&quot;')}"` : '';
+
     const body = `
 ${zeldaHeader(userLabel(req))}
 <main class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
     <a href="/zelda" class="text-sm text-slate-500 hover:underline">&larr; All matchups</a>
     <h1 class="text-2xl font-semibold mt-2 mb-1">Zelda vs ${escapeHtml(displayName)}</h1>
     <p class="text-sm text-slate-400 mb-6">${guide ? 'Last generated ' + new Date(guide.generatedAt).toLocaleString() + ' (' + guide.sourceMessageCount + ' messages)' : 'Not generated yet.'}</p>
-    <form method="POST" action="/zelda/${req.params.slug}/regenerate" class="mb-6"><button type="submit" class="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2">Fetch latest &amp; regenerate</button></form>
+    <form id="regenerate-form" method="POST" action="/zelda/${req.params.slug}/regenerate" class="mb-6">
+        <button id="regenerate-btn" type="submit" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2">
+            <svg id="regenerate-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span id="regenerate-label">Fetch latest &amp; regenerate</span>
+        </button>
+    </form>
     <div class="prose dark:prose-invert max-w-none">
         ${guide ? renderGuideHtml(guide.summary) : '<p class="text-slate-500">No guide generated yet.</p>'}
     </div>
-</main>`;
-    res.send(zeldaPage({ title: displayName, nonce: res.locals.nonce, body }));
+</main>
+<script${scriptNonce}>
+(function() {
+    var form = document.getElementById('regenerate-form');
+    var btn = document.getElementById('regenerate-btn');
+    var spinner = document.getElementById('regenerate-spinner');
+    var label = document.getElementById('regenerate-label');
+    var hint = document.getElementById('regenerate-hint');
+    if (!form || !btn || !spinner || !label || !hint) return;
+    form.addEventListener('submit', function() {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        label.textContent = 'Fetching & regenerating…';
+        hint.classList.remove('hidden');
+    });
+})();
+</script>`;
+    res.send(zeldaPage({ title: displayName, nonce, body }));
 });
 
 zeldaRouter.post('/:slug/regenerate', requireSiteAuth, async (req, res) => {
