@@ -13,3 +13,4 @@ sessions/
 *.log
 *.tmp
 *.zip
+*.pem
