@@ -20,7 +20,6 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             npm ci --omit=dev
-            npm run build:admin-css
             pm2 restart navi-web
 
       - name: Notify Discord audit-logs
