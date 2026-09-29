@@ -45,7 +45,7 @@ ${zeldaHeader(null)}
     ${error === 'no-access' ? `<p class="text-red-600 mb-4">Your Discord account doesn't have the ${escapeHtml(COACHING_PASS_ROLE_NAME)} role.</p>` : ''}
     <a href="${authorizeUrl}" class="block text-center w-full rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-3 mb-8">Log in with Discord</a>
     <details class="text-sm text-slate-500 dark:text-slate-400">
-        <summary class="cursor-pointer">Reviewing this for a job or interview?</summary>
+        <summary class="cursor-pointer">Demo login</summary>
         <form method="POST" action="/zelda/login/demo" class="mt-3 flex gap-2">
             <input type="password" name="password" placeholder="Demo access code" class="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" required>
             <button type="submit" class="rounded-lg bg-slate-700 hover:bg-slate-800 text-white text-sm px-4 py-2">Enter</button>

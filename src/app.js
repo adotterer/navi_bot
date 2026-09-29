@@ -240,16 +240,14 @@ export function createApp() {
         </div>
         <h2 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">Zelda Matchup Guides</h2>
         <p class="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-            A community tool for a Super Smash Bros. Ultimate Discord server. Each page is an AI-generated
-            matchup summary for Zelda vs. a specific character, sourced from years of the community's own
-            Discord discussion. Guides are cached and only regenerated on demand — a moderator clicks
-            "Fetch latest" to pull fresh Discord messages and re-run the summary, rather than the AI
-            re-running on every page view.
+            A community tool for Super Smash Bros. Ultimate <a target="_blank" href="https://metafy.gg/@kp" class="underline">Parry It</a> Discord server. 
+            Each page is an AI-generated matchup summary for Zelda vs. a specific character, sourced from years of the community's own
+            Discord discussion and data.
         </p>
         <p class="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
             Access is gated by Discord OAuth2 and a live role check against the server (a paid "Coaching Pass"
-            role) — no separate account system. The whole app runs on
-            a single $5/month box (no load balancer, no idle compute) with GitHub Actions deploying on every push.
+            role). The whole app runs on
+            a AWS Lightsail instance, with GitHub Actions deploying on every push.
         </p>
         <a href="/zelda" class="inline-flex items-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-3 mb-10">View the Matchup Guides &rarr;</a>
         <p class="text-sm text-slate-500 dark:text-slate-400">
