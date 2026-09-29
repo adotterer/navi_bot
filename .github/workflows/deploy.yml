@@ -1,4 +1,4 @@
-name: Deploy to Elastic Beanstalk
+name: Deploy to Lightsail
 
 on:
   push:
@@ -8,28 +8,26 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Create deployment package
-        run: |
-          zip -r navi_bot.zip . -x "node_modules/*" ".git/*" ".gitignore"
-
-      - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v21
+      - name: Deploy to Lightsail
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: navi-bot
-          environment_name: navi-bot-env-1
-          region: us-west-1
-          version_label: v-${{ github.sha }}
-          deployment_package: navi_bot.zip
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_USER }}
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          script: |
+            set -e
+            cd navi_bot
+            git fetch origin main
+            git reset --hard origin/main
+            npm ci --omit=dev
+            npm run build:admin-css
+            pm2 restart navi-web
 
       - name: Notify Discord audit-logs
         env:
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
         run: |
-          sleep 20
+          sleep 5
           PAYLOAD=$(jq -n \
             --arg ref "refs/heads/main" \
             --arg sha "${{ github.sha }}" \
