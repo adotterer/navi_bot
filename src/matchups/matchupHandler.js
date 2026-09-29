@@ -23,7 +23,7 @@ const genAI = new GoogleGenAI({
     defaultModel: process.env.GEMINI_MODEL || 'gemini-3-flash-preview'
 });
 
-function formatMessageForPrompt(msg) {
+export function formatMessageForPrompt(msg) {
     let output = `${msg.author}: ${msg.content}`;
 
     if (msg.replyingToContent) {

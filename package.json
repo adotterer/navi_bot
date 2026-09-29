@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon main.js",
-    "start": "node main.js",
+    "start": "node server.js",
+    "start:bot": "node main.js",
     "admin": "node server-admin.js",
     "dev:admin": "nodemon server-admin.js",
     "build:admin-css": "tailwindcss -i src/admin/input.css -o public/admin.css",

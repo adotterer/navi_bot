@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
     darkMode: 'class',
-    content: ['src/admin/**/*.js', 'src/admin/agent/agentPageContentInner.html', 'server-admin.js'],
+    content: ['src/admin/**/*.js', 'src/admin/agent/agentPageContentInner.html', 'server-admin.js', 'src/app.js', 'src/zelda/**/*.js'],
     theme: {
         extend: {
             fontFamily: {

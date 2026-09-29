@@ -19,6 +19,8 @@ import { adminRouter } from './admin/routes.js';
 import { webhookRouter } from './admin/webhookRoutes.js';
 import { fetchFromS3Buffer } from './shared/s3Helper.js';
 import { getEmojiLibrary, fetchEmojisFromS3 } from './shared/emojiSync.js';
+import { emojiCodeToUrl } from './shared/emojiCodeToUrl.js';
+import { zeldaRouter } from './zelda/zeldaRoutes.js';
 
 const ENFORCE_HTTPS = process.env.ENFORCE_HTTPS === 'true' || process.env.ENFORCE_HTTPS === '1';
 const isProduction = process.env.NODE_ENV === 'production';
@@ -35,6 +37,22 @@ const loginLimiter = rateLimit({
 const webhookLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const zeldaLoginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+    handler: (_req, res) => res.redirect('/zelda/login?error=ratelimit'),
+});
+
+const zeldaRegenerateLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 10,
     standardHeaders: true,
     legacyHeaders: false,
 });
@@ -60,6 +78,8 @@ export function createApp() {
     app.post('/admin/2fa', loginLimiter);
     app.post('/admin/setup', loginLimiter);
     app.post('/github/webhook', webhookLimiter);
+    app.post('/zelda/login/demo', zeldaLoginLimiter);
+    app.post('/zelda/:slug/regenerate', zeldaRegenerateLimiter);
 
     // Raw body parser must be registered before urlencoded/json so the webhook
     // route receives raw bytes for HMAC signature verification.
@@ -182,12 +202,7 @@ export function createApp() {
         ]},
     ];
 
-    function emojiCodeToUrl(code) {
-        const m = code && code.match(/<(a?):([^:]+):(\d+)>/);
-        if (!m) return null;
-        const ext = m[1] === 'a' ? 'gif' : 'png';
-        return `https://cdn.discordapp.com/emojis/${m[3]}.${ext}`;
-    }
+    app.use('/zelda', zeldaRouter);
 
     app.get('/', async (req, res) => {
         let emojis = getEmojiLibrary();
